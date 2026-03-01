@@ -11,13 +11,13 @@ pub fn main() !void {
     const allocator = arena.allocator();
 
     var stderr_buf: [1024]u8 = undefined;
-    const stderr_handle = std.fs.File.stderr();
+    const stderr_handle: std.fs.File = .stderr();
     var writer = stderr_handle.writer(&stderr_buf);
     const stderr = &writer.interface;
 
     const args = try std.process.argsAlloc(allocator);
-    if (args.len < 4) {
-        try stderr.print("Usage: compressor [tar|zst] [output_file] [input_dir]\n", .{});
+    if (args.len != 4) {
+        try stderr.print("Usage: compressor [zip|zst] [output_file] [input_dir]\n", .{});
         try stderr.flush();
         return error.UsageError;
     }
@@ -77,7 +77,6 @@ pub fn main() !void {
             continue;
         }
 
-        // Stream the file data into the archive
         const file = try entry.dir.openFile(entry.basename, .{});
         defer file.close();
         var reader = file.reader(input_buf);

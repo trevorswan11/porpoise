@@ -236,9 +236,10 @@ fn addArtifacts(b: *std.Build, config: struct {
     // LLVM is compiled from source because I like burning compute or something
     var llvm: LLVM = .init(b, config.target);
     try llvm.build(.{
-        .behavior = if (config.packaging) .package else .{
-            .supplemental_cxx_flags = config.cxx_flags,
-        },
+        .behavior = if (config.packaging)
+            .package
+        else
+            .allow_kaleidoscope,
         .auto_install = config.auto_install,
     });
 

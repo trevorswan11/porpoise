@@ -30,7 +30,7 @@ The following are "standalone" dependencies, required and manually fetched by Co
     - [libxml2](https://gitlab.gnome.org/GNOME/libxml2)
     - [zlib](https://github.com/madler/zlib)
     - [zstd](https://github.com/facebook/zstd)
-- [libarchive](https://github.com/libarchive/libarchive) is used for packaging releases, making use fo zlib and zstd to create `zip` and `zst` archives. It is license under the BSD 2-Clause License, but the associated compiled artifacts are neither linked with output artifacts nor shipped with releases.
+- [libarchive](https://github.com/libarchive/libarchive) is used for packaging releases, making use of zlib and zstd to create `zip` and `zst` archives. It is license under the BSD 2-Clause License, but the associated compiled artifacts are neither linked with output artifacts nor shipped with releases.
 
 These are automatically downloaded by the zig build system, so building conch is as easy as running:
 ```sh

@@ -326,10 +326,9 @@ pub fn init(b: *std.Build, target: std.Build.ResolvedTarget) Self {
 
 pub fn build(self: *Self, config: struct {
     behavior: union(enum) {
-        supplemental_cxx_flags: []const []const u8,
+        allow_kaleidoscope,
         package,
     },
-    skip_link_test: bool = true,
     auto_install: bool = false,
 }) !void {
     const b = self.b;
@@ -339,9 +338,8 @@ pub fn build(self: *Self, config: struct {
 
     // Packaging ignores test builds
     switch (config.behavior) {
-        .supplemental_cxx_flags => |cxx_flags| {
-            self.createLinkTest(cxx_flags);
-
+        .allow_kaleidoscope => {
+            const install_step = b.getInstallStep();
             if (config.auto_install and b.option(
                 bool,
                 "all-chapters",
@@ -350,7 +348,7 @@ pub fn build(self: *Self, config: struct {
                 for (std.enums.values(kaleidoscope.KaleidoscopeChapter)) |chapter| {
                     const exe = chapter.build(self);
                     const install_artifact = b.addInstallArtifact(exe, kaleidoscope_install_options);
-                    b.getInstallStep().dependOn(&install_artifact.step);
+                    install_step.dependOn(&install_artifact.step);
                 }
             } else if (b.option(
                 kaleidoscope.KaleidoscopeChapter,
@@ -359,7 +357,7 @@ pub fn build(self: *Self, config: struct {
             )) |chapter| {
                 const exe = chapter.build(self);
                 const run_cmd = b.addRunArtifact(exe);
-                run_cmd.step.dependOn(b.getInstallStep());
+                run_cmd.step.dependOn(install_step);
 
                 if (b.args) |args| {
                     run_cmd.addArgs(args);
@@ -370,7 +368,7 @@ pub fn build(self: *Self, config: struct {
 
                 if (config.auto_install) {
                     const install_artifact = b.addInstallArtifact(exe, kaleidoscope_install_options);
-                    b.getInstallStep().dependOn(&install_artifact.step);
+                    install_step.dependOn(&install_artifact.step);
                 }
             }
         },
@@ -559,36 +557,6 @@ fn createLLVMLibrary(self: *const Self, config: struct {
     });
     lib.bundle_compiler_rt = config.bundle_compiler_rt;
     return lib;
-}
-
-/// Creates a custom runnable target to test LLVM linkage against a C++23 source file
-fn createLinkTest(self: *const Self, cxx_flags: []const []const u8) void {
-    const b = self.b;
-    const mod = self.createHostModule();
-    mod.optimize = .Debug;
-
-    mod.addCSourceFile(.{
-        .file = b.path("packages/llvm/link_test.cpp"),
-        .flags = cxx_flags,
-    });
-    mod.addSystemIncludePath(self.llvm.llvm_include);
-
-    for (self.allTargetArtifacts()) |lib| {
-        mod.linkLibrary(lib);
-    }
-
-    const exe = b.addExecutable(.{
-        .name = "llvm_link_test",
-        .root_module = mod,
-    });
-
-    const run_cmd = b.addRunArtifact(exe);
-    if (b.args) |args| {
-        run_cmd.addArgs(args);
-    }
-
-    const run_step = b.step("link-test", "Run the llvm link test executable");
-    run_step.dependOn(&run_cmd.step);
 }
 
 const ConfigHeaders = struct {
