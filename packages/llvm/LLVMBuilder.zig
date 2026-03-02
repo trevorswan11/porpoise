@@ -49,21 +49,22 @@ const Platform = enum {
     }
 };
 
-/// A minimal set of artifacts, compiled for the host arch.
-///
-/// These are used for the generation of core files for the LLVM pipeline.
-/// A distinction between minimal and full must be made to prevent a circular dependency.
-const MinimalArtifacts = struct {
-    tblgen: Artifact = undefined,
+/// A minimal set of artifacts compiled for the host arch for general configuration.
+const ConfigurePhaseArtifacts = struct {
+    /// Used only for GenVT to prevent dependency loop
+    minimal_tblgen: Artifact = undefined,
     deps: ThirdPartyDeps = undefined,
     demangle: Artifact = undefined,
     support: Artifact = undefined,
 
     gen_vt: *std.Build.Step.WriteFile,
+
+    /// Used to convert the actual target 'td's into 'inc's
+    full_tblgen: Artifact = undefined,
 };
 
-/// Artifacts compiled for the actual target
-const TargetArtifacts = struct {
+/// Artifacts compiled for the actual target, associated with the LLVM subproject of llvm
+const LLVMTargetArtifacts = struct {
     const Bitcode = struct {
         reader: Artifact = undefined,
         writer: Artifact = undefined,
@@ -236,7 +237,8 @@ const kaleidoscope_install_options: std.Build.Step.InstallArtifact.Options = .{
     },
 };
 
-const ClangArtifacts = struct {
+/// Artifacts compiled for the actual target, associated with the clang subproject of llvm
+const ClangTargetArtifacts = struct {
     const ClangFormat = struct {
         core_lib: Artifact = undefined,
         tool: Artifact = undefined,
@@ -276,10 +278,7 @@ const enabled_targets = &[_][]const u8{
     "LoongArch",
 };
 
-const Self = @This();
-
-b: *std.Build,
-llvm: struct {
+const Metadata = struct {
     upstream: *std.Build.Dependency,
     root: std.Build.LazyPath,
     llvm_include: std.Build.LazyPath,
@@ -287,60 +286,99 @@ llvm: struct {
     extension_def: *std.Build.Step.WriteFile,
 
     clang_include: std.Build.LazyPath,
-},
+};
 
-minimal_artifacts: MinimalArtifacts,
+const Self = @This();
 
-/// Used to convert the actual target 'td's into 'inc's
-full_tblgen: Artifact = undefined,
+b: *std.Build,
+metadata: Metadata,
 
-target_artifacts: TargetArtifacts = .{},
-clang_artifacts: ClangArtifacts = .{},
+/// Shared across clones of the builder
+configure_phase_artifacts: *ConfigurePhaseArtifacts,
 
-/// The target system to compile to
-target: std.Build.ResolvedTarget,
+target_artifacts: LLVMTargetArtifacts = .{},
+clang_artifacts: ClangTargetArtifacts = .{},
 
-pub fn init(b: *std.Build, target: std.Build.ResolvedTarget) Self {
+/// The target system to compile to, not determined until `build`
+target: std.Build.ResolvedTarget = undefined,
+
+/// Creates a new LLVM builder with no preconfigured artifacts.
+///
+/// Do not mark `pub`, will provide a very fun footgun :)
+fn create(b: *std.Build, config: union(enum) {
+    from_existing: struct {
+        metadata: Metadata,
+        configure_phase_artifacts: *ConfigurePhaseArtifacts,
+    },
+    fresh,
+}) *Self {
     const upstream = b.dependency("llvm", .{});
-    return .{
-        .b = b,
-        .llvm = .{
-            .upstream = upstream,
-            .root = upstream.path("."),
-            .llvm_include = upstream.path("llvm/include"),
-            .vcs_revision = b.addConfigHeader(.{
+    const self = b.allocator.create(Self) catch @panic("OOM");
+    const vcs_revision, const extension_def, const configure_phase_artifacts = switch (config) {
+        .from_existing => |other| .{
+            other.metadata.vcs_revision,
+            other.metadata.extension_def,
+            other.configure_phase_artifacts,
+        },
+        .fresh => .{
+            b.addConfigHeader(.{
                 .style = .blank,
                 .include_path = "llvm/Support/VCSRevision.h",
             }, .{
                 .LLVM_REVISION = "git-" ++ version_str ++ "-2078da43e25a4623cab2d0d60decddf709aaea28",
             }),
-            .extension_def = b.addWriteFile("llvm/Support/Extension.def", "#undef HANDLE_EXTENSION"),
+            b.addWriteFile("llvm/Support/Extension.def", "#undef HANDLE_EXTENSION"),
+            blk: {
+                const cart = b.allocator.create(ConfigurePhaseArtifacts) catch @panic("OOM");
+                cart.* = .{
+                    .gen_vt = b.addWriteFiles(),
+                };
+                break :blk cart;
+            },
+        },
+    };
+
+    self.* = .{
+        .b = b,
+        .metadata = .{
+            .upstream = upstream,
+            .root = upstream.path("."),
+            .llvm_include = upstream.path("llvm/include"),
+            .vcs_revision = vcs_revision,
+            .extension_def = extension_def,
             .clang_include = upstream.path("clang/include"),
         },
-        .minimal_artifacts = .{
-            .gen_vt = b.addWriteFiles(),
-        },
-        .target = target,
+        .configure_phase_artifacts = configure_phase_artifacts,
     };
+    return self;
 }
 
+/// Creates a new LLVM builder with the Host artifacts preconfigured.
+pub fn init(b: *std.Build) *Self {
+    const self = create(b, .fresh);
+    self.buildHostLLVM();
+    return self;
+}
+
+/// Builds all target artifacts lazily
 pub fn build(self: *Self, config: struct {
+    target: std.Build.ResolvedTarget,
     behavior: union(enum) {
-        allow_kaleidoscope,
+        /// Set to true if kaleidoscope can be installed to the prefix
+        allow_kaleidoscope: bool,
         package,
     },
-    auto_install: bool = false,
-}) !void {
+}) void {
     const b = self.b;
+    self.target = config.target;
 
-    try self.buildHostLLVM();
-    try self.buildTargetLLVM();
+    self.buildTargetLLVM();
 
     // Packaging ignores test builds
     switch (config.behavior) {
-        .allow_kaleidoscope => {
+        .allow_kaleidoscope => |auto_install| {
             const install_step = b.getInstallStep();
-            if (config.auto_install and b.option(
+            if (auto_install and b.option(
                 bool,
                 "all-chapters",
                 "build all kaleidoscope chapters (dangerous)",
@@ -366,7 +404,7 @@ pub fn build(self: *Self, config: struct {
                 const kaleidoscope_step = b.step("kaleidoscope", "Run a Kaleidoscope Chapter's executable");
                 kaleidoscope_step.dependOn(&run_cmd.step);
 
-                if (config.auto_install) {
+                if (auto_install) {
                     const install_artifact = b.addInstallArtifact(exe, kaleidoscope_install_options);
                     install_step.dependOn(&install_artifact.step);
                 }
@@ -376,43 +414,54 @@ pub fn build(self: *Self, config: struct {
     }
 }
 
+/// Produces a clone that shares all configure phase artifacts with the parent.
+pub fn clone(self: *Self) *Self {
+    return create(self.b, .{
+        .from_existing = .{
+            .metadata = self.metadata,
+            .configure_phase_artifacts = self.configure_phase_artifacts,
+        },
+    });
+}
+
 /// Compiles a subset of LLVM that the host needs for full target compilation.
-///
-/// These should realistically never be linked with anything outside of this subset.
-fn buildHostLLVM(self: *Self) !void {
-    self.minimal_artifacts.deps = try self.buildDeps(.host);
-    self.minimal_artifacts.demangle = self.buildDemangle(.host);
-    self.minimal_artifacts.support = try self.buildSupport(.{
+fn buildHostLLVM(self: *Self) void {
+    self.configure_phase_artifacts.deps = self.buildDeps(.host);
+    self.configure_phase_artifacts.demangle = self.buildDemangle(.host);
+    self.configure_phase_artifacts.support = self.buildSupport(.{
         .platform = .host,
-        .deps = self.minimal_artifacts.deps,
+        .deps = self.configure_phase_artifacts.deps,
         .minimal = true,
     });
 
-    self.minimal_artifacts.tblgen = self.buildTblgen(.{
-        .support_lib = self.minimal_artifacts.support,
+    self.configure_phase_artifacts.minimal_tblgen = self.buildTblgen(.{
+        .support_lib = self.configure_phase_artifacts.support,
         .minimal = true,
     });
 
-    _ = self.synthesizeHeader(self.minimal_artifacts.gen_vt, .{
-        .tblgen = self.minimal_artifacts.tblgen,
+    _ = self.synthesizeHeader(self.configure_phase_artifacts.gen_vt, .{
+        .tblgen = self.configure_phase_artifacts.minimal_tblgen,
         .name = "GenVT",
         .td_file = "llvm/include/llvm/CodeGen/ValueTypes.td",
         .instruction = .{ .action = "-gen-vt" },
         .virtual_path = "llvm/CodeGen/GenVT.inc",
     });
 
-    self.full_tblgen = self.buildTblgen(.{
-        .support_lib = self.minimal_artifacts.support,
+    // The full tblgen can be made still using the stripped down support
+    self.configure_phase_artifacts.full_tblgen = self.buildTblgen(.{
+        .support_lib = self.configure_phase_artifacts.support,
         .minimal = false,
     });
-    self.full_tblgen.root_module.addIncludePath(self.minimal_artifacts.gen_vt.getDirectory());
+    self.configure_phase_artifacts.full_tblgen.root_module.addIncludePath(
+        self.configure_phase_artifacts.gen_vt.getDirectory(),
+    );
 }
 
 /// Compiles the entire LLVM target toolchain, allowing linking to other artifacts.
-fn buildTargetLLVM(self: *Self) !void {
-    self.target_artifacts.deps = try self.buildDeps(.target);
+fn buildTargetLLVM(self: *Self) void {
+    self.target_artifacts.deps = self.buildDeps(.target);
     self.target_artifacts.demangle = self.buildDemangle(.target);
-    self.target_artifacts.support = try self.buildSupport(.{
+    self.target_artifacts.support = self.buildSupport(.{
         .platform = .target,
         .deps = self.target_artifacts.deps,
         .minimal = false,
@@ -541,7 +590,7 @@ fn createLLVMLibrary(self: *const Self, config: struct {
     if (config.additional_include_paths) |addtl_includes| for (addtl_includes) |include| {
         mod.addIncludePath(include);
     };
-    mod.addIncludePath(self.llvm.llvm_include);
+    mod.addIncludePath(self.metadata.llvm_include);
 
     if (config.config_headers) |config_headers| for (config_headers) |config_header| {
         mod.addConfigHeader(config_header);
@@ -583,7 +632,7 @@ const ConfigHeaders = struct {
 };
 
 /// https://github.com/llvm/llvm-project/tree/llvmorg-21.1.8/llvm/include/llvm/Config
-fn createConfigHeaders(self: *const Self, target: std.Target) !ConfigHeaders {
+fn createConfigHeaders(self: *const Self, target: std.Target) ConfigHeaders {
     const b = self.b;
     const is_darwin = target.os.tag.isDarwin();
     const is_windows = target.os.tag == .windows;
@@ -591,7 +640,7 @@ fn createConfigHeaders(self: *const Self, target: std.Target) !ConfigHeaders {
 
     // https://github.com/llvm/llvm-project/blob/llvmorg-21.1.8/llvm/include/llvm/Config/config.h.cmake
     const config = b.addConfigHeader(.{
-        .style = .{ .cmake = self.llvm.root.path(b, "llvm/include/llvm/Config/config.h.cmake") },
+        .style = .{ .cmake = self.metadata.root.path(b, "llvm/include/llvm/Config/config.h.cmake") },
         .include_path = "llvm/Config/config.h",
     }, .{
         .PACKAGE_NAME = "LLVM",
@@ -717,7 +766,7 @@ fn createConfigHeaders(self: *const Self, target: std.Target) !ConfigHeaders {
 
     // https://github.com/llvm/llvm-project/blob/llvmorg-21.1.8/llvm/include/llvm/Config/llvm-config.h.cmake
     const llvm_config = b.addConfigHeader(.{
-        .style = .{ .cmake = self.llvm.root.path(b, "llvm/include/llvm/Config/llvm-config.h.cmake") },
+        .style = .{ .cmake = self.metadata.root.path(b, "llvm/include/llvm/Config/llvm-config.h.cmake") },
         .include_path = "llvm/Config/llvm-config.h",
     }, .{
         .LLVM_VERSION_MAJOR = @as(i64, @intCast(version.major)),
@@ -781,7 +830,7 @@ fn createConfigHeaders(self: *const Self, target: std.Target) !ConfigHeaders {
 
     // https://github.com/llvm/llvm-project/blob/llvmorg-21.1.8/llvm/include/llvm/Config/abi-breaking.h.cmake
     const abi_breaking = b.addConfigHeader(.{
-        .style = .{ .cmake = self.llvm.root.path(b, "llvm/include/llvm/Config/abi-breaking.h.cmake") },
+        .style = .{ .cmake = self.metadata.root.path(b, "llvm/include/llvm/Config/abi-breaking.h.cmake") },
         .include_path = "llvm/Config/abi-breaking.h",
     }, .{
         .LLVM_ENABLE_ABI_BREAKING_CHECKS = 0,
@@ -790,7 +839,7 @@ fn createConfigHeaders(self: *const Self, target: std.Target) !ConfigHeaders {
 
     // https://github.com/llvm/llvm-project/blob/llvmorg-21.1.8/llvm/include/llvm/Config/Targets.h.cmake
     const targets_h = b.addConfigHeader(.{
-        .style = .{ .cmake = self.llvm.root.path(b, "llvm/include/llvm/Config/Targets.h.cmake") },
+        .style = .{ .cmake = self.metadata.root.path(b, "llvm/include/llvm/Config/Targets.h.cmake") },
         .include_path = "llvm/Config/Targets.h",
     }, .{});
 
@@ -811,7 +860,7 @@ fn createConfigHeaders(self: *const Self, target: std.Target) !ConfigHeaders {
 
     // https://github.com/llvm/llvm-project/blob/llvmorg-21.1.8/llvm/include/llvm/Config/AsmParsers.def.in
     const asm_parsers = b.addConfigHeader(.{
-        .style = .{ .autoconf_at = self.llvm.root.path(b, "llvm/include/llvm/Config/AsmParsers.def.in") },
+        .style = .{ .autoconf_at = self.metadata.root.path(b, "llvm/include/llvm/Config/AsmParsers.def.in") },
         .include_path = "llvm/Config/AsmParsers.def",
     }, .{
         .LLVM_ENUM_ASM_PARSERS = formatDef(b, enabled_targets, "LLVM_ASM_PARSER"),
@@ -819,7 +868,7 @@ fn createConfigHeaders(self: *const Self, target: std.Target) !ConfigHeaders {
 
     // https://github.com/llvm/llvm-project/blob/llvmorg-21.1.8/llvm/include/llvm/Config/AsmPrinters.def.in
     const asm_printers = b.addConfigHeader(.{
-        .style = .{ .autoconf_at = self.llvm.root.path(b, "llvm/include/llvm/Config/AsmPrinters.def.in") },
+        .style = .{ .autoconf_at = self.metadata.root.path(b, "llvm/include/llvm/Config/AsmPrinters.def.in") },
         .include_path = "llvm/Config/AsmPrinters.def",
     }, .{
         .LLVM_ENUM_ASM_PRINTERS = formatDef(b, enabled_targets, "LLVM_ASM_PRINTER"),
@@ -827,7 +876,7 @@ fn createConfigHeaders(self: *const Self, target: std.Target) !ConfigHeaders {
 
     // https://github.com/llvm/llvm-project/blob/llvmorg-21.1.8/llvm/include/llvm/Config/Disassemblers.def.in
     const disassemblers = b.addConfigHeader(.{
-        .style = .{ .autoconf_at = self.llvm.root.path(b, "llvm/include/llvm/Config/Disassemblers.def.in") },
+        .style = .{ .autoconf_at = self.metadata.root.path(b, "llvm/include/llvm/Config/Disassemblers.def.in") },
         .include_path = "llvm/Config/Disassemblers.def",
     }, .{
         .LLVM_ENUM_DISASSEMBLERS = formatDef(b, enabled_targets, "LLVM_DISASSEMBLER"),
@@ -835,7 +884,7 @@ fn createConfigHeaders(self: *const Self, target: std.Target) !ConfigHeaders {
 
     // https://github.com/llvm/llvm-project/blob/llvmorg-21.1.8/llvm/include/llvm/Config/TargetExegesis.def.in
     const target_exegesis = b.addConfigHeader(.{
-        .style = .{ .autoconf_at = self.llvm.root.path(b, "llvm/include/llvm/Config/TargetExegesis.def.in") },
+        .style = .{ .autoconf_at = self.metadata.root.path(b, "llvm/include/llvm/Config/TargetExegesis.def.in") },
         .include_path = "llvm/Config/TargetExegesis.def",
     }, .{
         .LLVM_ENUM_EXEGESIS = formatDef(b, enabled_targets, "LLVM_EXEGESIS"),
@@ -843,7 +892,7 @@ fn createConfigHeaders(self: *const Self, target: std.Target) !ConfigHeaders {
 
     // https://github.com/llvm/llvm-project/blob/llvmorg-21.1.8/llvm/include/llvm/Config/TargetMCAs.def.in
     const target_mcas = b.addConfigHeader(.{
-        .style = .{ .autoconf_at = self.llvm.root.path(b, "llvm/include/llvm/Config/TargetMCAs.def.in") },
+        .style = .{ .autoconf_at = self.metadata.root.path(b, "llvm/include/llvm/Config/TargetMCAs.def.in") },
         .include_path = "llvm/Config/TargetMCAs.def",
     }, .{
         .LLVM_ENUM_TARGETMCAS = formatDef(b, enabled_targets, "LLVM_TARGETMCA"),
@@ -851,7 +900,7 @@ fn createConfigHeaders(self: *const Self, target: std.Target) !ConfigHeaders {
 
     // https://github.com/llvm/llvm-project/blob/llvmorg-21.1.8/llvm/include/llvm/Config/Targets.def.in
     const targets_def = b.addConfigHeader(.{
-        .style = .{ .autoconf_at = self.llvm.root.path(b, "llvm/include/llvm/Config/Targets.def.in") },
+        .style = .{ .autoconf_at = self.metadata.root.path(b, "llvm/include/llvm/Config/Targets.def.in") },
         .include_path = "llvm/Config/Targets.def",
     }, .{
         .LLVM_ENUM_TARGETS = formatDef(b, enabled_targets, "LLVM_TARGET"),
@@ -884,7 +933,7 @@ fn buildSupport(self: *const Self, config: struct {
     platform: Platform,
     deps: ThirdPartyDeps,
     minimal: bool,
-}) !Artifact {
+}) Artifact {
     const b = self.b;
     const mod = switch (config.platform) {
         .host => self.createHostModule(),
@@ -892,7 +941,7 @@ fn buildSupport(self: *const Self, config: struct {
     };
     const target_result = mod.resolved_target.?.result;
 
-    const support_root = self.llvm.root.path(b, support.common_root);
+    const support_root = self.metadata.root.path(b, support.common_root);
     mod.addCSourceFiles(.{
         .root = support_root,
         .files = &support.common_sources,
@@ -905,7 +954,7 @@ fn buildSupport(self: *const Self, config: struct {
     });
 
     mod.addCSourceFiles(.{
-        .root = self.llvm.root.path(b, support.blake3_root),
+        .root = self.metadata.root.path(b, support.blake3_root),
         .files = &support.blake3_sources,
         .flags = &.{"-std=c11"},
     });
@@ -916,20 +965,20 @@ fn buildSupport(self: *const Self, config: struct {
     mod.addCMacro("BLAKE3_NO_SSE41", "1");
     mod.addCMacro("BLAKE3_NO_SSE2", "1");
 
-    const config_headers = try self.createConfigHeaders(target_result);
+    const config_headers = self.createConfigHeaders(target_result);
     const config_header_array = config_headers.configHeaderArray();
     for (config_header_array) |header| {
         mod.addConfigHeader(header);
     }
 
-    mod.addIncludePath(self.llvm.llvm_include);
-    mod.addIncludePath(self.llvm.root.path(b, "third-party/siphash/include"));
+    mod.addIncludePath(self.metadata.llvm_include);
+    mod.addIncludePath(self.metadata.root.path(b, "third-party/siphash/include"));
 
     mod.linkLibrary(config.deps.zlib.artifact);
     mod.linkLibrary(config.deps.zstd.artifact);
     mod.linkLibrary(config.deps.libxml2.artifact);
     if (config.minimal) {
-        mod.linkLibrary(self.minimal_artifacts.demangle);
+        mod.linkLibrary(self.configure_phase_artifacts.demangle);
     } else {
         mod.linkLibrary(self.target_artifacts.demangle);
     }
@@ -969,7 +1018,7 @@ fn buildDemangle(self: *const Self, platform: Platform) Artifact {
     return self.createLLVMLibrary(.{
         .name = self.b.fmt("LLVMDemangle{s}", .{platform.suffix()}),
         .cxx_source_files = .{
-            .root = self.llvm.root.path(self.b, "llvm/lib/Demangle"),
+            .root = self.metadata.root.path(self.b, "llvm/lib/Demangle"),
             .files = &.{
                 "DLangDemangle.cpp",          "Demangle.cpp",
                 "ItaniumDemangle.cpp",        "MicrosoftDemangle.cpp",
@@ -988,7 +1037,7 @@ fn buildBinaryFormat(self: *const Self) Artifact {
     return self.createLLVMLibrary(.{
         .name = "LLVMBinaryFormat",
         .cxx_source_files = .{
-            .root = self.llvm.root.path(self.b, binary_format.root),
+            .root = self.metadata.root.path(self.b, binary_format.root),
             .files = &binary_format.sources,
         },
         .link_libraries = &.{
@@ -1003,10 +1052,10 @@ fn buildRemarks(self: *const Self) Artifact {
     return self.createLLVMLibrary(.{
         .name = "LLVMRemarks",
         .cxx_source_files = .{
-            .root = self.llvm.root.path(self.b, remarks.root),
+            .root = self.metadata.root.path(self.b, remarks.root),
             .files = &remarks.sources,
         },
-        .additional_include_paths = &.{self.minimal_artifacts.gen_vt.getDirectory()},
+        .additional_include_paths = &.{self.configure_phase_artifacts.gen_vt.getDirectory()},
         .link_libraries = &.{
             self.target_artifacts.support,
             self.target_artifacts.bitstream_reader,
@@ -1019,7 +1068,7 @@ fn buildBitstreamReader(self: *const Self) Artifact {
     return self.createLLVMLibrary(.{
         .name = "LLVMBitstreamReader",
         .cxx_source_files = .{
-            .root = self.llvm.root.path(self.b, "llvm/lib/Bitstream/Reader"),
+            .root = self.metadata.root.path(self.b, "llvm/lib/Bitstream/Reader"),
             .files = &.{"BitstreamReader.cpp"},
         },
         .link_libraries = &.{self.target_artifacts.support},
@@ -1032,39 +1081,39 @@ fn runTargetParserGen(self: *Self) *std.Build.Step.WriteFile {
     const write_file = b.addWriteFiles();
 
     _ = self.synthesizeHeader(write_file, .{
-        .tblgen = self.full_tblgen,
+        .tblgen = self.configure_phase_artifacts.full_tblgen,
         .name = "AArch64TargetParserDef",
         .td_file = "llvm/lib/Target/AArch64/AArch64.td",
         .instruction = .{ .action = "-gen-arm-target-def" },
         .virtual_path = "llvm/TargetParser/AArch64TargetParserDef.inc",
-        .extra_includes = &.{self.llvm.root.path(b, "llvm/lib/Target/AArch64")},
+        .extra_includes = &.{self.metadata.root.path(b, "llvm/lib/Target/AArch64")},
     });
 
     _ = self.synthesizeHeader(write_file, .{
-        .tblgen = self.full_tblgen,
+        .tblgen = self.configure_phase_artifacts.full_tblgen,
         .name = "ARMTargetParserDef",
         .td_file = "llvm/lib/Target/ARM/ARM.td",
         .instruction = .{ .action = "-gen-arm-target-def" },
         .virtual_path = "llvm/TargetParser/ARMTargetParserDef.inc",
-        .extra_includes = &.{self.llvm.root.path(b, "llvm/lib/Target/ARM")},
+        .extra_includes = &.{self.metadata.root.path(b, "llvm/lib/Target/ARM")},
     });
 
     _ = self.synthesizeHeader(write_file, .{
-        .tblgen = self.full_tblgen,
+        .tblgen = self.configure_phase_artifacts.full_tblgen,
         .name = "RISCVTargetParserDef",
         .td_file = "llvm/lib/Target/RISCV/RISCV.td",
         .instruction = .{ .action = "-gen-riscv-target-def" },
         .virtual_path = "llvm/TargetParser/RISCVTargetParserDef.inc",
-        .extra_includes = &.{self.llvm.root.path(b, "llvm/lib/Target/RISCV")},
+        .extra_includes = &.{self.metadata.root.path(b, "llvm/lib/Target/RISCV")},
     });
 
     _ = self.synthesizeHeader(write_file, .{
-        .tblgen = self.full_tblgen,
+        .tblgen = self.configure_phase_artifacts.full_tblgen,
         .name = "PPCGenTargetFeatures",
         .td_file = "llvm/lib/Target/PowerPC/PPC.td",
         .instruction = .{ .action = "-gen-target-features" },
         .virtual_path = "llvm/TargetParser/PPCGenTargetFeatures.inc",
-        .extra_includes = &.{self.llvm.root.path(b, "llvm/lib/Target/PowerPC")},
+        .extra_includes = &.{self.metadata.root.path(b, "llvm/lib/Target/PowerPC")},
     });
 
     return write_file;
@@ -1075,7 +1124,7 @@ fn buildTargetParser(self: *Self) Artifact {
     return self.createLLVMLibrary(.{
         .name = "LLVMTargetParser",
         .cxx_source_files = .{
-            .root = self.llvm.root.path(self.b, target_backends.parser_root),
+            .root = self.metadata.root.path(self.b, target_backends.parser_root),
             .files = &target_backends.parser_sources,
         },
         .additional_include_paths = &.{self.target_artifacts.target_backends.parser_gen.getDirectory()},
@@ -1089,7 +1138,7 @@ fn runIntrinsicsGen(self: *Self) *std.Build.Step.WriteFile {
     const write_file = b.addWriteFiles();
 
     _ = self.synthesizeHeader(write_file, .{
-        .tblgen = self.full_tblgen,
+        .tblgen = self.configure_phase_artifacts.full_tblgen,
         .name = "Attributes",
         .td_file = "llvm/include/llvm/IR/Attributes.td",
         .instruction = .{ .action = "-gen-attrs" },
@@ -1097,7 +1146,7 @@ fn runIntrinsicsGen(self: *Self) *std.Build.Step.WriteFile {
     });
 
     _ = self.synthesizeHeader(write_file, .{
-        .tblgen = self.full_tblgen,
+        .tblgen = self.configure_phase_artifacts.full_tblgen,
         .name = "IntrinsicEnums",
         .td_file = "llvm/include/llvm/IR/Intrinsics.td",
         .instruction = .{ .action = "-gen-intrinsic-enums" },
@@ -1105,7 +1154,7 @@ fn runIntrinsicsGen(self: *Self) *std.Build.Step.WriteFile {
     });
 
     _ = self.synthesizeHeader(write_file, .{
-        .tblgen = self.full_tblgen,
+        .tblgen = self.configure_phase_artifacts.full_tblgen,
         .name = "RuntimeLibcalls",
         .td_file = "llvm/include/llvm/IR/RuntimeLibcalls.td",
         .instruction = .{ .action = "-gen-runtime-libcalls" },
@@ -1113,7 +1162,7 @@ fn runIntrinsicsGen(self: *Self) *std.Build.Step.WriteFile {
     });
 
     _ = self.synthesizeHeader(write_file, .{
-        .tblgen = self.full_tblgen,
+        .tblgen = self.configure_phase_artifacts.full_tblgen,
         .name = "IntrinsicImpl",
         .td_file = "llvm/include/llvm/IR/Intrinsics.td",
         .instruction = .{ .action = "-gen-intrinsic-impl" },
@@ -1122,7 +1171,7 @@ fn runIntrinsicsGen(self: *Self) *std.Build.Step.WriteFile {
 
     for (ir.intrinsic_info) |info| {
         _ = self.synthesizeHeader(write_file, .{
-            .tblgen = self.full_tblgen,
+            .tblgen = self.configure_phase_artifacts.full_tblgen,
             .name = b.fmt("Intrinsics{s}", .{info.arch}),
             .td_file = "llvm/include/llvm/IR/Intrinsics.td",
             .instruction = .{
@@ -1140,11 +1189,11 @@ fn buildCore(self: *Self) Artifact {
     return self.createLLVMLibrary(.{
         .name = "LLVMCore",
         .cxx_source_files = .{
-            .root = self.llvm.root.path(self.b, ir.root),
+            .root = self.metadata.root.path(self.b, ir.root),
             .files = &ir.sources,
         },
         .additional_include_paths = &.{
-            self.minimal_artifacts.gen_vt.getDirectory(),
+            self.configure_phase_artifacts.gen_vt.getDirectory(),
             self.target_artifacts.intrinsics_gen.getDirectory(),
         },
         .link_libraries = &.{
@@ -1162,7 +1211,7 @@ fn buildBitcodeReader(self: *const Self) Artifact {
     return self.createLLVMLibrary(.{
         .name = "LLVMBitReader",
         .cxx_source_files = .{
-            .root = self.llvm.root.path(self.b, "llvm/lib/Bitcode/Reader"),
+            .root = self.metadata.root.path(self.b, "llvm/lib/Bitcode/Reader"),
             .files = &.{
                 "BitcodeAnalyzer.cpp", "BitReader.cpp",
                 "BitcodeReader.cpp",   "MetadataLoader.cpp",
@@ -1180,14 +1229,14 @@ fn buildBitcodeReader(self: *const Self) Artifact {
 }
 
 /// https://github.com/llvm/llvm-project/blob/llvmorg-21.1.8/llvm/lib/MC/CMakeLists.txt
-fn buildMC(self: *const Self) TargetArtifacts.MachineCode {
+fn buildMC(self: *const Self) LLVMTargetArtifacts.MachineCode {
     const b = self.b;
-    var mc: TargetArtifacts.MachineCode = .{};
+    var mc: LLVMTargetArtifacts.MachineCode = .{};
 
     mc.core_lib = self.createLLVMLibrary(.{
         .name = "LLVMMC",
         .cxx_source_files = .{
-            .root = self.llvm.root.path(b, machine_code.mc_root),
+            .root = self.metadata.root.path(b, machine_code.mc_root),
             .files = &machine_code.mc_sources,
         },
         .additional_include_paths = &.{self.target_artifacts.intrinsics_gen.getDirectory()},
@@ -1202,7 +1251,7 @@ fn buildMC(self: *const Self) TargetArtifacts.MachineCode {
     mc.disassembler = self.createLLVMLibrary(.{
         .name = "LLVMMCDisassembler",
         .cxx_source_files = .{
-            .root = self.llvm.root.path(b, machine_code.disassembler_root),
+            .root = self.metadata.root.path(b, machine_code.disassembler_root),
             .files = &machine_code.disassembler_sources,
         },
         .link_libraries = &.{
@@ -1216,7 +1265,7 @@ fn buildMC(self: *const Self) TargetArtifacts.MachineCode {
     mc.parser = self.createLLVMLibrary(.{
         .name = "LLVMMCParser",
         .cxx_source_files = .{
-            .root = self.llvm.root.path(b, machine_code.parser_root),
+            .root = self.metadata.root.path(b, machine_code.parser_root),
             .files = &machine_code.parser_sources,
         },
         .link_libraries = &.{
@@ -1230,7 +1279,7 @@ fn buildMC(self: *const Self) TargetArtifacts.MachineCode {
     mc.analyzer = self.createLLVMLibrary(.{
         .name = "LLVMMCA",
         .cxx_source_files = .{
-            .root = self.llvm.root.path(b, machine_code.mca_root),
+            .root = self.metadata.root.path(b, machine_code.mca_root),
             .files = &machine_code.mca_sources,
         },
         .link_libraries = &.{
@@ -1247,7 +1296,7 @@ fn buildAsmParser(self: *const Self) Artifact {
     return self.createLLVMLibrary(.{
         .name = "LLVMAsmParser",
         .cxx_source_files = .{
-            .root = self.llvm.root.path(self.b, "llvm/lib/AsmParser"),
+            .root = self.metadata.root.path(self.b, "llvm/lib/AsmParser"),
             .files = &.{ "LLLexer.cpp", "LLParser.cpp", "Parser.cpp" },
         },
         .additional_include_paths = &.{self.target_artifacts.intrinsics_gen.getDirectory()},
@@ -1265,7 +1314,7 @@ fn buildIRReader(self: *const Self) Artifact {
     return self.createLLVMLibrary(.{
         .name = "LLVMIRReader",
         .cxx_source_files = .{
-            .root = self.llvm.root.path(self.b, "llvm/lib/IRReader"),
+            .root = self.metadata.root.path(self.b, "llvm/lib/IRReader"),
             .files = &.{"IRReader.cpp"},
         },
         .additional_include_paths = &.{self.target_artifacts.intrinsics_gen.getDirectory()},
@@ -1283,7 +1332,7 @@ fn buildTextAPI(self: *const Self) Artifact {
     return self.createLLVMLibrary(.{
         .name = "LLVMTextAPI",
         .cxx_source_files = .{
-            .root = self.llvm.root.path(self.b, text_api.root),
+            .root = self.metadata.root.path(self.b, text_api.root),
             .files = &text_api.sources,
         },
         .additional_include_paths = &.{self.target_artifacts.intrinsics_gen.getDirectory()},
@@ -1300,11 +1349,11 @@ fn buildObject(self: *const Self) Artifact {
     return self.createLLVMLibrary(.{
         .name = "LLVMObject",
         .cxx_source_files = .{
-            .root = self.llvm.root.path(self.b, object.root),
+            .root = self.metadata.root.path(self.b, object.root),
             .files = &object.sources,
         },
         .additional_include_paths = &.{self.target_artifacts.intrinsics_gen.getDirectory()},
-        .config_headers = &.{self.llvm.vcs_revision},
+        .config_headers = &.{self.metadata.vcs_revision},
         .link_libraries = &.{
             self.target_artifacts.bitcode.reader,
             self.target_artifacts.core,
@@ -1320,15 +1369,15 @@ fn buildObject(self: *const Self) Artifact {
 }
 
 /// https://github.com/llvm/llvm-project/blob/llvmorg-21.1.8/llvm/lib/DebugInfo/CMakeLists.txt
-fn buildDebugInfo(self: *const Self) TargetArtifacts.DebugInfo {
+fn buildDebugInfo(self: *const Self) LLVMTargetArtifacts.DebugInfo {
     const b = self.b;
-    var debug_info: TargetArtifacts.DebugInfo = .{};
+    var debug_info: LLVMTargetArtifacts.DebugInfo = .{};
 
     // https://github.com/llvm/llvm-project/blob/llvmorg-21.1.8/llvm/lib/DebugInfo/BTF/CMakeLists.txt
     debug_info.btf = self.createLLVMLibrary(.{
         .name = "LLVMDebugInfoBTF",
         .cxx_source_files = .{
-            .root = self.llvm.root.path(b, dbg_info.btf_root),
+            .root = self.metadata.root.path(b, dbg_info.btf_root),
             .files = &dbg_info.btf_sources,
         },
         .additional_include_paths = &.{self.target_artifacts.intrinsics_gen.getDirectory()},
@@ -1339,7 +1388,7 @@ fn buildDebugInfo(self: *const Self) TargetArtifacts.DebugInfo {
     debug_info.code_view = self.createLLVMLibrary(.{
         .name = "LLVMDebugInfoCodeView",
         .cxx_source_files = .{
-            .root = self.llvm.root.path(b, dbg_info.code_view_root),
+            .root = self.metadata.root.path(b, dbg_info.code_view_root),
             .files = &dbg_info.code_view_sources,
         },
         .link_libraries = &.{self.target_artifacts.support},
@@ -1349,7 +1398,7 @@ fn buildDebugInfo(self: *const Self) TargetArtifacts.DebugInfo {
     debug_info.dwarf.low_level = self.createLLVMLibrary(.{
         .name = "LLVMDebugInfoDWARFLowLevel",
         .cxx_source_files = .{
-            .root = self.llvm.root.path(b, dbg_info.dwarf_ll_root),
+            .root = self.metadata.root.path(b, dbg_info.dwarf_ll_root),
             .files = &dbg_info.dwarf_ll_sources,
         },
         .link_libraries = &.{
@@ -1363,7 +1412,7 @@ fn buildDebugInfo(self: *const Self) TargetArtifacts.DebugInfo {
     debug_info.dwarf.core_lib = self.createLLVMLibrary(.{
         .name = "LLVMDebugInfoDWARF",
         .cxx_source_files = .{
-            .root = self.llvm.root.path(b, dbg_info.dwarf_root),
+            .root = self.metadata.root.path(b, dbg_info.dwarf_root),
             .files = &dbg_info.dwarf_sources,
         },
         .link_libraries = &.{
@@ -1379,7 +1428,7 @@ fn buildDebugInfo(self: *const Self) TargetArtifacts.DebugInfo {
     debug_info.gsym = self.createLLVMLibrary(.{
         .name = "LLVMDebugInfoGSYM",
         .cxx_source_files = .{
-            .root = self.llvm.root.path(b, dbg_info.gsym_root),
+            .root = self.metadata.root.path(b, dbg_info.gsym_root),
             .files = &dbg_info.gsym_sources,
         },
         .link_libraries = &.{
@@ -1395,7 +1444,7 @@ fn buildDebugInfo(self: *const Self) TargetArtifacts.DebugInfo {
     debug_info.msf = self.createLLVMLibrary(.{
         .name = "LLVMDebugInfoMSF",
         .cxx_source_files = .{
-            .root = self.llvm.root.path(b, dbg_info.msf_root),
+            .root = self.metadata.root.path(b, dbg_info.msf_root),
             .files = &dbg_info.msf_sources,
         },
         .link_libraries = &.{self.target_artifacts.support},
@@ -1405,7 +1454,7 @@ fn buildDebugInfo(self: *const Self) TargetArtifacts.DebugInfo {
     debug_info.pdb = self.createLLVMLibrary(.{
         .name = "LLVMDebugInfoPDB",
         .cxx_source_files = .{
-            .root = self.llvm.root.path(b, dbg_info.pdb_root),
+            .root = self.metadata.root.path(b, dbg_info.pdb_root),
             .files = &dbg_info.pdb_sources,
         },
         .link_libraries = &.{
@@ -1421,7 +1470,7 @@ fn buildDebugInfo(self: *const Self) TargetArtifacts.DebugInfo {
     debug_info.logical_view = self.createLLVMLibrary(.{
         .name = "LLVMDebugInfoLogicalView",
         .cxx_source_files = .{
-            .root = self.llvm.root.path(b, dbg_info.logical_view_root),
+            .root = self.metadata.root.path(b, dbg_info.logical_view_root),
             .files = &dbg_info.logical_view_sources,
         },
         .link_libraries = &.{
@@ -1442,7 +1491,7 @@ fn buildDebugInfo(self: *const Self) TargetArtifacts.DebugInfo {
     debug_info.symbolize = self.createLLVMLibrary(.{
         .name = "LLVMSymbolize",
         .cxx_source_files = .{
-            .root = self.llvm.root.path(b, dbg_info.symbolize_root),
+            .root = self.metadata.root.path(b, dbg_info.symbolize_root),
             .files = &dbg_info.symbolize_sources,
         },
         .link_libraries = &.{
@@ -1465,7 +1514,7 @@ fn buildObjectYAML(self: *const Self) Artifact {
     return self.createLLVMLibrary(.{
         .name = "LLVMObjectYAML",
         .cxx_source_files = .{
-            .root = self.llvm.root.path(self.b, object.yaml_root),
+            .root = self.metadata.root.path(self.b, object.yaml_root),
             .files = &object.yaml_sources,
         },
         .additional_include_paths = &.{self.target_artifacts.intrinsics_gen.getDirectory()},
@@ -1481,14 +1530,14 @@ fn buildObjectYAML(self: *const Self) Artifact {
 }
 
 /// https://github.com/llvm/llvm-project/blob/llvmorg-21.1.8/llvm/lib/ProfileData/CMakeLists.txt
-fn buildProfileData(self: *const Self) TargetArtifacts.ProfileData {
+fn buildProfileData(self: *const Self) LLVMTargetArtifacts.ProfileData {
     const b = self.b;
-    var profile_data: TargetArtifacts.ProfileData = .{};
+    var profile_data: LLVMTargetArtifacts.ProfileData = .{};
 
     profile_data.core_lib = self.createLLVMLibrary(.{
         .name = "LLVMProfileData",
         .cxx_source_files = .{
-            .root = self.llvm.root.path(b, prof_data.prof_data_root),
+            .root = self.metadata.root.path(b, prof_data.prof_data_root),
             .files = &prof_data.prof_data_sources,
         },
         .additional_include_paths = &.{self.target_artifacts.intrinsics_gen.getDirectory()},
@@ -1509,7 +1558,7 @@ fn buildProfileData(self: *const Self) TargetArtifacts.ProfileData {
     profile_data.coverage = self.createLLVMLibrary(.{
         .name = "LLVMCoverage",
         .cxx_source_files = .{
-            .root = self.llvm.root.path(b, prof_data.coverage_root),
+            .root = self.metadata.root.path(b, prof_data.coverage_root),
             .files = &prof_data.coverage_sources,
         },
         .additional_include_paths = &.{self.target_artifacts.intrinsics_gen.getDirectory()},
@@ -1530,7 +1579,7 @@ fn buildAnalysis(self: *const Self) Artifact {
     var library = self.createLLVMLibrary(.{
         .name = "LLVMAnalysis",
         .cxx_source_files = .{
-            .root = self.llvm.root.path(self.b, analysis.root),
+            .root = self.metadata.root.path(self.b, analysis.root),
             .files = &analysis.sources,
         },
         .additional_include_paths = &.{self.target_artifacts.intrinsics_gen.getDirectory()},
@@ -1546,7 +1595,7 @@ fn buildAnalysis(self: *const Self) Artifact {
 
     // Constant folding needs highly specific math
     library.root_module.addCSourceFile(.{
-        .file = self.llvm.root.path(self.b, analysis.constant_folding),
+        .file = self.metadata.root.path(self.b, analysis.constant_folding),
         .flags = &common_llvm_cxx_flags ++ .{analysis.extra_constant_folding_flag},
     });
     return library;
@@ -1557,7 +1606,7 @@ fn buildBitcodeWriter(self: *const Self) Artifact {
     return self.createLLVMLibrary(.{
         .name = "LLVMBitWriter",
         .cxx_source_files = .{
-            .root = self.llvm.root.path(self.b, "llvm/lib/Bitcode/Writer"),
+            .root = self.metadata.root.path(self.b, "llvm/lib/Bitcode/Writer"),
             .files = &.{
                 "BitWriter.cpp",         "BitcodeWriter.cpp",
                 "BitcodeWriterPass.cpp", "ValueEnumerator.cpp",
@@ -1581,7 +1630,7 @@ fn buildTextAPIBinaryReader(self: *const Self) Artifact {
     return self.createLLVMLibrary(.{
         .name = "LLVMTextAPIBinaryReader",
         .cxx_source_files = .{
-            .root = self.llvm.root.path(self.b, "llvm/lib/TextAPI/BinaryReader"),
+            .root = self.metadata.root.path(self.b, "llvm/lib/TextAPI/BinaryReader"),
             .files = &.{"DylibReader.cpp"},
         },
         .link_libraries = &.{
@@ -1599,10 +1648,10 @@ fn buildCodeGenTypes(self: *const Self) Artifact {
     return self.createLLVMLibrary(.{
         .name = "LLVMCodeGenTypes",
         .cxx_source_files = .{
-            .root = self.llvm.root.path(self.b, "llvm/lib/CodeGenTypes"),
+            .root = self.metadata.root.path(self.b, "llvm/lib/CodeGenTypes"),
             .files = &.{"LowLevelType.cpp"},
         },
-        .additional_include_paths = &.{self.minimal_artifacts.gen_vt.getDirectory()},
+        .additional_include_paths = &.{self.configure_phase_artifacts.gen_vt.getDirectory()},
         .link_libraries = &.{self.target_artifacts.support},
     });
 }
@@ -1612,7 +1661,7 @@ fn buildCodeGenData(self: *const Self) Artifact {
     return self.createLLVMLibrary(.{
         .name = "LLVMCGData",
         .cxx_source_files = .{
-            .root = self.llvm.root.path(self.b, codegen.data_root),
+            .root = self.metadata.root.path(self.b, codegen.data_root),
             .files = &codegen.data_sources,
         },
         .additional_include_paths = &.{self.target_artifacts.intrinsics_gen.getDirectory()},
@@ -1631,7 +1680,7 @@ fn buildSandboxIR(self: *const Self) Artifact {
     return self.createLLVMLibrary(.{
         .name = "LLVMSandboxIR",
         .cxx_source_files = .{
-            .root = self.llvm.root.path(self.b, sandbox_ir.root),
+            .root = self.metadata.root.path(self.b, sandbox_ir.root),
             .files = &sandbox_ir.sources,
         },
         .additional_include_paths = &.{self.target_artifacts.intrinsics_gen.getDirectory()},
@@ -1648,7 +1697,7 @@ fn buildInstrumentation(self: *const Self) Artifact {
     return self.createLLVMLibrary(.{
         .name = "LLVMInstrumentation",
         .cxx_source_files = .{
-            .root = self.llvm.root.path(self.b, transforms.instrumentation_root),
+            .root = self.metadata.root.path(self.b, transforms.instrumentation_root),
             .files = &transforms.instrumentation_sources,
         },
         .additional_include_paths = &.{self.target_artifacts.intrinsics_gen.getDirectory()},
@@ -1665,15 +1714,15 @@ fn buildInstrumentation(self: *const Self) Artifact {
     });
 }
 
-fn buildFrontend(self: *Self) TargetArtifacts.Frontend {
+fn buildFrontend(self: *Self) LLVMTargetArtifacts.Frontend {
     const b = self.b;
-    var frontend: TargetArtifacts.Frontend = .{
+    var frontend: LLVMTargetArtifacts.Frontend = .{
         .gen_files = b.addWriteFiles(),
     };
 
     // OpenMP gen files
     _ = self.synthesizeHeader(frontend.gen_files, .{
-        .tblgen = self.full_tblgen,
+        .tblgen = self.configure_phase_artifacts.full_tblgen,
         .name = "OMP",
         .td_file = "llvm/include/llvm/Frontend/OpenMP/OMP.td",
         .instruction = .{ .action = "-gen-directive-impl" },
@@ -1681,7 +1730,7 @@ fn buildFrontend(self: *Self) TargetArtifacts.Frontend {
     });
 
     _ = self.synthesizeHeader(frontend.gen_files, .{
-        .tblgen = self.full_tblgen,
+        .tblgen = self.configure_phase_artifacts.full_tblgen,
         .name = "OMP.h",
         .td_file = "llvm/include/llvm/Frontend/OpenMP/OMP.td",
         .instruction = .{ .action = "-gen-directive-decl" },
@@ -1690,7 +1739,7 @@ fn buildFrontend(self: *Self) TargetArtifacts.Frontend {
 
     // OpenACC gen files
     _ = self.synthesizeHeader(frontend.gen_files, .{
-        .tblgen = self.full_tblgen,
+        .tblgen = self.configure_phase_artifacts.full_tblgen,
         .name = "ACC",
         .td_file = "llvm/include/llvm/Frontend/OpenACC/ACC.td",
         .instruction = .{ .action = "-gen-directive-impl" },
@@ -1698,7 +1747,7 @@ fn buildFrontend(self: *Self) TargetArtifacts.Frontend {
     });
 
     _ = self.synthesizeHeader(frontend.gen_files, .{
-        .tblgen = self.full_tblgen,
+        .tblgen = self.configure_phase_artifacts.full_tblgen,
         .name = "ACC.h",
         .td_file = "llvm/include/llvm/Frontend/OpenACC/ACC.td",
         .instruction = .{ .action = "-gen-directive-decl" },
@@ -1709,7 +1758,7 @@ fn buildFrontend(self: *Self) TargetArtifacts.Frontend {
     frontend.atomic = self.createLLVMLibrary(.{
         .name = "LLVMFrontendAtomic",
         .cxx_source_files = .{
-            .root = self.llvm.root.path(b, "llvm/lib/Frontend/Atomic"),
+            .root = self.metadata.root.path(b, "llvm/lib/Frontend/Atomic"),
             .files = &.{"Atomic.cpp"},
         },
         .additional_include_paths = &.{self.target_artifacts.intrinsics_gen.getDirectory()},
@@ -1724,7 +1773,7 @@ fn buildFrontend(self: *Self) TargetArtifacts.Frontend {
     frontend.directive = self.createLLVMLibrary(.{
         .name = "LLVMFrontendDirective",
         .cxx_source_files = .{
-            .root = self.llvm.root.path(b, "llvm/lib/Frontend/Directive"),
+            .root = self.metadata.root.path(b, "llvm/lib/Frontend/Directive"),
             .files = &.{"Spelling.cpp"},
         },
         .additional_include_paths = &.{self.target_artifacts.intrinsics_gen.getDirectory()},
@@ -1735,7 +1784,7 @@ fn buildFrontend(self: *Self) TargetArtifacts.Frontend {
     frontend.driver = self.createLLVMLibrary(.{
         .name = "LLVMFrontendDriver",
         .cxx_source_files = .{
-            .root = self.llvm.root.path(b, "llvm/lib/Frontend/Driver"),
+            .root = self.metadata.root.path(b, "llvm/lib/Frontend/Driver"),
             .files = &.{"CodeGenOptions.cpp"},
         },
         .additional_include_paths = &.{self.target_artifacts.intrinsics_gen.getDirectory()},
@@ -1751,7 +1800,7 @@ fn buildFrontend(self: *Self) TargetArtifacts.Frontend {
     frontend.hlsl = self.createLLVMLibrary(.{
         .name = "LLVMFrontendHLSL",
         .cxx_source_files = .{
-            .root = self.llvm.root.path(b, "llvm/lib/Frontend/HLSL"),
+            .root = self.metadata.root.path(b, "llvm/lib/Frontend/HLSL"),
             .files = &.{
                 "CBuffer.cpp",                  "HLSLResource.cpp",
                 "HLSLRootSignature.cpp",        "RootSignatureMetadata.cpp",
@@ -1770,7 +1819,7 @@ fn buildFrontend(self: *Self) TargetArtifacts.Frontend {
     frontend.offloading = self.createLLVMLibrary(.{
         .name = "LLVMFrontendOffloading",
         .cxx_source_files = .{
-            .root = self.llvm.root.path(b, "llvm/lib/Frontend/Offloading"),
+            .root = self.metadata.root.path(b, "llvm/lib/Frontend/Offloading"),
             .files = &.{ "Utility.cpp", "OffloadWrapper.cpp" },
         },
         .additional_include_paths = &.{self.target_artifacts.intrinsics_gen.getDirectory()},
@@ -1789,7 +1838,7 @@ fn buildFrontend(self: *Self) TargetArtifacts.Frontend {
     frontend.open_mp = self.createLLVMLibrary(.{
         .name = "LLVMFrontendOpenMP",
         .cxx_source_files = .{
-            .root = self.llvm.root.path(b, "llvm/lib/Frontend/OpenMP"),
+            .root = self.metadata.root.path(b, "llvm/lib/Frontend/OpenMP"),
             .files = &.{
                 "OMP.cpp",          "OMPContext.cpp",
                 "OMPIRBuilder.cpp", "DirectiveNameParser.cpp",
@@ -1812,7 +1861,7 @@ fn buildFrontend(self: *Self) TargetArtifacts.Frontend {
     frontend.open_acc = self.createLLVMLibrary(.{
         .name = "LLVMFrontendOpenACC",
         .cxx_source_files = .{
-            .root = self.llvm.root.path(b, "llvm/lib/Frontend/OpenACC"),
+            .root = self.metadata.root.path(b, "llvm/lib/Frontend/OpenACC"),
             .files = &.{"ACC.cpp"},
         },
         .additional_include_paths = &.{
@@ -1830,7 +1879,7 @@ fn buildLinker(self: *const Self) Artifact {
     return self.createLLVMLibrary(.{
         .name = "LLVMLinker",
         .cxx_source_files = .{
-            .root = self.llvm.root.path(self.b, "llvm/lib/Linker"),
+            .root = self.metadata.root.path(self.b, "llvm/lib/Linker"),
             .files = &.{ "IRMover.cpp", "LinkModules.cpp" },
         },
         .additional_include_paths = &.{self.target_artifacts.intrinsics_gen.getDirectory()},
@@ -1849,7 +1898,7 @@ fn buildTransformUtils(self: *const Self) Artifact {
     return self.createLLVMLibrary(.{
         .name = "LLVMTransformUtils",
         .cxx_source_files = .{
-            .root = self.llvm.root.path(self.b, transforms.utils_root),
+            .root = self.metadata.root.path(self.b, transforms.utils_root),
             .files = &transforms.utils_sources,
         },
         .additional_include_paths = &.{self.target_artifacts.intrinsics_gen.getDirectory()},
@@ -1867,7 +1916,7 @@ fn buildInstCombine(self: *const Self) Artifact {
     return self.createLLVMLibrary(.{
         .name = "LLVMInstCombine",
         .cxx_source_files = .{
-            .root = self.llvm.root.path(self.b, transforms.inst_combine_root),
+            .root = self.metadata.root.path(self.b, transforms.inst_combine_root),
             .files = &transforms.inst_combine_sources,
         },
         .additional_include_paths = &.{self.target_artifacts.intrinsics_gen.getDirectory()},
@@ -1885,7 +1934,7 @@ fn buildAggressiveInstCombine(self: *const Self) Artifact {
     return self.createLLVMLibrary(.{
         .name = "LLVMAggressiveInstCombine",
         .cxx_source_files = .{
-            .root = self.llvm.root.path(self.b, transforms.aggressive_inst_root),
+            .root = self.metadata.root.path(self.b, transforms.aggressive_inst_root),
             .files = &transforms.aggressive_inst_sources,
         },
         .additional_include_paths = &.{self.target_artifacts.intrinsics_gen.getDirectory()},
@@ -1903,7 +1952,7 @@ fn buildCFGuard(self: *const Self) Artifact {
     return self.createLLVMLibrary(.{
         .name = "LLVMCFGuard",
         .cxx_source_files = .{
-            .root = self.llvm.root.path(self.b, "llvm/lib/Transforms/CFGuard"),
+            .root = self.metadata.root.path(self.b, "llvm/lib/Transforms/CFGuard"),
             .files = &.{"CFGuard.cpp"},
         },
         .additional_include_paths = &.{self.target_artifacts.intrinsics_gen.getDirectory()},
@@ -1920,7 +1969,7 @@ fn buildHipStdPar(self: *const Self) Artifact {
     return self.createLLVMLibrary(.{
         .name = "LLVMHipStdPar",
         .cxx_source_files = .{
-            .root = self.llvm.root.path(self.b, "llvm/lib/Transforms/HipStdPar"),
+            .root = self.metadata.root.path(self.b, "llvm/lib/Transforms/HipStdPar"),
             .files = &.{"HipStdPar.cpp"},
         },
         .additional_include_paths = &.{self.target_artifacts.intrinsics_gen.getDirectory()},
@@ -1938,7 +1987,7 @@ fn buildObjCARC(self: *const Self) Artifact {
     return self.createLLVMLibrary(.{
         .name = "LLVMObjCARCOpts",
         .cxx_source_files = .{
-            .root = self.llvm.root.path(self.b, transforms.obj_carc_root),
+            .root = self.metadata.root.path(self.b, transforms.obj_carc_root),
             .files = &transforms.obj_carc_sources,
         },
         .additional_include_paths = &.{self.target_artifacts.intrinsics_gen.getDirectory()},
@@ -1957,7 +2006,7 @@ fn buildScalar(self: *const Self) Artifact {
     return self.createLLVMLibrary(.{
         .name = "LLVMScalarOpts",
         .cxx_source_files = .{
-            .root = self.llvm.root.path(self.b, transforms.scalar_root),
+            .root = self.metadata.root.path(self.b, transforms.scalar_root),
             .files = &transforms.scalar_sources,
         },
         .additional_include_paths = &.{self.target_artifacts.intrinsics_gen.getDirectory()},
@@ -1977,7 +2026,7 @@ fn buildVectorize(self: *const Self) Artifact {
     return self.createLLVMLibrary(.{
         .name = "LLVMVectorize",
         .cxx_source_files = .{
-            .root = self.llvm.root.path(self.b, transforms.vectorize_root),
+            .root = self.metadata.root.path(self.b, transforms.vectorize_root),
             .files = &transforms.vectorize_sources,
         },
         .additional_include_paths = &.{self.target_artifacts.intrinsics_gen.getDirectory()},
@@ -1996,7 +2045,7 @@ fn buildIPO(self: *const Self) Artifact {
     return self.createLLVMLibrary(.{
         .name = "LLVMipo",
         .cxx_source_files = .{
-            .root = self.llvm.root.path(self.b, transforms.ipo_root),
+            .root = self.metadata.root.path(self.b, transforms.ipo_root),
             .files = &transforms.ipo_sources,
         },
         .additional_include_paths = &.{
@@ -2031,7 +2080,7 @@ fn buildCoroutines(self: *const Self) Artifact {
     return self.createLLVMLibrary(.{
         .name = "LLVMCoroutines",
         .cxx_source_files = .{
-            .root = self.llvm.root.path(self.b, transforms.coroutines_root),
+            .root = self.metadata.root.path(self.b, transforms.coroutines_root),
             .files = &transforms.coroutines_sources,
         },
         .additional_include_paths = &.{self.target_artifacts.intrinsics_gen.getDirectory()},
@@ -2052,7 +2101,7 @@ fn buildTarget(self: *const Self) Artifact {
     return self.createLLVMLibrary(.{
         .name = "LLVMTarget",
         .cxx_source_files = .{
-            .root = self.llvm.root.path(self.b, target_backends.root),
+            .root = self.metadata.root.path(self.b, target_backends.root),
             .files = &target_backends.base_sources,
         },
         .additional_include_paths = &.{self.target_artifacts.intrinsics_gen.getDirectory()},
@@ -2071,11 +2120,11 @@ fn buildCodeGen(self: *const Self) Artifact {
     return self.createLLVMLibrary(.{
         .name = "LLVMCodeGen",
         .cxx_source_files = .{
-            .root = self.llvm.root.path(self.b, codegen.codegen_root),
+            .root = self.metadata.root.path(self.b, codegen.codegen_root),
             .files = &codegen.codegen_sources,
         },
         .additional_include_paths = &.{
-            self.minimal_artifacts.gen_vt.getDirectory(),
+            self.configure_phase_artifacts.gen_vt.getDirectory(),
             self.target_artifacts.intrinsics_gen.getDirectory(),
         },
         .link_libraries = &.{
@@ -2102,12 +2151,12 @@ fn buildSelectionDAG(self: *const Self) Artifact {
     return self.createLLVMLibrary(.{
         .name = "LLVMSelectionDAG",
         .cxx_source_files = .{
-            .root = self.llvm.root.path(self.b, codegen.selection_dag_root),
+            .root = self.metadata.root.path(self.b, codegen.selection_dag_root),
             .files = &codegen.selection_dag_sources,
         },
         .additional_include_paths = &.{
             self.target_artifacts.intrinsics_gen.getDirectory(),
-            self.minimal_artifacts.gen_vt.getDirectory(),
+            self.configure_phase_artifacts.gen_vt.getDirectory(),
         },
         .link_libraries = &.{
             self.target_artifacts.analysis,
@@ -2128,12 +2177,12 @@ fn buildGlobalISel(self: *const Self) Artifact {
     return self.createLLVMLibrary(.{
         .name = "LLVMGlobalISel",
         .cxx_source_files = .{
-            .root = self.llvm.root.path(self.b, codegen.global_isel_root),
+            .root = self.metadata.root.path(self.b, codegen.global_isel_root),
             .files = &codegen.global_isel_sources,
         },
         .additional_include_paths = &.{
             self.target_artifacts.intrinsics_gen.getDirectory(),
-            self.minimal_artifacts.gen_vt.getDirectory(),
+            self.configure_phase_artifacts.gen_vt.getDirectory(),
         },
         .link_libraries = &.{
             self.target_artifacts.analysis,
@@ -2154,14 +2203,14 @@ fn buildAsmPrinter(self: *const Self) Artifact {
     return self.createLLVMLibrary(.{
         .name = "LLVMAsmPrinter",
         .cxx_source_files = .{
-            .root = self.llvm.root.path(self.b, codegen.asm_printer_root),
+            .root = self.metadata.root.path(self.b, codegen.asm_printer_root),
             .files = &codegen.asm_printer_sources,
         },
         .additional_include_paths = &.{
             self.target_artifacts.intrinsics_gen.getDirectory(),
-            self.minimal_artifacts.gen_vt.getDirectory(),
+            self.configure_phase_artifacts.gen_vt.getDirectory(),
         },
-        .config_headers = &.{self.llvm.vcs_revision},
+        .config_headers = &.{self.metadata.vcs_revision},
         .link_libraries = &.{
             self.target_artifacts.analysis,
             self.target_artifacts.binary_format,
@@ -2183,7 +2232,7 @@ fn buildAsmPrinter(self: *const Self) Artifact {
 
 /// https://github.com/llvm/llvm-project/blob/llvmorg-21.1.8/llvm/lib/CodeGen/MIRParser/CMakeLists.txt
 fn buildMIRParser(self: *const Self) Artifact {
-    const root = self.llvm.root.path(self.b, codegen.mir_parser_root);
+    const root = self.metadata.root.path(self.b, codegen.mir_parser_root);
     return self.createLLVMLibrary(.{
         .name = "LLVMMIRParser",
         .cxx_source_files = .{
@@ -2193,7 +2242,7 @@ fn buildMIRParser(self: *const Self) Artifact {
         .additional_include_paths = &.{
             root,
             self.target_artifacts.intrinsics_gen.getDirectory(),
-            self.minimal_artifacts.gen_vt.getDirectory(),
+            self.configure_phase_artifacts.gen_vt.getDirectory(),
         },
         .link_libraries = &.{
             self.target_artifacts.asm_parser,
@@ -2213,7 +2262,7 @@ fn buildIRPrinter(self: *const Self) Artifact {
     return self.createLLVMLibrary(.{
         .name = "LLVMIRPrinter",
         .cxx_source_files = .{
-            .root = self.llvm.root.path(self.b, "llvm/lib/IRPrinter"),
+            .root = self.metadata.root.path(self.b, "llvm/lib/IRPrinter"),
             .files = &.{"IRPrintingPasses.cpp"},
         },
         .additional_include_paths = &.{self.target_artifacts.intrinsics_gen.getDirectory()},
@@ -2230,12 +2279,12 @@ fn buildPasses(self: *const Self) Artifact {
     return self.createLLVMLibrary(.{
         .name = "LLVMPasses",
         .cxx_source_files = .{
-            .root = self.llvm.root.path(self.b, passes.root),
+            .root = self.metadata.root.path(self.b, passes.root),
             .files = &passes.sources,
         },
         .additional_include_paths = &.{
             self.target_artifacts.intrinsics_gen.getDirectory(),
-            self.minimal_artifacts.gen_vt.getDirectory(),
+            self.configure_phase_artifacts.gen_vt.getDirectory(),
         },
         .link_libraries = &.{
             self.target_artifacts.transforms.aggressive_inst_combine,
@@ -2265,7 +2314,7 @@ fn buildOption(self: *const Self) Artifact {
     return self.createLLVMLibrary(.{
         .name = "LLVMOption",
         .cxx_source_files = .{
-            .root = self.llvm.root.path(self.b, "llvm/lib/Option"),
+            .root = self.metadata.root.path(self.b, "llvm/lib/Option"),
             .files = &.{
                 "Arg.cpp",    "ArgList.cpp",
                 "Option.cpp", "OptTable.cpp",
@@ -2276,7 +2325,7 @@ fn buildOption(self: *const Self) Artifact {
 }
 
 fn buildObjCopy(self: *const Self) Artifact {
-    const copy_root = self.llvm.root.path(self.b, object.copy_root);
+    const copy_root = self.metadata.root.path(self.b, object.copy_root);
     return self.createLLVMLibrary(.{
         .name = "LLVMObjCopy",
         .cxx_source_files = .{
@@ -2286,12 +2335,12 @@ fn buildObjCopy(self: *const Self) Artifact {
         .additional_include_paths = &.{
             self.target_artifacts.intrinsics_gen.getDirectory(),
             copy_root,
-            self.llvm.root.path(self.b, object.copy_coff_root),
-            self.llvm.root.path(self.b, object.copy_coff_root),
-            self.llvm.root.path(self.b, object.copy_elf_root),
-            self.llvm.root.path(self.b, object.copy_macho_root),
-            self.llvm.root.path(self.b, object.copy_wasm_root),
-            self.llvm.root.path(self.b, object.copy_xcoff_root),
+            self.metadata.root.path(self.b, object.copy_coff_root),
+            self.metadata.root.path(self.b, object.copy_coff_root),
+            self.metadata.root.path(self.b, object.copy_elf_root),
+            self.metadata.root.path(self.b, object.copy_macho_root),
+            self.metadata.root.path(self.b, object.copy_wasm_root),
+            self.metadata.root.path(self.b, object.copy_xcoff_root),
         },
         .link_libraries = &.{
             self.target_artifacts.binary_format,
@@ -2303,14 +2352,14 @@ fn buildObjCopy(self: *const Self) Artifact {
 }
 
 /// https://github.com/llvm/llvm-project/tree/llvmorg-21.1.8/llvm/lib/DWARFLinker/CMakeLists.txt
-fn buildDwarfLinker(self: *const Self) TargetArtifacts.DwarfLinker {
+fn buildDwarfLinker(self: *const Self) LLVMTargetArtifacts.DwarfLinker {
     const b = self.b;
-    var linker: TargetArtifacts.DwarfLinker = .{};
+    var linker: LLVMTargetArtifacts.DwarfLinker = .{};
 
     linker.core_lib = self.createLLVMLibrary(.{
         .name = "LLVMDWARFLinker",
         .cxx_source_files = .{
-            .root = self.llvm.root.path(b, dbg_info.dwarf_linker_root),
+            .root = self.metadata.root.path(b, dbg_info.dwarf_linker_root),
             .files = &dbg_info.dwarf_linker_sources,
         },
         .additional_include_paths = &.{self.target_artifacts.intrinsics_gen.getDirectory()},
@@ -2324,7 +2373,7 @@ fn buildDwarfLinker(self: *const Self) TargetArtifacts.DwarfLinker {
     });
 
     // https://github.com/llvm/llvm-project/blob/llvmorg-21.1.8/llvm/lib/DWARFLinker/Parallel/CMakeLists.txt
-    const parallel_root = self.llvm.root.path(b, dbg_info.dwarf_linker_parallel_root);
+    const parallel_root = self.metadata.root.path(b, dbg_info.dwarf_linker_parallel_root);
     linker.parallel = self.createLLVMLibrary(.{
         .name = "LLVMDWARFLinkerParallel",
         .cxx_source_files = .{
@@ -2334,7 +2383,7 @@ fn buildDwarfLinker(self: *const Self) TargetArtifacts.DwarfLinker {
         .additional_include_paths = &.{
             parallel_root,
             self.target_artifacts.intrinsics_gen.getDirectory(),
-            self.minimal_artifacts.gen_vt.getDirectory(),
+            self.configure_phase_artifacts.gen_vt.getDirectory(),
         },
         .link_libraries = &.{
             self.target_artifacts.codegen.asm_printer,
@@ -2354,12 +2403,12 @@ fn buildDwarfLinker(self: *const Self) TargetArtifacts.DwarfLinker {
     linker.classic = self.createLLVMLibrary(.{
         .name = "LLVMDWARFLinkerClassic",
         .cxx_source_files = .{
-            .root = self.llvm.root.path(b, dbg_info.dwarf_linker_classic_root),
+            .root = self.metadata.root.path(b, dbg_info.dwarf_linker_classic_root),
             .files = &dbg_info.dwarf_linker_classic_sources,
         },
         .additional_include_paths = &.{
             self.target_artifacts.intrinsics_gen.getDirectory(),
-            self.minimal_artifacts.gen_vt.getDirectory(),
+            self.configure_phase_artifacts.gen_vt.getDirectory(),
         },
         .link_libraries = &.{
             self.target_artifacts.codegen.asm_printer,
@@ -2384,7 +2433,7 @@ fn buildDWP(self: *const Self) Artifact {
     return self.createLLVMLibrary(.{
         .name = "LLVMDWP",
         .cxx_source_files = .{
-            .root = self.llvm.root.path(self.b, "llvm/lib/DWP"),
+            .root = self.metadata.root.path(self.b, "llvm/lib/DWP"),
             .files = &.{ "DWP.cpp", "DWPError.cpp" },
         },
         .additional_include_paths = &.{self.target_artifacts.intrinsics_gen.getDirectory()},
@@ -2399,7 +2448,7 @@ fn buildDWP(self: *const Self) Artifact {
 
 /// https://github.com/llvm/llvm-project/blob/llvmorg-21.1.8/llvm/lib/FileCheck/CMakeLists.txt
 fn buildFileCheck(self: *const Self) Artifact {
-    const root = self.llvm.root.path(self.b, "llvm/lib/FileCheck");
+    const root = self.metadata.root.path(self.b, "llvm/lib/FileCheck");
     return self.createLLVMLibrary(.{
         .name = "LLVMFileCheck",
         .cxx_source_files = .{
@@ -2416,10 +2465,10 @@ fn buildExtensions(self: *const Self) Artifact {
     return self.createLLVMLibrary(.{
         .name = "LLVMExtensions",
         .cxx_source_files = .{
-            .root = self.llvm.root.path(self.b, "llvm/lib/Extensions"),
+            .root = self.metadata.root.path(self.b, "llvm/lib/Extensions"),
             .files = &.{"Extensions.cpp"},
         },
-        .additional_include_paths = &.{self.llvm.extension_def.getDirectory()},
+        .additional_include_paths = &.{self.metadata.extension_def.getDirectory()},
         .link_libraries = &.{self.target_artifacts.support},
     });
 }
@@ -2429,15 +2478,15 @@ fn buildLTO(self: *const Self) Artifact {
     return self.createLLVMLibrary(.{
         .name = "LLVMLTO",
         .cxx_source_files = .{
-            .root = self.llvm.root.path(self.b, lto.root),
+            .root = self.metadata.root.path(self.b, lto.root),
             .files = &lto.sources,
         },
         .additional_include_paths = &.{
             self.target_artifacts.intrinsics_gen.getDirectory(),
-            self.minimal_artifacts.gen_vt.getDirectory(),
-            self.llvm.extension_def.getDirectory(),
+            self.configure_phase_artifacts.gen_vt.getDirectory(),
+            self.metadata.extension_def.getDirectory(),
         },
-        .config_headers = &.{self.llvm.vcs_revision},
+        .config_headers = &.{self.metadata.vcs_revision},
         .link_libraries = &.{
             self.target_artifacts.transforms.aggressive_inst_combine,
             self.target_artifacts.analysis,
@@ -2472,7 +2521,7 @@ fn buildXRay(self: *const Self) Artifact {
     return self.createLLVMLibrary(.{
         .name = "LLVMXRay",
         .cxx_source_files = .{
-            .root = self.llvm.root.path(self.b, xray.root),
+            .root = self.metadata.root.path(self.b, xray.root),
             .files = &xray.sources,
         },
         .link_libraries = &.{
@@ -2483,15 +2532,15 @@ fn buildXRay(self: *const Self) Artifact {
     });
 }
 
-fn buildWindowsSupport(self: *const Self) TargetArtifacts.WindowsSupport {
+fn buildWindowsSupport(self: *const Self) LLVMTargetArtifacts.WindowsSupport {
     const b = self.b;
-    var windows_support: TargetArtifacts.WindowsSupport = .{};
+    var windows_support: LLVMTargetArtifacts.WindowsSupport = .{};
 
     // https://github.com/llvm/llvm-project/blob/llvmorg-21.1.8/llvm/lib/WindowsDriver/CMakeLists.txt
     windows_support.driver = self.createLLVMLibrary(.{
         .name = "LLVMWindowsDriver",
         .cxx_source_files = .{
-            .root = self.llvm.root.path(b, "llvm/lib/WindowsDriver"),
+            .root = self.metadata.root.path(b, "llvm/lib/WindowsDriver"),
             .files = &.{"MSVCPaths.cpp"},
         },
         .link_libraries = &.{
@@ -2505,7 +2554,7 @@ fn buildWindowsSupport(self: *const Self) TargetArtifacts.WindowsSupport {
     windows_support.manifest = self.createLLVMLibrary(.{
         .name = "LLVMWindowsManifest",
         .cxx_source_files = .{
-            .root = self.llvm.root.path(b, "llvm/lib/WindowsManifest"),
+            .root = self.metadata.root.path(b, "llvm/lib/WindowsManifest"),
             .files = &.{"WindowsManifestMerger.cpp"},
         },
         .link_libraries = &.{
@@ -2518,13 +2567,13 @@ fn buildWindowsSupport(self: *const Self) TargetArtifacts.WindowsSupport {
 }
 
 /// https://github.com/llvm/llvm-project/blob/llvmorg-21.1.8/llvm/lib/ToolDrivers/CMakeLists.txt
-fn buildToolDrivers(self: *const Self) TargetArtifacts.ToolDrivers {
+fn buildToolDrivers(self: *const Self) LLVMTargetArtifacts.ToolDrivers {
     const b = self.b;
-    var tool_drivers: TargetArtifacts.ToolDrivers = .{};
+    var tool_drivers: LLVMTargetArtifacts.ToolDrivers = .{};
 
     // https://github.com/llvm/llvm-project/blob/llvmorg-21.1.8/llvm/lib/ToolDrivers/llvm-dlltool/CMakeLists.txt
     const dll_options = self.generateTblgenInc(.{
-        .tblgen = self.full_tblgen,
+        .tblgen = self.configure_phase_artifacts.full_tblgen,
         .name = "Options",
         .td_file = "llvm/lib/ToolDrivers/llvm-dlltool/Options.td",
         .instruction = .{ .action = "-gen-opt-parser-defs" },
@@ -2533,7 +2582,7 @@ fn buildToolDrivers(self: *const Self) TargetArtifacts.ToolDrivers {
     tool_drivers.dlltool = self.createLLVMLibrary(.{
         .name = "LLVMDlltoolDriver",
         .cxx_source_files = .{
-            .root = self.llvm.root.path(b, "llvm/lib/ToolDrivers/llvm-dlltool"),
+            .root = self.metadata.root.path(b, "llvm/lib/ToolDrivers/llvm-dlltool"),
             .files = &.{"DlltoolDriver.cpp"},
         },
         .additional_include_paths = &.{dll_options.dirname()},
@@ -2548,7 +2597,7 @@ fn buildToolDrivers(self: *const Self) TargetArtifacts.ToolDrivers {
 
     // https://github.com/llvm/llvm-project/blob/llvmorg-21.1.8/llvm/lib/ToolDrivers/llvm-lib/CMakeLists.txt
     const lib_options = self.generateTblgenInc(.{
-        .tblgen = self.full_tblgen,
+        .tblgen = self.configure_phase_artifacts.full_tblgen,
         .name = "Options",
         .td_file = "llvm/lib/ToolDrivers/llvm-lib/Options.td",
         .instruction = .{ .action = "-gen-opt-parser-defs" },
@@ -2557,7 +2606,7 @@ fn buildToolDrivers(self: *const Self) TargetArtifacts.ToolDrivers {
     tool_drivers.lib = self.createLLVMLibrary(.{
         .name = "LLVMLibDriver",
         .cxx_source_files = .{
-            .root = self.llvm.root.path(b, "llvm/lib/ToolDrivers/llvm-lib"),
+            .root = self.metadata.root.path(b, "llvm/lib/ToolDrivers/llvm-lib"),
             .files = &.{"LibDriver.cpp"},
         },
         .additional_include_paths = &.{
@@ -2583,11 +2632,11 @@ fn buildAArch64(self: *Self) Artifact {
     const td_files = b.addWriteFiles();
 
     const Backend = target_backends.AArch64;
-    const backend_root = self.llvm.root.path(b, Backend.backend_root);
+    const backend_root = self.metadata.root.path(b, Backend.backend_root);
 
     inline for (Backend.actions) |action| {
         _ = self.synthesizeHeader(td_files, .{
-            .tblgen = self.full_tblgen,
+            .tblgen = self.configure_phase_artifacts.full_tblgen,
             .name = action.name,
             .td_file = Backend.td_filepath,
             .instruction = .{ .actions = action.td_args },
@@ -2597,7 +2646,7 @@ fn buildAArch64(self: *Self) Artifact {
     }
 
     // https://github.com/llvm/llvm-project/blob/llvmorg-21.1.8/llvm/lib/Target/AArch64/Utils/CMakeLists.txt
-    const utils_root = self.llvm.root.path(b, Backend.utils_root);
+    const utils_root = self.metadata.root.path(b, Backend.utils_root);
     const utils = self.createLLVMLibrary(.{
         .name = "LLVMAArch64Utils",
         .cxx_source_files = .{
@@ -2617,7 +2666,7 @@ fn buildAArch64(self: *Self) Artifact {
     });
 
     // https://github.com/llvm/llvm-project/blob/llvmorg-21.1.8/llvm/lib/Target/AArch64/TargetInfo/CMakeLists.txt
-    const info_root = self.llvm.root.path(b, Backend.info_root);
+    const info_root = self.metadata.root.path(b, Backend.info_root);
     const info = self.createLLVMLibrary(.{
         .name = "LLVMAArch64Info",
         .cxx_source_files = .{
@@ -2636,7 +2685,7 @@ fn buildAArch64(self: *Self) Artifact {
     });
 
     // https://github.com/llvm/llvm-project/blob/llvmorg-21.1.8/llvm/lib/Target/AArch64/MCTargetDesc/CMakeLists.txt
-    const desc_root = self.llvm.root.path(b, Backend.desc_root);
+    const desc_root = self.metadata.root.path(b, Backend.desc_root);
     const desc = self.createLLVMLibrary(.{
         .name = "LLVMAArch64Desc",
         .cxx_source_files = .{
@@ -2662,7 +2711,7 @@ fn buildAArch64(self: *Self) Artifact {
     });
 
     // https://github.com/llvm/llvm-project/blob/llvmorg-21.1.8/llvm/lib/Target/AArch64/Disassembler/CMakeLists.txt
-    const disassembler_root = self.llvm.root.path(b, Backend.disassembler_root);
+    const disassembler_root = self.metadata.root.path(b, Backend.disassembler_root);
     const disassembler = self.createLLVMLibrary(.{
         .name = "LLVMAArch64Disassembler",
         .cxx_source_files = .{
@@ -2686,7 +2735,7 @@ fn buildAArch64(self: *Self) Artifact {
     });
 
     // https://github.com/llvm/llvm-project/blob/llvmorg-21.1.8/llvm/lib/Target/AArch64/AsmParser/CMakeLists.txt
-    const asm_parser_root = self.llvm.root.path(b, Backend.asm_parser_root);
+    const asm_parser_root = self.metadata.root.path(b, Backend.asm_parser_root);
     const asm_parser = self.createLLVMLibrary(.{
         .name = "LLVMAArch64AsmParser",
         .cxx_source_files = .{
@@ -2697,7 +2746,7 @@ fn buildAArch64(self: *Self) Artifact {
             backend_root,
             asm_parser_root,
             td_files.getDirectory(),
-            self.minimal_artifacts.gen_vt.getDirectory(),
+            self.configure_phase_artifacts.gen_vt.getDirectory(),
             self.target_artifacts.intrinsics_gen.getDirectory(),
             self.target_artifacts.target_backends.parser_gen.getDirectory(),
         },
@@ -2724,7 +2773,7 @@ fn buildAArch64(self: *Self) Artifact {
             backend_root,
             td_files.getDirectory(),
             self.target_artifacts.intrinsics_gen.getDirectory(),
-            self.minimal_artifacts.gen_vt.getDirectory(),
+            self.configure_phase_artifacts.gen_vt.getDirectory(),
             self.target_artifacts.target_backends.parser_gen.getDirectory(),
         },
         .link_libraries = &.{
@@ -2758,11 +2807,11 @@ fn buildX86(self: *Self) Artifact {
     const td_files = b.addWriteFiles();
 
     const Backend = target_backends.X86;
-    const backend_root = self.llvm.root.path(b, Backend.backend_root);
+    const backend_root = self.metadata.root.path(b, Backend.backend_root);
 
     inline for (Backend.actions) |action| {
         _ = self.synthesizeHeader(td_files, .{
-            .tblgen = self.full_tblgen,
+            .tblgen = self.configure_phase_artifacts.full_tblgen,
             .name = action.name,
             .td_file = Backend.td_filepath,
             .instruction = .{ .actions = action.td_args },
@@ -2772,7 +2821,7 @@ fn buildX86(self: *Self) Artifact {
     }
 
     // https://github.com/llvm/llvm-project/blob/llvmorg-21.1.8/llvm/lib/Target/X86/TargetInfo/CMakeLists.txt
-    const info_root = self.llvm.root.path(b, Backend.info_root);
+    const info_root = self.metadata.root.path(b, Backend.info_root);
     const info = self.createLLVMLibrary(.{
         .name = "LLVMX86Info",
         .cxx_source_files = .{
@@ -2791,7 +2840,7 @@ fn buildX86(self: *Self) Artifact {
     });
 
     // https://github.com/llvm/llvm-project/blob/llvmorg-21.1.8/llvm/lib/Target/X86/MCTargetDesc/CMakeLists.txt
-    const desc_root = self.llvm.root.path(b, Backend.desc_root);
+    const desc_root = self.metadata.root.path(b, Backend.desc_root);
     const desc = self.createLLVMLibrary(.{
         .name = "LLVMX86Desc",
         .cxx_source_files = .{
@@ -2817,7 +2866,7 @@ fn buildX86(self: *Self) Artifact {
     });
 
     // https://github.com/llvm/llvm-project/blob/llvmorg-21.1.8/llvm/lib/Target/X86/Disassembler/CMakeLists.txt
-    const disassembler_root = self.llvm.root.path(b, Backend.disassembler_root);
+    const disassembler_root = self.metadata.root.path(b, Backend.disassembler_root);
     const disassembler = self.createLLVMLibrary(.{
         .name = "LLVMX86Disassembler",
         .cxx_source_files = .{
@@ -2837,7 +2886,7 @@ fn buildX86(self: *Self) Artifact {
     });
 
     // https://github.com/llvm/llvm-project/blob/llvmorg-21.1.8/llvm/lib/Target/X86/AsmParser/CMakeLists.txt
-    const asm_parser_root = self.llvm.root.path(b, Backend.asm_parser_root);
+    const asm_parser_root = self.metadata.root.path(b, Backend.asm_parser_root);
     const asm_parser = self.createLLVMLibrary(.{
         .name = "LLVMX86AsmParser",
         .cxx_source_files = .{
@@ -2848,7 +2897,7 @@ fn buildX86(self: *Self) Artifact {
             backend_root,
             asm_parser_root,
             td_files.getDirectory(),
-            self.minimal_artifacts.gen_vt.getDirectory(),
+            self.configure_phase_artifacts.gen_vt.getDirectory(),
             self.target_artifacts.intrinsics_gen.getDirectory(),
             self.target_artifacts.target_backends.parser_gen.getDirectory(),
         },
@@ -2862,7 +2911,7 @@ fn buildX86(self: *Self) Artifact {
     });
 
     // https://github.com/llvm/llvm-project/blob/llvmorg-21.1.8/llvm/lib/Target/X86/Disassembler/CMakeLists.txt
-    const mca_root = self.llvm.root.path(b, Backend.mca_root);
+    const mca_root = self.metadata.root.path(b, Backend.mca_root);
     const mca = self.createLLVMLibrary(.{
         .name = "LLVMX86TargetMCA",
         .cxx_source_files = .{
@@ -2897,7 +2946,7 @@ fn buildX86(self: *Self) Artifact {
             backend_root,
             td_files.getDirectory(),
             self.target_artifacts.intrinsics_gen.getDirectory(),
-            self.minimal_artifacts.gen_vt.getDirectory(),
+            self.configure_phase_artifacts.gen_vt.getDirectory(),
             self.target_artifacts.target_backends.parser_gen.getDirectory(),
         },
         .link_libraries = &.{
@@ -2931,11 +2980,11 @@ fn buildArm(self: *Self) Artifact {
     const td_files = b.addWriteFiles();
 
     const Backend = target_backends.Arm;
-    const backend_root = self.llvm.root.path(b, Backend.backend_root);
+    const backend_root = self.metadata.root.path(b, Backend.backend_root);
 
     inline for (Backend.actions) |action| {
         _ = self.synthesizeHeader(td_files, .{
-            .tblgen = self.full_tblgen,
+            .tblgen = self.configure_phase_artifacts.full_tblgen,
             .name = action.name,
             .td_file = Backend.td_filepath,
             .instruction = .{ .actions = action.td_args },
@@ -2945,7 +2994,7 @@ fn buildArm(self: *Self) Artifact {
     }
 
     // https://github.com/llvm/llvm-project/blob/llvmorg-21.1.8/llvm/lib/Target/ARM/Utils/CMakeLists.txt
-    const utils_root = self.llvm.root.path(b, Backend.utils_root);
+    const utils_root = self.metadata.root.path(b, Backend.utils_root);
     const utils = self.createLLVMLibrary(.{
         .name = "LLVMARMUtils",
         .cxx_source_files = .{
@@ -2962,7 +3011,7 @@ fn buildArm(self: *Self) Artifact {
     });
 
     // https://github.com/llvm/llvm-project/blob/llvmorg-21.1.8/llvm/lib/Target/ARM/TargetInfo/CMakeLists.txt
-    const info_root = self.llvm.root.path(b, Backend.info_root);
+    const info_root = self.metadata.root.path(b, Backend.info_root);
     const info = self.createLLVMLibrary(.{
         .name = "LLVMARMInfo",
         .cxx_source_files = .{
@@ -2981,7 +3030,7 @@ fn buildArm(self: *Self) Artifact {
     });
 
     // https://github.com/llvm/llvm-project/blob/llvmorg-21.1.8/llvm/lib/Target/ARM/MCTargetDesc/CMakeLists.txt
-    const desc_root = self.llvm.root.path(b, Backend.desc_root);
+    const desc_root = self.metadata.root.path(b, Backend.desc_root);
     const desc = self.createLLVMLibrary(.{
         .name = "LLVMARMDesc",
         .cxx_source_files = .{
@@ -3009,7 +3058,7 @@ fn buildArm(self: *Self) Artifact {
     });
 
     // https://github.com/llvm/llvm-project/blob/llvmorg-21.1.8/llvm/lib/Target/ARM/Disassembler/CMakeLists.txt
-    const disassembler_root = self.llvm.root.path(b, Backend.disassembler_root);
+    const disassembler_root = self.metadata.root.path(b, Backend.disassembler_root);
     const disassembler = self.createLLVMLibrary(.{
         .name = "LLVMARMDisassembler",
         .cxx_source_files = .{
@@ -3020,7 +3069,7 @@ fn buildArm(self: *Self) Artifact {
             backend_root,
             disassembler_root,
             td_files.getDirectory(),
-            self.minimal_artifacts.gen_vt.getDirectory(),
+            self.configure_phase_artifacts.gen_vt.getDirectory(),
             self.target_artifacts.intrinsics_gen.getDirectory(),
         },
         .link_libraries = &.{
@@ -3035,7 +3084,7 @@ fn buildArm(self: *Self) Artifact {
     });
 
     // https://github.com/llvm/llvm-project/blob/llvmorg-21.1.8/llvm/lib/Target/ARM/AsmParser/CMakeLists.txt
-    const asm_parser_root = self.llvm.root.path(b, Backend.asm_parser_root);
+    const asm_parser_root = self.metadata.root.path(b, Backend.asm_parser_root);
     const asm_parser = self.createLLVMLibrary(.{
         .name = "LLVMARMAsmParser",
         .cxx_source_files = .{
@@ -3046,7 +3095,7 @@ fn buildArm(self: *Self) Artifact {
             backend_root,
             asm_parser_root,
             td_files.getDirectory(),
-            self.minimal_artifacts.gen_vt.getDirectory(),
+            self.configure_phase_artifacts.gen_vt.getDirectory(),
             self.target_artifacts.intrinsics_gen.getDirectory(),
             self.target_artifacts.target_backends.parser_gen.getDirectory(),
         },
@@ -3073,7 +3122,7 @@ fn buildArm(self: *Self) Artifact {
             backend_root,
             td_files.getDirectory(),
             self.target_artifacts.intrinsics_gen.getDirectory(),
-            self.minimal_artifacts.gen_vt.getDirectory(),
+            self.configure_phase_artifacts.gen_vt.getDirectory(),
             self.target_artifacts.target_backends.parser_gen.getDirectory(),
         },
         .link_libraries = &.{
@@ -3106,12 +3155,12 @@ fn buildRISCV(self: *Self) Artifact {
     const td_files = b.addWriteFiles();
 
     const Backend = target_backends.RiscV;
-    const backend_root = self.llvm.root.path(b, Backend.backend_root);
+    const backend_root = self.metadata.root.path(b, Backend.backend_root);
 
     // RISCV has two sets of tblgen files to run
     inline for (Backend.base_actions) |action| {
         _ = self.synthesizeHeader(td_files, .{
-            .tblgen = self.full_tblgen,
+            .tblgen = self.configure_phase_artifacts.full_tblgen,
             .name = action.name,
             .td_file = Backend.base_td_filepath,
             .instruction = .{ .actions = action.td_args },
@@ -3122,7 +3171,7 @@ fn buildRISCV(self: *Self) Artifact {
 
     inline for (Backend.gisel_actions) |action| {
         _ = self.synthesizeHeader(td_files, .{
-            .tblgen = self.full_tblgen,
+            .tblgen = self.configure_phase_artifacts.full_tblgen,
             .name = action.name,
             .td_file = Backend.gisel_td_filepath,
             .instruction = .{ .actions = action.td_args },
@@ -3132,7 +3181,7 @@ fn buildRISCV(self: *Self) Artifact {
     }
 
     // https://github.com/llvm/llvm-project/blob/llvmorg-21.1.8/llvm/lib/Target/RISCV/TargetInfo/CMakeLists.txt
-    const info_root = self.llvm.root.path(b, Backend.info_root);
+    const info_root = self.metadata.root.path(b, Backend.info_root);
     const info = self.createLLVMLibrary(.{
         .name = "LLVMRISCVInfo",
         .cxx_source_files = .{
@@ -3151,7 +3200,7 @@ fn buildRISCV(self: *Self) Artifact {
     });
 
     // https://github.com/llvm/llvm-project/blob/llvmorg-21.1.8/llvm/lib/Target/RISCV/MCTargetDesc/CMakeLists.txt
-    const desc_root = self.llvm.root.path(b, Backend.desc_root);
+    const desc_root = self.metadata.root.path(b, Backend.desc_root);
     const desc = self.createLLVMLibrary(.{
         .name = "LLVMRISCVDesc",
         .cxx_source_files = .{
@@ -3174,7 +3223,7 @@ fn buildRISCV(self: *Self) Artifact {
     });
 
     // https://github.com/llvm/llvm-project/blob/llvmorg-21.1.8/llvm/lib/Target/RISCV/Disassembler/CMakeLists.txt
-    const disassembler_root = self.llvm.root.path(b, Backend.disassembler_root);
+    const disassembler_root = self.metadata.root.path(b, Backend.disassembler_root);
     const disassembler = self.createLLVMLibrary(.{
         .name = "LLVMRISCVDisassembler",
         .cxx_source_files = .{
@@ -3196,7 +3245,7 @@ fn buildRISCV(self: *Self) Artifact {
     });
 
     // https://github.com/llvm/llvm-project/blob/llvmorg-21.1.8/llvm/lib/Target/RISCV/AsmParser/CMakeLists.txt
-    const asm_parser_root = self.llvm.root.path(b, Backend.asm_parser_root);
+    const asm_parser_root = self.metadata.root.path(b, Backend.asm_parser_root);
     const asm_parser = self.createLLVMLibrary(.{
         .name = "LLVMRISCVAsmParser",
         .cxx_source_files = .{
@@ -3207,7 +3256,7 @@ fn buildRISCV(self: *Self) Artifact {
             backend_root,
             asm_parser_root,
             td_files.getDirectory(),
-            self.minimal_artifacts.gen_vt.getDirectory(),
+            self.configure_phase_artifacts.gen_vt.getDirectory(),
             self.target_artifacts.intrinsics_gen.getDirectory(),
             self.target_artifacts.target_backends.parser_gen.getDirectory(),
         },
@@ -3222,7 +3271,7 @@ fn buildRISCV(self: *Self) Artifact {
     });
 
     // https://github.com/llvm/llvm-project/blob/llvmorg-21.1.8/llvm/lib/Target/RISCV/Disassembler/CMakeLists.txt
-    const mca_root = self.llvm.root.path(b, Backend.mca_root);
+    const mca_root = self.metadata.root.path(b, Backend.mca_root);
     const mca = self.createLLVMLibrary(.{
         .name = "LLVMRISCVTargetMCA",
         .cxx_source_files = .{
@@ -3257,7 +3306,7 @@ fn buildRISCV(self: *Self) Artifact {
             backend_root,
             td_files.getDirectory(),
             self.target_artifacts.intrinsics_gen.getDirectory(),
-            self.minimal_artifacts.gen_vt.getDirectory(),
+            self.configure_phase_artifacts.gen_vt.getDirectory(),
             self.target_artifacts.target_backends.parser_gen.getDirectory(),
         },
         .link_libraries = &.{
@@ -3291,11 +3340,11 @@ fn buildWebAssembly(self: *Self) Artifact {
     const td_files = b.addWriteFiles();
 
     const Backend = target_backends.WebAssembly;
-    const backend_root = self.llvm.root.path(b, Backend.backend_root);
+    const backend_root = self.metadata.root.path(b, Backend.backend_root);
 
     inline for (Backend.actions) |action| {
         _ = self.synthesizeHeader(td_files, .{
-            .tblgen = self.full_tblgen,
+            .tblgen = self.configure_phase_artifacts.full_tblgen,
             .name = action.name,
             .td_file = Backend.td_filepath,
             .instruction = .{ .actions = action.td_args },
@@ -3305,7 +3354,7 @@ fn buildWebAssembly(self: *Self) Artifact {
     }
 
     // https://github.com/llvm/llvm-project/blob/llvmorg-21.1.8/llvm/lib/Target/WebAssembly/TargetInfo/CMakeLists.txt
-    const info_root = self.llvm.root.path(b, Backend.info_root);
+    const info_root = self.metadata.root.path(b, Backend.info_root);
     const info = self.createLLVMLibrary(.{
         .name = "LLVMWebAssemblyInfo",
         .cxx_source_files = .{
@@ -3324,7 +3373,7 @@ fn buildWebAssembly(self: *Self) Artifact {
     });
 
     // https://github.com/llvm/llvm-project/blob/llvmorg-21.1.8/llvm/lib/Target/WebAssembly/MCTargetDesc/CMakeLists.txt
-    const desc_root = self.llvm.root.path(b, Backend.desc_root);
+    const desc_root = self.metadata.root.path(b, Backend.desc_root);
     const desc = self.createLLVMLibrary(.{
         .name = "LLVMWebAssemblyDesc",
         .cxx_source_files = .{
@@ -3337,7 +3386,7 @@ fn buildWebAssembly(self: *Self) Artifact {
             td_files.getDirectory(),
             self.target_artifacts.intrinsics_gen.getDirectory(),
             self.target_artifacts.target_backends.parser_gen.getDirectory(),
-            self.minimal_artifacts.gen_vt.getDirectory(),
+            self.configure_phase_artifacts.gen_vt.getDirectory(),
         },
         .link_libraries = &.{
             self.target_artifacts.codegen.types,
@@ -3349,7 +3398,7 @@ fn buildWebAssembly(self: *Self) Artifact {
     });
 
     // https://github.com/llvm/llvm-project/blob/llvmorg-21.1.8/llvm/lib/Target/WebAssembly/Utils/CMakeLists.txt
-    const utils_root = self.llvm.root.path(b, Backend.utils_root);
+    const utils_root = self.metadata.root.path(b, Backend.utils_root);
     const utils = self.createLLVMLibrary(.{
         .name = "LLVMWebAssemblyUtils",
         .cxx_source_files = .{
@@ -3361,7 +3410,7 @@ fn buildWebAssembly(self: *Self) Artifact {
             utils_root,
             td_files.getDirectory(),
             self.target_artifacts.intrinsics_gen.getDirectory(),
-            self.minimal_artifacts.gen_vt.getDirectory(),
+            self.configure_phase_artifacts.gen_vt.getDirectory(),
         },
         .link_libraries = &.{
             self.target_artifacts.codegen.core_lib,
@@ -3374,7 +3423,7 @@ fn buildWebAssembly(self: *Self) Artifact {
     });
 
     // https://github.com/llvm/llvm-project/blob/llvmorg-21.1.8/llvm/lib/Target/WebAssembly/Disassembler/CMakeLists.txt
-    const disassembler_root = self.llvm.root.path(b, Backend.disassembler_root);
+    const disassembler_root = self.metadata.root.path(b, Backend.disassembler_root);
     const disassembler = self.createLLVMLibrary(.{
         .name = "LLVMWebAssemblyDisassembler",
         .cxx_source_files = .{
@@ -3397,7 +3446,7 @@ fn buildWebAssembly(self: *Self) Artifact {
     });
 
     // https://github.com/llvm/llvm-project/blob/llvmorg-21.1.8/llvm/lib/Target/WebAssembly/AsmParser/CMakeLists.txt
-    const asm_parser_root = self.llvm.root.path(b, Backend.asm_parser_root);
+    const asm_parser_root = self.metadata.root.path(b, Backend.asm_parser_root);
     const asm_parser = self.createLLVMLibrary(.{
         .name = "LLVMWebAssemblyAsmParser",
         .cxx_source_files = .{
@@ -3408,7 +3457,7 @@ fn buildWebAssembly(self: *Self) Artifact {
             backend_root,
             asm_parser_root,
             td_files.getDirectory(),
-            self.minimal_artifacts.gen_vt.getDirectory(),
+            self.configure_phase_artifacts.gen_vt.getDirectory(),
             self.target_artifacts.intrinsics_gen.getDirectory(),
             self.target_artifacts.target_backends.parser_gen.getDirectory(),
         },
@@ -3434,7 +3483,7 @@ fn buildWebAssembly(self: *Self) Artifact {
             backend_root,
             td_files.getDirectory(),
             self.target_artifacts.intrinsics_gen.getDirectory(),
-            self.minimal_artifacts.gen_vt.getDirectory(),
+            self.configure_phase_artifacts.gen_vt.getDirectory(),
             self.target_artifacts.target_backends.parser_gen.getDirectory(),
         },
         .link_libraries = &.{
@@ -3466,11 +3515,11 @@ fn buildXtensa(self: *Self) Artifact {
     const td_files = b.addWriteFiles();
 
     const Backend = target_backends.Xtensa;
-    const backend_root = self.llvm.root.path(b, Backend.backend_root);
+    const backend_root = self.metadata.root.path(b, Backend.backend_root);
 
     inline for (Backend.actions) |action| {
         _ = self.synthesizeHeader(td_files, .{
-            .tblgen = self.full_tblgen,
+            .tblgen = self.configure_phase_artifacts.full_tblgen,
             .name = action.name,
             .td_file = Backend.td_filepath,
             .instruction = .{ .actions = action.td_args },
@@ -3480,7 +3529,7 @@ fn buildXtensa(self: *Self) Artifact {
     }
 
     // https://github.com/llvm/llvm-project/blob/llvmorg-21.1.8/llvm/lib/Target/Xtensa/TargetInfo/CMakeLists.txt
-    const info_root = self.llvm.root.path(b, Backend.info_root);
+    const info_root = self.metadata.root.path(b, Backend.info_root);
     const info = self.createLLVMLibrary(.{
         .name = "LLVMXtensaInfo",
         .cxx_source_files = .{
@@ -3499,7 +3548,7 @@ fn buildXtensa(self: *Self) Artifact {
     });
 
     // https://github.com/llvm/llvm-project/blob/llvmorg-21.1.8/llvm/lib/Target/Xtensa/MCTargetDesc/CMakeLists.txt
-    const desc_root = self.llvm.root.path(b, Backend.desc_root);
+    const desc_root = self.metadata.root.path(b, Backend.desc_root);
     const desc = self.createLLVMLibrary(.{
         .name = "LLVMXtensaDesc",
         .cxx_source_files = .{
@@ -3521,7 +3570,7 @@ fn buildXtensa(self: *Self) Artifact {
     });
 
     // https://github.com/llvm/llvm-project/blob/llvmorg-21.1.8/llvm/lib/Target/Xtensa/Disassembler/CMakeLists.txt
-    const disassembler_root = self.llvm.root.path(b, Backend.disassembler_root);
+    const disassembler_root = self.metadata.root.path(b, Backend.disassembler_root);
     const disassembler = self.createLLVMLibrary(.{
         .name = "LLVMXtensaDisassembler",
         .cxx_source_files = .{
@@ -3542,7 +3591,7 @@ fn buildXtensa(self: *Self) Artifact {
     });
 
     // https://github.com/llvm/llvm-project/blob/llvmorg-21.1.8/llvm/lib/Target/Xtensa/AsmParser/CMakeLists.txt
-    const asm_parser_root = self.llvm.root.path(b, Backend.asm_parser_root);
+    const asm_parser_root = self.metadata.root.path(b, Backend.asm_parser_root);
     const asm_parser = self.createLLVMLibrary(.{
         .name = "LLVMXtensaAsmParser",
         .cxx_source_files = .{
@@ -3553,7 +3602,7 @@ fn buildXtensa(self: *Self) Artifact {
             backend_root,
             asm_parser_root,
             td_files.getDirectory(),
-            self.minimal_artifacts.gen_vt.getDirectory(),
+            self.configure_phase_artifacts.gen_vt.getDirectory(),
             self.target_artifacts.intrinsics_gen.getDirectory(),
             self.target_artifacts.target_backends.parser_gen.getDirectory(),
         },
@@ -3577,7 +3626,7 @@ fn buildXtensa(self: *Self) Artifact {
             backend_root,
             td_files.getDirectory(),
             self.target_artifacts.intrinsics_gen.getDirectory(),
-            self.minimal_artifacts.gen_vt.getDirectory(),
+            self.configure_phase_artifacts.gen_vt.getDirectory(),
             self.target_artifacts.target_backends.parser_gen.getDirectory(),
         },
         .link_libraries = &.{
@@ -3602,11 +3651,11 @@ fn buildPowerPC(self: *Self) Artifact {
     const td_files = b.addWriteFiles();
 
     const Backend = target_backends.PowerPC;
-    const backend_root = self.llvm.root.path(b, Backend.backend_root);
+    const backend_root = self.metadata.root.path(b, Backend.backend_root);
 
     inline for (Backend.actions) |action| {
         _ = self.synthesizeHeader(td_files, .{
-            .tblgen = self.full_tblgen,
+            .tblgen = self.configure_phase_artifacts.full_tblgen,
             .name = action.name,
             .td_file = Backend.td_filepath,
             .instruction = .{ .actions = action.td_args },
@@ -3616,7 +3665,7 @@ fn buildPowerPC(self: *Self) Artifact {
     }
 
     // https://github.com/llvm/llvm-project/blob/llvmorg-21.1.8/llvm/lib/Target/PowerPC/TargetInfo/CMakeLists.txt
-    const info_root = self.llvm.root.path(b, Backend.info_root);
+    const info_root = self.metadata.root.path(b, Backend.info_root);
     const info = self.createLLVMLibrary(.{
         .name = "LLVMPowerPCInfo",
         .cxx_source_files = .{
@@ -3635,7 +3684,7 @@ fn buildPowerPC(self: *Self) Artifact {
     });
 
     // https://github.com/llvm/llvm-project/blob/llvmorg-21.1.8/llvm/lib/Target/PowerPC/MCTargetDesc/CMakeLists.txt
-    const desc_root = self.llvm.root.path(b, Backend.desc_root);
+    const desc_root = self.metadata.root.path(b, Backend.desc_root);
     const desc = self.createLLVMLibrary(.{
         .name = "LLVMPowerPCDesc",
         .cxx_source_files = .{
@@ -3660,7 +3709,7 @@ fn buildPowerPC(self: *Self) Artifact {
     });
 
     // https://github.com/llvm/llvm-project/blob/llvmorg-21.1.8/llvm/lib/Target/PowerPC/Disassembler/CMakeLists.txt
-    const disassembler_root = self.llvm.root.path(b, Backend.disassembler_root);
+    const disassembler_root = self.metadata.root.path(b, Backend.disassembler_root);
     const disassembler = self.createLLVMLibrary(.{
         .name = "LLVMPowerPCDisassembler",
         .cxx_source_files = .{
@@ -3681,7 +3730,7 @@ fn buildPowerPC(self: *Self) Artifact {
     });
 
     // https://github.com/llvm/llvm-project/blob/llvmorg-21.1.8/llvm/lib/Target/PowerPC/AsmParser/CMakeLists.txt
-    const asm_parser_root = self.llvm.root.path(b, Backend.asm_parser_root);
+    const asm_parser_root = self.metadata.root.path(b, Backend.asm_parser_root);
     const asm_parser = self.createLLVMLibrary(.{
         .name = "LLVMPowerPCAsmParser",
         .cxx_source_files = .{
@@ -3692,7 +3741,7 @@ fn buildPowerPC(self: *Self) Artifact {
             backend_root,
             asm_parser_root,
             td_files.getDirectory(),
-            self.minimal_artifacts.gen_vt.getDirectory(),
+            self.configure_phase_artifacts.gen_vt.getDirectory(),
             self.target_artifacts.intrinsics_gen.getDirectory(),
             self.target_artifacts.target_backends.parser_gen.getDirectory(),
         },
@@ -3716,7 +3765,7 @@ fn buildPowerPC(self: *Self) Artifact {
             backend_root,
             td_files.getDirectory(),
             self.target_artifacts.intrinsics_gen.getDirectory(),
-            self.minimal_artifacts.gen_vt.getDirectory(),
+            self.configure_phase_artifacts.gen_vt.getDirectory(),
             self.target_artifacts.target_backends.parser_gen.getDirectory(),
         },
         .link_libraries = &.{
@@ -3748,11 +3797,11 @@ fn buildLoongArch(self: *Self) Artifact {
     const td_files = b.addWriteFiles();
 
     const Backend = target_backends.LoongArch;
-    const backend_root = self.llvm.root.path(b, Backend.backend_root);
+    const backend_root = self.metadata.root.path(b, Backend.backend_root);
 
     inline for (Backend.actions) |action| {
         _ = self.synthesizeHeader(td_files, .{
-            .tblgen = self.full_tblgen,
+            .tblgen = self.configure_phase_artifacts.full_tblgen,
             .name = action.name,
             .td_file = Backend.td_filepath,
             .instruction = .{ .actions = action.td_args },
@@ -3762,7 +3811,7 @@ fn buildLoongArch(self: *Self) Artifact {
     }
 
     // https://github.com/llvm/llvm-project/blob/llvmorg-21.1.8/llvm/lib/Target/LoongArch/TargetInfo/CMakeLists.txt
-    const info_root = self.llvm.root.path(b, Backend.info_root);
+    const info_root = self.metadata.root.path(b, Backend.info_root);
     const info = self.createLLVMLibrary(.{
         .name = "LLVMLoongArchInfo",
         .cxx_source_files = .{
@@ -3781,7 +3830,7 @@ fn buildLoongArch(self: *Self) Artifact {
     });
 
     // https://github.com/llvm/llvm-project/blob/llvmorg-21.1.8/llvm/lib/Target/LoongArch/MCTargetDesc/CMakeLists.txt
-    const desc_root = self.llvm.root.path(b, Backend.desc_root);
+    const desc_root = self.metadata.root.path(b, Backend.desc_root);
     const desc = self.createLLVMLibrary(.{
         .name = "LLVMLoongArchDesc",
         .cxx_source_files = .{
@@ -3804,7 +3853,7 @@ fn buildLoongArch(self: *Self) Artifact {
     });
 
     // https://github.com/llvm/llvm-project/blob/llvmorg-21.1.8/llvm/lib/Target/LoongArch/Disassembler/CMakeLists.txt
-    const disassembler_root = self.llvm.root.path(b, Backend.disassembler_root);
+    const disassembler_root = self.metadata.root.path(b, Backend.disassembler_root);
     const disassembler = self.createLLVMLibrary(.{
         .name = "LLVMLoongArchDisassembler",
         .cxx_source_files = .{
@@ -3826,7 +3875,7 @@ fn buildLoongArch(self: *Self) Artifact {
     });
 
     // https://github.com/llvm/llvm-project/blob/llvmorg-21.1.8/llvm/lib/Target/LoongArch/AsmParser/CMakeLists.txt
-    const asm_parser_root = self.llvm.root.path(b, Backend.asm_parser_root);
+    const asm_parser_root = self.metadata.root.path(b, Backend.asm_parser_root);
     const asm_parser = self.createLLVMLibrary(.{
         .name = "LLVMLoongArchAsmParser",
         .cxx_source_files = .{
@@ -3837,7 +3886,7 @@ fn buildLoongArch(self: *Self) Artifact {
             backend_root,
             asm_parser_root,
             td_files.getDirectory(),
-            self.minimal_artifacts.gen_vt.getDirectory(),
+            self.configure_phase_artifacts.gen_vt.getDirectory(),
             self.target_artifacts.intrinsics_gen.getDirectory(),
             self.target_artifacts.target_backends.parser_gen.getDirectory(),
         },
@@ -3861,7 +3910,7 @@ fn buildLoongArch(self: *Self) Artifact {
             backend_root,
             td_files.getDirectory(),
             self.target_artifacts.intrinsics_gen.getDirectory(),
-            self.minimal_artifacts.gen_vt.getDirectory(),
+            self.configure_phase_artifacts.gen_vt.getDirectory(),
             self.target_artifacts.target_backends.parser_gen.getDirectory(),
         },
         .link_libraries = &.{
@@ -3885,12 +3934,12 @@ fn buildLoongArch(self: *Self) Artifact {
     });
 }
 
-fn buildExecutionEngine(self: *const Self) TargetArtifacts.ExecutionEngine {
+fn buildExecutionEngine(self: *const Self) LLVMTargetArtifacts.ExecutionEngine {
     const b = self.b;
-    var exe_engine: TargetArtifacts.ExecutionEngine = .{};
+    var exe_engine: LLVMTargetArtifacts.ExecutionEngine = .{};
 
     // https://github.com/llvm/llvm-project/blob/llvmorg-21.1.8/llvm/lib/ExecutionEngine/RuntimeDyld/CMakeLists.txt
-    const runtime_dyld_root = self.llvm.root.path(b, execution_engine.runtime_dyld_root);
+    const runtime_dyld_root = self.metadata.root.path(b, execution_engine.runtime_dyld_root);
     exe_engine.runtime_dyld = self.createLLVMLibrary(.{
         .name = "LLVMRuntimeDyld",
         .cxx_source_files = .{
@@ -3911,7 +3960,7 @@ fn buildExecutionEngine(self: *const Self) TargetArtifacts.ExecutionEngine {
     });
 
     // https://github.com/llvm/llvm-project/blob/llvmorg-21.1.8/llvm/lib/ExecutionEngine/Orc/Shared/CMakeLists.txt
-    const orc_shared_root = self.llvm.root.path(b, execution_engine.orc_shared_root);
+    const orc_shared_root = self.metadata.root.path(b, execution_engine.orc_shared_root);
     exe_engine.orc.shared = self.createLLVMLibrary(.{
         .name = "LLVMOrcShared",
         .cxx_source_files = .{
@@ -3926,7 +3975,7 @@ fn buildExecutionEngine(self: *const Self) TargetArtifacts.ExecutionEngine {
     });
 
     // https://github.com/llvm/llvm-project/blob/llvmorg-21.1.8/llvm/lib/ExecutionEngine/Orc/TargetProcess/CMakeLists.txt
-    const orc_target_process_root = self.llvm.root.path(b, execution_engine.orc_target_process_root);
+    const orc_target_process_root = self.metadata.root.path(b, execution_engine.orc_target_process_root);
     exe_engine.orc.target_process = self.createLLVMLibrary(.{
         .name = "LLVMOrcTargetProcess",
         .cxx_source_files = .{
@@ -3944,13 +3993,13 @@ fn buildExecutionEngine(self: *const Self) TargetArtifacts.ExecutionEngine {
 
     // https://github.com/llvm/llvm-project/blob/llvmorg-21.1.8/llvm/lib/ExecutionEngine/JITLink/CMakeLists.txt
     const jit_link_td = self.generateTblgenInc(.{
-        .tblgen = self.full_tblgen,
+        .tblgen = self.configure_phase_artifacts.full_tblgen,
         .name = "COFFOptions",
         .td_file = execution_engine.jit_link_root ++ "COFFOptions.td",
         .instruction = .{ .action = "-gen-opt-parser-defs" },
     });
 
-    const jit_link_root = self.llvm.root.path(b, execution_engine.jit_link_root);
+    const jit_link_root = self.metadata.root.path(b, execution_engine.jit_link_root);
     exe_engine.jit_link = self.createLLVMLibrary(.{
         .name = "LLVMJITLink",
         .cxx_source_files = .{
@@ -3976,7 +4025,7 @@ fn buildExecutionEngine(self: *const Self) TargetArtifacts.ExecutionEngine {
     exe_engine.core_lib = self.createLLVMLibrary(.{
         .name = "LLVMExecutionEngine",
         .cxx_source_files = .{
-            .root = self.llvm.root.path(b, execution_engine.root),
+            .root = self.metadata.root.path(b, execution_engine.root),
             .files = &execution_engine.base_sources,
         },
         .additional_include_paths = &.{self.target_artifacts.intrinsics_gen.getDirectory()},
@@ -3996,12 +4045,12 @@ fn buildExecutionEngine(self: *const Self) TargetArtifacts.ExecutionEngine {
     exe_engine.orc.core_lib = self.createLLVMLibrary(.{
         .name = "LLVMOrcJIT",
         .cxx_source_files = .{
-            .root = self.llvm.root.path(b, execution_engine.orc_root),
+            .root = self.metadata.root.path(b, execution_engine.orc_root),
             .files = &execution_engine.orc_base_sources,
         },
         .additional_include_paths = &.{
             self.target_artifacts.intrinsics_gen.getDirectory(),
-            self.minimal_artifacts.gen_vt.getDirectory(),
+            self.configure_phase_artifacts.gen_vt.getDirectory(),
         },
         .link_libraries = &.{
             self.target_artifacts.binary_format,
@@ -4029,7 +4078,7 @@ fn buildExecutionEngine(self: *const Self) TargetArtifacts.ExecutionEngine {
     });
 
     // https://github.com/llvm/llvm-project/blob/llvmorg-21.1.8/llvm/lib/ExecutionEngine/Interpreter/CMakeLists.txt
-    const interpreter_root = self.llvm.root.path(b, execution_engine.interpreter_root);
+    const interpreter_root = self.metadata.root.path(b, execution_engine.interpreter_root);
     exe_engine.interpreter = self.createLLVMLibrary(.{
         .name = "LLVMInterpreter",
         .cxx_source_files = .{
@@ -4052,7 +4101,7 @@ fn buildExecutionEngine(self: *const Self) TargetArtifacts.ExecutionEngine {
     exe_engine.orc.debugging = self.createLLVMLibrary(.{
         .name = "LLVMOrcDebugging",
         .cxx_source_files = .{
-            .root = self.llvm.root.path(b, execution_engine.orc_debug_root),
+            .root = self.metadata.root.path(b, execution_engine.orc_debug_root),
             .files = &execution_engine.orc_debug_sources,
         },
         .additional_include_paths = &.{self.target_artifacts.intrinsics_gen.getDirectory()},
@@ -4069,7 +4118,7 @@ fn buildExecutionEngine(self: *const Self) TargetArtifacts.ExecutionEngine {
     });
 
     // https://github.com/llvm/llvm-project/blob/llvmorg-21.1.8/llvm/lib/ExecutionEngine/Interpreter/CMakeLists.txt
-    const mc_jit_root = self.llvm.root.path(b, execution_engine.mc_jit_root);
+    const mc_jit_root = self.metadata.root.path(b, execution_engine.mc_jit_root);
     exe_engine.mc_jit = self.createLLVMLibrary(.{
         .name = "LLVMMCJIT",
         .cxx_source_files = .{
@@ -4102,38 +4151,38 @@ fn buildTblgen(self: *const Self, config: struct {
     const mod = self.createHostModule();
 
     mod.addCSourceFiles(.{
-        .root = self.llvm.root.path(b, tblgen.basic_root),
+        .root = self.metadata.root.path(b, tblgen.basic_root),
         .files = &tblgen.basic_sources,
         .flags = &common_llvm_cxx_flags,
     });
 
     mod.addCSourceFiles(.{
-        .root = self.llvm.root.path(b, tblgen.lib_root),
+        .root = self.metadata.root.path(b, tblgen.lib_root),
         .files = &tblgen.lib_sources,
         .flags = &common_llvm_cxx_flags,
     });
 
     if (config.minimal) {
         mod.addCSourceFile(.{
-            .file = self.llvm.root.path(b, tblgen.minimal_main),
+            .file = self.metadata.root.path(b, tblgen.minimal_main),
             .flags = &common_llvm_cxx_flags,
         });
     } else {
         mod.addCSourceFiles(.{
-            .root = self.llvm.root.path(b, tblgen.common_root),
+            .root = self.metadata.root.path(b, tblgen.common_root),
             .files = &tblgen.common_sources,
             .flags = &common_llvm_cxx_flags,
         });
 
         mod.addCSourceFiles(.{
-            .root = self.llvm.root.path(b, tblgen.utils_root),
+            .root = self.metadata.root.path(b, tblgen.utils_root),
             .files = &tblgen.utils_sources,
             .flags = &common_llvm_cxx_flags,
         });
     }
 
-    mod.addIncludePath(self.llvm.llvm_include);
-    mod.addIncludePath(self.llvm.root.path(b, tblgen.utils_root));
+    mod.addIncludePath(self.metadata.llvm_include);
+    mod.addIncludePath(self.metadata.root.path(b, tblgen.utils_root));
     mod.linkLibrary(config.support_lib);
 
     return b.addExecutable(.{
@@ -4169,14 +4218,14 @@ fn generateTblgenInc(self: *const Self, config: struct {
         .actions => |action| run.addArgs(action),
     }
 
-    run.addPrefixedDirectoryArg("-I", self.llvm.llvm_include);
+    run.addPrefixedDirectoryArg("-I", self.metadata.llvm_include);
     if (config.extra_includes) |extra_includes| {
         for (extra_includes) |include| {
             run.addPrefixedDirectoryArg("-I", include);
         }
     }
 
-    run.addFileArg(self.llvm.root.path(b, config.td_file));
+    run.addFileArg(self.metadata.root.path(b, config.td_file));
     run.addArg("-o");
 
     return run.addOutputFileArg(b.fmt("{s}.inc", .{config.name}));
@@ -4201,7 +4250,7 @@ fn synthesizeHeader(self: *Self, registry: *std.Build.Step.WriteFile, config: st
     return registry.addCopyFile(flat, config.virtual_path);
 }
 
-fn buildDeps(self: *const Self, platform: Platform) !ThirdPartyDeps {
+fn buildDeps(self: *const Self, platform: Platform) ThirdPartyDeps {
     const b = self.b;
     const target = switch (platform) {
         .host => b.graph.host,
@@ -4209,7 +4258,13 @@ fn buildDeps(self: *const Self, platform: Platform) !ThirdPartyDeps {
     };
 
     const zlib_dep = zlib.build(b, .{ .target = target, .optimize = optimize });
-    const libxml2_dep = libxml2.build(b, .{ .target = target, .optimize = optimize, .zlib = zlib_dep });
+    const libxml2_dep = libxml2.build(b, .{
+        .opts = .{
+            .target = target,
+            .optimize = optimize,
+        },
+        .zlib = zlib_dep,
+    });
     const zstd_dep = zstd.build(b, .{ .target = target, .optimize = optimize });
 
     return .{
@@ -4329,15 +4384,15 @@ pub fn allIncludePaths(self: *const Self) struct {
 } {
     var all_includes: std.ArrayList(std.Build.LazyPath) = .empty;
     all_includes.appendSlice(self.b.allocator, &.{
-        self.llvm.llvm_include,
-        self.minimal_artifacts.gen_vt.getDirectory(),
+        self.metadata.llvm_include,
+        self.configure_phase_artifacts.gen_vt.getDirectory(),
         self.target_artifacts.intrinsics_gen.getDirectory(),
         self.target_artifacts.frontend.gen_files.getDirectory(),
         self.target_artifacts.target_backends.parser_gen.getDirectory(),
     }) catch @panic("OOM");
 
     var all_config_headers: std.ArrayList(*std.Build.Step.ConfigHeader) = .empty;
-    all_config_headers.append(self.b.allocator, self.llvm.vcs_revision) catch @panic("OOM");
+    all_config_headers.append(self.b.allocator, self.metadata.vcs_revision) catch @panic("OOM");
 
     return .{
         .includes = all_includes.items,

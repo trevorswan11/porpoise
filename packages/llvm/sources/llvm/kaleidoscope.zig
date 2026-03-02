@@ -1,7 +1,7 @@
 //! https://github.com/llvm/llvm-project/tree/llvmorg-21.1.8/llvm/examples/Kaleidoscope
 const std = @import("std");
 
-const LLVM = @import("../../LLVM.zig");
+const LLVMBuilder = @import("../../LLVMBuilder.zig");
 
 const kaleidoscope_root = "llvm/examples/Kaleidoscope";
 
@@ -32,9 +32,9 @@ pub const KaleidoscopeChapter = enum {
     }
 
     /// The chapter-specific include directory
-    fn includeDirectory(self: KaleidoscopeChapter, llvm: *const LLVM) std.Build.LazyPath {
+    fn includeDirectory(self: KaleidoscopeChapter, llvm: *const LLVMBuilder) std.Build.LazyPath {
         const b = llvm.b;
-        const kaleidoscope_path = llvm.llvm.root.path(b, kaleidoscope_root);
+        const kaleidoscope_path = llvm.metadata.root.path(b, kaleidoscope_root);
         return switch (self) {
             .BuildingAJIT_Ch1,
             .BuildingAJIT_Ch2,
@@ -46,7 +46,7 @@ pub const KaleidoscopeChapter = enum {
     }
 
     /// Compiles the chapter of Kaleidoscope. The host must match the target.
-    pub fn build(self: KaleidoscopeChapter, llvm: *const LLVM) *std.Build.Step.Compile {
+    pub fn build(self: KaleidoscopeChapter, llvm: *const LLVMBuilder) *std.Build.Step.Compile {
         const b = llvm.b;
         const mod = b.createModule(.{
             .target = b.graph.host,
@@ -57,8 +57,8 @@ pub const KaleidoscopeChapter = enum {
 
         const source_file = b.fmt("{s}/{s}/toy.cpp", .{ kaleidoscope_root, self.relativeDirectory() });
         mod.addCSourceFile(.{
-            .file = llvm.llvm.root.path(b, source_file),
-            .flags = &LLVM.common_llvm_cxx_flags,
+            .file = llvm.metadata.root.path(b, source_file),
+            .flags = &LLVMBuilder.common_llvm_cxx_flags,
         });
 
         const include = self.includeDirectory(llvm);

@@ -1,6 +1,7 @@
 const std = @import("std");
 
 const Dependency = @import("Dependency.zig");
+const Config = Dependency.Config;
 
 /// Compiles fmt from source as a static library
 /// https://github.com/fmtlib/fmt

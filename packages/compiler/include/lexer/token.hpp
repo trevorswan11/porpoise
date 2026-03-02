@@ -312,7 +312,7 @@ template <> struct SourceInfo<Token> {
 template <> struct fmt::formatter<conch::Token> {
     static constexpr auto parse(format_parse_context& ctx) noexcept { return ctx.begin(); }
 
-    template <typename F> auto format(const conch::Token& t, F& ctx) const {
+    template <typename F> static auto format(const conch::Token& t, F& ctx) {
         return fmt::format_to(
             ctx.out(), "{}({}) [{}, {}]", magic_enum::enum_name(t.type), t.slice, t.line, t.column);
     }

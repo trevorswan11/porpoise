@@ -1,19 +1,22 @@
 const std = @import("std");
 const builtin = @import("builtin");
 
+const Dependency = @import("packages/third-party/Dependency.zig");
 const cppcheck = @import("packages/third-party/cppcheck.zig");
 const libarchive = @import("packages/third-party/libarchive.zig");
 const fmt = @import("packages/third-party/fmt.zig");
+const catch2 = @import("packages/third-party/catch2.zig");
 
-const LLVM = @import("packages/llvm/LLVM.zig");
+const LLVMBuilder = @import("packages/llvm/LLVMBuilder.zig");
 
 pub fn build(b: *std.Build) !void {
     const optimize = b.standardOptimizeOption(.{
         .preferred_optimize_mode = .ReleaseFast,
     });
 
+    const llvm: *LLVMBuilder = .init(b);
     const flag_opts = addFlagOptions(b);
-    const cdb_gen: *CdbGenerator = .init(b);
+    const cdb_gen: *CDBGenerator = .init(b);
 
     var compiler_flags: std.ArrayList([]const u8) = .empty;
     try compiler_flags.appendSlice(b.allocator, &.{
@@ -33,7 +36,7 @@ pub fn build(b: *std.Build) !void {
 
     const cdb_flags = [_][]const u8{
         "-gen-cdb-fragment-path",
-        getCacheRelativePath(b, &.{CdbGenerator.cdb_frags_dirname}),
+        getCacheRelativePath(b, &.{CDBGenerator.cdb_frags_dirname}),
     };
 
     try compiler_flags.appendSlice(b.allocator, &cdb_flags);
@@ -42,28 +45,25 @@ pub fn build(b: *std.Build) !void {
         .ReleaseSafe => try compiler_flags.appendSlice(b.allocator, &.{"-DRELEASE"}),
         .ReleaseFast, .ReleaseSmall => try compiler_flags.appendSlice(b.allocator, dist_flags),
     }
-    try compiler_flags.append(b.allocator, "-DCATCH_AMALGAMATED_CUSTOM_MAIN");
 
     var cdb_steps: std.ArrayList(*std.Build.Step) = .empty;
     const artifacts = try addArtifacts(b, .{
-        .target = b.graph.host,
         .optimize = optimize,
+        .llvm = llvm,
         .cxx_flags = compiler_flags.items,
         .cdb_steps = &cdb_steps,
-        .skip_tests = flag_opts.skip_tests,
-        .skip_cppcheck = flag_opts.skip_cppcheck,
     });
     for (cdb_steps.items) |cdb_step| cdb_gen.step.dependOn(cdb_step);
 
     try addTooling(b, .{
         .cdb_gen = cdb_gen,
         .cli = artifacts.cli,
-        .tests = artifacts.tests,
-        .cppcheck = artifacts.cppcheck,
+        .cppcheck = artifacts.cppcheck.?,
         .clean_cache = flag_opts.clean_cache,
     });
 
     try addPackageStep(b, .{
+        .llvm = llvm,
         .cxx_flags = package_flags.items,
         .compile_only = flag_opts.compile_only,
     });
@@ -106,31 +106,18 @@ const ProjectPaths = struct {
     const test_runner = "packages/test_runner/";
     const llvm = "packages/llvm/";
     const third_party = "packages/third-party/";
-    const compressor = "packages/compressor/";
+
+    const compressor = "apps/compressor/";
 };
 
 fn addFlagOptions(b: *std.Build) struct {
     compile_only: bool,
-    skip_tests: bool,
-    skip_cppcheck: bool,
     clean_cache: bool,
 } {
     const compile_only = b.option(
         bool,
         "compile-only",
         "Skip copying legal documents to and compressing packaged directories",
-    ) orelse false;
-
-    const skip_tests = b.option(
-        bool,
-        "skip-tests",
-        "Skip compilation of tests and disable test running",
-    ) orelse false;
-
-    const skip_cppcheck = b.option(
-        bool,
-        "skip-cppcheck",
-        "Skip compilation of cppcheck and disable static analysis tooling",
     ) orelse false;
 
     const clean_cache = builtin.os.tag != .windows and b.option(
@@ -141,8 +128,6 @@ fn addFlagOptions(b: *std.Build) struct {
 
     return .{
         .compile_only = compile_only,
-        .skip_tests = skip_tests,
-        .skip_cppcheck = skip_cppcheck,
         .clean_cache = clean_cache,
     };
 }
@@ -156,7 +141,6 @@ const ExecutableBehavior = union(enum) {
 };
 
 const TestArtifacts = struct {
-    libcatch2: *std.Build.Step.Compile = undefined,
     runner_tests: *std.Build.Step.Compile = undefined,
     core_tests: *std.Build.Step.Compile = undefined,
     compiler_tests: *std.Build.Step.Compile = undefined,
@@ -169,7 +153,6 @@ const TestArtifacts = struct {
         cdb_steps: ?*std.ArrayList(*std.Build.Step),
     ) !void {
         if (install) {
-            b.installArtifact(self.libcatch2);
             b.installArtifact(self.runner_tests);
             b.installArtifact(self.core_tests);
             b.installArtifact(self.compiler_tests);
@@ -177,7 +160,6 @@ const TestArtifacts = struct {
         }
 
         if (cdb_steps) |cdb| {
-            try cdb.append(b.allocator, &self.libcatch2.step);
             try cdb.append(b.allocator, &self.core_tests.step);
             try cdb.append(b.allocator, &self.compiler_tests.step);
             try cdb.append(b.allocator, &self.cli_tests.step);
@@ -199,12 +181,11 @@ const TestArtifacts = struct {
 };
 
 fn addArtifacts(b: *std.Build, config: struct {
-    target: std.Build.ResolvedTarget,
+    target: ?std.Build.ResolvedTarget = null,
     optimize: std.builtin.OptimizeMode,
+    llvm: *LLVMBuilder,
     cxx_flags: []const []const u8,
     cdb_steps: ?*std.ArrayList(*std.Build.Step),
-    skip_tests: bool,
-    skip_cppcheck: bool,
     behavior: ?ExecutableBehavior = null,
     auto_install: bool = true,
     packaging: bool = false,
@@ -216,18 +197,21 @@ fn addArtifacts(b: *std.Build, config: struct {
     tests: ?TestArtifacts,
     cppcheck: ?*std.Build.Step.Compile,
 } {
+    const target = config.target orelse b.graph.host;
+    const building_for_host = config.target == null;
+
     const magic_enum = b.dependency("magic_enum", .{});
     const magic_enum_inc = magic_enum.path("include");
 
     const fmt_dep = fmt.build(b, .{
-        .target = config.target,
+        .target = target,
         .optimize = config.optimize,
     });
 
     // Shared core functionality
     const libcore = createLibrary(b, .{
         .name = "core",
-        .target = config.target,
+        .target = target,
         .optimize = config.optimize,
         .include_paths = &.{b.path(ProjectPaths.core.inc)},
         .system_include_paths = &.{magic_enum_inc},
@@ -241,19 +225,18 @@ fn addArtifacts(b: *std.Build, config: struct {
     if (config.cdb_steps) |cdb_steps| try cdb_steps.append(b.allocator, &libcore.step);
 
     // LLVM is compiled from source because I like burning compute or something
-    var llvm: LLVM = .init(b, config.target);
-    try llvm.build(.{
+    config.llvm.build(.{
+        .target = target,
         .behavior = if (config.packaging)
             .package
         else
-            .allow_kaleidoscope,
-        .auto_install = config.auto_install,
+            .{ .allow_kaleidoscope = config.auto_install },
     });
 
     // The actual compiler static library
     const libcompiler = createLibrary(b, .{
         .name = "compiler",
-        .target = config.target,
+        .target = target,
         .optimize = config.optimize,
         .include_paths = &.{
             b.path(ProjectPaths.compiler.inc),
@@ -272,7 +255,7 @@ fn addArtifacts(b: *std.Build, config: struct {
     // The CLI library is stripped of main
     const libcli = createLibrary(b, .{
         .name = "cli",
-        .target = config.target,
+        .target = target,
         .optimize = config.optimize,
         .include_paths = &.{
             b.path(ProjectPaths.cli.inc),
@@ -294,7 +277,7 @@ fn addArtifacts(b: *std.Build, config: struct {
     // The shippable executable links only against libcli which has a transitive dep of the compiler
     const cli = createExecutable(b, .{
         .name = "conch",
-        .target = config.target,
+        .target = target,
         .optimize = config.optimize,
         .include_paths = &.{b.path(ProjectPaths.cli.inc)},
         .cxx = .{
@@ -313,60 +296,46 @@ fn addArtifacts(b: *std.Build, config: struct {
     if (config.cdb_steps) |cdb_steps| try cdb_steps.append(b.allocator, &cli.step);
 
     var tests: ?TestArtifacts = null;
-    if (!config.skip_tests) {
-        tests = .{};
+    if (building_for_host) {
         const test_runner = b.path(ProjectPaths.test_runner ++ "main.zig");
-
-        const catch2 = b.dependency("catch2", .{});
-        const catch2_inc = catch2.path("extras");
-        tests.?.libcatch2 = createLibrary(b, .{
-            .name = "catch2",
-            .target = config.target,
-            .optimize = .ReleaseSafe,
-            .include_paths = &.{catch2_inc},
-            .source_root = catch2.path("."),
-            .cxx = .{
-                .files = &.{"extras/catch_amalgamated.cpp"},
-                .flags = config.cxx_flags,
-            },
+        const catch2_dep = catch2.build(b, .{
+            .target = target,
+            .optimize = .Debug,
         });
 
         // The runner has standalone tests
-        tests.?.runner_tests = b.addTest(.{
+        const runner_tests = b.addTest(.{
             .name = "runner_tests",
             .root_module = b.createModule(.{
                 .root_source_file = test_runner,
                 .optimize = config.optimize,
-                .target = config.target,
+                .target = target,
                 .link_libc = true,
             }),
         });
 
-        const runner_cmd = b.addRunArtifact(tests.?.runner_tests);
+        const runner_cmd = b.addRunArtifact(runner_tests);
         const runner_step = b.step("test-runner", "Run test instrumentation tests");
         runner_step.dependOn(&runner_cmd.step);
 
         // Core tests depend on the test runner but not LLVM
-        tests.?.core_tests = createExecutable(b, .{
+        const core_tests = createExecutable(b, .{
             .name = "core_tests",
             .zig_main = test_runner,
-            .target = config.target,
+            .target = target,
             .optimize = config.optimize,
             .include_paths = &.{
                 b.path(ProjectPaths.core.inc),
                 b.path(ProjectPaths.core.tests),
             },
-            .system_include_paths = &.{
-                catch2_inc,
-                magic_enum_inc,
-            },
+            .system_include_paths = &.{magic_enum_inc},
             .cxx = .{
                 .files = try collectFiles(b, ProjectPaths.core.tests, .{
                     .extra_files = &.{ProjectPaths.test_runner ++ "runner.cpp"},
                 }),
                 .flags = config.cxx_flags,
             },
-            .link_libraries = &.{ tests.?.libcatch2, libcore, fmt_dep.artifact },
+            .link_libraries = &.{ libcore, catch2_dep.artifact, fmt_dep.artifact },
             .behavior = config.behavior orelse .{
                 .runnable = .{
                     .cmd_name = "test-core",
@@ -376,27 +345,24 @@ fn addArtifacts(b: *std.Build, config: struct {
         });
 
         // Compiler tests can pull in core helpers
-        tests.?.compiler_tests = createExecutable(b, .{
+        const compiler_tests = createExecutable(b, .{
             .name = "compiler_tests",
             .zig_main = test_runner,
-            .target = config.target,
+            .target = target,
             .optimize = config.optimize,
             .include_paths = &.{
                 b.path(ProjectPaths.compiler.inc),
                 b.path(ProjectPaths.core.inc),
                 b.path(ProjectPaths.compiler.tests),
             },
-            .system_include_paths = &.{
-                catch2_inc,
-                magic_enum_inc,
-            },
+            .system_include_paths = &.{magic_enum_inc},
             .cxx = .{
                 .files = try collectFiles(b, ProjectPaths.compiler.tests, .{
                     .extra_files = &.{ProjectPaths.test_runner ++ "runner.cpp"},
                 }),
                 .flags = config.cxx_flags,
             },
-            .link_libraries = &.{ libcompiler, tests.?.libcatch2, fmt_dep.artifact },
+            .link_libraries = &.{ libcompiler, catch2_dep.artifact, fmt_dep.artifact },
             .behavior = config.behavior orelse .{
                 .runnable = .{
                     .cmd_name = "test-compiler",
@@ -406,10 +372,10 @@ fn addArtifacts(b: *std.Build, config: struct {
         });
 
         // CLI tests can pull in core helpers
-        tests.?.cli_tests = createExecutable(b, .{
+        const cli_tests = createExecutable(b, .{
             .name = "cli_tests",
             .zig_main = b.path(ProjectPaths.test_runner ++ "main.zig"),
-            .target = config.target,
+            .target = target,
             .optimize = config.optimize,
             .include_paths = &.{
                 b.path(ProjectPaths.compiler.inc),
@@ -417,17 +383,14 @@ fn addArtifacts(b: *std.Build, config: struct {
                 b.path(ProjectPaths.core.inc),
                 b.path(ProjectPaths.cli.tests),
             },
-            .system_include_paths = &.{
-                catch2_inc,
-                magic_enum_inc,
-            },
+            .system_include_paths = &.{magic_enum_inc},
             .cxx = .{
                 .files = try collectFiles(b, ProjectPaths.cli.tests, .{
                     .extra_files = &.{ProjectPaths.test_runner ++ "runner.cpp"},
                 }),
                 .flags = config.cxx_flags,
             },
-            .link_libraries = &.{ libcompiler, libcli, tests.?.libcatch2, fmt_dep.artifact },
+            .link_libraries = &.{ libcompiler, libcli, catch2_dep.artifact, fmt_dep.artifact },
             .behavior = config.behavior orelse .{
                 .runnable = .{
                     .cmd_name = "test-cli",
@@ -436,8 +399,19 @@ fn addArtifacts(b: *std.Build, config: struct {
             },
         });
 
+        tests = .{
+            .runner_tests = runner_tests,
+            .core_tests = core_tests,
+            .compiler_tests = compiler_tests,
+            .cli_tests = cli_tests,
+        };
         try tests.?.configure(b, config.auto_install, config.cdb_steps);
     }
+
+    const cppcheck_dep: ?Dependency = if (building_for_host) try cppcheck.build(b, .{
+        .target = target,
+        .optimize = .ReleaseFast,
+    }) else null;
 
     return .{
         .libcore = libcore,
@@ -445,7 +419,7 @@ fn addArtifacts(b: *std.Build, config: struct {
         .libcli = libcli,
         .cli = cli,
         .tests = tests,
-        .cppcheck = if (config.skip_cppcheck) null else (try cppcheck.build(b)).artifact,
+        .cppcheck = if (cppcheck_dep) |dep| dep.artifact else null,
     };
 }
 
@@ -599,7 +573,7 @@ fn createExecutable(b: *std.Build, config: struct {
     return exe;
 }
 
-const CdbGenerator = struct {
+const CDBGenerator = struct {
     const cdb_filename = "compile_commands.json";
     const cdb_frags_dirname = "cdb-frags";
 
@@ -616,8 +590,8 @@ const CdbGenerator = struct {
     step: std.Build.Step,
     output_file: std.Build.GeneratedFile,
 
-    pub fn init(b: *std.Build) *CdbGenerator {
-        const self = b.allocator.create(CdbGenerator) catch @panic("OOM");
+    pub fn init(b: *std.Build) *CDBGenerator {
+        const self = b.allocator.create(CDBGenerator) catch @panic("OOM");
         self.* = .{
             .step = .init(.{
                 .id = .custom,
@@ -630,12 +604,12 @@ const CdbGenerator = struct {
         return self;
     }
 
-    pub fn getCdbPath(self: *const CdbGenerator) std.Build.LazyPath {
+    pub fn getCdbPath(self: *const CDBGenerator) std.Build.LazyPath {
         return .{ .generated = .{ .file = &self.output_file } };
     }
 
     fn generateCdb(step: *std.Build.Step, _: std.Build.Step.MakeOptions) !void {
-        const self: *CdbGenerator = @fieldParentPtr("step", step);
+        const self: *CDBGenerator = @fieldParentPtr("step", step);
 
         const b = step.owner;
         const allocator = b.allocator;
@@ -725,15 +699,14 @@ const CdbGenerator = struct {
 };
 
 fn addTooling(b: *std.Build, config: struct {
-    cdb_gen: *CdbGenerator,
+    cdb_gen: *CDBGenerator,
     cli: *std.Build.Step.Compile,
-    tests: ?TestArtifacts,
-    cppcheck: ?*std.Build.Step.Compile,
+    cppcheck: *std.Build.Step.Compile,
     clean_cache: bool,
 }) !void {
     const tooling_sources = try collectToolingFiles(b);
 
-    const cdb_step = b.step("cdb", "Generate " ++ CdbGenerator.cdb_filename);
+    const cdb_step = b.step("cdb", "Generate " ++ CDBGenerator.cdb_filename);
     cdb_step.dependOn(&config.cdb_gen.step);
     b.getInstallStep().dependOn(&config.cdb_gen.step);
 
@@ -744,25 +717,16 @@ fn addTooling(b: *std.Build, config: struct {
         });
     }
 
-    if (config.cppcheck) |cppcheck_bin| {
-        const check_step = try addStaticAnalysisStep(b, .{
-            .tooling_sources = tooling_sources,
-            .cppcheck = cppcheck_bin,
-            .cdb_gen = config.cdb_gen,
-        });
-        check_step.dependOn(&config.cdb_gen.step);
-    }
+    const check_step = try addStaticAnalysisStep(b, .{
+        .tooling_sources = tooling_sources,
+        .cppcheck = config.cppcheck,
+        .cdb_gen = config.cdb_gen,
+    });
+    check_step.dependOn(&config.cdb_gen.step);
 
     const cloc: *LOCCounter = .init(b);
     const cloc_step = b.step("cloc", "Count lines of code across the project");
     cloc_step.dependOn(&cloc.step);
-
-    if (config.tests) |tests| {
-        try addLLDBStep(b, .{
-            .cli = config.cli,
-            .tests = tests,
-        });
-    }
 
     const clean_step = b.step("clean", "Remove all emitted artifacts");
     const remove_install = b.addRemoveDirTree(b.path(getPrefixRelativePath(b, &.{})));
@@ -805,7 +769,7 @@ fn addFmtStep(b: *std.Build, config: struct {
 fn addStaticAnalysisStep(b: *std.Build, config: struct {
     tooling_sources: []const []const u8,
     cppcheck: *std.Build.Step.Compile,
-    cdb_gen: *CdbGenerator,
+    cdb_gen: *CDBGenerator,
 }) !*std.Build.Step {
     const check_step = b.step("check", "Run static analysis on all project files");
     const cppcheck_run = b.addRunArtifact(config.cppcheck);
@@ -820,11 +784,12 @@ fn addStaticAnalysisStep(b: *std.Build, config: struct {
     cppcheck_run.addArg("--check-level=exhaustive");
     cppcheck_run.addArgs(&.{ "--error-exitcode=1", "--enable=all" });
     cppcheck_run.addArgs(&.{
-        "-icatch_amalgamated.cpp",
-        "--suppress=*:catch_amalgamated.hpp",
         "--suppress=*:magic_enum.hpp",
+        "--suppress=*:.zig-cache/*",
+        "--suppress=*:*llvm/*",
     });
 
+    // Other spurious warnings
     const suppressions: []const []const u8 = &.{
         "checkersReport",
         "unmatchedSuppression",
@@ -851,54 +816,6 @@ fn addStaticAnalysisStep(b: *std.Build, config: struct {
     check_step.dependOn(&cppcheck_cache_install.step);
     check_step.dependOn(&cppcheck_run.step);
     return check_step;
-}
-
-fn addLLDBStep(b: *std.Build, config: struct {
-    cli: *std.Build.Step.Compile,
-    tests: TestArtifacts,
-}) !void {
-    if (builtin.os.tag == .windows) return;
-    const error_msg =
-        \\LLDB is is LLVM's CLI debugger whose source code can be found here:
-        \\  https://github.com/llvm/llvm-project
-        \\
-        \\It is available on most major platforms through their corresponding package managers.
-    ;
-
-    const dbg = b.step("dbg", "Debug the main executable with lldb");
-    const dbg_cli = b.step("dbg-cli", "Debug the cli tests with lldb");
-    const dbg_compiler = b.step("dbg-compiler", "Debug the compiler tests with lldb");
-    const dbg_core = b.step("dbg-core", "Debug the core tests with lldb");
-    const dbg_runner = b.step("dbg-runner", "Debug the runner tests with lldb");
-    const steps = [_]struct { *std.Build.Step, *std.Build.Step.Compile }{
-        .{ dbg, config.cli },
-        .{ dbg_cli, config.tests.cli_tests },
-        .{ dbg_compiler, config.tests.compiler_tests },
-        .{ dbg_core, config.tests.core_tests },
-        .{ dbg_runner, config.tests.runner_tests },
-    };
-
-    for (steps) |step| {
-        if (findProgram(b, "lldb")) |lldb| {
-            var debugger: *std.Build.Step.Run = undefined;
-
-            if (findProgram(b, "coreutils")) |coreutils| {
-                debugger = b.addSystemCommand(&.{coreutils});
-                debugger.addArgs(&.{ "--coreutils-prog=env", "-i", lldb });
-            } else if (findProgram(b, "env")) |env| {
-                debugger = b.addSystemCommand(&.{env});
-                debugger.addArgs(&.{ "-i", lldb });
-            } else {
-                debugger = b.addSystemCommand(&.{lldb});
-                debugger = b.addSystemCommand(&.{lldb});
-            }
-
-            debugger.addArtifactArg(step.@"1");
-            step.@"0".dependOn(&debugger.step);
-        } else {
-            try step.@"0".addError(error_msg, .{});
-        }
-    }
 }
 
 const LOCCounter = struct {
@@ -1068,6 +985,7 @@ const target_queries = [_]std.Target.Query{
 };
 
 fn addPackageStep(b: *std.Build, config: struct {
+    llvm: *LLVMBuilder,
     compile_only: bool,
     cxx_flags: []const []const u8,
 }) !void {
@@ -1097,10 +1015,9 @@ fn addPackageStep(b: *std.Build, config: struct {
         const artifacts = try addArtifacts(b, .{
             .target = resolved_target,
             .optimize = .ReleaseFast,
+            .llvm = config.llvm.clone(),
             .cxx_flags = config.cxx_flags,
             .cdb_steps = null,
-            .skip_tests = true,
-            .skip_cppcheck = true,
             .behavior = .standalone,
             .auto_install = false,
             .packaging = true,

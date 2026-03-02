@@ -1,13 +1,11 @@
 const std = @import("std");
 
 const Dependency = @import("Dependency.zig");
+const Config = Dependency.Config;
 
 /// Compiles zstd from source as a static library
 /// https://github.com/allyourcodebase/zstd
-pub fn build(b: *std.Build, config: struct {
-    target: std.Build.ResolvedTarget,
-    optimize: std.builtin.OptimizeMode,
-}) Dependency {
+pub fn build(b: *std.Build, config: Config) Dependency {
     const upstream = b.dependency("zstd", .{});
     const lib_path = upstream.path("lib");
 

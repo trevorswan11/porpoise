@@ -67,7 +67,7 @@ class Diagnostic {
 template <typename E> struct fmt::formatter<conch::Diagnostic<E>> {
     static constexpr auto parse(format_parse_context& ctx) noexcept { return ctx.begin(); }
 
-    template <typename F> auto format(const conch::Diagnostic<E>& d, F& ctx) const {
+    template <typename F> static auto format(const conch::Diagnostic<E>& d, F& ctx) {
         return fmt::format_to(ctx.out(), "{}", d.to_string());
     }
 };

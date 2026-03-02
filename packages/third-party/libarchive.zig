@@ -1,6 +1,8 @@
 const std = @import("std");
 
 const Dependency = @import("Dependency.zig");
+const Config = Dependency.Config;
+
 const zlib = @import("zlib.zig");
 const zstd = @import("zstd.zig");
 
@@ -11,7 +13,7 @@ const version: std.SemanticVersion = .{
 };
 const version_str = std.fmt.comptimePrint("{f}", .{version});
 
-/// Compiles libxml2 from source as a static library
+/// Compiles libarchive from source as a static library
 /// https://github.com/allyourcodebase/libarchive
 pub fn build(b: *std.Build) Dependency {
     const upstream = b.dependency("libarchive", .{});

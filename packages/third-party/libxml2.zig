@@ -1,6 +1,7 @@
 const std = @import("std");
 
 const Dependency = @import("Dependency.zig");
+const Config = Dependency.Config;
 
 const version: std.SemanticVersion = .{
     .major = 2,
@@ -13,17 +14,17 @@ const version_num = 21501;
 /// Compiles libxml2 from source as a static library
 /// https://github.com/allyourcodebase/libxml2
 pub fn build(b: *std.Build, config: struct {
-    target: std.Build.ResolvedTarget,
-    optimize: std.builtin.OptimizeMode,
+    opts: Config,
     zlib: Dependency,
 }) Dependency {
     const upstream = b.dependency("libxml2", .{});
+    const target = config.opts.target;
     const mod = b.createModule(.{
-        .target = config.target,
-        .optimize = config.optimize,
+        .target = target,
+        .optimize = config.opts.optimize,
         .link_libc = true,
     });
-    const os_tag = config.target.result.os.tag;
+    const os_tag = target.result.os.tag;
 
     // CMake generates this required file usually
     const config_header = b.addConfigHeader(.{
@@ -86,7 +87,7 @@ pub fn build(b: *std.Build, config: struct {
         .WITH_SCHEMATRON = 0,
         .WITH_MODULES = 0,
         .WITH_ZLIB = 1,
-        .MODULE_EXTENSION = config.target.result.dynamicLibSuffix(),
+        .MODULE_EXTENSION = target.result.dynamicLibSuffix(),
     });
     mod.addConfigHeader(xmlversion_header);
 

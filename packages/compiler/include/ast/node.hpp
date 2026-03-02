@@ -156,7 +156,7 @@ template <typename Derived> class StmtBase : public NodeBase<Derived, Statement>
 template <conch::ast::NodeSubtype N> struct fmt::formatter<N> {
     static constexpr auto parse(format_parse_context& ctx) noexcept { return ctx.begin(); }
 
-    template <typename F> auto format(const N& n, F& ctx) const {
+    template <typename F> static auto format(const N& n, F& ctx) {
         return fmt::format_to(
             ctx.out(), "{}: {}", magic_enum::enum_name(n.get_kind()), n.get_token());
     }
