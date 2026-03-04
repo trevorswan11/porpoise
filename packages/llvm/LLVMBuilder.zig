@@ -4422,11 +4422,13 @@ pub fn allTargetArtifacts(self: *const Self) []Artifact {
     return all_artifacts.items;
 }
 
-/// Populates all include and config header paths for inclusion in modules
-pub fn allIncludePaths(self: *const Self) struct {
+pub const AllIncludes = struct {
     includes: []std.Build.LazyPath,
     config_headers: []*std.Build.Step.ConfigHeader,
-} {
+};
+
+/// Populates all include and config header paths for inclusion in modules
+pub fn allIncludePaths(self: *const Self) AllIncludes {
     var all_includes: std.ArrayList(std.Build.LazyPath) = .empty;
     all_includes.appendSlice(self.b.allocator, &.{
         self.metadata.llvm_include,

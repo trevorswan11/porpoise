@@ -1,0 +1,48 @@
+//! https://github.com/llvm/llvm-project/blob/llvmorg-21.1.8/clang/lib/Frontend
+pub const root = "clang/lib/Frontend/";
+pub const sources = [_][]const u8{
+    "ASTConsumers.cpp",
+    "ASTMerge.cpp",
+    "ASTUnit.cpp",
+    "ChainedDiagnosticConsumer.cpp",
+    "ChainedIncludesSource.cpp",
+    "CompilerInstance.cpp",
+    "CompilerInvocation.cpp",
+    "CreateInvocationFromCommandLine.cpp",
+    "DependencyFile.cpp",
+    "DependencyGraph.cpp",
+    "DiagnosticRenderer.cpp",
+    "FrontendAction.cpp",
+    "FrontendActions.cpp",
+    "FrontendOptions.cpp",
+    "HeaderIncludeGen.cpp",
+    "InitPreprocessor.cpp",
+    "LayoutOverrideSource.cpp",
+    "LogDiagnosticPrinter.cpp",
+    "ModuleDependencyCollector.cpp",
+    "MultiplexConsumer.cpp",
+    "PrecompiledPreamble.cpp",
+    "PrintPreprocessedOutput.cpp",
+    "SARIFDiagnostic.cpp",
+    "SARIFDiagnosticPrinter.cpp",
+    "SerializedDiagnosticPrinter.cpp",
+    "SerializedDiagnosticReader.cpp",
+    "TestModuleFileExtension.cpp",
+    "TextDiagnostic.cpp",
+    "TextDiagnosticBuffer.cpp",
+    "TextDiagnosticPrinter.cpp",
+    "VerifyDiagnosticConsumer.cpp",
+    "InterfaceStubFunctionsConsumer.cpp",
+};
+
+pub const rewrite_root = root ++ "Rewrite";
+pub const rewrite_sources = [_][]const u8{
+    "FixItRewriter.cpp",
+    "FrontendActions.cpp",
+    "HTMLPrint.cpp",
+    "InclusionRewriter.cpp",
+    "RewriteMacros.cpp",
+    "RewriteModernObjC.cpp",
+    "RewriteObjC.cpp",
+    "RewriteTest.cpp",
+};

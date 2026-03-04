@@ -1,6 +1,4 @@
 //! https://github.com/llvm/llvm-project/blob/llvmorg-21.1.8/clang/lib/Basic/CMakeLists.txt
-const std = @import("std");
-
 const LLVMBuilder = @import("../../LLVMBuilder.zig");
 const SynthesizeHeaderConfig = LLVMBuilder.SynthesizeHeaderConfig;
 

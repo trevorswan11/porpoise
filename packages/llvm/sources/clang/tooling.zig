@@ -1,0 +1,88 @@
+//! https://github.com/llvm/llvm-project/tree/llvmorg-21.1.8/clang/lib/Tooling
+pub const root = "clang/lib/Tooling/";
+pub const sources = [_][]const u8{
+    "AllTUsExecution.cpp",
+    "ArgumentsAdjusters.cpp",
+    "CommonOptionsParser.cpp",
+    "CompilationDatabase.cpp",
+    "Execution.cpp",
+    "ExpandResponseFilesCompilationDatabase.cpp",
+    "FileMatchTrie.cpp",
+    "FixIt.cpp",
+    "GuessTargetAndModeCompilationDatabase.cpp",
+    "InterpolatingCompilationDatabase.cpp",
+    "JSONCompilationDatabase.cpp",
+    "LocateToolCompilationDatabase.cpp",
+    "Refactoring.cpp",
+    "RefactoringCallbacks.cpp",
+    "StandaloneExecution.cpp",
+    "Tooling.cpp",
+};
+
+pub const ast_diff_root = root ++ "ASTDiff";
+pub const ast_diff_sources = [_][]const u8{"ASTDiff.cpp"};
+
+pub const core_root = root ++ "Core";
+pub const core_sources = [_][]const u8{
+    "Diagnostic.cpp",
+    "Replacement.cpp",
+};
+
+pub const dep_scanning_root = root ++ "DependencyScanning";
+pub const dep_scanning_sources = [_][]const u8{
+    "DependencyScanningFilesystem.cpp",
+    "DependencyScanningService.cpp",
+    "DependencyScanningWorker.cpp",
+    "DependencyScanningTool.cpp",
+    "InProcessModuleCache.cpp",
+    "ModuleDepCollector.cpp",
+};
+
+pub const inclusions_root = root ++ "Inclusions/";
+pub const inclusions_sources = [_][]const u8{
+    "HeaderAnalysis.cpp",
+    "HeaderIncludes.cpp",
+    "IncludeStyle.cpp",
+};
+
+pub const inclusions_stdlib_root = inclusions_root ++ "Stdlib";
+pub const inclusions_stdlib_sources = [_][]const u8{"StandardLibrary.cpp"};
+
+pub const refactoring_root = root ++ "Refactoring";
+pub const refactoring_sources = [_][]const u8{
+    "ASTSelection.cpp",
+    "ASTSelectionRequirements.cpp",
+    "AtomicChange.cpp",
+    "Extract/Extract.cpp",
+    "Extract/SourceExtraction.cpp",
+    "Lookup.cpp",
+    "RefactoringActions.cpp",
+    "Rename/RenamingAction.cpp",
+    "Rename/SymbolOccurrences.cpp",
+    "Rename/USRFinder.cpp",
+    "Rename/USRFindingAction.cpp",
+    "Rename/USRLocFinder.cpp",
+};
+
+pub const syntax_root = root ++ "Syntax";
+pub const syntax_sources = [_][]const u8{
+    "BuildTree.cpp",
+    "ComputeReplacements.cpp",
+    "Nodes.cpp",
+    "Mutations.cpp",
+    "TokenBufferTokenManager.cpp",
+    "Synthesis.cpp",
+    "Tokens.cpp",
+    "Tree.cpp",
+};
+
+pub const transformer_root = root ++ "Transformer";
+pub const transformer_sources = [_][]const u8{
+    "Parsing.cpp",
+    "RangeSelector.cpp",
+    "RewriteRule.cpp",
+    "SourceCode.cpp",
+    "SourceCodeBuilders.cpp",
+    "Stencil.cpp",
+    "Transformer.cpp",
+};

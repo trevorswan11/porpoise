@@ -1016,7 +1016,8 @@ fn addPackageStep(b: *std.Build, config: struct {
         };
 
         for (legal_paths) |path| {
-            _ = staging.addCopyFile(path.@"0", b.fmt("{s}/{s}", .{ package_artifact_dirname, path.@"1" }));
+            const src, const dst = path;
+            _ = staging.addCopyFile(src, b.fmt("{s}/{s}", .{ package_artifact_dirname, dst }));
         }
 
         // Zip is only needed on windows

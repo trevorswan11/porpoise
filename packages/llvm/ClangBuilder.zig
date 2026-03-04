@@ -3,11 +3,26 @@ const std = @import("std");
 
 const LLVMBuilder = @import("LLVMBuilder.zig");
 
+const analysis = @import("sources/clang/analysis.zig");
+const api_notes = @import("sources/clang/api_notes.zig");
+const ast = @import("sources/clang/ast.zig");
+const ast_matchers = @import("sources/clang/ast_matchers.zig");
 const basic = @import("sources/clang/basic.zig");
+const codegen = @import("sources/clang/codegen.zig");
+const driver = @import("sources/clang/driver.zig");
+const extract_api = @import("sources/clang/extract_api.zig");
 const format = @import("sources/clang/format.zig");
+const frontend = @import("sources/clang/frontend.zig");
+const index = @import("sources/clang/index.zig");
+const install_api = @import("sources/clang/install_api.zig");
+const interpreter = @import("sources/clang/interpreter.zig");
 const lex = @import("sources/clang/lex.zig");
+const parse = @import("sources/clang/parse.zig");
 const sema = @import("sources/clang/sema.zig");
+const serialization = @import("sources/clang/serialization.zig");
+const static_analyzer = @import("sources/clang/static_analyzer.zig");
 const tblgen = @import("sources/clang/tblgen.zig");
+const tooling = @import("sources/clang/tooling.zig");
 
 const Artifact = LLVMBuilder.Artifact;
 const ArtifactCreateConfig = LLVMBuilder.ArtifactCreateConfig;
@@ -20,8 +35,8 @@ const Metadata = struct {
 
 /// Artifacts compiled for the actual target, associated with the clang subproject of llvm
 const ClangTargetArtifacts = struct {
-    const Driver = struct {
-        options: *std.Build.Step.WriteFile = undefined,
+    const ArtifactWithGen = struct {
+        gen: *std.Build.Step.WriteFile = undefined,
         core_lib: Artifact = undefined,
     };
 
@@ -31,25 +46,66 @@ const ClangTargetArtifacts = struct {
         version_inc: *std.Build.Step.ConfigHeader = undefined,
     };
 
-    const Sema = struct {
-        gen: *std.Build.Step.WriteFile = undefined,
+    const Tooling = struct {
         core_lib: Artifact = undefined,
+        core: Artifact = undefined,
+        ast_diff: Artifact = undefined,
+        dep_scanning: Artifact = undefined,
+        inclusions: struct {
+            core_lib: Artifact = undefined,
+            stdlib: Artifact = undefined,
+        } = .{},
+        refactoring: Artifact = undefined,
+        syntax: Artifact = undefined,
+        transformer: Artifact = undefined,
     };
 
-    const Tooling = struct {
+    const StaticAnalyzer = struct {
+        gen: *std.Build.Step.WriteFile = undefined,
+        checkers: Artifact = undefined,
         core: Artifact = undefined,
-        inclusions: Artifact = undefined,
+        frontend: Artifact = undefined,
+    };
+
+    const AST = struct {
+        gen: *std.Build.Step.WriteFile = undefined,
+        core_lib: Artifact = undefined,
+        matchers: struct {
+            core_lib: Artifact = undefined,
+            dynamic: Artifact = undefined,
+        } = .{},
+    };
+
+    const Frontend = struct {
+        core_lib: Artifact = undefined,
+        rewrite: Artifact = undefined,
+        tool: Artifact = undefined,
     };
 
     support: Artifact = undefined,
-    driver: Driver = .{},
-    sema: Sema = .{},
+    driver: ArtifactWithGen = .{},
+    sema: ArtifactWithGen = .{},
     basic: Basic = .{},
     lex: Artifact = undefined,
     rewrite: Artifact = undefined,
-    tooling: Tooling = .{},
 
+    analysis: Artifact = undefined,
+    api_notes: Artifact = undefined,
+    ast: AST = .{},
+    codegen: Artifact = undefined,
+    cross_tu: Artifact = undefined,
+    directory_watcher: Artifact = undefined,
+    edit: Artifact = undefined,
+    extract_api: Artifact = undefined,
     format: Artifact = undefined,
+    frontend: Artifact = undefined,
+    index: Artifact = undefined,
+    install_api: Artifact = undefined,
+    interpreter: Artifact = undefined,
+    parse: ArtifactWithGen = .{},
+    serialization: ArtifactWithGen = .{},
+    static_analyzer: StaticAnalyzer = .{},
+    tooling: Tooling = .{},
 };
 
 /// CLI Tools provided by Clang
@@ -114,7 +170,7 @@ pub fn build(self: *Self) void {
     self.clang_artifacts.tooling = self.buildTooling();
     self.clang_artifacts.format = self.buildFormat();
 
-    self.clang_artifacts.driver.options = self.runDriverOptsGen();
+    self.clang_artifacts.driver.gen = self.runDriverOptsGen();
 
     self.clang_tools.clang_format = self.buildFormatTool();
 
@@ -393,8 +449,8 @@ fn buildTooling(self: *const Self) ClangTargetArtifacts.Tooling {
     const core = self.createClangLibrary(.{
         .name = "clangToolingCore",
         .cxx_source_files = .{
-            .root = self.metadata.root.path(b, "clang/lib/Tooling/Core"),
-            .files = &.{ "Diagnostic.cpp", "Replacement.cpp" },
+            .root = self.metadata.root.path(b, tooling.core_root),
+            .files = &tooling.core_sources,
         },
         .additional_include_paths = &.{
             self.metadata.root.path(b, basic.root),
@@ -410,11 +466,11 @@ fn buildTooling(self: *const Self) ClangTargetArtifacts.Tooling {
     });
 
     // https://github.com/llvm/llvm-project/blob/llvmorg-21.1.8/clang/lib/Tooling/Inclusions/CMakeLists.txt
-    const inclusions = self.createClangLibrary(.{
+    const inclusions_core = self.createClangLibrary(.{
         .name = "clangToolingInclusions",
         .cxx_source_files = .{
-            .root = self.metadata.root.path(b, "clang/lib/Tooling/Inclusions"),
-            .files = &.{ "HeaderAnalysis.cpp", "HeaderIncludes.cpp", "IncludeStyle.cpp" },
+            .root = self.metadata.root.path(b, tooling.inclusions_root),
+            .files = &tooling.inclusions_sources,
         },
         .additional_include_paths = &.{
             self.metadata.root.path(b, basic.root),
@@ -431,7 +487,9 @@ fn buildTooling(self: *const Self) ClangTargetArtifacts.Tooling {
 
     return .{
         .core = core,
-        .inclusions = inclusions,
+        .inclusions = .{
+            .core_lib = inclusions_core,
+        },
     };
 }
 
@@ -455,7 +513,7 @@ fn buildFormat(self: *const Self) Artifact {
             self.clang_artifacts.basic.core_lib,
             self.clang_artifacts.lex,
             self.clang_artifacts.tooling.core,
-            self.clang_artifacts.tooling.inclusions,
+            self.clang_artifacts.tooling.inclusions.core_lib,
             llvm.target_artifacts.support,
         },
     });
@@ -487,17 +545,72 @@ fn buildFormatTool(self: *const Self) Artifact {
     });
 }
 
-/// Returns all clang artifacts
+/// Returns all clang-specific artifacts
 pub fn allClangArtifacts(self: *const Self) []Artifact {
     var all_artifacts: std.ArrayList(Artifact) = .empty;
     all_artifacts.appendSlice(self.b.allocator, &.{
         self.clang_artifacts.support,
+        self.clang_artifacts.driver.core_lib,
+        self.clang_artifacts.sema.core_lib,
         self.clang_artifacts.basic.core_lib,
         self.clang_artifacts.lex,
         self.clang_artifacts.rewrite,
-        self.clang_artifacts.tooling.core,
-        self.clang_artifacts.tooling.inclusions,
+        self.clang_artifacts.analysis,
+        self.clang_artifacts.api_notes,
+        self.clang_artifacts.ast.core_lib,
+        self.clang_artifacts.ast.matchers.core_lib,
+        self.clang_artifacts.ast.matchers.dynamic,
+        self.clang_artifacts.codegen,
+        self.clang_artifacts.cross_tu,
+        self.clang_artifacts.directory_watcher,
+        self.clang_artifacts.edit,
+        self.clang_artifacts.extract_api,
         self.clang_artifacts.format,
+        self.clang_artifacts.frontend,
+        self.clang_artifacts.index,
+        self.clang_artifacts.install_api,
+        self.clang_artifacts.interpreter,
+        self.clang_artifacts.parse.core_lib,
+        self.clang_artifacts.serialization.core_lib,
+        self.clang_artifacts.static_analyzer.checkers,
+        self.clang_artifacts.static_analyzer.core,
+        self.clang_artifacts.static_analyzer.frontend,
+        self.clang_artifacts.tooling.ast_diff,
+        self.clang_artifacts.tooling.core,
+        self.clang_artifacts.tooling.core_lib,
+        self.clang_artifacts.tooling.dep_scanning,
+        self.clang_artifacts.tooling.inclusions.core_lib,
+        self.clang_artifacts.tooling.inclusions.stdlib,
+        self.clang_artifacts.tooling.refactoring,
+        self.clang_artifacts.tooling.syntax,
+        self.clang_artifacts.tooling.transformer,
     }) catch @panic("OOM");
     return all_artifacts.items;
+}
+
+/// Populates all clang-specific include and config header paths for inclusion in modules
+pub fn allIncludePaths(self: *const Self) LLVMBuilder.AllIncludes {
+    var all_includes: std.ArrayList(std.Build.LazyPath) = .empty;
+    all_includes.appendSlice(self.b.allocator, &.{
+        self.metadata.clang_include,
+        self.clang_artifacts.basic.gen.getDirectory(),
+        self.clang_artifacts.static_analyzer.gen.getDirectory(),
+        self.clang_artifacts.ast.gen.getDirectory(),
+        self.clang_artifacts.driver.gen.getDirectory(),
+        self.clang_artifacts.sema.gen.getDirectory(),
+        self.clang_artifacts.parse.gen.getDirectory(),
+        self.clang_artifacts.serialization.gen.getDirectory(),
+    }) catch @panic("OOM");
+
+    var all_config_headers: std.ArrayList(*std.Build.Step.ConfigHeader) = .empty;
+    all_config_headers.appendSlice(self.b.allocator, &.{
+        self.metadata.vcs_version,
+        self.config_h,
+        self.clang_artifacts.basic.version_inc,
+    }) catch @panic("OOM");
+
+    return .{
+        .includes = all_includes.items,
+        .config_headers = all_config_headers.items,
+    };
 }
