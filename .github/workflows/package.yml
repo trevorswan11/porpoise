@@ -33,6 +33,6 @@ jobs:
               with:
                   name: conch-binaries
                   path: |
-                      zig-out/package/compressed/*.tar.zst
-                      zig-out/package/compressed/*.zip
+                      zig-out/package/*.tar.zst
+                      zig-out/package/*.zip
                   if-no-files-found: error

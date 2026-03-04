@@ -968,7 +968,6 @@ fn addPackageStep(b: *std.Build, config: struct {
     const package_step = b.step("package", "Package artifacts for a new release");
     package_step.dependOn(&compressor.step);
     const version = zon.version;
-    const compressed_package_dir = b.pathJoin(&.{ package_parent_dirname, "compressed" });
 
     const ArchiveBehavior = struct {
         compressor_arg: enum { zip, zst },
@@ -999,41 +998,25 @@ fn addPackageStep(b: *std.Build, config: struct {
             else
                 b.fmt("{s}-{s}", .{ name, version });
         };
+        artifacts.cli.root_module.strip = true;
 
         const package_artifact_dirname = b.fmt("conch-{s}-{s}", .{
             try query.zigTriple(b.allocator),
             version,
         });
 
-        const package_artifact_dir_path = b.pathJoin(&.{
-            package_parent_dirname,
-            "uncompressed",
-            package_artifact_dirname,
-        });
+        const staging = b.addWriteFiles();
+        const artifact_dest_path = b.fmt("{s}/{s}", .{ package_artifact_dirname, artifacts.cli.out_filename });
+        _ = staging.addCopyFile(artifacts.cli.getEmittedBin(), artifact_dest_path);
 
-        const platform = b.addInstallArtifact(artifacts.cli, .{
-            .dest_dir = .{
-                .override = .{ .custom = package_artifact_dir_path },
-            },
-        });
-        package_step.dependOn(&platform.step);
-
-        const prefix: std.Build.LazyPath = .{ .cwd_relative = b.install_prefix };
         const legal_paths = [_]struct { std.Build.LazyPath, []const u8 }{
             .{ b.path("LICENSE"), "LICENSE" },
             .{ b.path("README.md"), "README.md" },
             .{ b.path(".github/CHANGELOG.md"), "CHANGELOG.md" },
         };
 
-        var file_installs: [legal_paths.len]*std.Build.Step = undefined;
-        for (legal_paths, 0..) |path, i| {
-            const install_file_step = b.addInstallFileWithDir(
-                path.@"0",
-                .{ .custom = package_artifact_dir_path },
-                path.@"1",
-            );
-            package_step.dependOn(&install_file_step.step);
-            file_installs[i] = &install_file_step.step;
+        for (legal_paths) |path| {
+            _ = staging.addCopyFile(path.@"0", b.fmt("{s}/{s}", .{ package_artifact_dirname, path.@"1" }));
         }
 
         // Zip is only needed on windows
@@ -1061,18 +1044,12 @@ fn addPackageStep(b: *std.Build, config: struct {
             const packer = b.addRunArtifact(compressor);
             packer.addArg(@tagName(archive.compressor_arg));
             const out_path = packer.addOutputFileArg(out_name);
-            packer.addArg(package_artifact_dir_path);
-            packer.setCwd(prefix);
-
-            packer.step.dependOn(&platform.step);
+            packer.addDirectoryArg(staging.getDirectory().path(b, package_artifact_dirname));
             package_step.dependOn(&packer.step);
-            for (file_installs) |step| {
-                packer.step.dependOn(step);
-            }
 
             const copy = b.addInstallFileWithDir(
                 out_path,
-                .{ .custom = compressed_package_dir },
+                .{ .custom = package_parent_dirname },
                 out_name,
             );
             package_step.dependOn(&copy.step);
