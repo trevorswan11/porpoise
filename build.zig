@@ -10,6 +10,7 @@ const catch2 = @import("packages/third-party/catch2.zig");
 
 const LLVMBuilder = @import("packages/llvm/LLVMBuilder.zig");
 const ClangBuilder = @import("packages/llvm/ClangBuilder.zig");
+const LLDBuilder = @import("packages/llvm/LLDBuilder.zig");
 
 pub fn build(b: *std.Build) !void {
     const optimize = b.standardOptimizeOption(.{
@@ -18,6 +19,7 @@ pub fn build(b: *std.Build) !void {
 
     const llvm: *LLVMBuilder = .init(b);
     const clang: *ClangBuilder = .init(llvm);
+    const lld: *LLDBuilder = .init(llvm);
     const cdb_gen: *CDBGenerator = .init(b);
 
     var compiler_flags: std.ArrayList([]const u8) = .empty;
@@ -66,10 +68,11 @@ pub fn build(b: *std.Build) !void {
     });
 
     // TODO: Remove
-    const install_step = b.getInstallStep();
-    for (clang.allClangArtifacts()) |art| {
-        install_step.dependOn(&art.step);
-    }
+    lld.build();
+    // const install_step = b.getInstallStep();
+    // for (lld.allArtifacts()) |art| {
+    //     install_step.dependOn(&art.step);
+    // }
 
     try addPackageStep(b, .{
         .llvm = llvm,

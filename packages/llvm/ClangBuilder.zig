@@ -110,9 +110,6 @@ const ClangTools = struct {
     clang_format: Artifact = undefined,
 };
 
-const default_optimize = LLVMBuilder.default_optimize;
-const common_llvm_cxx_flags = LLVMBuilder.common_llvm_cxx_flags;
-
 const Self = @This();
 
 b: *std.Build,
@@ -563,6 +560,11 @@ fn buildDriver(self: *const Self) ArtifactWithGen {
             self.llvm.target_artifacts.windows_support.driver,
         },
     });
+
+    // MSVCToolchain.cpp needs version.dll
+    if (self.llvm.target.result.os.tag == .windows) {
+        lib.root_module.linkSystemLibrary("version", .{});
+    }
 
     return .{
         .gen = registry,
