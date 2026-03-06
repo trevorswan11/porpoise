@@ -19,6 +19,7 @@ pub fn build(b: *std.Build) !void {
 
     const llvm: *LLVMBuilder = .init(b);
     const clang: *ClangBuilder = .init(llvm);
+    const lld: *LLDBuilder = .init(llvm);
     const cdb_gen: *CDBGenerator = .init(b);
 
     var compiler_flags: std.ArrayList([]const u8) = .empty;
@@ -65,6 +66,40 @@ pub fn build(b: *std.Build) !void {
         .cli = artifacts.cli,
         .cppcheck = artifacts.cppcheck.?,
     });
+
+    // TODO: For demonstrative purposes only
+    {
+        const llvm_build = b.step("llvm", "Install all LLVM libraries");
+        for (llvm.allTargetArtifacts()) |artifact| {
+            const install = b.addInstallArtifact(artifact, .{
+                .dest_dir = .{
+                    .override = .{ .custom = "llvm" },
+                },
+            });
+            llvm_build.dependOn(&install.step);
+        }
+
+        const clang_build = b.step("clang", "Install all Clang libraries");
+        for (clang.allArtifacts()) |artifact| {
+            const install = b.addInstallArtifact(artifact, .{
+                .dest_dir = .{
+                    .override = .{ .custom = "clang" },
+                },
+            });
+            clang_build.dependOn(&install.step);
+        }
+
+        lld.build();
+        const lld_build = b.step("lld", "Install all LLD libraries");
+        for (lld.allArtifacts()) |artifact| {
+            const install = b.addInstallArtifact(artifact, .{
+                .dest_dir = .{
+                    .override = .{ .custom = "lld" },
+                },
+            });
+            lld_build.dependOn(&install.step);
+        }
+    }
 
     try addPackageStep(b, .{
         .llvm = llvm,

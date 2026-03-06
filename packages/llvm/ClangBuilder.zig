@@ -1507,7 +1507,7 @@ fn buildFormatTool(self: *const Self) Artifact {
 }
 
 /// Returns all clang-specific artifacts
-pub fn allClangArtifacts(self: *const Self) []Artifact {
+pub fn allArtifacts(self: *const Self) []Artifact {
     var all_artifacts: std.ArrayList(Artifact) = .empty;
     all_artifacts.appendSlice(self.b.allocator, &.{
         self.clang_artifacts.support,
