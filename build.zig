@@ -75,6 +75,9 @@ pub fn build(b: *std.Build) !void {
                 .dest_dir = .{
                     .override = .{ .custom = "llvm" },
                 },
+                .h_dir = .{
+                    .override = .{ .custom = "include/llvm" },
+                },
             });
             llvm_build.dependOn(&install.step);
         }
@@ -84,6 +87,9 @@ pub fn build(b: *std.Build) !void {
             const install = b.addInstallArtifact(artifact, .{
                 .dest_dir = .{
                     .override = .{ .custom = "clang" },
+                },
+                .h_dir = .{
+                    .override = .{ .custom = "include/clang" },
                 },
             });
             clang_build.dependOn(&install.step);
@@ -95,6 +101,9 @@ pub fn build(b: *std.Build) !void {
             const install = b.addInstallArtifact(artifact, .{
                 .dest_dir = .{
                     .override = .{ .custom = "lld" },
+                },
+                .h_dir = .{
+                    .override = .{ .custom = "include/lld" },
                 },
             });
             lld_build.dependOn(&install.step);
