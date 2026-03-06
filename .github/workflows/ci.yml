@@ -46,5 +46,8 @@ jobs:
                 restore-keys: |
                   ${{ runner.os }}-zig-
 
-            - name: Run tests
+            - name: Run tests (debug)
               run: zig build test
+
+            - name: Run tests (release)
+              run: zig build test --release
