@@ -1,0 +1,38 @@
+//! https://github.com/llvm/llvm-project/tree/llvmorg-21.1.8/clang/lib/Analysis
+pub const root = "clang/lib/Analysis";
+pub const sources = [_][]const u8{
+    "AnalysisDeclContext.cpp",
+    "BodyFarm.cpp",
+    "CalledOnceCheck.cpp",
+    "CFG.cpp",
+    "CFGReachabilityAnalysis.cpp",
+    "CFGStmtMap.cpp",
+    "CallGraph.cpp",
+    "CloneDetection.cpp",
+    "CocoaConventions.cpp",
+    "ConstructionContext.cpp",
+    "Consumed.cpp",
+    "CodeInjector.cpp",
+    "Dominators.cpp",
+    "ExprMutationAnalyzer.cpp",
+    "FixitUtil.cpp",
+    "IntervalPartition.cpp",
+    "IssueHash.cpp",
+    "LifetimeSafety.cpp",
+    "LiveVariables.cpp",
+    "MacroExpansionContext.cpp",
+    "ObjCNoReturn.cpp",
+    "PathDiagnostic.cpp",
+    "PostOrderCFGView.cpp",
+    "ProgramPoint.cpp",
+    "ReachableCode.cpp",
+    "RetainSummaryManager.cpp",
+    "ThreadSafety.cpp",
+    "ThreadSafetyCommon.cpp",
+    "ThreadSafetyLogical.cpp",
+    "ThreadSafetyTIL.cpp",
+    "UninitializedValues.cpp",
+    "UnsafeBufferUsage.cpp",
+};
+
+// Skipping FlowAnalysis (not necessary) and plugins (disabled)

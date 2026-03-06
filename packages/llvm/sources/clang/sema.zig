@@ -1,13 +1,110 @@
 //! https://github.com/llvm/llvm-project/blob/llvmorg-21.1.8/clang/lib/Sema/CMakeLists.txt
-const std = @import("std");
-
 const LLVMBuilder = @import("../../LLVMBuilder.zig");
 const SynthesizeHeaderConfig = LLVMBuilder.SynthesizeHeaderConfig;
 
 const basic = @import("basic.zig");
 
-pub const include_root = "clang/include/clang/Sema";
-pub const attr_td = basic.attr_td;
+pub const root = "clang/lib/Sema/";
+pub const sources = [_][]const u8{
+    "AnalysisBasedWarnings.cpp",
+    "CheckExprLifetime.cpp",
+    "CodeCompleteConsumer.cpp",
+    "DeclSpec.cpp",
+    "DelayedDiagnostic.cpp",
+    "HeuristicResolver.cpp",
+    "HLSLBuiltinTypeDeclBuilder.cpp",
+    "HLSLExternalSemaSource.cpp",
+    "IdentifierResolver.cpp",
+    "JumpDiagnostics.cpp",
+    "MultiplexExternalSemaSource.cpp",
+    "ParsedAttr.cpp",
+    "Scope.cpp",
+    "ScopeInfo.cpp",
+    "Sema.cpp",
+    "SemaAMDGPU.cpp",
+    "SemaARM.cpp",
+    "SemaAVR.cpp",
+    "SemaAccess.cpp",
+    "SemaAttr.cpp",
+    "SemaAPINotes.cpp",
+    "SemaAvailability.cpp",
+    "SemaBPF.cpp",
+    "SemaBase.cpp",
+    "SemaBoundsSafety.cpp",
+    "SemaCXXScopeSpec.cpp",
+    "SemaCast.cpp",
+    "SemaChecking.cpp",
+    "SemaCodeComplete.cpp",
+    "SemaConcept.cpp",
+    "SemaConsumer.cpp",
+    "SemaCoroutine.cpp",
+    "SemaCUDA.cpp",
+    "SemaDirectX.cpp",
+    "SemaDecl.cpp",
+    "SemaDeclAttr.cpp",
+    "SemaDeclCXX.cpp",
+    "SemaDeclObjC.cpp",
+    "SemaExceptionSpec.cpp",
+    "SemaExpr.cpp",
+    "SemaExprCXX.cpp",
+    "SemaExprMember.cpp",
+    "SemaExprObjC.cpp",
+    "SemaFixItUtils.cpp",
+    "SemaFunctionEffects.cpp",
+    "SemaHLSL.cpp",
+    "SemaHexagon.cpp",
+    "SemaInit.cpp",
+    "SemaLambda.cpp",
+    "SemaLookup.cpp",
+    "SemaLoongArch.cpp",
+    "SemaM68k.cpp",
+    "SemaMIPS.cpp",
+    "SemaMSP430.cpp",
+    "SemaModule.cpp",
+    "SemaNVPTX.cpp",
+    "SemaObjC.cpp",
+    "SemaObjCProperty.cpp",
+    "SemaOpenACC.cpp",
+    "SemaOpenACCAtomic.cpp",
+    "SemaOpenACCClause.cpp",
+    "SemaOpenACCClauseAppertainment.cpp",
+    "SemaOpenCL.cpp",
+    "SemaOpenMP.cpp",
+    "SemaOverload.cpp",
+    "SemaPPC.cpp",
+    "SemaPseudoObject.cpp",
+    "SemaRISCV.cpp",
+    "SemaStmt.cpp",
+    "SemaStmtAsm.cpp",
+    "SemaStmtAttr.cpp",
+    "SemaSPIRV.cpp",
+    "SemaSYCL.cpp",
+    "SemaSwift.cpp",
+    "SemaSystemZ.cpp",
+    "SemaTemplate.cpp",
+    "SemaTemplateDeduction.cpp",
+    "SemaTemplateDeductionGuide.cpp",
+    "SemaTemplateInstantiate.cpp",
+    "SemaTemplateInstantiateDecl.cpp",
+    "SemaTemplateVariadic.cpp",
+    "SemaType.cpp",
+    "SemaTypeTraits.cpp",
+    "SemaWasm.cpp",
+    "SemaX86.cpp",
+    "TypeLocBuilder.cpp",
+};
+
+pub const open_cl_synthesize: SynthesizeHeaderConfig = .{
+    .gen_conf = .{
+        .name = "ClangOpenCLBuiltinsImpl",
+        .td_file = root ++ "OpenCLBuiltins.td",
+        .instruction = .{ .action = "-gen-clang-opencl-builtins" },
+    },
+    .virtual_path = "OpenCLBuiltins.inc",
+};
+
+const include_root = "clang/include/clang/Sema";
+const attr_td = basic.attr_td;
 
 pub const attr_synthesize_configs = [_]SynthesizeHeaderConfig{
     .{

@@ -10,6 +10,7 @@ const catch2 = @import("packages/third-party/catch2.zig");
 
 const LLVMBuilder = @import("packages/llvm/LLVMBuilder.zig");
 const ClangBuilder = @import("packages/llvm/ClangBuilder.zig");
+const LLDBuilder = @import("packages/llvm/LLDBuilder.zig");
 
 pub fn build(b: *std.Build) !void {
     const optimize = b.standardOptimizeOption(.{
@@ -57,6 +58,7 @@ pub fn build(b: *std.Build) !void {
     });
     for (cdb_steps.items) |cdb_step| cdb_gen.step.dependOn(cdb_step);
 
+    clang.build();
     try addTooling(b, .{
         .cdb_gen = cdb_gen,
         .clang = clang,
@@ -710,6 +712,7 @@ fn addFmtStep(b: *std.Build, config: struct {
     tooling_sources: []const []const u8,
     clang: *ClangBuilder,
 }) !void {
+    const clang_format = config.clang.clang_tools.clang_format;
     const zig_paths = try collectFiles(b, "packages", .{
         .allowed_extensions = &.{".zig"},
         .extra_files = &.{
@@ -719,9 +722,6 @@ fn addFmtStep(b: *std.Build, config: struct {
     });
     const build_fmt = b.addFmt(.{ .paths = zig_paths });
     const build_fmt_check = b.addFmt(.{ .paths = zig_paths, .check = true });
-
-    config.clang.build();
-    const clang_format = config.clang.clang_tools.clang_format;
 
     const formatter = b.addRunArtifact(clang_format);
     formatter.addArg("-i");
@@ -1016,7 +1016,8 @@ fn addPackageStep(b: *std.Build, config: struct {
         };
 
         for (legal_paths) |path| {
-            _ = staging.addCopyFile(path.@"0", b.fmt("{s}/{s}", .{ package_artifact_dirname, path.@"1" }));
+            const src, const dst = path;
+            _ = staging.addCopyFile(src, b.fmt("{s}/{s}", .{ package_artifact_dirname, dst }));
         }
 
         // Zip is only needed on windows

@@ -1,6 +1,4 @@
 //! https://github.com/llvm/llvm-project/blob/llvmorg-21.1.8/clang/lib/Basic/CMakeLists.txt
-const std = @import("std");
-
 const LLVMBuilder = @import("../../LLVMBuilder.zig");
 const SynthesizeHeaderConfig = LLVMBuilder.SynthesizeHeaderConfig;
 
@@ -179,8 +177,7 @@ pub const diag_synthesize_configs = blk: {
         .virtual_path = "clang/Basic/DiagnosticAllCompatIDs.inc",
     };
 
-    const static = configs;
-    break :blk static;
+    break :blk configs;
 };
 
 pub const attr_td = include_root ++ "Attr.td";
