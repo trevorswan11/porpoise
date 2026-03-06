@@ -20,14 +20,13 @@ const bar := mut fn(): ulong {
 - Parameters obey the same syntax rules as the rest of the type system
 - Without any type modifiers, parameters are passed by value
     - All parameters are implicitly constant values
-- A parameter may be passed by const reference by marking it as `ref`
+- A parameter may be passed by const reference by marking it as `&`
     - To call such a function, the call site must also indicate with the `&` operator
-- A parameter may be passed by mutable reference by marking it as `mut`
+- A parameter may be passed by mutable reference by marking it as `&mut`
     - To call such a function, the call site must also indicate with the `&mut` operator
-    - The mut keyword implicitly implies a reference is being taken, though you cannot use `ref` and `mut` together (e.g. ref mut int is illegal because it's ugly)
-- There are no default parameters due to lifetime concerns
+- There are no default parameters
 ```conch
-const foo := fn(a: ref int): ulong {
+const foo := fn(a: &int): ulong {
     // ...
 };
 
@@ -35,7 +34,7 @@ const bar := fn(b: int): ulong {
     // ...
 };
 
-const baz := fn(c: mut int): ulong {
+const baz := fn(c: &mut int): ulong {
     // ...
 };
 
@@ -76,7 +75,6 @@ const foo := fn(a: int, b: uint): ulong {
 - There is no function overloading
     - This includes operators. There is no operator overloading
 - Top-level functions cannot be marked variable and must be `const`
-    - This is because of how top-level functions behave with the resulting assembly
 - Functions can have the `noreturn` return 'type' which signifies that the compiler should not expect a `return` construct in the function body
     - Violating this assumption is a compile time error
 

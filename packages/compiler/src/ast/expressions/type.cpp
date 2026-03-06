@@ -1,5 +1,3 @@
-#include <algorithm>
-
 #include "ast/expressions/type.hpp"
 
 #include "ast/expressions/function.hpp"
@@ -11,81 +9,46 @@
 
 namespace conch::ast {
 
-ExplicitArrayType::ExplicitArrayType(std::vector<Box<Expression>> dimensions,
-                                     Box<TypeExpression>          inner_type) noexcept
-    : dimensions_{std::move(dimensions)}, inner_type_{std::move(inner_type)} {}
+ExplicitArrayType::ExplicitArrayType(Box<Expression>   dimension,
+                                     Box<ExplicitType> inner_type) noexcept
+    : dimension_{std::move(dimension)}, inner_type_{std::move(inner_type)} {}
 
 ExplicitArrayType::~ExplicitArrayType() = default;
 
-ExplicitType::ExplicitType(const Optional<TypeModifiers>& modifiers,
-                           ExplicitTypeVariant            type,
-                           bool                           primitive) noexcept
-    : modifiers_{modifiers}, type_{std::move(type)}, primitive_{primitive} {}
+ExplicitType::ExplicitType(TypeModifier modifier, ExplicitTypeVariant type) noexcept
+    : modifier_{std::move(modifier)}, type_{std::move(type)} {}
 
 ExplicitType::~ExplicitType() = default;
 
 [[nodiscard]] auto ExplicitType::parse(Parser& parser) -> Expected<ExplicitType, ParserDiagnostic> {
     const auto start_token = parser.current_token();
 
-    // The modifiers are initialized only if the first token is one
-    const auto parse_modifiers =
-        [&parser]() -> Expected<Optional<TypeModifiers>, ParserDiagnostic> {
-        Optional<TypeModifiers> modifiers;
+    // Always check for a modifier and advance past it if present
+    const auto modifier = TypeModifier::from_token(start_token);
+    if (!modifier.is_value()) { parser.advance(); }
 
-        const auto local_start = parser.current_token();
-        if (token_to_modifier(local_start)) { modifiers.emplace(); }
-        while (const auto modifier = token_to_modifier(parser.current_token())) {
-            parser.advance();
-            *modifiers |= *modifier;
-        }
+    // The array dimension of a type are only present conditionally
+    if (parser.peek_token_is(TokenType::LBRACKET)) {
+        parser.advance();
+        auto dimension = TRY(parser.parse_expression());
+        TRY(parser.expect_peek(TokenType::RBRACKET));
 
-        // The modifiers are invalid if they were initialized and are not unique
-        if (modifiers && !validate_modifiers(*modifiers)) {
-            return make_parser_unexpected(ParserError::ILLEGAL_TYPE_MODIFIERS, local_start);
-        }
-        return modifiers;
-    };
-    const auto outer_modifiers = TRY(parse_modifiers());
+        // Arrays are recursively defined
+        return ExplicitType{
+            std::move(modifier),
+            ExplicitArrayType{std::move(dimension), make_box<ExplicitType>(TRY(parse(parser)))}};
+    } else if (!TypeModifier::from_token(start_token).is_value()) {
+        // Don't advance since the parser does it implicitly here (costs two from_token calls)
+        return ExplicitType{std::move(modifier), make_box<ExplicitType>(TRY(parse(parser)))};
+    }
 
-    // The array dimensions of a type are only present conditionally
-    auto opt_array_dims =
-        TRY(([&]() -> Expected<Optional<std::vector<Box<Expression>>>, ParserDiagnostic> {
-            if (!parser.peek_token_is(TokenType::LBRACKET)) { return nullopt; }
-
-            // Arrays are a little weird especially with the function signature
-            parser.advance();
-            std::vector<Box<Expression>> dimensions;
-
-            while (!parser.peek_token_is(TokenType::RBRACKET) &&
-                   !parser.peek_token_is(TokenType::END)) {
-                parser.advance();
-                dimensions.emplace_back(TRY(parser.parse_expression()));
-                if (!parser.peek_token_is(TokenType::RBRACKET)) {
-                    TRY(parser.expect_peek(TokenType::COMMA));
-                }
-            }
-
-            TRY(parser.expect_peek(TokenType::RBRACKET));
-            if (dimensions.empty()) {
-                return make_parser_unexpected(ParserError::MISSING_ARRAY_SIZE_TOKEN, start_token);
-            }
-            return dimensions;
-        }()));
-
-    // Inner modifiers exist only if there is an outer array type, otherwise they mirror outer
-    const auto inner_modifiers = TRY(([&]() -> Expected<Optional<TypeModifiers>, ParserDiagnostic> {
-        if (opt_array_dims) { return parse_modifiers(); }
-        return outer_modifiers;
-    }()));
-
-    auto inner_type = TRY(([&]() -> Expected<ExplicitType, ParserDiagnostic> {
-        const auto is_primitive = parser.peek_token().is_primitive();
-        if (is_primitive || parser.peek_token_is(TokenType::IDENT)) {
+    // Otherwise the type has to be a 'simple' function or ident
+    return TRY(([&]() -> Expected<ExplicitType, ParserDiagnostic> {
+        if (parser.peek_token_is(TokenType::IDENT)) {
             parser.advance();
             return ExplicitType{
-                inner_modifiers,
-                Node::downcast<IdentifierExpression>(TRY(IdentifierExpression::parse(parser))),
-                is_primitive};
+                modifier,
+                Node::downcast<IdentifierExpression>(TRY(IdentifierExpression::parse(parser)))};
         }
 
         // Otherwise the inner type must be a function
@@ -95,28 +58,20 @@ ExplicitType::~ExplicitType() = default;
 
         if (type_expr->is<FunctionExpression>()) {
             auto function = Node::downcast<FunctionExpression>(std::move(type_expr));
-            if (inner_modifiers) {
-                return make_parser_unexpected(ParserError::ILLEGAL_TYPE_MODIFIERS, type_start);
+            if (!modifier.is_value()) {
+                return make_parser_unexpected(ParserError::ILLEGAL_TYPE_MODIFIER, type_start);
             }
 
             // Function types cannot have bodies
             if (function->has_body()) {
                 return make_parser_unexpected(ParserError::EXPLICIT_FN_TYPE_HAS_BODY, type_start);
             }
-            return ExplicitType{nullopt, std::move(function), false};
+            return ExplicitType{modifier, std::move(function)};
         }
 
         // No other expressions qualify as types
         return make_parser_unexpected(ParserError::ILLEGAL_EXPLICIT_TYPE, type_start);
     }()));
-
-    // If we parsed an array type at the start, then the actual type is nested
-    if (opt_array_dims) {
-        auto inner_type_expr = make_box<TypeExpression>(start_token, std::move(inner_type));
-        ExplicitArrayType array_type{std::move(*opt_array_dims), std::move(inner_type_expr)};
-        return ExplicitType{outer_modifiers, std::move(array_type), false};
-    }
-    return inner_type;
 }
 
 TypeExpression::TypeExpression(const Token& start_token, Optional<ExplicitType> exp) noexcept
@@ -162,26 +117,22 @@ auto TypeExpression::is_equal(const Node& other) const noexcept -> bool {
         explicit_, casted.explicit_, [](const auto& a, const auto& b) {
             if (a.type_.index() != b.type_.index()) { return false; }
 
-            const auto& btype      = b.type_;
-            const auto  variant_eq = std::visit(
-                Overloaded{
-                    [&btype](const ExplicitIdentType& v) {
-                        return *v == *std::get<ExplicitIdentType>(btype);
-                    },
-                    [&btype](const ExplicitFunctionType& v) {
-                        return *v == *std::get<ExplicitFunctionType>(btype);
-                    },
-                    [&btype](const ExplicitArrayType& v1) {
-                        const auto& v2 = std::get<ExplicitArrayType>(btype);
-                        return std::ranges::equal(v1.dimensions_,
-                                                  v2.dimensions_,
-                                                  [](const auto& dim1, const auto& dim2) {
-                                                      return *dim1 == *dim2;
-                                                  }) &&
-                               *v1.inner_type_ == *v2.inner_type_;
-                    },
-                },
-                a.type_);
+            const auto& btype = b.type_;
+            const auto  variant_eq =
+                std::visit(Overloaded{
+                               [&btype](const ExplicitIdentType& v) {
+                                   return *v == *std::get<ExplicitIdentType>(btype);
+                               },
+                               [&btype](const ExplicitFunctionType& v) {
+                                   return *v == *std::get<ExplicitFunctionType>(btype);
+                               },
+                               [&btype](const ExplicitArrayType& v1) {
+                                   const auto& v2 = std::get<ExplicitArrayType>(btype);
+                                   return *v1.dimension_ == *v2.dimension_ &&
+                                          *v1.inner_type_ == *v2.inner_type_;
+                               },
+                           },
+                           a.type_);
 
             return variant_eq && a.primitive_ == b.primitive_;
         });

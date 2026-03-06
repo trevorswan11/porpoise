@@ -2,87 +2,62 @@
 
 namespace conch::ast {
 
-class ArrayExpression;
-class AssignmentExpression;
-class BinaryExpression;
-class CallExpression;
-class DoWhileLoopExpression;
-class DotExpression;
-class EnumExpression;
-class ForLoopExpression;
-class FunctionExpression;
-class IdentifierExpression;
-class IfExpression;
-class IndexExpression;
-class InfiniteLoopExpression;
-class MatchExpression;
-class PointerExpression;
-class UnaryExpression;
-class ImplicitAccessExpression;
-class StringExpression;
-class SignedIntegerExpression;
-class SignedLongIntegerExpression;
-class ISizeIntegerExpression;
-class UnsignedIntegerExpression;
-class UnsignedLongIntegerExpression;
-class USizeIntegerExpression;
-class ByteExpression;
-class FloatExpression;
-class BoolExpression;
-class RangeExpression;
-class ScopeResolutionExpression;
-class StructExpression;
-class TypeExpression;
-class WhileLoopExpression;
+#define FOREACH_AST_NODE(X)          \
+    X(ArrayExpression)               \
+    X(AssignmentExpression)          \
+    X(BinaryExpression)              \
+    X(CallExpression)                \
+    X(DoWhileLoopExpression)         \
+    X(DotExpression)                 \
+    X(EnumExpression)                \
+    X(ForLoopExpression)             \
+    X(FunctionExpression)            \
+    X(IdentifierExpression)          \
+    X(IfExpression)                  \
+    X(IndexExpression)               \
+    X(InfiniteLoopExpression)        \
+    X(MatchExpression)               \
+    X(ReferenceExpression)           \
+    X(DereferenceExpression)         \
+    X(ImplicitAccessExpression)      \
+    X(UnaryExpression)               \
+    X(StringExpression)              \
+    X(SignedIntegerExpression)       \
+    X(SignedLongIntegerExpression)   \
+    X(ISizeIntegerExpression)        \
+    X(UnsignedIntegerExpression)     \
+    X(UnsignedLongIntegerExpression) \
+    X(USizeIntegerExpression)        \
+    X(ByteExpression)                \
+    X(FloatExpression)               \
+    X(BoolExpression)                \
+    X(RangeExpression)               \
+    X(ScopeResolutionExpression)     \
+    X(StructExpression)              \
+    X(TypeExpression)                \
+    X(WhileLoopExpression)           \
+    X(BlockStatement)                \
+    X(DeclStatement)                 \
+    X(DiscardStatement)              \
+    X(ExpressionStatement)           \
+    X(ImportStatement)               \
+    X(JumpStatement)
 
-class BlockStatement;
-class DeclStatement;
-class DiscardStatement;
-class ExpressionStatement;
-class ImportStatement;
-class JumpStatement;
+#define FORWARD_DECLARE_AST_NODES FOREACH_AST_NODE(FORWARD_DECLARE_NODE)
+#define FORWARD_DECLARE_NODE(NodeType) class NodeType;
+
+#define ABSTRACT_AST_VISITOR_DECLARATION FOREACH_AST_NODE(GENERATE_ABSTRACT_VISIT)
+#define GENERATE_ABSTRACT_VISIT(NodeType) virtual auto visit(const NodeType&) -> void = 0;
+
+#define AST_VISITOR_OVERRIDES FOREACH_AST_NODE(GENERATE_OVERRIDE_VISIT)
+#define GENERATE_OVERRIDE_VISIT(NodeType) auto visit(const NodeType&) -> void override;
+
+FORWARD_DECLARE_AST_NODES
 
 class Visitor {
   public:
-    virtual ~Visitor()                                               = default;
-    virtual auto visit(const ArrayExpression&) -> void               = 0;
-    virtual auto visit(const AssignmentExpression&) -> void          = 0;
-    virtual auto visit(const BinaryExpression&) -> void              = 0;
-    virtual auto visit(const CallExpression&) -> void                = 0;
-    virtual auto visit(const DoWhileLoopExpression&) -> void         = 0;
-    virtual auto visit(const DotExpression&) -> void                 = 0;
-    virtual auto visit(const EnumExpression&) -> void                = 0;
-    virtual auto visit(const ForLoopExpression&) -> void             = 0;
-    virtual auto visit(const FunctionExpression&) -> void            = 0;
-    virtual auto visit(const IdentifierExpression&) -> void          = 0;
-    virtual auto visit(const IfExpression&) -> void                  = 0;
-    virtual auto visit(const IndexExpression&) -> void               = 0;
-    virtual auto visit(const InfiniteLoopExpression&) -> void        = 0;
-    virtual auto visit(const MatchExpression&) -> void               = 0;
-    virtual auto visit(const PointerExpression&) -> void             = 0;
-    virtual auto visit(const ImplicitAccessExpression&) -> void      = 0;
-    virtual auto visit(const UnaryExpression&) -> void               = 0;
-    virtual auto visit(const StringExpression&) -> void              = 0;
-    virtual auto visit(const SignedIntegerExpression&) -> void       = 0;
-    virtual auto visit(const SignedLongIntegerExpression&) -> void   = 0;
-    virtual auto visit(const ISizeIntegerExpression&) -> void        = 0;
-    virtual auto visit(const UnsignedIntegerExpression&) -> void     = 0;
-    virtual auto visit(const UnsignedLongIntegerExpression&) -> void = 0;
-    virtual auto visit(const USizeIntegerExpression&) -> void        = 0;
-    virtual auto visit(const ByteExpression&) -> void                = 0;
-    virtual auto visit(const FloatExpression&) -> void               = 0;
-    virtual auto visit(const BoolExpression&) -> void                = 0;
-    virtual auto visit(const RangeExpression&) -> void               = 0;
-    virtual auto visit(const ScopeResolutionExpression&) -> void     = 0;
-    virtual auto visit(const StructExpression&) -> void              = 0;
-    virtual auto visit(const TypeExpression&) -> void                = 0;
-    virtual auto visit(const WhileLoopExpression&) -> void           = 0;
-    virtual auto visit(const BlockStatement&) -> void                = 0;
-    virtual auto visit(const DeclStatement&) -> void                 = 0;
-    virtual auto visit(const DiscardStatement&) -> void              = 0;
-    virtual auto visit(const ExpressionStatement&) -> void           = 0;
-    virtual auto visit(const ImportStatement&) -> void               = 0;
-    virtual auto visit(const JumpStatement&) -> void                 = 0;
+    virtual ~Visitor() = default;
+    ABSTRACT_AST_VISITOR_DECLARATION
 };
 
 } // namespace conch::ast

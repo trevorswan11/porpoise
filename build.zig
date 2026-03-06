@@ -1112,12 +1112,3 @@ fn collectToolingFiles(b: *std.Build) ![]const []const u8 {
 fn getCacheRelativePath(b: *std.Build, paths: []const []const u8) []const u8 {
     return b.cache_root.join(b.allocator, paths) catch @panic("OOM");
 }
-
-/// Resolves the relative path with its root at the installation directory
-fn getPrefixRelativePath(b: *std.Build, paths: []const []const u8) []const u8 {
-    return b.pathJoin(std.mem.concat(
-        b.allocator,
-        []const u8,
-        &.{ &.{std.fs.path.basename(b.install_prefix)}, paths },
-    ) catch @panic("OOM"));
-}

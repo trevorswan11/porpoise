@@ -1,19 +1,39 @@
 #include <algorithm>
+#include <variant>
 
 #include "ast/expressions/for.hpp"
 
 #include "ast/expressions/identifier.hpp"
-#include "ast/expressions/pointer.hpp"
 #include "ast/statements/block.hpp"
 #include "ast/visitor.hpp"
 
 namespace conch::ast {
 
-ForLoopExpression::ForLoopExpression(const Token&                                     start_token,
-                                     std::vector<Box<Expression>>                     iterables,
-                                     Optional<std::vector<Optional<Box<Expression>>>> captures,
-                                     Box<BlockStatement>                              block,
-                                     Optional<Box<Statement>> non_break) noexcept
+ForLoopCapture::ForLoopCapture() noexcept : underlying_{std::monostate{}} {}
+
+ForLoopCapture::ForLoopCapture(TypeModifier modifier, Box<IdentifierExpression> name) noexcept
+    : underlying_{Valued{std::move(modifier), std::move(name)}} {}
+
+ForLoopCapture::~ForLoopCapture() = default;
+
+auto ForLoopCapture::is_equal(const ForLoopCapture& other) const noexcept -> bool {
+    if (is_discarded()) {
+        if (!other.is_discarded()) { return false; }
+        return true;
+    }
+
+    // At this point lhs must be a true capture
+    if (!other.is_valued()) { return false; }
+    const auto& this_v  = get_valued();
+    const auto& other_v = get_valued();
+    return this_v.modifier == other_v.modifier && *this_v.name == *other_v.name;
+}
+
+ForLoopExpression::ForLoopExpression(const Token&                          start_token,
+                                     std::vector<Box<Expression>>          iterables,
+                                     Optional<std::vector<ForLoopCapture>> captures,
+                                     Box<BlockStatement>                   block,
+                                     Optional<Box<Statement>>              non_break) noexcept
     : ExprBase{start_token}, iterables_{std::move(iterables)}, captures_{std::move(captures)},
       block_{std::move(block)}, non_break_{std::move(non_break)} {}
 
@@ -43,8 +63,8 @@ auto ForLoopExpression::parse(Parser& parser) -> Expected<Box<Expression>, Parse
 
     TRY(parser.expect_peek(TokenType::RPAREN));
 
-    // Captures are entirely optional and take on the zig capture syntax
-    Optional<std::vector<Optional<Box<Expression>>>> captures;
+    // Captures are entirely optional and take on something similar to zig's capture syntax
+    Optional<std::vector<ForLoopCapture>> captures;
     if (parser.peek_token_is(TokenType::OR)) {
         captures.emplace();
         parser.advance();
@@ -52,14 +72,20 @@ auto ForLoopExpression::parse(Parser& parser) -> Expected<Box<Expression>, Parse
         while (!parser.peek_token_is(TokenType::OR) && !parser.peek_token_is(TokenType::END)) {
             parser.advance();
             if (parser.current_token_is(TokenType::UNDERSCORE)) {
-                captures->emplace_back(nullopt);
+                captures->emplace_back();
             } else {
+                // Always check for a modifier and advance past it if present
+                const auto modifier = TypeModifier::from_token(parser.current_token());
+                if (!modifier.is_value()) { parser.advance(); }
+
                 auto capture = TRY(parser.parse_expression());
-                if (!capture->any<IdentifierExpression, PointerExpression>()) {
+                if (!capture->is<IdentifierExpression>()) {
                     return make_parser_unexpected(ParserError::ILLEGAL_FOR_LOOP_CAPTURE,
                                                   capture->get_token());
                 }
-                captures->emplace_back(std::move(capture));
+
+                captures->emplace_back(ForLoopCapture{
+                    std::move(modifier), Node::downcast<IdentifierExpression>(std::move(capture))});
             }
 
             if (!parser.peek_token_is(TokenType::RPAREN)) {
@@ -92,12 +118,9 @@ auto ForLoopExpression::is_equal(const Node& other) const noexcept -> bool {
     const auto& casted       = as<ForLoopExpression>(other);
     const auto  iterables_eq = std::ranges::equal(
         iterables_, casted.iterables_, [](const auto& a, const auto& b) { return *a == *b; });
-    const auto captures_eq = optional::safe_eq<std::vector<Optional<Box<Expression>>>>(
+    const auto captures_eq = optional::safe_eq<std::vector<ForLoopCapture>>(
         captures_, casted.captures_, [](const auto& a_captures, const auto& b_captures) {
-            return std::ranges::equal(
-                a_captures, b_captures, [](const auto& a_capture, const auto& b_capture) {
-                    return optional::unsafe_eq<Expression>(a_capture, b_capture);
-                });
+            return std::ranges::equal(a_captures, b_captures);
         });
     return iterables_eq && captures_eq && block_ == casted.block_ &&
            optional::unsafe_eq<Statement>(non_break_, casted.non_break_);

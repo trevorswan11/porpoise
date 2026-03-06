@@ -7,7 +7,7 @@ namespace conch::ast {
 
 class UnaryExpression : public PrefixExpression<UnaryExpression> {
   public:
-    static constexpr auto KIND = NodeKind::POINTER_EXPRESSION;
+    static constexpr auto KIND = NodeKind::UNARY_EXPRESSION;
 
   public:
     using PrefixExpression::parse;
