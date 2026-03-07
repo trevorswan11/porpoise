@@ -27,7 +27,7 @@ class TypeModifier {
         return it == LEGAL_MODIFIERS.end() ? TypeModifier{nullopt} : TypeModifier{it->second};
     }
 
-    // Whether or not the type is a 'value' type, mutually exclusive result.
+    // Whether or not the type is a 'value' type (no modifier), mutually exclusive result.
     [[nodiscard]] auto is_value() const noexcept -> bool { return !underlying_; }
 
     // Whether or not the type is a const reference, mutually exclusive result.

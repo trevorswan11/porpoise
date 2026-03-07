@@ -35,7 +35,7 @@ ExplicitType::~ExplicitType() = default;
         return ExplicitType{
             std::move(modifier),
             ExplicitArrayType{std::move(dimension), make_box<ExplicitType>(TRY(parse(parser)))}};
-    } else if (!TypeModifier::from_token(start_token).is_value()) {
+    } else if (!TypeModifier::from_token(parser.current_token()).is_value()) {
         // Don't advance since the parser does it implicitly here (costs two from_token calls)
         return ExplicitType{std::move(modifier), make_box<ExplicitType>(TRY(parse(parser)))};
     }
