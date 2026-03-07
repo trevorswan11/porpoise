@@ -1,40 +1,24 @@
 #include <catch2/catch_test_macros.hpp>
 
-#include "ast/common_helpers.hpp"
-#include "ast/expressions/primitive.hpp"
-#include "ast/statements/helpers.hpp"
+#include "ast/helpers.hpp"
 
 #include "ast/expressions/identifier.hpp"
+#include "ast/expressions/primitive.hpp"
+#include "ast/statements/import.hpp"
 
 #include "lexer/keywords.hpp"
 #include "lexer/token.hpp"
 
 namespace conch::tests {
 
-namespace helpers {
-
-auto test_import(std::string_view input, const ast::ImportStatement& expected) -> void {
-    Parser p{input};
-    auto [ast, errors] = p.consume();
-
-    helpers::check_errors<ParserDiagnostic>(errors);
-    REQUIRE(ast.size() == 1);
-
-    const auto  actual{std::move(ast[0])};
-    const auto& actual_decl = helpers::try_into<ast::ImportStatement>(*actual);
-    REQUIRE(expected == actual_decl);
-}
-
-} // namespace helpers
-
 TEST_CASE("Module imports") {
-    helpers::test_import(
+    helpers::test_stmt(
         "import std;",
         ast::ImportStatement{Token{keywords::IMPORT},
                              make_box<ast::IdentifierExpression>(Token{TokenType::IDENT, "std"}),
                              {}});
 
-    helpers::test_import(
+    helpers::test_stmt(
         "import std as stud;",
         ast::ImportStatement{Token{keywords::IMPORT},
                              make_box<ast::IdentifierExpression>(Token{TokenType::IDENT, "std"}),
@@ -42,7 +26,7 @@ TEST_CASE("Module imports") {
 }
 
 TEST_CASE("User imports") {
-    helpers::test_import(
+    helpers::test_stmt(
         R"(import "ast/node.conch" as node;)",
         ast::ImportStatement{
             Token{keywords::IMPORT},

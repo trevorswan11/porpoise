@@ -10,7 +10,7 @@ auto JumpStatement::parse(Parser& parser) -> Expected<Box<Statement>, ParserDiag
     const auto start_token = parser.current_token();
 
     Optional<Box<Expression>> value;
-    if (start_token.type != TokenType::CONTINUE && !parser.peek_token_is(TokenType::END) &&
+    if (start_token.type == TokenType::RETURN && !parser.peek_token_is(TokenType::END) &&
         !parser.peek_token_is(TokenType::SEMICOLON)) {
         parser.advance();
         value = TRY(parser.parse_expression());

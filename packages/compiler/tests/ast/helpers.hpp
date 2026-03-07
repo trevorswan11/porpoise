@@ -2,7 +2,6 @@
 
 #include <algorithm>
 #include <span>
-#include <string_view>
 
 #include <catch2/catch_test_macros.hpp>
 #include <fmt/format.h>
@@ -53,6 +52,18 @@ inline auto test_fail(std::string_view failing, ParserDiagnostic expected_error)
 
 constexpr auto trim_semicolons(std::string_view str) -> std::string_view {
     return string::trim_right(str, [](byte b) { return b == ';'; });
+}
+
+template <ast::LeafNode N> auto test_stmt(std::string_view input, const N& expected) -> void {
+    Parser p{input};
+    auto [ast, errors] = p.consume();
+
+    helpers::check_errors<ParserDiagnostic>(errors);
+    REQUIRE(ast.size() == 1);
+
+    const auto  actual{std::move(ast[0])};
+    const auto& actual_stmt = helpers::try_into<N>(*actual);
+    REQUIRE(expected == actual_stmt);
 }
 
 } // namespace conch::tests::helpers

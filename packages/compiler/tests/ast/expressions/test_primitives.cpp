@@ -1,8 +1,47 @@
 #include <catch2/catch_test_macros.hpp>
 
-#include "ast/expressions/helpers.hpp"
+#include "ast/helpers.hpp"
+
+#include "ast/expressions/primitive.hpp"
 
 namespace conch::tests {
+
+namespace helpers {
+
+template <ast::PrimitiveNode N>
+auto test_primitive(std::string_view                                       input,
+                    std::string_view                                       node_token_slice,
+                    Optional<TokenType>                                    expected_type,
+                    std::variant<typename N::value_type, ParserDiagnostic> expected_value) -> void {
+    using T = typename N::value_type;
+    Parser p{input};
+    auto [ast, errors] = p.consume();
+
+    if (std::holds_alternative<ParserDiagnostic>(expected_value)) {
+        REQUIRE(errors.size() == 1);
+        const auto& actual_error = errors[0];
+        REQUIRE(std::get<ParserDiagnostic>(expected_value) == actual_error);
+        return;
+    }
+
+    REQUIRE(errors.empty());
+    REQUIRE(ast.size() == 1);
+
+    const auto  actual{std::move(ast[0])};
+    const auto& expr_stmt = into_expression_statement(*actual);
+    const N     expected{Token{*expected_type, trim_semicolons(node_token_slice)},
+                     std::get<T>(expected_value)};
+    REQUIRE(expected == expr_stmt.get_expression());
+}
+
+template <ast::PrimitiveNode N>
+auto test_primitive(std::string_view                                       input,
+                    Optional<TokenType>                                    expected_type,
+                    std::variant<typename N::value_type, ParserDiagnostic> expected_value) -> void {
+    test_primitive<N>(input, input, expected_type, expected_value);
+}
+
+} // namespace helpers
 
 TEST_CASE("Single-line string parsing") {
     using N = ast::StringExpression;

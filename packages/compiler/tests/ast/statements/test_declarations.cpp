@@ -7,39 +7,23 @@
 
 #include "array.hpp"
 
-#include "ast/common_helpers.hpp"
-#include "ast/statements/helpers.hpp"
+#include "ast/helpers.hpp"
 
 #include "ast/expressions/function.hpp"
 #include "ast/expressions/identifier.hpp"
 #include "ast/expressions/primitive.hpp"
 #include "ast/expressions/type.hpp"
+#include "ast/statements/decl.hpp"
 
 #include "lexer/keywords.hpp"
 #include "lexer/operators.hpp"
 
 namespace conch::tests {
 
-namespace helpers {
-
-auto test_decl(std::string_view input, const ast::DeclStatement& expected) -> void {
-    Parser p{input};
-    auto [ast, errors] = p.consume();
-
-    helpers::check_errors<ParserDiagnostic>(errors);
-    REQUIRE(ast.size() == 1);
-
-    const auto  actual{std::move(ast[0])};
-    const auto& actual_decl = helpers::try_into<ast::DeclStatement>(*actual);
-    REQUIRE(expected == actual_decl);
-}
-
-} // namespace helpers
-
 using ExplicitTypeVariant = ast::ExplicitType::ExplicitTypeVariant;
 
 TEST_CASE("Explicit primitive declaration") {
-    helpers::test_decl(
+    helpers::test_stmt(
         "var a: int = 2;",
         ast::DeclStatement{
             Token{keywords::VAR},
@@ -56,7 +40,7 @@ TEST_CASE("Explicit primitive declaration") {
 }
 
 TEST_CASE("Explicit non-primitive declaration") {
-    helpers::test_decl("var a: Foo = bar;",
+    helpers::test_stmt("var a: Foo = bar;",
                        ast::DeclStatement{
                            Token{keywords::VAR},
                            make_box<ast::IdentifierExpression>(Token{TokenType::IDENT, "a"}),
@@ -73,7 +57,7 @@ TEST_CASE("Explicit non-primitive declaration") {
 }
 
 TEST_CASE("Implicit comptime declaration") {
-    helpers::test_decl(
+    helpers::test_stmt(
         "comptime SIZE := 2uz;",
         ast::DeclStatement{
             Token{keywords::COMPTIME},
@@ -92,7 +76,7 @@ TEST_CASE("Correct declaration modifiers") {
         for (const auto& keyword : modifiers) { ss << keyword.first << " "; }
         if (initialized) {
             ss << " a := 2;";
-            helpers::test_decl(
+            helpers::test_stmt(
                 ss.view(),
                 ast::DeclStatement{
                     Token{*modifiers.begin()},
@@ -103,7 +87,7 @@ TEST_CASE("Correct declaration modifiers") {
                 });
         } else {
             ss << " a: int;";
-            helpers::test_decl(
+            helpers::test_stmt(
                 ss.view(),
                 ast::DeclStatement{
                     Token{*modifiers.begin()},

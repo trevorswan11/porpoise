@@ -26,7 +26,7 @@ auto EnumExpression::accept(Visitor& v) const -> void { v.visit(*this); }
 auto EnumExpression::parse(Parser& parser) -> Expected<Box<Expression>, ParserDiagnostic> {
     const auto start_token = parser.current_token();
 
-    Box<IdentifierExpression> underlying;
+    Optional<Box<IdentifierExpression>> underlying;
     if (parser.peek_token_is(TokenType::COLON)) {
         parser.advance();
         TRY(parser.expect_peek(TokenType::IDENT));
