@@ -52,7 +52,7 @@ auto ArrayExpression::parse(Parser& parser) -> Expected<Box<Expression>, ParserD
     if (size) {
         const auto& size_expr = *(*size);
         if (size_expr.is<USizeIntegerExpression>()) {
-            const auto& actual_size = Node::as<USizeIntegerExpression>(size_expr);
+            const auto& actual_size = as<USizeIntegerExpression>(size_expr);
             if (items.size() != actual_size.get_value()) {
                 return make_parser_unexpected(ParserError::EXPLICIT_ARRAY_SIZE_MISMATCH,
                                               size_expr.get_token());

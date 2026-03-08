@@ -15,10 +15,7 @@ using Items = std::vector<Box<ast::Expression>>;
 namespace helpers {
 
 template <ast::LeafNode... Ns> auto make_items(Ns&&... nodes) -> Items {
-    Items items;
-    items.reserve(sizeof...(nodes));
-    (items.emplace_back(make_box<Ns>(std::forward<Ns>(nodes))), ...);
-    return items;
+    return make_vector<Box<ast::Expression>>(make_box<Ns>(std::forward<Ns>(nodes))...);
 }
 
 } // namespace helpers

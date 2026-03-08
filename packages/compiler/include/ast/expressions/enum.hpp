@@ -49,6 +49,7 @@ class EnumExpression : public ExprBase<EnumExpression> {
     auto                      accept(Visitor& v) const -> void override;
     [[nodiscard]] static auto parse(Parser& parser) -> Expected<Box<Expression>, ParserDiagnostic>;
 
+    [[nodiscard]] auto has_underlying() const noexcept -> bool { return underlying_.has_value(); }
     [[nodiscard]] auto get_underlying() const noexcept -> Optional<const IdentifierExpression&> {
         return underlying_ ? Optional<const IdentifierExpression&>{**underlying_} : nullopt;
     }

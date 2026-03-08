@@ -26,9 +26,9 @@ auto EnumExpression::parse(Parser& parser) -> Expected<Box<Expression>, ParserDi
 
     Optional<Box<IdentifierExpression>> underlying;
     if (parser.peek_token_is(TokenType::COLON)) {
-        parser.advance();
-        TRY(parser.expect_peek(TokenType::IDENT));
-        underlying = downcast<IdentifierExpression>(TRY(IdentifierExpression::parse(parser)));
+        parser.advance(2);
+        underlying.emplace(
+            downcast<IdentifierExpression>(TRY(IdentifierExpression::parse(parser))));
     }
 
     TRY(parser.expect_peek(TokenType::LBRACE));
@@ -42,10 +42,10 @@ auto EnumExpression::parse(Parser& parser) -> Expected<Box<Expression>, ParserDi
         TRY(parser.expect_peek(TokenType::IDENT));
         auto ident = downcast<IdentifierExpression>(TRY(IdentifierExpression::parse(parser)));
 
-        Optional<Box<Expression>> value = nullopt;
+        Optional<Box<Expression>> value;
         if (parser.peek_token_is(TokenType::ASSIGN)) {
             parser.advance(2);
-            value = TRY(parser.parse_expression());
+            value.emplace(TRY(parser.parse_expression()));
         }
         enumeration.emplace_back(std::move(ident), std::move(value));
 

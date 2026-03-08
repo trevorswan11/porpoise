@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <span>
+#include <vector>
 
 #include <catch2/catch_test_macros.hpp>
 #include <fmt/format.h>
@@ -69,6 +70,13 @@ template <ast::LeafNode N> auto test_stmt(std::string_view input, const N& expec
 template <ast::LeafNode N> auto test_expr_stmt(std::string_view input, N&& expected) -> void {
     test_stmt(input,
               ast::ExpressionStatement{expected.get_token(), make_box<N>(std::move(expected))});
+}
+
+template <typename T, typename... Ts> auto make_vector(Ts&&... es) -> std::vector<T> {
+    std::vector<T> list;
+    list.reserve(sizeof...(es));
+    (list.emplace_back(std::forward<Ts>(es)), ...);
+    return list;
 }
 
 } // namespace conch::tests::helpers
