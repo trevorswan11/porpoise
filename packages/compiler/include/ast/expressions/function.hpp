@@ -2,7 +2,7 @@
 
 #include <span>
 
-#include "ast/expressions/type_modifiers.hpp"
+#include "ast/expressions/type.hpp"
 #include "ast/node.hpp"
 
 #include "parser/parser.hpp"
@@ -10,22 +10,30 @@
 namespace conch::ast {
 
 class IdentifierExpression;
-class TypeExpression;
+class ExplicitType;
 class BlockStatement;
 
 class FunctionParameter {
   public:
-    explicit FunctionParameter(Box<IdentifierExpression> name, Box<TypeExpression> type) noexcept;
+    explicit FunctionParameter(Box<IdentifierExpression> name, ExplicitType&& type) noexcept;
     ~FunctionParameter();
 
     MAKE_AST_COPY_MOVE(FunctionParameter)
 
     [[nodiscard]] auto get_name() const noexcept -> const IdentifierExpression& { return *name_; }
-    [[nodiscard]] auto get_type() const noexcept -> const TypeExpression& { return *type_; }
+    [[nodiscard]] auto get_type() const noexcept -> const ExplicitType& { return type_; }
+
+    friend auto operator==(const FunctionParameter& lhs, const FunctionParameter& rhs) noexcept
+        -> bool {
+        return lhs.is_equal(rhs);
+    }
+
+  private:
+    auto is_equal(const FunctionParameter& other) const noexcept -> bool;
 
   private:
     Box<IdentifierExpression> name_;
-    Box<TypeExpression>       type_;
+    ExplicitType              type_;
 
     friend class FunctionExpression;
 };
@@ -55,7 +63,7 @@ class FunctionExpression : public ExprBase<FunctionExpression> {
     explicit FunctionExpression(const Token&                   start_token,
                                 Optional<SelfParameter>        self,
                                 std::vector<FunctionParameter> parameters,
-                                Box<TypeExpression>            return_type,
+                                ExplicitType&&                 return_type,
                                 Optional<Box<BlockStatement>>  body) noexcept;
     ~FunctionExpression() override;
 
@@ -68,8 +76,8 @@ class FunctionExpression : public ExprBase<FunctionExpression> {
         return parameters_;
     }
 
-    [[nodiscard]] auto get_return_type() const noexcept -> const TypeExpression& {
-        return *return_type_;
+    [[nodiscard]] auto get_return_type() const noexcept -> const ExplicitType& {
+        return return_type_;
     }
 
     [[nodiscard]] auto has_body() const noexcept -> bool { return body_.has_value(); }
@@ -83,7 +91,7 @@ class FunctionExpression : public ExprBase<FunctionExpression> {
   private:
     Optional<SelfParameter>        self_;
     std::vector<FunctionParameter> parameters_;
-    Box<TypeExpression>            return_type_;
+    ExplicitType                   return_type_;
     Optional<Box<BlockStatement>>  body_;
 };
 

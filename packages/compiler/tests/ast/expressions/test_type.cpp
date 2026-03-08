@@ -13,7 +13,6 @@
 
 #include "lexer/keywords.hpp"
 #include "lexer/token.hpp"
-#include "parser/parser.hpp"
 
 namespace conch::tests {
 
@@ -56,11 +55,9 @@ TEST_CASE("Function types") {
                               Token{keywords::FN},
                               nullopt,
                               Parameters{},
-                              make_box<ast::TypeExpression>(
-                                  colon,
-                                  ast::ExplicitType{{},
-                                                    make_box<ast::IdentifierExpression>(
-                                                        Token{TokenType::NORETURN, "noreturn"})}),
+                              ast::ExplicitType{{},
+                                                make_box<ast::IdentifierExpression>(
+                                                    Token{TokenType::NORETURN, "noreturn"})},
                               nullopt)});
 
     helpers::test_type_expr(
@@ -73,11 +70,9 @@ TEST_CASE("Function types") {
                     ast::TypeModifier{ast::TypeModifier::Modifier::REF},
                     make_box<ast::IdentifierExpression>(Token{TokenType::IDENT, "self"})},
                 Parameters{},
-                make_box<ast::TypeExpression>(
-                    colon,
-                    ast::ExplicitType{
-                        ast::TypeModifier{ast::TypeModifier::Modifier::MUT_PTR},
-                        make_box<ast::IdentifierExpression>(Token{TokenType::IDENT, "E"})}),
+                ast::ExplicitType{
+                    ast::TypeModifier{ast::TypeModifier::Modifier::MUT_PTR},
+                    make_box<ast::IdentifierExpression>(Token{TokenType::IDENT, "E"})},
                 nullopt)});
 }
 
@@ -111,10 +106,8 @@ TEST_CASE("Complex function type (holistic)") {
     Parameters parameters;
     parameters.emplace_back(
         make_box<ast::IdentifierExpression>(Token{TokenType::IDENT, "b"}),
-        make_box<ast::TypeExpression>(
-            colon,
-            ast::ExplicitType{ast::TypeModifier{ast::TypeModifier::Modifier::MUT_PTR},
-                              make_box<ast::IdentifierExpression>(Token{TokenType::IDENT, "B"})}));
+        ast::ExplicitType{ast::TypeModifier{ast::TypeModifier::Modifier::MUT_PTR},
+                          make_box<ast::IdentifierExpression>(Token{TokenType::IDENT, "B"})});
     helpers::test_type_expr(
         "*fn(&a, b: *mut B): &[0x2uz][N]*E",
         ast::ExplicitType{
@@ -125,31 +118,35 @@ TEST_CASE("Complex function type (holistic)") {
                     ast::TypeModifier{ast::TypeModifier::Modifier::REF},
                     make_box<ast::IdentifierExpression>(Token{TokenType::IDENT, "a"})},
                 std::move(parameters),
-                make_box<ast::TypeExpression>(
-                    colon,
-                    ast::ExplicitType{
-                        ast::TypeModifier{ast::TypeModifier::Modifier::REF},
-                        ast::ExplicitArrayType{
-                            make_box<ast::USizeIntegerExpression>(
-                                Token{TokenType::UZINT_16, "0x2uz"}, 0x2uz),
-                            make_box<ast::ExplicitType>(
-                                ast::TypeModifier{},
-                                ast::ExplicitArrayType{
+                ast::ExplicitType{
+                    ast::TypeModifier{ast::TypeModifier::Modifier::REF},
+                    ast::ExplicitArrayType{
+                        make_box<ast::USizeIntegerExpression>(Token{TokenType::UZINT_16, "0x2uz"},
+                                                              0x2uz),
+                        make_box<ast::ExplicitType>(
+                            ast::TypeModifier{},
+                            ast::ExplicitArrayType{
+                                make_box<ast::IdentifierExpression>(Token{TokenType::IDENT, "N"}),
+                                make_box<ast::ExplicitType>(
+                                    ast::TypeModifier{ast::TypeModifier::Modifier::PTR},
                                     make_box<ast::IdentifierExpression>(
-                                        Token{TokenType::IDENT, "N"}),
-                                    make_box<ast::ExplicitType>(
-                                        ast::TypeModifier{ast::TypeModifier::Modifier::PTR},
-                                        make_box<ast::IdentifierExpression>(
-                                            Token{TokenType::IDENT, "E"}))})}}),
+                                        Token{TokenType::IDENT, "E"}))})}},
                 nullopt)});
 }
 
-TEST_CASE("Volatile is restricted to declarations") {
+TEST_CASE("Volatile restricted to declarations") {
     helpers::test_fail("var a: volatile int;",
                        ParserDiagnostic{"No prefix parse function for VOLATILE(volatile) found",
                                         ParserError::MISSING_PREFIX_PARSER,
                                         1,
                                         8});
+}
+
+TEST_CASE("Array type requirement") {
+    helpers::test_fail("var a: [9]int;",
+                       ParserDiagnostic{ParserError::ILLEGAL_ARRAY_SIZE_TYPE, 1, 9});
+    helpers::test_fail(R"(var a: ["e"]int;)",
+                       ParserDiagnostic{ParserError::ILLEGAL_ARRAY_SIZE_TYPE, 1, 9});
 }
 
 TEST_CASE("Function type restrictions") {

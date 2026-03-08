@@ -102,6 +102,8 @@ class TypeExpression : public ExprBase<TypeExpression> {
 
   private:
     Optional<ExplicitType> explicit_;
+
+    friend class FunctionExpression;
 };
 
 } // namespace conch::ast

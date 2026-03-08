@@ -2,6 +2,7 @@
 
 #include "ast/expressions/function.hpp"
 #include "ast/expressions/identifier.hpp"
+#include "ast/expressions/primitive.hpp"
 #include "ast/visitor.hpp"
 
 namespace conch::ast {
@@ -25,6 +26,11 @@ ExplicitType::~ExplicitType() = default;
     if (parser.peek_token_is(TokenType::LBRACKET)) {
         parser.advance(2);
         auto dimension = TRY(parser.parse_expression());
+        if (!dimension->any<USizeIntegerExpression, IdentifierExpression>()) {
+            return make_parser_unexpected(ParserError::ILLEGAL_ARRAY_SIZE_TYPE,
+                                          dimension->get_token());
+        }
+
         TRY(parser.expect_peek(TokenType::RBRACKET));
 
         // Arrays are recursively defined

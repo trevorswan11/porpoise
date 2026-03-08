@@ -1,0 +1,81 @@
+#include <catch2/catch_test_macros.hpp>
+
+#include "ast/helpers.hpp"
+
+#include "ast/expressions/array.hpp"
+#include "ast/expressions/function.hpp"
+#include "ast/expressions/identifier.hpp"
+#include "ast/expressions/primitive.hpp"
+#include "ast/expressions/type.hpp"
+
+namespace conch::tests {
+
+using Items = std::vector<Box<ast::Expression>>;
+
+namespace helpers {
+
+template <ast::LeafNode... Ns> auto make_items(Ns&&... nodes) -> Items {
+    Items items;
+    items.reserve(sizeof...(nodes));
+    (items.emplace_back(make_box<Ns>(std::forward<Ns>(nodes))), ...);
+    return items;
+}
+
+} // namespace helpers
+
+const Token rbracket{TokenType::LBRACKET, "["};
+
+TEST_CASE("Explicitly sized arrays") {
+    helpers::test_expr_stmt(
+        "[1uz]int{2};",
+        ast::ArrayExpression{
+            rbracket,
+            make_box<ast::USizeIntegerExpression>(Token{TokenType::UZINT_10, "1uz"}, 1),
+            ast::ExplicitType{
+                {}, make_box<ast::IdentifierExpression>(Token{TokenType::INT_TYPE, "int"})},
+            helpers::make_items(ast::SignedIntegerExpression{Token{TokenType::INT_10, "2"}, 2})});
+
+    helpers::test_expr_stmt(
+        "[2uz]int{A, B, };",
+        ast::ArrayExpression{
+            rbracket,
+            make_box<ast::USizeIntegerExpression>(Token{TokenType::UZINT_10, "2uz"}, 2),
+            ast::ExplicitType{
+                {}, make_box<ast::IdentifierExpression>(Token{TokenType::INT_TYPE, "int"})},
+            helpers::make_items(ast::IdentifierExpression{Token{TokenType::IDENT, "A"}},
+                                ast::IdentifierExpression{Token{TokenType::IDENT, "B"}})});
+}
+
+TEST_CASE("Implicitly sized array") {
+    helpers::test_expr_stmt(
+        "[_]N{a, b, c, d, e, };",
+        ast::ArrayExpression{
+            rbracket,
+            nullopt,
+            ast::ExplicitType{{},
+                              make_box<ast::IdentifierExpression>(Token{TokenType::IDENT, "N"})},
+            helpers::make_items(ast::IdentifierExpression{Token{TokenType::IDENT, "a"}},
+                                ast::IdentifierExpression{Token{TokenType::IDENT, "b"}},
+                                ast::IdentifierExpression{Token{TokenType::IDENT, "c"}},
+                                ast::IdentifierExpression{Token{TokenType::IDENT, "d"}},
+                                ast::IdentifierExpression{Token{TokenType::IDENT, "e"}})});
+}
+
+TEST_CASE("Size mismatch") {
+    helpers::test_fail("[1uz]int{2, 3};",
+                       ParserDiagnostic{ParserError::EXPLICIT_ARRAY_SIZE_MISMATCH, 1, 2});
+}
+
+TEST_CASE("Array size token requirement") {
+    helpers::test_fail("[3]int{1,2,3};",
+                       ParserDiagnostic{ParserError::ILLEGAL_ARRAY_SIZE_TYPE, 1, 2});
+    helpers::test_fail(R"(["e"]int{1};)",
+                       ParserDiagnostic{ParserError::ILLEGAL_ARRAY_SIZE_TYPE, 1, 2});
+}
+
+TEST_CASE("Empty arrays") {
+    helpers::test_fail("[_]int{};", ParserDiagnostic{ParserError::EMPTY_ARRAY, 1, 1});
+    helpers::test_fail("[0]int{};", ParserDiagnostic{ParserError::EMPTY_ARRAY, 1, 1});
+}
+
+} // namespace conch::tests

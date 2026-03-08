@@ -11,10 +11,13 @@
 
 namespace conch::ast {
 
-FunctionParameter::FunctionParameter(Box<IdentifierExpression> name,
-                                     Box<TypeExpression>       type) noexcept
+FunctionParameter::FunctionParameter(Box<IdentifierExpression> name, ExplicitType&& type) noexcept
     : name_{std::move(name)}, type_{std::move(type)} {}
 FunctionParameter::~FunctionParameter() = default;
+
+auto FunctionParameter::is_equal(const FunctionParameter& other) const noexcept -> bool {
+    return *name_ == *other.name_ && type_ == other.type_;
+}
 
 SelfParameter::SelfParameter(TypeModifier modifier, Box<IdentifierExpression> name) noexcept
     : modifier_{std::move(modifier)}, name_{std::move(name)} {}
@@ -23,7 +26,7 @@ SelfParameter::~SelfParameter() = default;
 FunctionExpression::FunctionExpression(const Token&                   start_token,
                                        Optional<SelfParameter>        self,
                                        std::vector<FunctionParameter> parameters,
-                                       Box<TypeExpression>            return_type,
+                                       ExplicitType&&                 return_type,
                                        Optional<Box<BlockStatement>>  body) noexcept
     : ExprBase{start_token}, self_{std::move(self)}, parameters_{std::move(parameters)},
       return_type_{std::move(return_type)}, body_{std::move(body)} {}
@@ -75,11 +78,11 @@ auto FunctionExpression::parse(Parser& parser) -> Expected<Box<Expression>, Pars
 
             // There are no default values for parameters, and they must be explicitly typed
             if (initialized || !type->has_explicit_type()) {
-                return make_parser_unexpected(ParserError::ILLEGAL_FUNCTION_PARAMETER_TYPE,
+                return make_parser_unexpected(ParserError::FUNCTION_PARAMETER_HAS_DEFAULT_VALUE,
                                               type->get_token());
             }
 
-            parameters.emplace_back(std::move(name), std::move(type));
+            parameters.emplace_back(std::move(name), std::move(*(type->explicit_)));
             if (!parser.peek_token_is(TokenType::RPAREN)) {
                 TRY(parser.expect_peek(TokenType::COMMA));
             }
@@ -88,9 +91,7 @@ auto FunctionExpression::parse(Parser& parser) -> Expected<Box<Expression>, Pars
     }
 
     TRY(parser.expect_peek(TokenType::COLON));
-    const auto colon         = parser.current_token();
-    auto       explicit_type = TRY(ExplicitType::parse(parser));
-    auto       return_type   = make_box<TypeExpression>(colon, std::move(explicit_type));
+    auto return_type = TRY(ExplicitType::parse(parser));
 
     // If there is opening brace then just return without a body
     if (!parser.peek_token_is(TokenType::LBRACE)) {
@@ -115,11 +116,8 @@ auto FunctionExpression::is_equal(const Node& other) const noexcept -> bool {
             return optional::safe_eq<TypeModifier>(a.modifier_, b.modifier_) &&
                    *a.name_ == *b.name_;
         });
-    const auto parameters_eq =
-        std::ranges::equal(parameters_, casted.parameters_, [](const auto& a, const auto& b) {
-            return *a.name_ == *b.name_ && *a.type_ == *b.type_;
-        });
-    return self_matches && parameters_eq && *return_type_ == *casted.return_type_ &&
+    const auto parameters_eq = std::ranges::equal(parameters_, casted.parameters_);
+    return self_matches && parameters_eq && return_type_ == casted.return_type_ &&
            optional::unsafe_eq<BlockStatement>(body_, casted.body_);
 }
 

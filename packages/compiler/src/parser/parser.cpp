@@ -38,6 +38,12 @@ auto Parser::consume() -> std::pair<ast::AST, Diagnostics> {
     Diagnostics diagnostics;
 
     while (!current_token_is(TokenType::END)) {
+        // Advance through any amount of semicolons
+        const auto skip = [](TokenType tt) { return tt == TokenType::SEMICOLON; };
+        if (skip(current_token_.type)) { while (skip(advance().type)); }
+        if (current_token_is(TokenType::END)) { break; }
+
+        // Comments are entirely discarded from the tree
         if (!current_token_is(TokenType::COMMENT)) {
             auto stmt = parse_statement();
             if (stmt) {
