@@ -4,7 +4,6 @@
 
 #include "ast/expressions/array.hpp"
 #include "ast/expressions/function.hpp"
-#include "ast/expressions/identifier.hpp"
 #include "ast/expressions/primitive.hpp"
 #include "ast/expressions/type.hpp"
 
@@ -28,8 +27,7 @@ TEST_CASE("Explicitly sized arrays") {
         ast::ArrayExpression{
             rbracket,
             make_box<ast::USizeIntegerExpression>(Token{TokenType::UZINT_10, "1uz"}, 1),
-            ast::ExplicitType{
-                {}, make_box<ast::IdentifierExpression>(Token{TokenType::INT_TYPE, "int"})},
+            ast::ExplicitType{{}, helpers::make_ident("int")},
             helpers::make_items(ast::SignedIntegerExpression{Token{TokenType::INT_10, "2"}, 2})});
 
     helpers::test_expr_stmt(
@@ -37,25 +35,20 @@ TEST_CASE("Explicitly sized arrays") {
         ast::ArrayExpression{
             rbracket,
             make_box<ast::USizeIntegerExpression>(Token{TokenType::UZINT_10, "2uz"}, 2),
-            ast::ExplicitType{
-                {}, make_box<ast::IdentifierExpression>(Token{TokenType::INT_TYPE, "int"})},
-            helpers::make_items(ast::IdentifierExpression{Token{TokenType::IDENT, "A"}},
-                                ast::IdentifierExpression{Token{TokenType::IDENT, "B"}})});
+            ast::ExplicitType{{}, helpers::make_ident("int")},
+            helpers::make_items(helpers::ident_from("A"), helpers::ident_from("B"))});
 }
 
 TEST_CASE("Implicitly sized array") {
-    helpers::test_expr_stmt(
-        "[_]N{a, b, c, d, e, };",
-        ast::ArrayExpression{
-            rbracket,
-            nullopt,
-            ast::ExplicitType{{},
-                              make_box<ast::IdentifierExpression>(Token{TokenType::IDENT, "N"})},
-            helpers::make_items(ast::IdentifierExpression{Token{TokenType::IDENT, "a"}},
-                                ast::IdentifierExpression{Token{TokenType::IDENT, "b"}},
-                                ast::IdentifierExpression{Token{TokenType::IDENT, "c"}},
-                                ast::IdentifierExpression{Token{TokenType::IDENT, "d"}},
-                                ast::IdentifierExpression{Token{TokenType::IDENT, "e"}})});
+    helpers::test_expr_stmt("[_]N{a, b, c, d, e, };",
+                            ast::ArrayExpression{rbracket,
+                                                 nullopt,
+                                                 ast::ExplicitType{{}, helpers::make_ident("N")},
+                                                 helpers::make_items(helpers::ident_from("a"),
+                                                                     helpers::ident_from("b"),
+                                                                     helpers::ident_from("c"),
+                                                                     helpers::ident_from("d"),
+                                                                     helpers::ident_from("e"))});
 }
 
 TEST_CASE("Size mismatch") {

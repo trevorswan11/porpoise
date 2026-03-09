@@ -10,7 +10,11 @@
 
 #include "string.hpp"
 
+#include "ast/expressions/identifier.hpp"
+#include "ast/statements/block.hpp"
 #include "ast/statements/expression.hpp"
+
+#include "lexer/keywords.hpp"
 
 namespace conch::tests::helpers {
 
@@ -81,6 +85,49 @@ template <typename T, typename... Ts> auto make_vector(Ts&&... es) -> std::vecto
     list.reserve(sizeof...(es));
     (list.emplace_back(std::forward<Ts>(es)), ...);
     return list;
+}
+
+inline auto ident_from(std::string_view name) -> ast::IdentifierExpression {
+    const auto extract = [](const auto& key) { return key.second; };
+    const auto tt      = get_keyword(name).transform(extract).value_or(
+        get_builtin(name).transform(extract).value_or(TokenType::IDENT));
+    return ast::IdentifierExpression{Token{tt, name}};
+}
+
+inline auto ident_from(const Token& tok) -> ast::IdentifierExpression {
+    return ast::IdentifierExpression{tok};
+}
+
+inline auto make_ident(std::string_view name) -> Box<ast::IdentifierExpression> {
+    return make_box<ast::IdentifierExpression>(ident_from(name));
+}
+
+inline auto make_ident(const Token& tok) -> Box<ast::IdentifierExpression> {
+    return make_box<ast::IdentifierExpression>(ident_from(tok));
+}
+
+// Creates a block statement by boxing all passed statements
+template <ast::LeafNode... Ns> auto block_stmt_from(Ns&&... nodes) -> ast::BlockStatement {
+    return ast::BlockStatement{
+        Token{TokenType::LBRACE, "{"},
+        make_vector<Box<ast::Statement>>(make_box<Ns>(std::forward<Ns>(nodes))...)};
+}
+
+// Creates a boxed block statement by boxing all passed statements
+template <ast::LeafNode... Ns> auto make_block_stmt(Ns&&... nodes) -> Box<ast::BlockStatement> {
+    return make_box<ast::BlockStatement>(block_stmt_from(std::forward<Ns>(nodes)...));
+}
+
+// Creates a block statement by packing all passed expressions into expression statements
+template <ast::LeafNode... Ns> auto expr_block_stmt_from(Ns&&... nodes) -> ast::BlockStatement {
+    return block_stmt_from(
+        ast::ExpressionStatement{nodes.get_token(), make_box<Ns>(std::forward<Ns>(nodes))}...);
+}
+
+// Creates a boxed block statement by packing all passed expressions into expression statements
+template <ast::LeafNode... Ns>
+auto make_expr_block_stmt(Ns&&... nodes) -> Box<ast::BlockStatement> {
+    return make_box<ast::BlockStatement>(expr_block_stmt_from(std::forward<Ns>(nodes)...));
 }
 
 } // namespace conch::tests::helpers

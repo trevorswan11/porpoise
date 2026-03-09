@@ -2,7 +2,6 @@
 
 #include "ast/helpers.hpp"
 
-#include "ast/expressions/identifier.hpp"
 #include "ast/expressions/index.hpp"
 #include "ast/expressions/primitive.hpp"
 
@@ -12,27 +11,22 @@ TEST_CASE("Single-level index") {
     const Token arr{TokenType::IDENT, "arr"};
     helpers::test_expr_stmt("arr[3uz];",
                             ast::IndexExpression{arr,
-                                                 make_box<ast::IdentifierExpression>(arr),
+                                                 helpers::make_ident(arr),
                                                  make_box<ast::USizeIntegerExpression>(
                                                      Token{TokenType::UZINT_10, "3uz"}, 3uz)});
 
     helpers::test_expr_stmt(
-        "arr[i];",
-        ast::IndexExpression{arr,
-                             make_box<ast::IdentifierExpression>(arr),
-                             make_box<ast::IdentifierExpression>(Token{TokenType::IDENT, "i"})});
+        "arr[i];", ast::IndexExpression{arr, helpers::make_ident(arr), helpers::make_ident("i")});
 }
 
 TEST_CASE("Index on an index") {
     const Token arr{TokenType::IDENT, "arr"};
     helpers::test_expr_stmt(
         "arr[i][j];",
-        ast::IndexExpression{arr,
-                             make_box<ast::IndexExpression>(
-                                 arr,
-                                 make_box<ast::IdentifierExpression>(arr),
-                                 make_box<ast::IdentifierExpression>(Token{TokenType::IDENT, "i"})),
-                             make_box<ast::IdentifierExpression>(Token{TokenType::IDENT, "j"})});
+        ast::IndexExpression{
+            arr,
+            make_box<ast::IndexExpression>(arr, helpers::make_ident(arr), helpers::make_ident("i")),
+            helpers::make_ident("j")});
 }
 
 TEST_CASE("No index") {

@@ -3,11 +3,8 @@
 #include "ast/helpers.hpp"
 
 #include "ast/expressions/enum.hpp"
-#include "ast/expressions/identifier.hpp"
 #include "ast/expressions/primitive.hpp"
 #include "ast/statements/jump.hpp"
-
-#include "lexer/keywords.hpp"
 
 namespace conch::tests {
 
@@ -24,8 +21,7 @@ TEST_CASE("Expression returns") {
                                               Token{TokenType::INT_10, "4"}, 4)});
 
     std::vector<ast::Enumeration> enumerations;
-    enumerations.emplace_back(ast::Enumeration{
-        make_box<ast::IdentifierExpression>(Token{TokenType::IDENT, "RED"}), nullopt});
+    enumerations.emplace_back(ast::Enumeration{helpers::make_ident("RED"), nullopt});
     helpers::test_stmt("return enum { RED };",
                        ast::JumpStatement{Token{keywords::RETURN},
                                           make_box<ast::EnumExpression>(Token{keywords::ENUM},

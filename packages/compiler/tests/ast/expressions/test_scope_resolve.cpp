@@ -2,31 +2,25 @@
 
 #include "ast/helpers.hpp"
 
-#include "ast/expressions/identifier.hpp"
 #include "ast/expressions/scope_resolve.hpp"
 
 namespace conch::tests {
 
 TEST_CASE("Basic scope") {
-    const Token start_token{TokenType::IDENT, "A"};
-    helpers::test_expr_stmt("A::B;",
-                            ast::ScopeResolutionExpression{
-                                start_token,
-                                make_box<ast::IdentifierExpression>(start_token),
-                                make_box<ast::IdentifierExpression>(Token{TokenType::IDENT, "B"})});
+    const Token a{TokenType::IDENT, "A"};
+    helpers::test_expr_stmt(
+        "A::B;",
+        ast::ScopeResolutionExpression{a, helpers::make_ident(a), helpers::make_ident("B")});
 }
 
 TEST_CASE("Nested scope") {
-    const Token start_token{TokenType::IDENT, "A"};
+    const Token a{TokenType::IDENT, "A"};
     helpers::test_expr_stmt(
         "A::B::C;",
-        ast::ScopeResolutionExpression{
-            start_token,
-            make_box<ast::ScopeResolutionExpression>(
-                start_token,
-                make_box<ast::IdentifierExpression>(start_token),
-                make_box<ast::IdentifierExpression>(Token{TokenType::IDENT, "B"})),
-            make_box<ast::IdentifierExpression>(Token{TokenType::IDENT, "C"})});
+        ast::ScopeResolutionExpression{a,
+                                       make_box<ast::ScopeResolutionExpression>(
+                                           a, helpers::make_ident(a), helpers::make_ident("B")),
+                                       helpers::make_ident("C")});
 }
 
 TEST_CASE("Missing inner scope") {

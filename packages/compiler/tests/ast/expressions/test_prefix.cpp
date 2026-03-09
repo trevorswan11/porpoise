@@ -3,7 +3,6 @@
 
 #include "ast/helpers.hpp"
 
-#include "ast/expressions/identifier.hpp"
 #include "ast/expressions/prefix.hpp"
 
 #include "lexer/operators.hpp"
@@ -12,11 +11,9 @@ namespace conch::tests {
 
 namespace helpers {
 
-const Token a{TokenType::IDENT, "a"};
-
 template <ast::LeafNode N> auto test_prefix_expr(const Operator& op) -> void {
-    const auto input = fmt::format("{}{};", op.first, a.slice);
-    test_expr_stmt(input, N{Token{op}, make_box<ast::IdentifierExpression>(a)});
+    const auto input = fmt::format("{}a;", op.first);
+    test_expr_stmt(input, N{Token{op}, make_ident("a")});
 }
 
 } // namespace helpers

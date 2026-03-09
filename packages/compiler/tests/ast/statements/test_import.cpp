@@ -2,36 +2,29 @@
 
 #include "ast/helpers.hpp"
 
-#include "ast/expressions/identifier.hpp"
 #include "ast/expressions/primitive.hpp"
 #include "ast/statements/import.hpp"
-
-#include "lexer/keywords.hpp"
 
 namespace conch::tests {
 
 TEST_CASE("Module imports") {
     helpers::test_stmt(
         "import std;",
-        ast::ImportStatement{Token{keywords::IMPORT},
-                             make_box<ast::IdentifierExpression>(Token{TokenType::IDENT, "std"}),
-                             {}});
+        ast::ImportStatement{Token{keywords::IMPORT}, helpers::make_ident("std"), {}});
 
-    helpers::test_stmt(
-        "import std as stud;",
-        ast::ImportStatement{Token{keywords::IMPORT},
-                             make_box<ast::IdentifierExpression>(Token{TokenType::IDENT, "std"}),
-                             make_box<ast::IdentifierExpression>(Token{TokenType::IDENT, "stud"})});
+    helpers::test_stmt("import std as stud;",
+                       ast::ImportStatement{Token{keywords::IMPORT},
+                                            helpers::make_ident("std"),
+                                            helpers::make_ident("stud")});
 }
 
 TEST_CASE("User imports") {
-    helpers::test_stmt(
-        R"(import "ast/node.conch" as node;)",
-        ast::ImportStatement{
-            Token{keywords::IMPORT},
-            make_box<ast::StringExpression>(Token{TokenType::STRING, R"("ast/node.conch")"},
-                                            std::string{"ast/node.conch"}),
-            make_box<ast::IdentifierExpression>(Token{TokenType::IDENT, "node"})});
+    helpers::test_stmt(R"(import "ast/node.conch" as node;)",
+                       ast::ImportStatement{Token{keywords::IMPORT},
+                                            make_box<ast::StringExpression>(
+                                                Token{TokenType::STRING, R"("ast/node.conch")"},
+                                                std::string{"ast/node.conch"}),
+                                            helpers::make_ident("node")});
 }
 
 TEST_CASE("Incorrect module imports ") {

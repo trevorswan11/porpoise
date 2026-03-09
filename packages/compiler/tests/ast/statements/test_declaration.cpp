@@ -10,12 +10,10 @@
 #include "ast/helpers.hpp"
 
 #include "ast/expressions/function.hpp"
-#include "ast/expressions/identifier.hpp"
 #include "ast/expressions/primitive.hpp"
 #include "ast/expressions/type.hpp"
 #include "ast/statements/declaration.hpp"
 
-#include "lexer/keywords.hpp"
 #include "lexer/operators.hpp"
 
 namespace conch::tests {
@@ -27,33 +25,31 @@ TEST_CASE("Explicit primitive declaration") {
         "var a: int = 2;",
         ast::DeclStatement{
             Token{keywords::VAR},
-            make_box<ast::IdentifierExpression>(Token{TokenType::IDENT, "a"}),
-            make_box<ast::TypeExpression>(
-                Token{TokenType::COLON, ":"},
-                ast::ExplicitType{
-                    {},
-                    ExplicitTypeVariant{make_box<ast::IdentifierExpression>(Token{keywords::INT})},
-                }),
+            helpers::make_ident("a"),
+            make_box<ast::TypeExpression>(Token{TokenType::COLON, ":"},
+                                          ast::ExplicitType{
+                                              {},
+                                              ExplicitTypeVariant{helpers::make_ident("int")},
+                                          }),
             make_box<ast::SignedIntegerExpression>(Token{TokenType::INT_10, "2"}, 2),
             ast::DeclModifiers::VARIABLE,
         });
 }
 
 TEST_CASE("Explicit non-primitive declaration") {
-    helpers::test_stmt("var a: Foo = bar;",
-                       ast::DeclStatement{
-                           Token{keywords::VAR},
-                           make_box<ast::IdentifierExpression>(Token{TokenType::IDENT, "a"}),
-                           make_box<ast::TypeExpression>(
-                               Token{TokenType::COLON, ":"},
-                               ast::ExplicitType{
-                                   {},
-                                   ExplicitTypeVariant{make_box<ast::IdentifierExpression>(
-                                       Token{TokenType::IDENT, "Foo"})},
-                               }),
-                           make_box<ast::IdentifierExpression>(Token{TokenType::IDENT, "bar"}),
-                           ast::DeclModifiers::VARIABLE,
-                       });
+    helpers::test_stmt(
+        "var a: Foo = bar;",
+        ast::DeclStatement{
+            Token{keywords::VAR},
+            helpers::make_ident("a"),
+            make_box<ast::TypeExpression>(Token{TokenType::COLON, ":"},
+                                          ast::ExplicitType{
+                                              {},
+                                              ExplicitTypeVariant{helpers::make_ident("Foo")},
+                                          }),
+            helpers::make_ident("bar"),
+            ast::DeclModifiers::VARIABLE,
+        });
 }
 
 TEST_CASE("Implicit comptime declaration") {
@@ -61,7 +57,7 @@ TEST_CASE("Implicit comptime declaration") {
         "comptime SIZE := 2uz;",
         ast::DeclStatement{
             Token{keywords::COMPTIME},
-            make_box<ast::IdentifierExpression>(Token{TokenType::IDENT, "SIZE"}),
+            helpers::make_ident("SIZE"),
             make_box<ast::TypeExpression>(Token{operators::WALRUS}, nullopt),
             make_box<ast::USizeIntegerExpression>(Token{TokenType::UZINT_10, "2uz"}, 2uz),
             ast::DeclModifiers::COMPTIME,
@@ -80,28 +76,26 @@ TEST_CASE("Correct declaration modifiers") {
                 ss.view(),
                 ast::DeclStatement{
                     Token{*modifiers.begin()},
-                    make_box<ast::IdentifierExpression>(Token{TokenType::IDENT, "a"}),
+                    helpers::make_ident("a"),
                     make_box<ast::TypeExpression>(Token{operators::WALRUS}, nullopt),
                     make_box<ast::SignedIntegerExpression>(Token{TokenType::INT_10, "2"}, 2),
                     flags,
                 });
         } else {
             ss << " a: int;";
-            helpers::test_stmt(
-                ss.view(),
-                ast::DeclStatement{
-                    Token{*modifiers.begin()},
-                    make_box<ast::IdentifierExpression>(Token{TokenType::IDENT, "a"}),
-                    make_box<ast::TypeExpression>(
-                        Token{TokenType::COLON, ":"},
-                        ast::ExplicitType{
-                            {},
-                            ExplicitTypeVariant{
-                                make_box<ast::IdentifierExpression>(Token{keywords::INT})},
-                        }),
-                    nullopt,
-                    flags,
-                });
+            helpers::test_stmt(ss.view(),
+                               ast::DeclStatement{
+                                   Token{*modifiers.begin()},
+                                   helpers::make_ident("a"),
+                                   make_box<ast::TypeExpression>(
+                                       Token{TokenType::COLON, ":"},
+                                       ast::ExplicitType{
+                                           {},
+                                           ExplicitTypeVariant{helpers::make_ident("int")},
+                                       }),
+                                   nullopt,
+                                   flags,
+                               });
         }
     };
 

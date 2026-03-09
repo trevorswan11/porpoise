@@ -3,11 +3,8 @@
 #include "ast/helpers.hpp"
 
 #include "ast/expressions/enum.hpp"
-#include "ast/expressions/identifier.hpp"
 #include "ast/expressions/primitive.hpp"
 #include "ast/statements/discard.hpp"
-
-#include "lexer/keywords.hpp"
 
 namespace conch::tests {
 
@@ -19,8 +16,7 @@ TEST_CASE("Discard statements") {
             start_token, make_box<ast::SignedIntegerExpression>(Token{TokenType::INT_10, "4"}, 4)});
 
     std::vector<ast::Enumeration> enumerations;
-    enumerations.emplace_back(ast::Enumeration{
-        make_box<ast::IdentifierExpression>(Token{TokenType::IDENT, "RED"}), nullopt});
+    enumerations.emplace_back(ast::Enumeration{helpers::make_ident("RED"), nullopt});
     helpers::test_stmt(
         "_ = enum { RED };",
         ast::DiscardStatement{start_token,
