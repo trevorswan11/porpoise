@@ -18,6 +18,8 @@ class DoWhileLoopExpression : public ExprBase<DoWhileLoopExpression> {
                                    Box<Expression>     condition) noexcept;
     ~DoWhileLoopExpression() override;
 
+    MAKE_AST_COPY_MOVE(DoWhileLoopExpression)
+
     auto                      accept(Visitor& v) const -> void override;
     [[nodiscard]] static auto parse(Parser& parser) -> Expected<Box<Expression>, ParserDiagnostic>;
 

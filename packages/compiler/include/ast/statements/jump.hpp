@@ -16,6 +16,8 @@ class JumpStatement : public StmtBase<JumpStatement> {
     explicit JumpStatement(const Token& start_token, Optional<Box<Expression>> expression) noexcept
         : StmtBase{start_token}, expression_{std::move(expression)} {}
 
+    MAKE_AST_COPY_MOVE(JumpStatement)
+
     auto                      accept(Visitor& v) const -> void override;
     [[nodiscard]] static auto parse(Parser& parser) -> Expected<Box<Statement>, ParserDiagnostic>;
 

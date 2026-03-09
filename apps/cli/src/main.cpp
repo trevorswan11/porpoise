@@ -1,3 +1,3 @@
 #include "program.hpp"
 
-auto main() -> int { conch::cli::Program::repl(); }
+auto main() -> int { conch::cli::Program::interactive(); }

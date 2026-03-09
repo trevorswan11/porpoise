@@ -2,19 +2,21 @@
 #include <string>
 
 #include <fmt/format.h>
+#include <fmt/ranges.h>
 
 #include "program.hpp"
 
-#include "lexer/lexer.hpp"
+#include "parser/parser.hpp"
+
+#include "ast/node.hpp" // IWYU pragma: keep
 
 #include "string.hpp"
 
 namespace conch::cli {
 
-auto Program::repl() -> void {
-    Lexer lexer;
+auto Program::interactive() -> void {
+    Parser p;
 
-    fmt::println("Welcome to Conch REPL! Type 'exit' to quit.");
     std::string line;
     while (true) {
         fmt::print(">>> ");
@@ -24,8 +26,13 @@ auto Program::repl() -> void {
         const auto trimmed = string::trim(line);
         if (trimmed == "exit") { break; }
 
-        lexer.reset(trimmed);
-        for (const auto& token : lexer) { fmt::println("{}", token); }
+        p.reset(trimmed);
+        auto [ast, errors] = p.consume();
+        if (!errors.empty()) {
+            fmt::println("{}", errors);
+        } else {
+            fmt::println("AST size {} for line: {}", ast.size(), line);
+        }
     }
 }
 

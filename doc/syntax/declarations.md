@@ -1,5 +1,6 @@
 # Declarations
 - The assignment operator `=` can be used to assign an existing non-constant value
+    - It is also used to assign a value to an explicitly typed variable in-line
     - The operator can also be used to discard a value using the `_ = ...` syntax 
 - The walrus operator `:=` can be used to declare a value who's type is inferred based on the assigned value
     - The walrus operator can only be used with value-initialized declarations
@@ -17,7 +18,7 @@ var e: string;          // Allowed, e is forward declared and future assignments
 - A constant must be initialized with a value
     - This is true unless it is a value that is marked `extern`
 - A constant's value does not have to be compile-time known
-- Constness cannot be casted away (for now)
+- Constness cannot be casted away
 - A mutable reference cannot be taken from a constant
 
 ## Compile-time Constants

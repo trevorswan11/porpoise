@@ -13,7 +13,6 @@ WhileLoopExpression::WhileLoopExpression(const Token&              start_token,
     : ExprBase{start_token}, condition_{std::move(condition)},
       continuation_{std::move(continuation)}, block_{std::move(block)},
       non_break_{std::move(non_break)} {}
-
 WhileLoopExpression::~WhileLoopExpression() = default;
 
 auto WhileLoopExpression::accept(Visitor& v) const -> void { v.visit(*this); }
@@ -41,12 +40,12 @@ auto WhileLoopExpression::parse(Parser& parser) -> Expected<Box<Expression>, Par
         // Consume again to look at the actual expr start
         parser.advance();
         if (parser.current_token_is(TokenType::RPAREN)) {
-            return make_parser_unexpected(ParserError::IMPROPER_WHILE_CONTINUATION,
+            return make_parser_unexpected(ParserError::EMPTY_WHILE_CONTINUATION,
                                           continuation_start);
         }
 
         continuation.emplace(TRY(parser.parse_expression()));
-        TRY(parser.expect_peek(TokenType::RBRACE));
+        TRY(parser.expect_peek(TokenType::RPAREN));
     }
 
     // Loops must have a well formed block and may have an alternate in non-break cases
@@ -57,7 +56,7 @@ auto WhileLoopExpression::parse(Parser& parser) -> Expected<Box<Expression>, Par
 
     // There needs to be at least a continuation or block
     if (!continuation && block->empty()) {
-        return make_parser_unexpected(ParserError::EMPTY_WHILE_LOOP, start_token);
+        return make_parser_unexpected(ParserError::EMPTY_WHILE_LOOP, block->get_token());
     }
 
     return make_box<WhileLoopExpression>(start_token,
@@ -71,7 +70,8 @@ auto WhileLoopExpression::is_equal(const Node& other) const noexcept -> bool {
     const auto& casted = as<WhileLoopExpression>(other);
     return *condition_ == *casted.condition_ &&
            optional::unsafe_eq<Expression>(continuation_, casted.continuation_) &&
-           block_ == casted.block_ && optional::unsafe_eq<Statement>(non_break_, casted.non_break_);
+           *block_ == *casted.block_ &&
+           optional::unsafe_eq<Statement>(non_break_, casted.non_break_);
 }
 
 } // namespace conch::ast

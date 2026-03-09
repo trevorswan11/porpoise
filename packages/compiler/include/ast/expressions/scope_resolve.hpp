@@ -18,6 +18,8 @@ class ScopeResolutionExpression : public ExprBase<ScopeResolutionExpression> {
                                        Box<IdentifierExpression> inner) noexcept;
     ~ScopeResolutionExpression() override;
 
+    MAKE_AST_COPY_MOVE(ScopeResolutionExpression)
+
     auto                      accept(Visitor& v) const -> void override;
     [[nodiscard]] static auto parse(Parser& parser, Box<Expression> outer)
         -> Expected<Box<Expression>, ParserDiagnostic>;

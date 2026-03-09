@@ -16,6 +16,8 @@ class DiscardStatement : public StmtBase<DiscardStatement> {
     explicit DiscardStatement(const Token& start_token, Box<Expression> discarded) noexcept
         : StmtBase{start_token}, discarded_{std::move(discarded)} {}
 
+    MAKE_AST_COPY_MOVE(DiscardStatement)
+
     auto                      accept(Visitor& v) const -> void override;
     [[nodiscard]] static auto parse(Parser& parser) -> Expected<Box<Statement>, ParserDiagnostic>;
 

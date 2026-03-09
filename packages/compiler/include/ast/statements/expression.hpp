@@ -16,6 +16,8 @@ class ExpressionStatement : public StmtBase<ExpressionStatement> {
     explicit ExpressionStatement(const Token& start_token, Box<Expression> expression) noexcept
         : StmtBase{start_token}, expression_{std::move(expression)} {}
 
+    MAKE_AST_COPY_MOVE(ExpressionStatement)
+
     auto                      accept(Visitor& v) const -> void override;
     [[nodiscard]] static auto parse(Parser& parser) -> Expected<Box<Statement>, ParserDiagnostic>;
 

@@ -20,6 +20,8 @@ class WhileLoopExpression : public ExprBase<WhileLoopExpression> {
                                  Optional<Box<Statement>>  non_break) noexcept;
     ~WhileLoopExpression() override;
 
+    MAKE_AST_COPY_MOVE(WhileLoopExpression)
+
     auto                      accept(Visitor& v) const -> void override;
     [[nodiscard]] static auto parse(Parser& parser) -> Expected<Box<Expression>, ParserDiagnostic>;
 

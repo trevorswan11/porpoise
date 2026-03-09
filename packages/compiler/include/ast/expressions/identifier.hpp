@@ -16,6 +16,8 @@ class IdentifierExpression : public ExprBase<IdentifierExpression> {
   public:
     explicit IdentifierExpression(const Token& start_token) noexcept : ExprBase{start_token} {}
 
+    MAKE_AST_COPY_MOVE(IdentifierExpression)
+
     auto                      accept(Visitor& v) const -> void override;
     [[nodiscard]] static auto parse(Parser& parser) -> Expected<Box<Expression>, ParserDiagnostic>;
 

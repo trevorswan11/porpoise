@@ -10,7 +10,9 @@ auto ExpressionStatement::parse(Parser& parser) -> Expected<Box<Statement>, Pars
     const auto start_token = parser.current_token();
     auto       expr        = TRY(parser.parse_expression());
 
-    TRY(parser.expect_peek(TokenType::SEMICOLON));
+    if (!parser.current_token_is(TokenType::SEMICOLON)) {
+        TRY(parser.expect_peek(TokenType::SEMICOLON));
+    }
     return make_box<ExpressionStatement>(start_token, std::move(expr));
 }
 

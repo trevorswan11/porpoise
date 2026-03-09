@@ -16,10 +16,7 @@ class Enumeration {
                          Optional<Box<Expression>> value) noexcept;
     ~Enumeration();
 
-    Enumeration(const Enumeration&)                        = delete;
-    auto operator=(const Enumeration&) -> Enumeration&     = delete;
-    Enumeration(Enumeration&&) noexcept                    = default;
-    auto operator=(Enumeration&&) noexcept -> Enumeration& = default;
+    MAKE_AST_COPY_MOVE(Enumeration)
 
     [[nodiscard]] auto get_enumeration() const noexcept -> const IdentifierExpression& {
         return *enumeration_;
@@ -47,9 +44,12 @@ class EnumExpression : public ExprBase<EnumExpression> {
                             std::vector<Enumeration>            enumerations) noexcept;
     ~EnumExpression() override;
 
+    MAKE_AST_COPY_MOVE(EnumExpression)
+
     auto                      accept(Visitor& v) const -> void override;
     [[nodiscard]] static auto parse(Parser& parser) -> Expected<Box<Expression>, ParserDiagnostic>;
 
+    [[nodiscard]] auto has_underlying() const noexcept -> bool { return underlying_.has_value(); }
     [[nodiscard]] auto get_underlying() const noexcept -> Optional<const IdentifierExpression&> {
         return underlying_ ? Optional<const IdentifierExpression&>{**underlying_} : nullopt;
     }

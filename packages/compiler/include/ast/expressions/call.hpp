@@ -21,6 +21,8 @@ class CallExpression : public ExprBase<CallExpression> {
                             std::vector<Box<Expression>> arguments) noexcept
         : ExprBase{start_token}, function_{std::move(function)}, arguments_{std::move(arguments)} {}
 
+    MAKE_AST_COPY_MOVE(CallExpression)
+
     auto                      accept(Visitor& v) const -> void override;
     [[nodiscard]] static auto parse(Parser& parser, Box<Expression> function)
         -> Expected<Box<Expression>, ParserDiagnostic>;
@@ -33,7 +35,10 @@ class CallExpression : public ExprBase<CallExpression> {
   protected:
     auto is_equal(const Node& other) const noexcept -> bool override {
         const auto& casted = as<CallExpression>(other);
-        return *function_ == *casted.function_ && std::ranges::equal(arguments_, casted.arguments_);
+        return *function_ == *casted.function_ &&
+               std::ranges::equal(arguments_, casted.arguments_, [](const auto& a, const auto& b) {
+                   return *a == *b;
+               });
     }
 
   private:

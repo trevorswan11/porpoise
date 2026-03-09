@@ -16,6 +16,8 @@ class InfiniteLoopExpression : public ExprBase<InfiniteLoopExpression> {
     explicit InfiniteLoopExpression(const Token& start_token, Box<BlockStatement> block) noexcept;
     ~InfiniteLoopExpression() override;
 
+    MAKE_AST_COPY_MOVE(InfiniteLoopExpression)
+
     auto                      accept(Visitor& v) const -> void override;
     [[nodiscard]] static auto parse(Parser& parser) -> Expected<Box<Expression>, ParserDiagnostic>;
 

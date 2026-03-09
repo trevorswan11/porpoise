@@ -23,6 +23,8 @@ class BlockStatement : public StmtBase<BlockStatement> {
                             std::vector<Box<Statement>> statements) noexcept
         : StmtBase{start_token}, statements_{std::move(statements)} {}
 
+    MAKE_AST_COPY_MOVE(BlockStatement)
+
     auto                      accept(Visitor& v) const -> void override;
     [[nodiscard]] static auto parse(Parser& parser) -> Expected<Box<Statement>, ParserDiagnostic>;
 

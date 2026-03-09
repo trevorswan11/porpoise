@@ -233,28 +233,20 @@ TEST_CASE("Integer base variants") {
 }
 
 TEST_CASE("Iterator with other keywords") {
-    Lexer l{"private extern export packed volatile static "
+    Lexer l{"and or private extern export packed volatile static "
             "int long isize uint ulong usize float byte string bool void type"};
 
     const auto expecteds = std::to_array<ExpectedLexeme>({
-        {TokenType::PRIVATE, "private"},
-        {TokenType::EXTERN, "extern"},
-        {TokenType::EXPORT, "export"},
-        {TokenType::PACKED, "packed"},
-        {TokenType::VOLATILE, "volatile"},
-        {TokenType::STATIC, "static"},
-        {TokenType::INT_TYPE, "int"},
-        {TokenType::LONG_TYPE, "long"},
-        {TokenType::ISIZE_TYPE, "isize"},
-        {TokenType::UINT_TYPE, "uint"},
-        {TokenType::ULONG_TYPE, "ulong"},
-        {TokenType::USIZE_TYPE, "usize"},
-        {TokenType::FLOAT_TYPE, "float"},
-        {TokenType::BYTE_TYPE, "byte"},
-        {TokenType::STRING_TYPE, "string"},
-        {TokenType::BOOL_TYPE, "bool"},
-        {TokenType::VOID_TYPE, "void"},
-        {TokenType::TYPE_TYPE, "type"},
+        {TokenType::BOOLEAN_AND, "and"},    {TokenType::BOOLEAN_OR, "or"},
+        {TokenType::PRIVATE, "private"},    {TokenType::EXTERN, "extern"},
+        {TokenType::EXPORT, "export"},      {TokenType::PACKED, "packed"},
+        {TokenType::VOLATILE, "volatile"},  {TokenType::STATIC, "static"},
+        {TokenType::INT_TYPE, "int"},       {TokenType::LONG_TYPE, "long"},
+        {TokenType::ISIZE_TYPE, "isize"},   {TokenType::UINT_TYPE, "uint"},
+        {TokenType::ULONG_TYPE, "ulong"},   {TokenType::USIZE_TYPE, "usize"},
+        {TokenType::FLOAT_TYPE, "float"},   {TokenType::BYTE_TYPE, "byte"},
+        {TokenType::STRING_TYPE, "string"}, {TokenType::BOOL_TYPE, "bool"},
+        {TokenType::VOID_TYPE, "void"},     {TokenType::TYPE_TYPE, "type"},
     });
 
     size_t i = 0;
@@ -431,6 +423,25 @@ TEST_CASE("Compiler builtins") {
         REQUIRE(expected_tt == token.type);
         REQUIRE(expected_slice == token.slice);
         REQUIRE(is_builtin(token.type));
+    }
+}
+
+TEST_CASE("Pointers and references") {
+    Lexer l{"& &mut * *mut nullptr"};
+
+    const auto expecteds = std::to_array<ExpectedLexeme>({
+        {TokenType::BW_AND, "&"},
+        {TokenType::AND_MUT, "&mut"},
+        {TokenType::STAR, "*"},
+        {TokenType::STAR_MUT, "*mut"},
+        {TokenType::NULLPTR, "nullptr"},
+    });
+
+    size_t i = 0;
+    for (const auto& token : l) {
+        REQUIRE(expecteds[i].first == token.type);
+        REQUIRE(expecteds[i].second == token.slice);
+        i += 1;
     }
 }
 

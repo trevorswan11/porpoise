@@ -52,6 +52,8 @@ class DeclStatement : public StmtBase<DeclStatement> {
                            DeclModifiers             modifiers) noexcept;
     ~DeclStatement() override;
 
+    MAKE_AST_COPY_MOVE(DeclStatement)
+
     auto                      accept(Visitor& v) const -> void override;
     [[nodiscard]] static auto parse(Parser& parser) -> Expected<Box<Statement>, ParserDiagnostic>;
 

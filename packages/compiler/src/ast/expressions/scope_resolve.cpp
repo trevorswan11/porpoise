@@ -9,13 +9,16 @@ ScopeResolutionExpression::ScopeResolutionExpression(const Token&              s
                                                      Box<Expression>           outer,
                                                      Box<IdentifierExpression> inner) noexcept
     : ExprBase{start_token}, outer_{std::move(outer)}, inner_{std::move(inner)} {}
-
 ScopeResolutionExpression::~ScopeResolutionExpression() = default;
 
 auto ScopeResolutionExpression::accept(Visitor& v) const -> void { v.visit(*this); }
 
 auto ScopeResolutionExpression::parse(Parser& parser, Box<Expression> outer)
     -> Expected<Box<Expression>, ParserDiagnostic> {
+    if (!outer->any<IdentifierExpression, ScopeResolutionExpression>()) {
+        return make_parser_unexpected(ParserError::ILLEGAL_OUTER_SCOPE_TYPE, outer->get_token());
+    }
+
     TRY(parser.expect_peek(TokenType::IDENT));
     auto inner = downcast<IdentifierExpression>(TRY(IdentifierExpression::parse(parser)));
     return make_box<ScopeResolutionExpression>(

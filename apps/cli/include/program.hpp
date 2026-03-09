@@ -4,7 +4,7 @@ namespace conch::cli {
 
 class Program {
   public:
-    static auto repl() -> void;
+    static auto interactive() -> void;
 };
 
 } // namespace conch::cli

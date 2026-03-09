@@ -1,4 +1,4 @@
-#include "ast/statements/decl.hpp"
+#include "ast/statements/declaration.hpp"
 
 #include "ast/expressions/function.hpp"
 #include "ast/expressions/identifier.hpp"
@@ -14,7 +14,6 @@ DeclStatement::DeclStatement(const Token&              start_token,
                              DeclModifiers             modifiers) noexcept
     : StmtBase{start_token}, ident_{std::move(ident)}, type_{std::move(type)},
       value_{std::move(value)}, modifiers_{modifiers} {}
-
 DeclStatement::~DeclStatement() = default;
 
 auto DeclStatement::accept(Visitor& v) const -> void { v.visit(*this); }
@@ -68,7 +67,9 @@ auto DeclStatement::parse(Parser& parser) -> Expected<Box<Statement>, ParserDiag
         }
     }
 
-    TRY(parser.expect_peek(TokenType::SEMICOLON));
+    if (!parser.current_token_is(TokenType::SEMICOLON)) {
+        TRY(parser.expect_peek(TokenType::SEMICOLON));
+    }
     return make_box<DeclStatement>(start_token,
                                    std::move(decl_name),
                                    std::move(decl_type_expr),

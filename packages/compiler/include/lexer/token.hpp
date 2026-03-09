@@ -60,13 +60,12 @@ enum class TokenType : u8 {
     PLUS,
     MINUS,
     STAR,
-    STAR_STAR,
     SLASH,
     PERCENT,
     BANG,
 
-    AND,
-    OR,
+    BW_AND,
+    BW_OR,
     SHL,
     SHR,
     NOT,
@@ -77,17 +76,17 @@ enum class TokenType : u8 {
     STAR_ASSIGN,
     SLASH_ASSIGN,
     PERCENT_ASSIGN,
-    AND_ASSIGN,
-    OR_ASSIGN,
+    BW_AND_ASSIGN,
+    BW_OR_ASSIGN,
     SHL_ASSIGN,
     SHR_ASSIGN,
     NOT_ASSIGN,
     XOR_ASSIGN,
 
     LT,
-    LTEQ,
+    LT_EQ,
     GT,
-    GTEQ,
+    GT_EQ,
     EQ,
     NEQ,
 
@@ -113,8 +112,8 @@ enum class TokenType : u8 {
 
     SINGLE_QUOTE,
     UNDERSCORE,
-    REF,
     AND_MUT,
+    STAR_MUT,
 
     FUNCTION,
     VAR,
@@ -158,12 +157,14 @@ enum class TokenType : u8 {
     PACKED,
     VOLATILE,
     STATIC,
-    MUT,
     NORETURN,
+    NULLPTR,
 
     TYPEOF,
     SIZEOF,
     ALIGNOF,
+    PTR_ADD,
+    PTR_SUB,
     SIN,
     COS,
     TAN,
@@ -181,6 +182,7 @@ enum class TokenType : u8 {
     FLOOR,
     EXP,
     EXP_2,
+    POW,
     CLZ, // Count leading zeroes
     CTZ, // Count trailing zeroes
 

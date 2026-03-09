@@ -4,15 +4,12 @@
 #include "ast/expressions/primitive.hpp"
 #include "ast/visitor.hpp"
 
-#include "common.hpp"
-
 namespace conch::ast {
 
 ImportStatement::ImportStatement(const Token&                           start_token,
                                  std::variant<ModuleImport, UserImport> imported,
                                  Optional<Box<IdentifierExpression>>    alias) noexcept
     : StmtBase{start_token}, imported_{std::move(imported)}, alias_{std::move(alias)} {}
-
 ImportStatement::~ImportStatement() = default;
 
 auto ImportStatement::accept(Visitor& v) const -> void { v.visit(*this); }
@@ -26,9 +23,14 @@ auto ImportStatement::parse(Parser& parser) -> Expected<Box<Statement>, ParserDi
         imported = downcast<IdentifierExpression>(TRY(IdentifierExpression::parse(parser)));
     } else if (parser.peek_token_is(TokenType::STRING)) {
         TRY(parser.expect_peek(TokenType::STRING));
-        imported = downcast<StringExpression>(TRY(StringExpression::parse(parser)));
+        auto string = downcast<StringExpression>(TRY(StringExpression::parse(parser)));
+
+        if (string->get_value().empty()) {
+            return make_parser_unexpected(ParserError::EMPTY_USER_IMPORT, string->get_token());
+        }
+        imported = std::move(string);
     } else {
-        return make_parser_unexpected(ParserError::ILLEGAL_IMPORT, parser.peek_token());
+        return make_parser_unexpected(ParserError::ILLEGAL_IMPORT_TYPE, parser.peek_token());
     }
 
     Optional<Box<IdentifierExpression>> imported_alias;
@@ -41,7 +43,9 @@ auto ImportStatement::parse(Parser& parser) -> Expected<Box<Statement>, ParserDi
         return make_parser_unexpected(ParserError::USER_IMPORT_MISSING_ALIAS, start_token);
     }
 
-    TRY(parser.expect_peek(TokenType::SEMICOLON));
+    if (!parser.current_token_is(TokenType::SEMICOLON)) {
+        TRY(parser.expect_peek(TokenType::SEMICOLON));
+    }
     return make_box<ImportStatement>(start_token, std::move(imported), std::move(imported_alias));
 }
 

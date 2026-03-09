@@ -1,49 +1,38 @@
 #include <catch2/catch_test_macros.hpp>
 #include <fmt/format.h>
 
-#include "ast/expressions/test_identifiers.hpp"
-#include "ast/test_helpers.hpp"
-
-#include "lexer/keywords.hpp"
-
-#include "parser/parser.hpp"
-
-#include "ast/expressions/identifier.hpp"
+#include "ast/helpers.hpp"
 
 namespace conch::tests {
 
 namespace helpers {
 
-auto test_ident(std::string_view input, Optional<TokenType> expected_type) -> void {
-    Parser p{input};
-    auto [ast, errors] = p.consume();
-
-    helpers::check_errors<ParserDiagnostic>(errors);
-    REQUIRE(ast.size() == 1);
-
-    const auto                       actual{std::move(ast[0])};
-    const auto&                      expr_stmt = helpers::into_expression_statement(*actual);
-    const ast::IdentifierExpression& expected{Token{*expected_type, trim_semicolons(input)}};
-    REQUIRE(expected == expr_stmt.get_expression());
+auto test_ident(std::string_view input) -> void {
+    test_expr_stmt(input, ident_from(trim_semicolons(input)));
 }
 
 } // namespace helpers
 
 TEST_CASE("Normal identifiers") {
     helpers::test_ident("foobar;");
-    helpers::test_ident("int;", TokenType::INT_TYPE);
-    helpers::test_ident("uint;", TokenType::UINT_TYPE);
-    helpers::test_ident("float;", TokenType::FLOAT_TYPE);
-    helpers::test_ident("byte;", TokenType::BYTE_TYPE);
-    helpers::test_ident("string;", TokenType::STRING_TYPE);
-    helpers::test_ident("bool;", TokenType::BOOL_TYPE);
-    helpers::test_ident("void;", TokenType::VOID_TYPE);
+    helpers::test_ident("int;");
+    helpers::test_ident("uint;");
+    helpers::test_ident("float;");
+    helpers::test_ident("byte;");
+    helpers::test_ident("string;");
+    helpers::test_ident("bool;");
+    helpers::test_ident("void;");
+}
+
+TEST_CASE("Non-terminated identifier") {
+    helpers::test_fail(
+        "foobar",
+        ParserDiagnostic{
+            "Expected token SEMICOLON, found END", ParserError::UNEXPECTED_TOKEN, 1, 7});
 }
 
 TEST_CASE("Builtin identifiers") {
-    for (const auto& [str, tok] : ALL_BUILTINS) {
-        helpers::test_ident(fmt::format("{};", str), tok);
-    }
+    for (const auto& [str, tok] : ALL_BUILTINS) { helpers::test_ident(fmt::format("{};", str)); }
 }
 
 } // namespace conch::tests

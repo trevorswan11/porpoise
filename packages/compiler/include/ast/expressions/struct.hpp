@@ -21,6 +21,8 @@ class StructExpression : public ExprBase<StructExpression> {
                               std::vector<Box<DeclStatement>> members) noexcept;
     ~StructExpression() override;
 
+    MAKE_AST_COPY_MOVE(StructExpression)
+
     auto                      accept(Visitor& v) const -> void override;
     [[nodiscard]] static auto parse(Parser& parser) -> Expected<Box<Expression>, ParserDiagnostic>;
 

@@ -13,7 +13,7 @@ auto IfExpression::parse(Parser& parser) -> Expected<Box<Expression>, ParserDiag
     TRY(parser.expect_peek(TokenType::LPAREN));
     parser.advance();
     if (parser.current_token_is(TokenType::RPAREN)) {
-        return make_parser_unexpected(ParserError::WHILE_MISSING_CONDITION, start_token);
+        return make_parser_unexpected(ParserError::IF_MISSING_CONDITION, start_token);
     }
 
     auto condition = TRY(parser.parse_expression());

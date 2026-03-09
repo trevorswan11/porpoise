@@ -9,7 +9,6 @@ DoWhileLoopExpression::DoWhileLoopExpression(const Token&        start_token,
                                              Box<BlockStatement> block,
                                              Box<Expression>     condition) noexcept
     : ExprBase{start_token}, block_{std::move(block)}, condition_{std::move(condition)} {}
-
 DoWhileLoopExpression::~DoWhileLoopExpression() = default;
 
 auto DoWhileLoopExpression::accept(Visitor& v) const -> void { v.visit(*this); }
@@ -19,8 +18,6 @@ auto DoWhileLoopExpression::parse(Parser& parser) -> Expected<Box<Expression>, P
     TRY(parser.expect_peek(TokenType::LBRACE));
 
     auto block = downcast<BlockStatement>(TRY(BlockStatement::parse(parser)));
-    if (block->empty()) { return make_parser_unexpected(ParserError::EMPTY_LOOP, start_token); }
-
     TRY(parser.expect_peek(TokenType::WHILE));
     TRY(parser.expect_peek(TokenType::LPAREN));
 
@@ -32,6 +29,9 @@ auto DoWhileLoopExpression::parse(Parser& parser) -> Expected<Box<Expression>, P
     // There's no continuation or non break clause so this is easy :)
     auto condition = TRY(parser.parse_expression());
     TRY(parser.expect_peek(TokenType::RPAREN));
+    if (block->empty()) {
+        return make_parser_unexpected(ParserError::EMPTY_LOOP, block->get_token());
+    }
     return make_box<DoWhileLoopExpression>(start_token, std::move(block), std::move(condition));
 }
 

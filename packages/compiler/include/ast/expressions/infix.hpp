@@ -25,12 +25,15 @@ template <typename Derived> class InfixExpression : public ExprBase<Derived> {
 
     [[nodiscard]] static auto parse(Parser& parser, Box<Expression> lhs)
         -> Expected<Box<Expression>, ParserDiagnostic> {
-        const auto op_token_type      = parser.current_token().type;
+        const auto op_token           = parser.current_token();
         const auto current_precedence = parser.poll_current_precedence();
+        if (parser.peek_token_is(TokenType::END)) {
+            return make_parser_unexpected(ParserError::INFIX_MISSING_RHS, op_token);
+        }
 
         parser.advance();
         auto rhs = TRY(parser.parse_expression(current_precedence));
-        return make_box<Derived>(lhs->get_token(), std::move(lhs), op_token_type, std::move(rhs));
+        return make_box<Derived>(lhs->get_token(), std::move(lhs), op_token.type, std::move(rhs));
     }
 
   protected:
@@ -44,5 +47,24 @@ template <typename Derived> class InfixExpression : public ExprBase<Derived> {
     TokenType       op_;
     Box<Expression> rhs_;
 };
+
+#define DECLARE_INFIX_EXPRESSION(Type, Kind)    \
+    class Type : public InfixExpression<Type> { \
+      public:                                   \
+        static constexpr auto KIND = Kind;      \
+                                                \
+      public:                                   \
+        using InfixExpression::InfixExpression; \
+        MAKE_AST_COPY_MOVE(Type)                \
+                                                \
+        using InfixExpression::parse;           \
+    };
+
+DECLARE_INFIX_EXPRESSION(AssignmentExpression, NodeKind::ASSIGNMENT_EXPRESSION)
+DECLARE_INFIX_EXPRESSION(BinaryExpression, NodeKind::BINARY_EXPRESSION)
+DECLARE_INFIX_EXPRESSION(DotExpression, NodeKind::DOT_EXPRESSION)
+DECLARE_INFIX_EXPRESSION(RangeExpression, NodeKind::RANGE_EXPRESSION)
+
+#undef DECLARE_INFIX_EXPRESSION
 
 } // namespace conch::ast

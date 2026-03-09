@@ -38,6 +38,12 @@ auto Parser::consume() -> std::pair<ast::AST, Diagnostics> {
     Diagnostics diagnostics;
 
     while (!current_token_is(TokenType::END)) {
+        // Advance through any amount of semicolons
+        const auto skip = [](TokenType tt) { return tt == TokenType::SEMICOLON; };
+        if (skip(current_token_.type)) { while (skip(advance().type)); }
+        if (current_token_is(TokenType::END)) { break; }
+
+        // Comments are entirely discarded from the tree
         if (!current_token_is(TokenType::COMMENT)) {
             auto stmt = parse_statement();
             if (stmt) {
@@ -128,11 +134,7 @@ auto Parser::parse_expression(Precedence precedence)
     while (!peek_token_is(TokenType::SEMICOLON) && precedence < poll_peek_precedence()) {
         const auto& infix = poll_infix_fn(peek_token_.type);
         if (!infix) { break; }
-
-        if (advance().type == TokenType::END) {
-            return make_parser_unexpected(ParserError::INFIX_MISSING_RHS, current_token_);
-        }
-
+        advance();
         lhs_expression = TRY((*infix)(*this, std::move(lhs_expression)));
     }
 
@@ -171,10 +173,9 @@ constexpr auto PREFIX_FNS = []() {
         {TokenType::NOT, ast::UnaryExpression::parse},
         {TokenType::MINUS, ast::UnaryExpression::parse},
         {TokenType::PLUS, ast::UnaryExpression::parse},
-        {TokenType::STAR, ast::PointerExpression::parse},
-        {TokenType::AND, ast::PointerExpression::parse},
-        {TokenType::AND_MUT, ast::PointerExpression::parse},
-        {TokenType::DOT, ast::ImplicitAccessExpression::parse},
+        {TokenType::STAR, ast::DereferenceExpression::parse},
+        {TokenType::BW_AND, ast::ReferenceExpression::parse},
+        {TokenType::AND_MUT, ast::ReferenceExpression::parse},
         {TokenType::TRUE, ast::BoolExpression::parse},
         {TokenType::FALSE, ast::BoolExpression::parse},
         {TokenType::STRING, ast::StringExpression::parse},
@@ -182,10 +183,9 @@ constexpr auto PREFIX_FNS = []() {
         {TokenType::LPAREN, ast::GroupedExpression::parse},
         {TokenType::IF, ast::IfExpression::parse},
         {TokenType::FUNCTION, ast::FunctionExpression::parse},
-        {TokenType::MUT, ast::FunctionExpression::parse},
         {TokenType::PACKED, ast::StructExpression::parse},
         {TokenType::STRUCT, ast::StructExpression::parse},
-        {TokenType::ENUM, ast::FunctionExpression::parse},
+        {TokenType::ENUM, ast::EnumExpression::parse},
         {TokenType::MATCH, ast::MatchExpression::parse},
         {TokenType::LBRACKET, ast::ArrayExpression::parse},
         {TokenType::FOR, ast::ForLoopExpression::parse},
@@ -261,20 +261,20 @@ constexpr auto INFIX_FNS = []() {
         {TokenType::STAR, ast::BinaryExpression::parse},
         {TokenType::SLASH, ast::BinaryExpression::parse},
         {TokenType::PERCENT, ast::BinaryExpression::parse},
-        {TokenType::STAR_STAR, ast::BinaryExpression::parse},
         {TokenType::LT, ast::BinaryExpression::parse},
-        {TokenType::LTEQ, ast::BinaryExpression::parse},
+        {TokenType::LT_EQ, ast::BinaryExpression::parse},
         {TokenType::GT, ast::BinaryExpression::parse},
-        {TokenType::GTEQ, ast::BinaryExpression::parse},
+        {TokenType::GT_EQ, ast::BinaryExpression::parse},
         {TokenType::EQ, ast::BinaryExpression::parse},
         {TokenType::NEQ, ast::BinaryExpression::parse},
         {TokenType::BOOLEAN_AND, ast::BinaryExpression::parse},
         {TokenType::BOOLEAN_OR, ast::BinaryExpression::parse},
-        {TokenType::AND, ast::BinaryExpression::parse},
-        {TokenType::OR, ast::BinaryExpression::parse},
+        {TokenType::BW_AND, ast::BinaryExpression::parse},
+        {TokenType::BW_OR, ast::BinaryExpression::parse},
         {TokenType::XOR, ast::BinaryExpression::parse},
         {TokenType::SHR, ast::BinaryExpression::parse},
         {TokenType::SHL, ast::BinaryExpression::parse},
+        {TokenType::DOT, ast::DotExpression::parse},
         {TokenType::DOT_DOT, ast::RangeExpression::parse},
         {TokenType::DOT_DOT_EQ, ast::RangeExpression::parse},
         {TokenType::LPAREN, ast::CallExpression::parse},
@@ -285,8 +285,8 @@ constexpr auto INFIX_FNS = []() {
         {TokenType::STAR_ASSIGN, ast::AssignmentExpression::parse},
         {TokenType::SLASH_ASSIGN, ast::AssignmentExpression::parse},
         {TokenType::PERCENT_ASSIGN, ast::AssignmentExpression::parse},
-        {TokenType::AND_ASSIGN, ast::AssignmentExpression::parse},
-        {TokenType::OR_ASSIGN, ast::AssignmentExpression::parse},
+        {TokenType::BW_AND_ASSIGN, ast::AssignmentExpression::parse},
+        {TokenType::BW_OR_ASSIGN, ast::AssignmentExpression::parse},
         {TokenType::SHL_ASSIGN, ast::AssignmentExpression::parse},
         {TokenType::SHR_ASSIGN, ast::AssignmentExpression::parse},
         {TokenType::NOT_ASSIGN, ast::AssignmentExpression::parse},

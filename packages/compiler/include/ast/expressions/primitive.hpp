@@ -76,6 +76,7 @@ class StringExpression : public PrimitiveExpression<StringExpression, std::strin
 
   public:
     using PrimitiveExpression::PrimitiveExpression;
+    MAKE_AST_COPY_MOVE(StringExpression)
 
     auto                      accept(Visitor& v) const -> void override;
     [[nodiscard]] static auto parse(Parser& parser) -> Expected<Box<Expression>, ParserDiagnostic>;
@@ -88,6 +89,7 @@ class SignedIntegerExpression : public PrimitiveExpression<SignedIntegerExpressi
 
   public:
     using PrimitiveExpression::PrimitiveExpression;
+    MAKE_AST_COPY_MOVE(SignedIntegerExpression)
 
     auto accept(Visitor& v) const -> void override;
 };
@@ -98,6 +100,7 @@ class SignedLongIntegerExpression : public PrimitiveExpression<SignedLongInteger
 
   public:
     using PrimitiveExpression::PrimitiveExpression;
+    MAKE_AST_COPY_MOVE(SignedLongIntegerExpression)
 
     auto accept(Visitor& v) const -> void override;
 };
@@ -108,6 +111,7 @@ class ISizeIntegerExpression : public PrimitiveExpression<ISizeIntegerExpression
 
   public:
     using PrimitiveExpression::PrimitiveExpression;
+    MAKE_AST_COPY_MOVE(ISizeIntegerExpression)
 
     auto accept(Visitor& v) const -> void override;
 };
@@ -118,6 +122,7 @@ class UnsignedIntegerExpression : public PrimitiveExpression<UnsignedIntegerExpr
 
   public:
     using PrimitiveExpression::PrimitiveExpression;
+    MAKE_AST_COPY_MOVE(UnsignedIntegerExpression)
 
     auto accept(Visitor& v) const -> void override;
 };
@@ -129,6 +134,7 @@ class UnsignedLongIntegerExpression
 
   public:
     using PrimitiveExpression::PrimitiveExpression;
+    MAKE_AST_COPY_MOVE(UnsignedLongIntegerExpression)
 
     auto accept(Visitor& v) const -> void override;
 };
@@ -139,6 +145,7 @@ class USizeIntegerExpression : public PrimitiveExpression<USizeIntegerExpression
 
   public:
     using PrimitiveExpression::PrimitiveExpression;
+    MAKE_AST_COPY_MOVE(USizeIntegerExpression)
 
     auto accept(Visitor& v) const -> void override;
 };
@@ -149,6 +156,7 @@ class ByteExpression : public PrimitiveExpression<ByteExpression, byte> {
 
   public:
     using PrimitiveExpression::PrimitiveExpression;
+    MAKE_AST_COPY_MOVE(ByteExpression)
 
     auto                      accept(Visitor& v) const -> void override;
     [[nodiscard]] static auto parse(Parser& parser) -> Expected<Box<Expression>, ParserDiagnostic>;
@@ -161,6 +169,7 @@ class FloatExpression : public PrimitiveExpression<FloatExpression, f64> {
 
   public:
     using PrimitiveExpression::PrimitiveExpression;
+    MAKE_AST_COPY_MOVE(FloatExpression)
 
     auto accept(Visitor& v) const -> void override;
 
@@ -176,6 +185,7 @@ class BoolExpression : public PrimitiveExpression<BoolExpression, bool> {
 
   public:
     using PrimitiveExpression::PrimitiveExpression;
+    MAKE_AST_COPY_MOVE(BoolExpression)
 
     auto                      accept(Visitor& v) const -> void override;
     [[nodiscard]] static auto parse(Parser& parser) -> Expected<Box<Expression>, ParserDiagnostic>;

@@ -15,6 +15,8 @@ class MatchArm {
     explicit MatchArm(Box<Expression> pattern, Box<Statement> dispatch) noexcept
         : pattern_{std::move(pattern)}, dispatch_{std::move(dispatch)} {}
 
+    MAKE_AST_COPY_MOVE(MatchArm)
+
     [[nodiscard]] auto get_pattern() const noexcept -> const Expression& { return *pattern_; }
     [[nodiscard]] auto get_dispatch() const noexcept -> const Statement& { return *dispatch_; }
 
@@ -36,6 +38,8 @@ class MatchExpression : public ExprBase<MatchExpression> {
                              Optional<Box<Statement>> catch_all) noexcept
         : ExprBase{start_token}, matcher_{std::move(matcher)}, arms_{std::move(arms)},
           catch_all_{std::move(catch_all)} {}
+
+    MAKE_AST_COPY_MOVE(MatchExpression)
 
     auto                      accept(Visitor& v) const -> void override;
     [[nodiscard]] static auto parse(Parser& parser) -> Expected<Box<Expression>, ParserDiagnostic>;

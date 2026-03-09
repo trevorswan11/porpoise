@@ -18,6 +18,8 @@ class IndexExpression : public ExprBase<IndexExpression> {
                              Box<Expression> idx) noexcept
         : ExprBase{start_token}, array_{std::move(array)}, index_{std::move(idx)} {}
 
+    MAKE_AST_COPY_MOVE(IndexExpression)
+
     auto                      accept(Visitor& v) const -> void override;
     [[nodiscard]] static auto parse(Parser& parser, Box<Expression> array)
         -> Expected<Box<Expression>, ParserDiagnostic>;

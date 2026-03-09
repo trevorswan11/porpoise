@@ -10,7 +10,6 @@ namespace conch::ast {
 Enumeration::Enumeration(Box<IdentifierExpression> enumeration,
                          Optional<Box<Expression>> value) noexcept
     : enumeration_{std::move(enumeration)}, value_{std::move(value)} {}
-
 Enumeration::~Enumeration() = default;
 
 EnumExpression::EnumExpression(const Token&                        start_token,
@@ -18,7 +17,6 @@ EnumExpression::EnumExpression(const Token&                        start_token,
                                std::vector<Enumeration>            enumerations) noexcept
     : ExprBase{start_token}, underlying_{std::move(underlying)},
       enumerations_{std::move(enumerations)} {}
-
 EnumExpression::~EnumExpression() = default;
 
 auto EnumExpression::accept(Visitor& v) const -> void { v.visit(*this); }
@@ -26,17 +24,18 @@ auto EnumExpression::accept(Visitor& v) const -> void { v.visit(*this); }
 auto EnumExpression::parse(Parser& parser) -> Expected<Box<Expression>, ParserDiagnostic> {
     const auto start_token = parser.current_token();
 
-    Box<IdentifierExpression> underlying;
+    Optional<Box<IdentifierExpression>> underlying;
     if (parser.peek_token_is(TokenType::COLON)) {
-        parser.advance();
-        TRY(parser.expect_peek(TokenType::IDENT));
-        underlying = downcast<IdentifierExpression>(TRY(IdentifierExpression::parse(parser)));
+        parser.advance(2);
+        underlying.emplace(
+            downcast<IdentifierExpression>(TRY(IdentifierExpression::parse(parser))));
     }
 
     TRY(parser.expect_peek(TokenType::LBRACE));
     if (parser.peek_token_is(TokenType::RBRACE)) {
+        const auto opening = parser.current_token();
         parser.advance();
-        return make_parser_unexpected(ParserError::ENUM_MISSING_VARIANTS, std::move(start_token));
+        return make_parser_unexpected(ParserError::ENUM_MISSING_VARIANTS, opening);
     }
 
     std::vector<Enumeration> enumeration;
@@ -44,10 +43,10 @@ auto EnumExpression::parse(Parser& parser) -> Expected<Box<Expression>, ParserDi
         TRY(parser.expect_peek(TokenType::IDENT));
         auto ident = downcast<IdentifierExpression>(TRY(IdentifierExpression::parse(parser)));
 
-        Optional<Box<Expression>> value = nullopt;
+        Optional<Box<Expression>> value;
         if (parser.peek_token_is(TokenType::ASSIGN)) {
             parser.advance(2);
-            value = TRY(parser.parse_expression());
+            value.emplace(TRY(parser.parse_expression()));
         }
         enumeration.emplace_back(std::move(ident), std::move(value));
 
