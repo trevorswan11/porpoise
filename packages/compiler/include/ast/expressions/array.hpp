@@ -28,10 +28,7 @@ class ArrayExpression : public ExprBase<ArrayExpression> {
     auto                      accept(Visitor& v) const -> void override;
     [[nodiscard]] static auto parse(Parser& parser) -> Expected<Box<Expression>, ParserDiagnostic>;
 
-    [[nodiscard]] auto is_inferred_size() const noexcept -> bool { return !size_.has_value(); }
-    [[nodiscard]] auto get_size() const noexcept -> Optional<const Expression&> {
-        return size_ ? Optional<const Expression&>{**size_} : nullopt;
-    }
+    MAKE_OPTIONAL_UNPACKER(explicit_size, Expression, size_, **)
 
     [[nodiscard]] auto get_item_type() const noexcept -> const ExplicitType& { return item_type_; }
     [[nodiscard]] auto get_items() const noexcept -> std::span<const Box<Expression>> {

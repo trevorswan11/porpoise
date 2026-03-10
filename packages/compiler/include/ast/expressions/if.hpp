@@ -30,10 +30,7 @@ class IfExpression : public ExprBase<IfExpression> {
         return *consequence_;
     }
 
-    [[nodiscard]] auto has_alternate() const noexcept -> bool { return alternate_.has_value(); }
-    [[nodiscard]] auto get_alternate() const noexcept -> Optional<const Statement&> {
-        return alternate_ ? Optional<const Statement&>{**alternate_} : nullopt;
-    }
+    MAKE_OPTIONAL_UNPACKER(alternate, Statement, alternate_, **)
 
   protected:
     auto is_equal(const Node& other) const noexcept -> bool override {

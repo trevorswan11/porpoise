@@ -22,10 +22,7 @@ class Enumeration {
         return *enumeration_;
     }
 
-    [[nodiscard]] auto has_default_value() const noexcept -> bool { return value_.has_value(); }
-    [[nodiscard]] auto get_default_value() const noexcept -> Optional<const Expression&> {
-        return value_ ? Optional<const Expression&>{**value_} : nullopt;
-    }
+    MAKE_OPTIONAL_UNPACKER(default_value, Expression, value_, **)
 
   private:
     Box<IdentifierExpression> enumeration_;
@@ -49,10 +46,7 @@ class EnumExpression : public ExprBase<EnumExpression> {
     auto                      accept(Visitor& v) const -> void override;
     [[nodiscard]] static auto parse(Parser& parser) -> Expected<Box<Expression>, ParserDiagnostic>;
 
-    [[nodiscard]] auto has_underlying() const noexcept -> bool { return underlying_.has_value(); }
-    [[nodiscard]] auto get_underlying() const noexcept -> Optional<const IdentifierExpression&> {
-        return underlying_ ? Optional<const IdentifierExpression&>{**underlying_} : nullopt;
-    }
+    MAKE_OPTIONAL_UNPACKER(underlying, IdentifierExpression, underlying_, **)
 
     [[nodiscard]] auto get_enumerations() const noexcept -> std::span<const Enumeration> {
         return enumerations_;

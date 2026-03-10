@@ -72,6 +72,7 @@ class FunctionExpression : public ExprBase<FunctionExpression> {
     auto                      accept(Visitor& v) const -> void override;
     [[nodiscard]] static auto parse(Parser& parser) -> Expected<Box<Expression>, ParserDiagnostic>;
 
+    MAKE_OPTIONAL_UNPACKER(self, SelfParameter, self_, *)
     [[nodiscard]] auto get_parameters() const noexcept -> std::span<const FunctionParameter> {
         return parameters_;
     }
@@ -80,10 +81,7 @@ class FunctionExpression : public ExprBase<FunctionExpression> {
         return return_type_;
     }
 
-    [[nodiscard]] auto has_body() const noexcept -> bool { return body_.has_value(); }
-    [[nodiscard]] auto get_body() const noexcept -> Optional<const BlockStatement&> {
-        return body_ ? Optional<const BlockStatement&>{**body_} : nullopt;
-    }
+    MAKE_OPTIONAL_UNPACKER(body, BlockStatement, body_, **)
 
   protected:
     auto is_equal(const Node& other) const noexcept -> bool override;

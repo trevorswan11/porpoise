@@ -46,10 +46,7 @@ class MatchExpression : public ExprBase<MatchExpression> {
 
     [[nodiscard]] auto get_matcher() const noexcept -> const Expression& { return *matcher_; }
     [[nodiscard]] auto get_arms() const noexcept -> std::span<const MatchArm> { return arms_; }
-    [[nodiscard]] auto has_catch_all() const noexcept -> bool { return catch_all_.has_value(); }
-    [[nodiscard]] auto get_catch_all() const noexcept -> Optional<const Statement&> {
-        return catch_all_ ? Optional<const Statement&>{**catch_all_} : nullopt;
-    }
+    MAKE_OPTIONAL_UNPACKER(catch_all, Statement, catch_all_, **)
 
   protected:
     auto is_equal(const Node& other) const noexcept -> bool override {

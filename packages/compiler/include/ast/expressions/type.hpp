@@ -92,10 +92,7 @@ class TypeExpression : public ExprBase<TypeExpression> {
     [[nodiscard]] static auto parse(Parser& parser)
         -> Expected<std::pair<Box<Expression>, bool>, ParserDiagnostic>;
 
-    [[nodiscard]] auto has_explicit_type() const noexcept -> bool { return explicit_.has_value(); }
-    [[nodiscard]] auto get_explicit_type() const noexcept -> const Optional<ExplicitType>& {
-        return explicit_;
-    }
+    MAKE_OPTIONAL_UNPACKER(explicit_type, ExplicitType, explicit_, *)
 
   protected:
     auto is_equal(const Node& other) const noexcept -> bool override;

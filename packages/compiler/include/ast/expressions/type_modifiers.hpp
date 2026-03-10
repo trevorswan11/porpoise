@@ -3,6 +3,9 @@
 #include <algorithm>
 #include <utility>
 
+#include <fmt/format.h>
+#include <magic_enum/magic_enum.hpp>
+
 #include "lexer/token.hpp"
 
 #include "optional.hpp"
@@ -65,6 +68,22 @@ class TypeModifier {
 
   private:
     Optional<Modifier> underlying_;
+
+    friend struct fmt::formatter<conch::ast::TypeModifier>;
 };
 
+#undef MAKE_MUTUALLY_EXCLUSIVE_TYPE_QUERY
+
 } // namespace conch::ast
+
+template <> struct fmt::formatter<conch::ast::TypeModifier> {
+    static constexpr auto parse(format_parse_context& ctx) noexcept { return ctx.begin(); }
+
+    template <typename F> static auto format(const conch::ast::TypeModifier& t, F& ctx) {
+        return fmt::format_to(
+            ctx.out(),
+            "{}",
+            t.underlying_.transform([](const auto& u) { return magic_enum::enum_name(u); })
+                .value_or("BASE"));
+    }
+};

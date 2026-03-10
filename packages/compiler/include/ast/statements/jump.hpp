@@ -21,10 +21,7 @@ class JumpStatement : public StmtBase<JumpStatement> {
     auto                      accept(Visitor& v) const -> void override;
     [[nodiscard]] static auto parse(Parser& parser) -> Expected<Box<Statement>, ParserDiagnostic>;
 
-    [[nodiscard]] auto has_expression() const noexcept -> bool { return expression_.has_value(); }
-    [[nodiscard]] auto get_expression() const noexcept -> Optional<const Expression&> {
-        return expression_ ? Optional<const Expression&>{**expression_} : nullopt;
-    }
+    MAKE_OPTIONAL_UNPACKER(expression, Expression, expression_, **)
 
   protected:
     auto is_equal(const Node& other) const noexcept -> bool override {

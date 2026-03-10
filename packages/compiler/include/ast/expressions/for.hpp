@@ -91,10 +91,7 @@ class ForLoopExpression : public ExprBase<ForLoopExpression> {
     }
 
     [[nodiscard]] auto get_block() const noexcept -> const BlockStatement& { return *block_; }
-    [[nodiscard]] auto has_non_break() const noexcept -> bool { return non_break_.has_value(); }
-    [[nodiscard]] auto get_non_break() const noexcept -> Optional<const Statement&> {
-        return non_break_ ? Optional<const Statement&>{**non_break_} : nullopt;
-    }
+    MAKE_OPTIONAL_UNPACKER(non_break, Statement, non_break_, **)
 
   protected:
     auto is_equal(const Node& other) const noexcept -> bool override;
