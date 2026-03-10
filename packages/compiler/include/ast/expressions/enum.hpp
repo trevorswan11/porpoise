@@ -18,15 +18,14 @@ class Enumeration {
 
     MAKE_AST_COPY_MOVE(Enumeration)
 
-    [[nodiscard]] auto get_name() const noexcept -> const IdentifierExpression& { return *name_; }
-
+    MAKE_AST_GETTER(name, const IdentifierExpression&, *)
     MAKE_OPTIONAL_UNPACKER(default_value, Expression, value_, **)
+
+    MAKE_AST_DEPENDENT_EQ(Enumeration)
 
   private:
     Box<IdentifierExpression> name_;
     Optional<Box<Expression>> value_;
-
-    friend class EnumExpression;
 };
 
 class EnumExpression : public ExprBase<EnumExpression> {
@@ -45,10 +44,7 @@ class EnumExpression : public ExprBase<EnumExpression> {
     [[nodiscard]] static auto parse(Parser& parser) -> Expected<Box<Expression>, ParserDiagnostic>;
 
     MAKE_OPTIONAL_UNPACKER(underlying, IdentifierExpression, underlying_, **)
-
-    [[nodiscard]] auto get_enumerations() const noexcept -> std::span<const Enumeration> {
-        return enumerations_;
-    }
+    MAKE_AST_GETTER(enumerations, std::span<const Enumeration>, )
 
   protected:
     auto is_equal(const Node& other) const noexcept -> bool override;

@@ -67,10 +67,18 @@ auto ASTDumper::visit(const CallExpression& node) -> void {
         fmt::print(out_, "{}Callee: ", indent_.current_branch());
         node.get_function().accept(*this);
     }
+
     {
         const Indent::Guard g{indent_, true};
         fmt::println(out_, "{}Arguments: ", indent_.current_branch());
-        dump_node_list(node.get_arguments());
+        dump_container(node.get_arguments(), [this](const CallArgument& arg) {
+            fmt::print(out_, "{}", indent_.current_branch());
+            if (arg.is_expression()) {
+                arg.get_expression().accept(*this);
+            } else {
+                dump_explicit_type(arg.get_type(), false);
+            }
+        });
     }
 }
 
@@ -426,6 +434,21 @@ auto ASTDumper::visit(const JumpStatement& node) -> void {
     }
 }
 
+auto ASTDumper::visit(const UsingStatement& node) -> void {
+    fmt::println(out_, "UsingStatement");
+    {
+        const Indent::Guard g{indent_, false};
+        fmt::print(out_, "{}Alias: ", indent_.current_branch());
+        node.get_alias().accept(*this);
+    }
+
+    {
+        const Indent::Guard g{indent_, true};
+        fmt::print(out_, "{}Type: ", indent_.current_branch());
+        dump_explicit_type(node.get_type(), false);
+    }
+}
+
 auto ASTDumper::dump_explicit_type(const ExplicitType& type, bool print_branch) -> void {
     if (print_branch) { fmt::print(out_, "{}", indent_.current_branch()); }
     fmt::println(out_, "ExplicitType (modifier: {})", type.get_modifier());
@@ -446,7 +469,11 @@ auto ASTDumper::dump_explicit_type(const ExplicitType& type, bool print_branch) 
                 {
                     const Indent::Guard g_inner{indent_, false};
                     fmt::print(out_, "{}Dimensions: ", indent_.current_branch());
-                    a.get_dimensions().accept(*this);
+                    if (a.has_dimension()) {
+                        a.get_dimension().accept(*this);
+                    } else {
+                        fmt::println(out_, "(slice)");
+                    }
                 }
                 {
                     const Indent::Guard g_inner{indent_, true};

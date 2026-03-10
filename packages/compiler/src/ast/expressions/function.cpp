@@ -23,6 +23,10 @@ SelfParameter::SelfParameter(TypeModifier modifier, Box<IdentifierExpression> na
     : modifier_{std::move(modifier)}, name_{std::move(name)} {}
 SelfParameter::~SelfParameter() = default;
 
+auto SelfParameter::is_equal(const SelfParameter& other) const noexcept -> bool {
+    return optional::safe_eq<TypeModifier>(modifier_, other.modifier_) && *name_ == *other.name_;
+}
+
 FunctionExpression::FunctionExpression(const Token&                   start_token,
                                        Optional<SelfParameter>        self,
                                        std::vector<FunctionParameter> parameters,
@@ -84,6 +88,15 @@ auto FunctionExpression::parse(Parser& parser) -> Expected<Box<Expression>, Pars
                                               type->get_token());
             }
 
+            const auto& explicit_type = type->get_explicit_type();
+            if (explicit_type.is_ident_type()) {
+                // noreturn is not allowed for parameters
+                if (explicit_type.get_ident_type().get_token().type == TokenType::NORETURN) {
+                    return make_parser_unexpected(ParserError::FUNCTION_PARAMETER_IS_NORETURN,
+                                                  type->get_token());
+                }
+            }
+
             parameters.emplace_back(std::move(name), std::move(*(type->explicit_)));
             if (!parser.peek_token_is(TokenType::RPAREN)) {
                 TRY(parser.expect_peek(TokenType::COMMA));
@@ -113,13 +126,9 @@ auto FunctionExpression::parse(Parser& parser) -> Expected<Box<Expression>, Pars
 }
 
 auto FunctionExpression::is_equal(const Node& other) const noexcept -> bool {
-    const auto& casted = as<FunctionExpression>(other);
-    const auto  self_matches =
-        optional::safe_eq<SelfParameter>(self_, casted.self_, [](const auto& a, const auto& b) {
-            return optional::safe_eq<TypeModifier>(a.modifier_, b.modifier_) &&
-                   *a.name_ == *b.name_;
-        });
-    const auto parameters_eq = std::ranges::equal(parameters_, casted.parameters_);
+    const auto& casted        = as<FunctionExpression>(other);
+    const auto  self_matches  = optional::safe_eq<SelfParameter>(self_, casted.self_);
+    const auto  parameters_eq = std::ranges::equal(parameters_, casted.parameters_);
     return self_matches && parameters_eq && return_type_ == casted.return_type_ &&
            optional::unsafe_eq<BlockStatement>(body_, casted.body_);
 }

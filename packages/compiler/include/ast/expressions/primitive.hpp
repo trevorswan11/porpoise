@@ -58,7 +58,7 @@ template <typename Derived, typename T> class PrimitiveExpression : public ExprB
         return make_parser_unexpected(err, start_token);
     }
 
-    auto get_value() const -> const value_type& { return value_; }
+    MAKE_AST_GETTER(value, const value_type&, )
 
   protected:
     auto is_equal(const Node& other) const noexcept -> bool override {

@@ -7,14 +7,40 @@
 
 namespace conch::ast {
 
-ExplicitArrayType::ExplicitArrayType(Box<Expression>   dimension,
-                                     Box<ExplicitType> inner_type) noexcept
+ExplicitArrayType::ExplicitArrayType(Optional<Box<Expression>> dimension,
+                                     Box<ExplicitType>         inner_type) noexcept
     : dimension_{std::move(dimension)}, inner_type_{std::move(inner_type)} {}
 ExplicitArrayType::~ExplicitArrayType() = default;
+
+auto ExplicitArrayType::is_equal(const ExplicitArrayType& other) const noexcept -> bool {
+    return optional::unsafe_eq<Expression>(dimension_, other.dimension_) &&
+           *inner_type_ == *other.inner_type_;
+}
 
 ExplicitType::ExplicitType(TypeModifier modifier, ExplicitTypeVariant type) noexcept
     : modifier_{std::move(modifier)}, type_{std::move(type)} {}
 ExplicitType::~ExplicitType() = default;
+
+auto ExplicitType::is_equal(const ExplicitType& other) const noexcept -> bool {
+    const auto& other_type = other.type_;
+    if (type_.index() != other_type.index()) { return false; }
+    return modifier_ == other.modifier_ &&
+           std::visit(Overloaded{
+                          [&other_type](const ExplicitIdentType& v) {
+                              return *v == *std::get<ExplicitIdentType>(other_type);
+                          },
+                          [&other_type](const ExplicitFunctionType& v) {
+                              return *v == *std::get<ExplicitFunctionType>(other_type);
+                          },
+                          [&other_type](const ExplicitArrayType& v1) {
+                              return v1 == std::get<ExplicitArrayType>(other_type);
+                          },
+                          [&other_type](const Box<ExplicitType>& v1) {
+                              return *v1 == *std::get<ExplicitRecursiveType>(other_type);
+                          },
+                      },
+                      type_);
+}
 
 [[nodiscard]] auto ExplicitType::parse(Parser& parser) -> Expected<ExplicitType, ParserDiagnostic> {
     // Always check for a modifier and advance past it if present
@@ -25,13 +51,18 @@ ExplicitType::~ExplicitType() = default;
     // The array dimension of a type are only present conditionally
     if (parser.peek_token_is(TokenType::LBRACKET)) {
         parser.advance(2);
-        auto dimension = TRY(parser.parse_expression());
-        if (!dimension->any<USizeIntegerExpression, IdentifierExpression>()) {
-            return make_parser_unexpected(ParserError::ILLEGAL_ARRAY_SIZE_TYPE,
-                                          dimension->get_token());
+        Optional<Box<Expression>> dimension;
+        if (!parser.current_token_is(TokenType::RBRACKET)) {
+            dimension.emplace(TRY(parser.parse_expression()));
+            if (!(*dimension)->any<USizeIntegerExpression, IdentifierExpression>()) {
+                return make_parser_unexpected(ParserError::ILLEGAL_ARRAY_SIZE_TYPE,
+                                              (*dimension)->get_token());
+            } else if ((*dimension)->is<USizeIntegerExpression>() &&
+                       Node::as<USizeIntegerExpression>(**dimension).get_value() == 0) {
+                return make_parser_unexpected(ParserError::EMPTY_ARRAY, (*dimension)->get_token());
+            }
+            TRY(parser.expect_peek(TokenType::RBRACKET));
         }
-
-        TRY(parser.expect_peek(TokenType::RBRACKET));
 
         // Arrays are recursively defined
         auto inner = TRY(ExplicitType::parse(parser));
@@ -49,11 +80,19 @@ ExplicitType::~ExplicitType() = default;
         const auto& peek_token = parser.peek_token();
         if (peek_token.is_valid_ident() && !peek_token.is_builtin()) {
             // It's trivial to catch these syntactic errors here
-            if ((peek_token.type == TokenType::VOID_TYPE ||
-                 peek_token.type == TokenType::NORETURN) &&
-                !modifier.is_value()) {
-                return make_parser_unexpected(ParserError::ILLEGAL_RETURN_TYPE_MODIFIER,
-                                              modifier_token);
+            if (!modifier.is_value()) {
+                switch (peek_token.type) {
+                case TokenType::TYPE_TYPE:
+                    return make_parser_unexpected(ParserError::ILLEGAL_TYPE_TYPE_MODIFIER,
+                                                  modifier_token);
+                case TokenType::VOID_TYPE:
+                    return make_parser_unexpected(ParserError::ILLEGAL_VOID_TYPE_MODIFIER,
+                                                  modifier_token);
+                case TokenType::NORETURN:
+                    return make_parser_unexpected(ParserError::ILLEGAL_NORETURN_TYPE_MODIFIER,
+                                                  modifier_token);
+                default: break;
+                }
             }
 
             parser.advance();
@@ -84,29 +123,6 @@ ExplicitType::~ExplicitType() = default;
         // No other expressions qualify as types
         return make_parser_unexpected(ParserError::ILLEGAL_EXPLICIT_TYPE, type_start);
     }()));
-}
-
-auto ExplicitType::is_equal(const ExplicitType& other) const noexcept -> bool {
-    const auto& other_type = other.type_;
-    if (type_.index() != other_type.index()) { return false; }
-    return modifier_ == other.modifier_ &&
-           std::visit(Overloaded{
-                          [&other_type](const ExplicitIdentType& v) {
-                              return *v == *std::get<ExplicitIdentType>(other_type);
-                          },
-                          [&other_type](const ExplicitFunctionType& v) {
-                              return *v == *std::get<ExplicitFunctionType>(other_type);
-                          },
-                          [&other_type](const ExplicitArrayType& v1) {
-                              const auto& v2 = std::get<ExplicitArrayType>(other_type);
-                              return *v1.dimension_ == *v2.dimension_ &&
-                                     *v1.inner_type_ == *v2.inner_type_;
-                          },
-                          [&other_type](const Box<ExplicitType>& v1) {
-                              return *v1 == *std::get<ExplicitRecursiveType>(other_type);
-                          },
-                      },
-                      type_);
 }
 
 TypeExpression::TypeExpression(const Token& start_token, Optional<ExplicitType> exp) noexcept

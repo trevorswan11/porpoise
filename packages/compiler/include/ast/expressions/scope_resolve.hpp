@@ -24,8 +24,8 @@ class ScopeResolutionExpression : public ExprBase<ScopeResolutionExpression> {
     [[nodiscard]] static auto parse(Parser& parser, Box<Expression> outer)
         -> Expected<Box<Expression>, ParserDiagnostic>;
 
-    [[nodiscard]] auto get_outer() const noexcept -> const Expression& { return *outer_; }
-    [[nodiscard]] auto get_inner() const noexcept -> const IdentifierExpression& { return *inner_; }
+    MAKE_AST_GETTER(outer, const Expression&, *)
+    MAKE_AST_GETTER(inner, const IdentifierExpression&, *)
 
   protected:
     auto is_equal(const Node& other) const noexcept -> bool override;

@@ -40,7 +40,8 @@ namespace conch::ast {
     X(DiscardStatement)              \
     X(ExpressionStatement)           \
     X(ImportStatement)               \
-    X(JumpStatement)
+    X(JumpStatement)                 \
+    X(UsingStatement)
 
 // The following use '()' since it messes with Zed's syntax highlighting otherwise :(
 

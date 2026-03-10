@@ -17,9 +17,9 @@ template <typename Derived> class InfixExpression : public ExprBase<Derived> {
                              Box<Expression> rhs) noexcept
         : ExprBase<Derived>{start_token}, lhs_{std::move(lhs)}, op_{op}, rhs_{std::move(rhs)} {}
 
-    [[nodiscard]] auto get_lhs() const noexcept -> const Expression& { return *lhs_; }
-    auto               get_op() const noexcept -> TokenType { return op_; }
-    [[nodiscard]] auto get_rhs() const noexcept -> const Expression& { return *rhs_; }
+    MAKE_AST_GETTER(lhs, const Expression&, *)
+    MAKE_AST_GETTER(op, TokenType, )
+    MAKE_AST_GETTER(rhs, const Expression&, *)
 
     auto accept(Visitor& v) const noexcept -> void override { v.visit(Node::as<Derived>(*this)); }
 

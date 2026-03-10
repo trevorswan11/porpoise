@@ -31,7 +31,6 @@ class ImportStatement : public StmtBase<ImportStatement> {
 
     MAKE_VARIANT_UNPACKER(module_import, IdentifierExpression, ModuleImport, imported_, *std::get)
     MAKE_VARIANT_UNPACKER(user_import, StringExpression, UserImport, imported_, *std::get)
-
     MAKE_OPTIONAL_UNPACKER(alias, IdentifierExpression, alias_, **)
 
   protected:

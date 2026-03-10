@@ -249,7 +249,7 @@ TEST_CASE("Call precedence") {
         TokenType::BOOLEAN_AND,
         ast::BinaryExpression{b,
                               make_box<ast::CallExpression>(
-                                  b, helpers::make_ident(b), std::vector<Box<ast::Expression>>{}),
+                                  b, helpers::make_ident(b), std::vector<ast::CallArgument>{}),
                               TokenType::NEQ,
                               helpers::make_ident(c)});
 }

@@ -9,6 +9,10 @@
 
 namespace conch {
 
+Lexer::Snapshot::Snapshot(const Lexer& l) noexcept
+    : pos_{l.pos_}, peek_pos_{l.peek_pos_}, current_byte_{l.current_byte_}, line_no_{l.line_no_},
+      col_no_{l.col_no_} {}
+
 auto Lexer::reset(std::string_view input) noexcept -> void { *this = Lexer{input}; }
 
 auto Lexer::advance() noexcept -> Token {

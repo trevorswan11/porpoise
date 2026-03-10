@@ -34,6 +34,8 @@ constexpr std::string_view input{R"(
     for (arr, l, p) |i, &mut j, _| { a; } else return b;
     enum : ulong {A = 1ul, B = T, C, };
     @ptrAdd(a, 4uz);
+    using T = int;
+    a(&mut r, t, *[N]int);
 )"};
 
 constexpr std::string_view expected{

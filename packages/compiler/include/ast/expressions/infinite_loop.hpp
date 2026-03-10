@@ -21,7 +21,7 @@ class InfiniteLoopExpression : public ExprBase<InfiniteLoopExpression> {
     auto                      accept(Visitor& v) const -> void override;
     [[nodiscard]] static auto parse(Parser& parser) -> Expected<Box<Expression>, ParserDiagnostic>;
 
-    [[nodiscard]] auto get_block() const noexcept -> const BlockStatement& { return *block_; }
+    MAKE_AST_GETTER(block, const BlockStatement&, *)
 
   protected:
     auto is_equal(const Node& other) const noexcept -> bool override;

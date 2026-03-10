@@ -17,14 +17,14 @@ class MatchArm {
 
     MAKE_AST_COPY_MOVE(MatchArm)
 
-    [[nodiscard]] auto get_pattern() const noexcept -> const Expression& { return *pattern_; }
-    [[nodiscard]] auto get_dispatch() const noexcept -> const Statement& { return *dispatch_; }
+    MAKE_AST_GETTER(pattern, const Expression&, *)
+    MAKE_AST_GETTER(dispatch, const Statement&, *)
+
+    MAKE_AST_DEPENDENT_EQ(MatchArm)
 
   private:
     Box<Expression> pattern_;
     Box<Statement>  dispatch_;
-
-    friend class MatchExpression;
 };
 
 class MatchExpression : public ExprBase<MatchExpression> {
@@ -44,17 +44,14 @@ class MatchExpression : public ExprBase<MatchExpression> {
     auto                      accept(Visitor& v) const -> void override;
     [[nodiscard]] static auto parse(Parser& parser) -> Expected<Box<Expression>, ParserDiagnostic>;
 
-    [[nodiscard]] auto get_matcher() const noexcept -> const Expression& { return *matcher_; }
-    [[nodiscard]] auto get_arms() const noexcept -> std::span<const MatchArm> { return arms_; }
+    MAKE_AST_GETTER(matcher, const Expression&, *)
+    MAKE_AST_GETTER(arms, std::span<const MatchArm>, )
     MAKE_OPTIONAL_UNPACKER(catch_all, Statement, catch_all_, **)
 
   protected:
     auto is_equal(const Node& other) const noexcept -> bool override {
-        const auto& casted = as<MatchExpression>(other);
-        const auto  arms_eq =
-            std::ranges::equal(arms_, casted.arms_, [](const auto& a, const auto& b) {
-                return *a.pattern_ == *b.pattern_ && *a.dispatch_ == *b.dispatch_;
-            });
+        const auto& casted  = as<MatchExpression>(other);
+        const auto  arms_eq = std::ranges::equal(arms_, casted.arms_);
         return *matcher_ == *casted.matcher_ && arms_eq &&
                optional::unsafe_eq<Statement>(catch_all_, casted.catch_all_);
     }

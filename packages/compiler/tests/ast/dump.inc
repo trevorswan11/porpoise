@@ -207,4 +207,20 @@ ExpressionStatement
     └─ Arguments: 
         ├─ IdentifierExpression: a
         └─ USizeIntegerExpression: 4
+UsingStatement
+├─ Alias: IdentifierExpression: T
+└─ Type: ExplicitType (modifier: BASE)
+    └─ IdentifierExpression: int
+ExpressionStatement
+└─ Expr: CallExpression
+    ├─ Callee: IdentifierExpression: a
+    └─ Arguments: 
+        ├─ ReferenceExpression (AND_MUT)
+        │   └─ Operand: IdentifierExpression: r
+        ├─ IdentifierExpression: t
+        └─ ExplicitType (modifier: PTR)
+            └─ ArrayType
+                ├─ Dimensions: IdentifierExpression: N
+                └─ ExplicitType (modifier: BASE)
+                    └─ IdentifierExpression: int
 )"

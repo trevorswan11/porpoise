@@ -57,6 +57,7 @@ enum class NodeKind : u8 {
     EXPRESSION_STATEMENT,
     IMPORT_STATEMENT,
     JUMP_STATEMENT,
+    USING_STATEMENT,
 };
 
 #define MAKE_AST_COPY_MOVE(NodeType)                            \
@@ -155,6 +156,18 @@ template <typename Derived> class StmtBase : public NodeBase<Derived, Statement>
   protected:
     using NodeBase<Derived, Statement>::NodeBase;
 };
+
+#define MAKE_AST_GETTER(name, ReturnType, getter) \
+    [[nodiscard]] auto get_##name() const noexcept -> ReturnType { return getter name##_; }
+
+#define MAKE_AST_DEPENDENT_EQ(NodeType)                                                     \
+    [[nodiscard]] friend auto operator==(const NodeType& lhs, const NodeType& rhs) noexcept \
+        -> bool {                                                                           \
+        return lhs.is_equal(rhs);                                                           \
+    }                                                                                       \
+                                                                                            \
+  private:                                                                                  \
+    auto is_equal(const NodeType& other) const noexcept -> bool;
 
 } // namespace conch::ast
 
