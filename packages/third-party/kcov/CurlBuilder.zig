@@ -3,6 +3,8 @@ const std = @import("std");
 const Dependency = @import("../Dependency.zig");
 const Config = Dependency.Config;
 
+const curl = @import("sources/curl.zig");
+
 const zlib = @import("../zlib.zig");
 const zstd = @import("../zstd.zig");
 const mbedtls = @import("mbedtls.zig");
@@ -14,13 +16,15 @@ const version: std.SemanticVersion = .{
 };
 const version_str = std.fmt.comptimePrint("{f}", .{version});
 
+const c_flags: []const []const u8 = &.{"-fvisibility=hidden"};
+
 const Self = @This();
 
 upstream: *std.Build.Dependency,
 lib: *std.Build.Step.Compile,
 exe: *std.Build.Step.Compile,
 
-/// Compiles curl from source under ReleaseFast.
+/// Compiles curl from source (lib and exe).
 /// https://github.com/allyourcodebase/curl
 pub fn build(b: *std.Build, config: Config) !Self {
     const upstream = b.dependency("curl", .{});
@@ -51,7 +55,7 @@ pub fn build(b: *std.Build, config: Config) !Self {
     lib_mod.addIncludePath(lib_root);
     lib_mod.addCSourceFiles(.{
         .root = lib_root,
-        .files = sources,
+        .files = curl.sources,
         .flags = c_flags,
     });
 
@@ -62,7 +66,7 @@ pub fn build(b: *std.Build, config: Config) !Self {
     exe_mod.addIncludePath(src_root);
     exe_mod.addCSourceFiles(.{
         .root = src_root,
-        .files = exe_sources,
+        .files = curl.exe_sources,
         .flags = c_flags,
     });
 
@@ -85,23 +89,13 @@ pub fn build(b: *std.Build, config: Config) !Self {
         lib_mod.linkSystemLibrary("bcrypt", .{});
     }
 
-    const mbedtls_dep = mbedtls.build(b, .{
-        .target = target,
-        .optimize = config.optimize,
-    });
+    const mbedtls_dep = mbedtls.build(b, config);
     lib_mod.linkLibrary(mbedtls_dep.artifact);
-    lib_mod.addCMacro("MBEDTLS_VERSION", "3.6.4");
+    lib_mod.addCMacro("MBEDTLS_VERSION", mbedtls.version_str);
 
-    const zlib_dep = zlib.build(b, .{
-        .target = target,
-        .optimize = config.optimize,
-    });
+    const zlib_dep = zlib.build(b, config);
     lib_mod.linkLibrary(zlib_dep.artifact);
-
-    const zstd_dep = zstd.build(b, .{
-        .target = target,
-        .optimize = config.optimize,
-    });
+    const zstd_dep = zstd.build(b, config);
     lib_mod.linkLibrary(zstd_dep.artifact);
 
     // CA handling
@@ -210,7 +204,7 @@ pub fn build(b: *std.Build, config: Config) !Self {
         .CURL_DISABLE_CA_SEARCH = false,
         .CURL_CA_SEARCH_SAFE = false,
         .CURL_EXTERN_SYMBOL = "__attribute__((__visibility__(\"default\")))",
-        .USE_WIN32_CRYPTO = target.result.os.tag == .windows, // Assumes 'NOT WINDOWS_STORE'
+        .USE_WIN32_CRYPTO = target.result.os.tag == .windows,
         .USE_WIN32_LDAP = false,
         .USE_IPV6 = true,
         .HAVE_ALARM = target.result.os.tag != .windows and target.result.os.tag != .wasi,
@@ -283,7 +277,7 @@ pub fn build(b: *std.Build, config: Config) !Self {
         .HAVE_GETPWUID_R = target.result.os.tag != .windows and target.result.os.tag != .wasi,
         .HAVE_GETRLIMIT = target.result.os.tag != .windows and target.result.os.tag != .wasi,
         .HAVE_GETTIMEOFDAY = true,
-        .HAVE_GLIBC_STRERROR_R = false, // TODO why not target.result.isGnuLibC()?
+        .HAVE_GLIBC_STRERROR_R = false,
         .HAVE_GMTIME_R = target.result.os.tag != .windows,
         .HAVE_GSSAPI = null,
         .HAVE_GSSGNU = null,
@@ -460,7 +454,7 @@ pub fn build(b: *std.Build, config: Config) !Self {
         .USE_SCHANNEL = false,
         .USE_WATT32 = null,
         .CURL_WITH_MULTI_SSL = false,
-        .VERSION = b.fmt("{f}", .{version}),
+        .VERSION = version_str,
         ._FILE_OFFSET_BITS = 64,
         ._LARGE_FILES = null,
         ._THREAD_SAFE = null,
@@ -509,295 +503,3 @@ pub fn addFrameworkSearchPaths(mod: *std.Build.Module, target: std.Build.Resolve
         mod.addSystemIncludePath(.{ .cwd_relative = b.fmt("{s}/usr/include", .{sdkroot}) });
     }
 }
-
-const c_flags: []const []const u8 = &.{"-fvisibility=hidden"};
-
-/// `LIB_CURLX_CFILES` in `lib/Makefile.inc`.
-const lib_curlx_sources: []const []const u8 = &.{
-    "curlx/base64.c",
-    "curlx/dynbuf.c",
-    "curlx/fopen.c",
-    "curlx/inet_ntop.c",
-    "curlx/inet_pton.c",
-    "curlx/multibyte.c",
-    "curlx/nonblock.c",
-    "curlx/strcopy.c",
-    "curlx/strerr.c",
-    "curlx/strparse.c",
-    "curlx/timediff.c",
-    "curlx/timeval.c",
-    "curlx/version_win32.c",
-    "curlx/wait.c",
-    "curlx/warnless.c",
-    "curlx/winapi.c",
-};
-
-/// `LIB_VAUTH_CFILES` in `lib/Makefile.inc`.
-const lib_vauth_sources: []const []const u8 = &.{
-    "vauth/cleartext.c",
-    "vauth/cram.c",
-    "vauth/digest.c",
-    "vauth/digest_sspi.c",
-    "vauth/gsasl.c",
-    "vauth/krb5_gssapi.c",
-    "vauth/krb5_sspi.c",
-    "vauth/ntlm.c",
-    "vauth/ntlm_sspi.c",
-    "vauth/oauth2.c",
-    "vauth/spnego_gssapi.c",
-    "vauth/spnego_sspi.c",
-    "vauth/vauth.c",
-};
-
-const lib_vtls_sources: []const []const u8 = &.{
-    "vtls/apple.c",
-    "vtls/cipher_suite.c",
-    "vtls/gtls.c",
-    "vtls/hostcheck.c",
-    "vtls/keylog.c",
-    "vtls/mbedtls.c",
-    "vtls/openssl.c",
-    "vtls/rustls.c",
-    "vtls/schannel.c",
-    "vtls/schannel_verify.c",
-    "vtls/vtls.c",
-    "vtls/vtls_scache.c",
-    "vtls/vtls_spack.c",
-    "vtls/wolfssl.c",
-    "vtls/x509asn1.c",
-};
-
-/// `LIB_VQUIC_CFILES` in `lib/Makefile.inc`.
-const lib_vquic_sources: []const []const u8 = &.{
-    "vquic/curl_ngtcp2.c",
-    "vquic/curl_osslq.c",
-    "vquic/curl_quiche.c",
-    "vquic/vquic.c",
-    "vquic/vquic-tls.c",
-};
-
-/// `LIB_VSSH_CFILES` in `lib/Makefile.inc`.
-const lib_vssh_sources: []const []const u8 = &.{
-    "vssh/libssh.c",
-    "vssh/libssh2.c",
-    "vssh/vssh.c",
-};
-
-/// `LIB_CFILES` in `lib/Makefile.inc`.
-const lib_sources: []const []const u8 = &.{
-    "altsvc.c",
-    "amigaos.c",
-    "asyn-ares.c",
-    "asyn-base.c",
-    "asyn-thrdd.c",
-    "bufq.c",
-    "bufref.c",
-    "cf-h1-proxy.c",
-    "cf-h2-proxy.c",
-    "cf-haproxy.c",
-    "cf-https-connect.c",
-    "cf-ip-happy.c",
-    "cf-socket.c",
-    "cfilters.c",
-    "conncache.c",
-    "connect.c",
-    "content_encoding.c",
-    "cookie.c",
-    "cshutdn.c",
-    "curl_addrinfo.c",
-    "curl_endian.c",
-    "curl_fnmatch.c",
-    "curl_fopen.c",
-    "curl_get_line.c",
-    "curl_gethostname.c",
-    "curl_gssapi.c",
-    "curl_memrchr.c",
-    "curl_ntlm_core.c",
-    "curl_range.c",
-    "curl_rtmp.c",
-    "curl_sasl.c",
-    "curl_sha512_256.c",
-    "curl_share.c",
-    "curl_sspi.c",
-    "curl_threads.c",
-    "curl_trc.c",
-    "cw-out.c",
-    "cw-pause.c",
-    "dict.c",
-    "doh.c",
-    "dynhds.c",
-    "easy.c",
-    "easygetopt.c",
-    "easyoptions.c",
-    "escape.c",
-    "fake_addrinfo.c",
-    "file.c",
-    "fileinfo.c",
-    "formdata.c",
-    "ftp.c",
-    "ftplistparser.c",
-    "getenv.c",
-    "getinfo.c",
-    "gopher.c",
-    "hash.c",
-    "headers.c",
-    "hmac.c",
-    "hostip.c",
-    "hostip4.c",
-    "hostip6.c",
-    "hsts.c",
-    "http.c",
-    "http1.c",
-    "http2.c",
-    "http_aws_sigv4.c",
-    "http_chunks.c",
-    "http_digest.c",
-    "http_negotiate.c",
-    "http_ntlm.c",
-    "http_proxy.c",
-    "httpsrr.c",
-    "idn.c",
-    "if2ip.c",
-    "imap.c",
-    "ldap.c",
-    "llist.c",
-    "macos.c",
-    "md4.c",
-    "md5.c",
-    "memdebug.c",
-    "mime.c",
-    "mprintf.c",
-    "mqtt.c",
-    "multi.c",
-    "multi_ev.c",
-    "multi_ntfy.c",
-    "netrc.c",
-    "noproxy.c",
-    "openldap.c",
-    "parsedate.c",
-    "pingpong.c",
-    "pop3.c",
-    "progress.c",
-    "psl.c",
-    "rand.c",
-    "ratelimit.c",
-    "request.c",
-    "rtsp.c",
-    "select.c",
-    "sendf.c",
-    "setopt.c",
-    "sha256.c",
-    "slist.c",
-    "smb.c",
-    "smtp.c",
-    "socketpair.c",
-    "socks.c",
-    "socks_gssapi.c",
-    "socks_sspi.c",
-    "splay.c",
-    "strcase.c",
-    "strdup.c",
-    "strequal.c",
-    "strerror.c",
-    "system_win32.c",
-    "telnet.c",
-    "tftp.c",
-    "transfer.c",
-    "uint-bset.c",
-    "uint-hash.c",
-    "uint-spbset.c",
-    "uint-table.c",
-    "url.c",
-    "urlapi.c",
-    "version.c",
-    "ws.c",
-};
-
-/// `CSOURCES` in `lib/Makefile.inc`.
-const sources = lib_sources ++ lib_vauth_sources ++ lib_vtls_sources ++ lib_vquic_sources ++ lib_vssh_sources ++ lib_curlx_sources;
-
-/// `CURLX_CFILES` in `src/Makefile.inc`.
-const curlx_sources: []const []const u8 = &.{
-    "curlx/base64.c",
-    "curlx/dynbuf.c",
-    "curlx/fopen.c",
-    "curlx/multibyte.c",
-    "curlx/nonblock.c",
-    "curlx/strcopy.c",
-    "curlx/strerr.c",
-    "curlx/strparse.c",
-    "curlx/timediff.c",
-    "curlx/timeval.c",
-    "curlx/version_win32.c",
-    "curlx/wait.c",
-    "curlx/warnless.c",
-    "curlx/winapi.c",
-};
-
-/// `CURLX_HFILES` in `src/Makefile.inc`.
-const curlx_headers: []const []const u8 = &.{
-    "curl_setup.h",
-    "curlx/binmode.h",
-    "curlx/dynbuf.h",
-    "curlx/fopen.h",
-    "curlx/multibyte.h",
-    "curlx/nonblock.h",
-    "curlx/snprintf.h",
-    "curlx/strcopy.h",
-    "curlx/strerr.h",
-    "curlx/strparse.h",
-    "curlx/timediff.h",
-    "curlx/timeval.h",
-    "curlx/version_win32.h",
-    "curlx/wait.h",
-    "curlx/warnless.h",
-    "curlx/winapi.h",
-};
-
-/// `CURL_CFILES` in `src/Makefile.inc`.
-const exe_sources: []const []const u8 = &.{
-    "config2setopts.c",
-    "slist_wc.c",
-    "terminal.c",
-    "tool_bname.c",
-    "tool_cb_dbg.c",
-    "tool_cb_hdr.c",
-    "tool_cb_prg.c",
-    "tool_cb_rea.c",
-    "tool_cb_see.c",
-    "tool_cb_soc.c",
-    "tool_cb_wrt.c",
-    "tool_cfgable.c",
-    "tool_dirhie.c",
-    "tool_doswin.c",
-    "tool_easysrc.c",
-    "tool_filetime.c",
-    "tool_findfile.c",
-    "tool_formparse.c",
-    "tool_getparam.c",
-    "tool_getpass.c",
-    "tool_help.c",
-    "tool_helpers.c",
-    "tool_ipfs.c",
-    "tool_libinfo.c",
-    "tool_listhelp.c",
-    "tool_main.c",
-    "tool_msgs.c",
-    "tool_operate.c",
-    "tool_operhlp.c",
-    "tool_paramhlp.c",
-    "tool_parsecfg.c",
-    "tool_progress.c",
-    "tool_setopt.c",
-    "tool_ssls.c",
-    "tool_stderr.c",
-    "tool_strdup.c",
-    "tool_urlglob.c",
-    "tool_util.c",
-    "tool_vms.c",
-    "tool_writeout.c",
-    "tool_writeout_json.c",
-    "tool_xattr.c",
-    "var.c",
-    "toolx/tool_time.c",
-};

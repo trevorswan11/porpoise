@@ -48,6 +48,10 @@
             .url = "https://github.com/Mbed-TLS/mbedtls/archive/refs/tags/mbedtls-3.6.4.tar.gz",
             .hash = "N-V-__8AADE9jALWhPS2ykOLbf8gUmr9r-SBwyzzpccbtBAv",
         },
+        .binutils = .{
+            .url = "https://sourceware.org/pub/binutils/releases/binutils-2.45.tar.xz",
+            .hash = "N-V-__8AAA6W9hFBAXcaEDszHBBVI0IfEpYUwk8y2YtqoTBr",
+        },
     },
     .paths = .{
         "apps",

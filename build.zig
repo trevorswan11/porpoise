@@ -9,6 +9,7 @@ const fmt = @import("packages/third-party/fmt.zig");
 const catch2 = @import("packages/third-party/catch2.zig");
 
 const CurlBuilder = @import("packages/third-party/kcov/CurlBuilder.zig");
+const BinutilsBuilder = @import("packages/third-party/kcov/BinutilsBuilder.zig");
 
 const LLVMBuilder = @import("packages/llvm/LLVMBuilder.zig");
 const ClangBuilder = @import("packages/llvm/ClangBuilder.zig");
@@ -29,6 +30,17 @@ pub fn build(b: *std.Build) !void {
     });
     b.installArtifact(curl.exe);
     b.installArtifact(curl.lib);
+
+    const binutils: ?BinutilsBuilder = .build(b, .{
+        .target = b.graph.host,
+        .optimize = .ReleaseFast,
+    });
+    if (binutils) |bu| {
+        b.installArtifact(bu.libbfd);
+        b.installArtifact(bu.libiberty);
+        b.installArtifact(bu.libopcodes);
+        b.installArtifact(bu.libsframe);
+    }
 
     var compiler_flags: std.ArrayList([]const u8) = .empty;
     try compiler_flags.appendSlice(b.allocator, &.{
