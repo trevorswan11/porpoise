@@ -9,7 +9,6 @@
 namespace conch::ast {
 
 class FunctionExpression;
-
 class DeclStatement;
 
 class StructExpression : public ExprBase<StructExpression> {
@@ -26,12 +25,9 @@ class StructExpression : public ExprBase<StructExpression> {
     auto                      accept(Visitor& v) const -> void override;
     [[nodiscard]] static auto parse(Parser& parser) -> Expected<Box<Expression>, ParserDiagnostic>;
 
+    MAKE_AST_GETTER(members, std::span<const Box<DeclStatement>>, )
     [[nodiscard]] auto is_packed() const noexcept -> bool {
         return start_token_.type == TokenType::PACKED;
-    }
-
-    [[nodiscard]] auto get_members() const noexcept -> std::span<const Box<DeclStatement>> {
-        return members_;
     }
 
   protected:

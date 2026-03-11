@@ -21,7 +21,7 @@ class ExpressionStatement : public StmtBase<ExpressionStatement> {
     auto                      accept(Visitor& v) const -> void override;
     [[nodiscard]] static auto parse(Parser& parser) -> Expected<Box<Statement>, ParserDiagnostic>;
 
-    [[nodiscard]] auto get_expression() const noexcept -> const Expression& { return *expression_; }
+    MAKE_AST_GETTER(expression, const Expression&, *)
 
   protected:
     auto is_equal(const Node& other) const noexcept -> bool override {

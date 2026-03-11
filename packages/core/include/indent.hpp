@@ -1,0 +1,41 @@
+#pragma once
+
+#include <string>
+#include <vector>
+
+namespace conch {
+
+namespace symbols {
+
+constexpr std::string_view VERT_BAR{"\u2502   "};
+constexpr std::string_view T_BRANCH{"\u251C\u2500 "};
+constexpr std::string_view L_BRANCH{"\u2514\u2500 "};
+constexpr std::string_view EMPTY{"    "};
+
+} // namespace symbols
+
+class Indent {
+  public:
+    class Guard {
+      public:
+        Guard(Indent& i, bool last) : indent_{i} { indent_.push(last); }
+        ~Guard() { indent_.pop(); }
+
+      private:
+        Indent& indent_;
+    };
+
+  public:
+    auto push(bool last) -> void { levels_.push_back(last); }
+    auto pop() -> void { levels_.pop_back(); }
+
+    [[nodiscard]] auto current_branch() const -> std::string;
+
+  private:
+    [[nodiscard]] auto prefix_only() const -> std::string;
+
+  private:
+    std::vector<bool> levels_;
+};
+
+} // namespace conch

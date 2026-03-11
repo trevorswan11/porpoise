@@ -25,15 +25,9 @@ class IfExpression : public ExprBase<IfExpression> {
     auto                      accept(Visitor& v) const -> void override;
     [[nodiscard]] static auto parse(Parser& parser) -> Expected<Box<Expression>, ParserDiagnostic>;
 
-    [[nodiscard]] auto get_condition() const noexcept -> const Expression& { return *condition_; }
-    [[nodiscard]] auto get_consequence() const noexcept -> const Statement& {
-        return *consequence_;
-    }
-
-    [[nodiscard]] auto has_alternate() const noexcept -> bool { return alternate_.has_value(); }
-    [[nodiscard]] auto get_alternate() const noexcept -> Optional<const Statement&> {
-        return alternate_ ? Optional<const Statement&>{**alternate_} : nullopt;
-    }
+    MAKE_AST_GETTER(condition, const Expression&, *)
+    MAKE_AST_GETTER(consequence, const Statement&, *)
+    MAKE_OPTIONAL_UNPACKER(alternate, Statement, alternate_, **)
 
   protected:
     auto is_equal(const Node& other) const noexcept -> bool override {

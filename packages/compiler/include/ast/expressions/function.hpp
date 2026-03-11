@@ -15,27 +15,19 @@ class BlockStatement;
 
 class FunctionParameter {
   public:
-    explicit FunctionParameter(Box<IdentifierExpression> name, ExplicitType&& type) noexcept;
+    explicit FunctionParameter(Box<IdentifierExpression> ident, ExplicitType&& type) noexcept;
     ~FunctionParameter();
 
     MAKE_AST_COPY_MOVE(FunctionParameter)
 
-    [[nodiscard]] auto get_name() const noexcept -> const IdentifierExpression& { return *name_; }
-    [[nodiscard]] auto get_type() const noexcept -> const ExplicitType& { return type_; }
+    MAKE_AST_GETTER(ident, const IdentifierExpression&, *)
+    MAKE_AST_GETTER(type, const ExplicitType&, )
 
-    friend auto operator==(const FunctionParameter& lhs, const FunctionParameter& rhs) noexcept
-        -> bool {
-        return lhs.is_equal(rhs);
-    }
+    MAKE_AST_DEPENDENT_EQ(FunctionParameter)
 
   private:
-    auto is_equal(const FunctionParameter& other) const noexcept -> bool;
-
-  private:
-    Box<IdentifierExpression> name_;
+    Box<IdentifierExpression> ident_;
     ExplicitType              type_;
-
-    friend class FunctionExpression;
 };
 
 class SelfParameter {
@@ -45,14 +37,14 @@ class SelfParameter {
 
     MAKE_AST_COPY_MOVE(SelfParameter)
 
-    [[nodiscard]] auto get_name() const noexcept -> const IdentifierExpression& { return *name_; }
-    [[nodiscard]] auto get_modifier() const noexcept -> const TypeModifier& { return modifier_; }
+    MAKE_AST_GETTER(modifier, const TypeModifier&, )
+    MAKE_AST_GETTER(ident, const IdentifierExpression&, *)
+
+    MAKE_AST_DEPENDENT_EQ(SelfParameter)
 
   private:
     TypeModifier              modifier_;
-    Box<IdentifierExpression> name_;
-
-    friend class FunctionExpression;
+    Box<IdentifierExpression> ident_;
 };
 
 class FunctionExpression : public ExprBase<FunctionExpression> {
@@ -72,18 +64,10 @@ class FunctionExpression : public ExprBase<FunctionExpression> {
     auto                      accept(Visitor& v) const -> void override;
     [[nodiscard]] static auto parse(Parser& parser) -> Expected<Box<Expression>, ParserDiagnostic>;
 
-    [[nodiscard]] auto get_parameters() const noexcept -> std::span<const FunctionParameter> {
-        return parameters_;
-    }
-
-    [[nodiscard]] auto get_return_type() const noexcept -> const ExplicitType& {
-        return return_type_;
-    }
-
-    [[nodiscard]] auto has_body() const noexcept -> bool { return body_.has_value(); }
-    [[nodiscard]] auto get_body() const noexcept -> Optional<const BlockStatement&> {
-        return body_ ? Optional<const BlockStatement&>{**body_} : nullopt;
-    }
+    MAKE_OPTIONAL_UNPACKER(self, SelfParameter, self_, *)
+    MAKE_AST_GETTER(parameters, std::span<const FunctionParameter>, )
+    MAKE_AST_GETTER(return_type, const ExplicitType&, )
+    MAKE_OPTIONAL_UNPACKER(body, BlockStatement, body_, **)
 
   protected:
     auto is_equal(const Node& other) const noexcept -> bool override;

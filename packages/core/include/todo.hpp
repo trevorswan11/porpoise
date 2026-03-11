@@ -2,8 +2,8 @@
 
 #include <cassert>
 #include <cstdio>
-#include <optional>
-#include <string_view>
+#include <source_location>
+#include <utility> // IWYU pragma: export
 
 #include <fmt/format.h>
 
@@ -12,24 +12,15 @@ namespace conch {
 namespace detail {
 
 template <typename... Args>
-auto todo_impl(std::optional<std::string_view> message) noexcept -> void {
-    if (message) { fmt::println(stderr, "TODO: {}", *message); }
-    assert(false);
-}
-
-template <typename... Args> auto todo([[maybe_unused]] Args&&... args) noexcept -> void {
-    todo_impl(std::nullopt);
-}
-
-template <typename... Args>
-auto todo(std::string_view message, [[maybe_unused]] Args&&... args) noexcept -> void {
-    todo_impl(message);
+auto todo_impl(std::source_location loc, [[maybe_unused]] Args&&... args) noexcept -> void {
+    fmt::println(stderr, "TODO: {}:{}:{}", loc.file_name(), loc.line(), loc.column());
+    assert(false && "TODO");
 }
 
 } // namespace detail
 
-#define TODO(...)              \
-    detail::todo(__VA_ARGS__); \
+#define TODO(...)                                                             \
+    ::conch::detail::todo_impl(std::source_location::current(), __VA_ARGS__); \
     std::unreachable()
 
 } // namespace conch

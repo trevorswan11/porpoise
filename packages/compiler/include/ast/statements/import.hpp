@@ -31,11 +31,7 @@ class ImportStatement : public StmtBase<ImportStatement> {
 
     MAKE_VARIANT_UNPACKER(module_import, IdentifierExpression, ModuleImport, imported_, *std::get)
     MAKE_VARIANT_UNPACKER(user_import, StringExpression, UserImport, imported_, *std::get)
-
-    [[nodiscard]] auto has_alias() const noexcept -> bool { return alias_.has_value(); }
-    [[nodiscard]] auto get_alias() const noexcept -> Optional<const IdentifierExpression&> {
-        return alias_ ? Optional<const IdentifierExpression&>{**alias_} : nullopt;
-    }
+    MAKE_OPTIONAL_UNPACKER(alias, IdentifierExpression, alias_, **)
 
   protected:
     auto is_equal(const Node& other) const noexcept -> bool override;

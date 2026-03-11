@@ -21,7 +21,7 @@ class DiscardStatement : public StmtBase<DiscardStatement> {
     auto                      accept(Visitor& v) const -> void override;
     [[nodiscard]] static auto parse(Parser& parser) -> Expected<Box<Statement>, ParserDiagnostic>;
 
-    [[nodiscard]] auto get_discarded() const noexcept -> const Expression& { return *discarded_; }
+    MAKE_AST_GETTER(discarded, const Expression&, *)
 
   protected:
     auto is_equal(const Node& other) const noexcept -> bool override {

@@ -48,8 +48,29 @@ _ = baz(&mut b);    // Illegal, cannot mutate const
 - Function declarations cannot be marked variable and must be `const`
 - Functions can have the `noreturn` return 'type' which signifies that the compiler should not expect a `return` construct in the function body
     - Violating this assumption is a compile time error
+- The return types `noreturn` and `void` cannot have any type modifiers
 - There are no closures
 
 ## Builtin Functions
 - Builtin functions are prefixed with the `@` symbol and are always camelCase
 - Builtin functions can run at compile time or runtime depending on the context, and will attempt to lower to the most efficient instructions when possible
+
+## Calling
+- Functions are called in three ways depending on the context
+    - If calling a top-level, non-struct function, the syntax is simple (`func(args...)`)
+    - If calling a member function, the syntax is similar to other languages (`instance.func(args...)`)
+        - This requires the function to have a self parameter, as discussed in the struct documentation
+        - The callee must have mutability that matches the explicit self parameter
+    - If calling a static struct function, the syntax uses a scope resolution expression (`Struct::func(args...)`)
+
+## Types
+- Function's signatures are their types, including parameter modifiers and the return type
+- A function can be declared verbosely by using the type before the declaration function
+```conch
+const f: fn(): int = fn(): int { ... };
+```
+
+- You can also use this to indicate that a function takes a function as an argument
+```conch
+const f := fn(g: fn(): int): int { ... };
+```

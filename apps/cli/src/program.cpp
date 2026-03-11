@@ -8,7 +8,8 @@
 
 #include "parser/parser.hpp"
 
-#include "ast/node.hpp" // IWYU pragma: keep
+#include "ast/ast.hpp"
+#include "ast/dumper.hpp"
 
 #include "string.hpp"
 
@@ -31,7 +32,8 @@ auto Program::interactive() -> void {
         if (!errors.empty()) {
             fmt::println("{}", errors);
         } else {
-            fmt::println("AST size {} for line: {}", ast.size(), line);
+            ast::ASTDumper dumper{std::cout};
+            for (const auto& node : ast) { node->accept(dumper); }
         }
     }
 }

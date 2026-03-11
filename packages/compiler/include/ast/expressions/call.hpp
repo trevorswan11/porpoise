@@ -1,25 +1,43 @@
 #pragma once
 
-#include <algorithm>
 #include <span>
-#include <utility>
 #include <vector>
 
+#include "ast/expressions/type.hpp"
 #include "ast/node.hpp"
 
 #include "parser/parser.hpp"
 
+#include "variant.hpp"
+
 namespace conch::ast {
+
+class CallArgument {
+  public:
+    explicit CallArgument(Box<Expression> argument) noexcept;
+    explicit CallArgument(ExplicitType&& argument) noexcept;
+    ~CallArgument();
+
+    MAKE_AST_COPY_MOVE(CallArgument)
+
+    MAKE_VARIANT_UNPACKER(expression, Expression, Box<Expression>, argument_, *std::get)
+    MAKE_VARIANT_UNPACKER(type, ExplicitType, ExplicitType, argument_, std::get)
+
+    MAKE_AST_DEPENDENT_EQ(CallArgument)
+
+  private:
+    std::variant<Box<Expression>, ExplicitType> argument_;
+};
 
 class CallExpression : public ExprBase<CallExpression> {
   public:
     static constexpr auto KIND = NodeKind::CALL_EXPRESSION;
 
   public:
-    explicit CallExpression(const Token&                 start_token,
-                            Box<Expression>              function,
-                            std::vector<Box<Expression>> arguments) noexcept
-        : ExprBase{start_token}, function_{std::move(function)}, arguments_{std::move(arguments)} {}
+    explicit CallExpression(const Token&              start_token,
+                            Box<Expression>           function,
+                            std::vector<CallArgument> arguments) noexcept;
+    ~CallExpression() override;
 
     MAKE_AST_COPY_MOVE(CallExpression)
 
@@ -27,23 +45,15 @@ class CallExpression : public ExprBase<CallExpression> {
     [[nodiscard]] static auto parse(Parser& parser, Box<Expression> function)
         -> Expected<Box<Expression>, ParserDiagnostic>;
 
-    [[nodiscard]] auto get_function() const noexcept -> const Expression& { return *function_; }
-    [[nodiscard]] auto get_arguments() const noexcept -> std::span<const Box<Expression>> {
-        return arguments_;
-    }
+    MAKE_AST_GETTER(function, const Expression&, *)
+    MAKE_AST_GETTER(arguments, std::span<const CallArgument>, )
 
   protected:
-    auto is_equal(const Node& other) const noexcept -> bool override {
-        const auto& casted = as<CallExpression>(other);
-        return *function_ == *casted.function_ &&
-               std::ranges::equal(arguments_, casted.arguments_, [](const auto& a, const auto& b) {
-                   return *a == *b;
-               });
-    }
+    auto is_equal(const Node& other) const noexcept -> bool override;
 
   private:
-    Box<Expression>              function_;
-    std::vector<Box<Expression>> arguments_;
+    Box<Expression>           function_;
+    std::vector<CallArgument> arguments_;
 };
 
 } // namespace conch::ast

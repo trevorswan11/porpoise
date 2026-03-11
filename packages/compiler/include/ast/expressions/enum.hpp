@@ -12,26 +12,19 @@ class IdentifierExpression;
 
 class Enumeration {
   public:
-    explicit Enumeration(Box<IdentifierExpression> enumeration,
-                         Optional<Box<Expression>> value) noexcept;
+    explicit Enumeration(Box<IdentifierExpression> ident, Optional<Box<Expression>> value) noexcept;
     ~Enumeration();
 
     MAKE_AST_COPY_MOVE(Enumeration)
 
-    [[nodiscard]] auto get_enumeration() const noexcept -> const IdentifierExpression& {
-        return *enumeration_;
-    }
+    MAKE_AST_GETTER(ident, const IdentifierExpression&, *)
+    MAKE_OPTIONAL_UNPACKER(default_value, Expression, value_, **)
 
-    [[nodiscard]] auto has_default_value() const noexcept -> bool { return value_.has_value(); }
-    [[nodiscard]] auto get_default_value() const noexcept -> Optional<const Expression&> {
-        return value_ ? Optional<const Expression&>{**value_} : nullopt;
-    }
+    MAKE_AST_DEPENDENT_EQ(Enumeration)
 
   private:
-    Box<IdentifierExpression> enumeration_;
+    Box<IdentifierExpression> ident_;
     Optional<Box<Expression>> value_;
-
-    friend class EnumExpression;
 };
 
 class EnumExpression : public ExprBase<EnumExpression> {
@@ -49,14 +42,8 @@ class EnumExpression : public ExprBase<EnumExpression> {
     auto                      accept(Visitor& v) const -> void override;
     [[nodiscard]] static auto parse(Parser& parser) -> Expected<Box<Expression>, ParserDiagnostic>;
 
-    [[nodiscard]] auto has_underlying() const noexcept -> bool { return underlying_.has_value(); }
-    [[nodiscard]] auto get_underlying() const noexcept -> Optional<const IdentifierExpression&> {
-        return underlying_ ? Optional<const IdentifierExpression&>{**underlying_} : nullopt;
-    }
-
-    [[nodiscard]] auto get_enumerations() const noexcept -> std::span<const Enumeration> {
-        return enumerations_;
-    }
+    MAKE_OPTIONAL_UNPACKER(underlying, IdentifierExpression, underlying_, **)
+    MAKE_AST_GETTER(enumerations, std::span<const Enumeration>, )
 
   protected:
     auto is_equal(const Node& other) const noexcept -> bool override;

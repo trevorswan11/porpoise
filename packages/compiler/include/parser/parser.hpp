@@ -76,13 +76,17 @@ enum class ParserError : u8 {
     ILLEGAL_MATCH_ARM,
     ILLEGAL_MATCH_CATCH_ALL,
     FUNCTION_PARAMETER_HAS_DEFAULT_VALUE,
+    FUNCTION_PARAMETER_IS_NORETURN,
     ILLEGAL_FUNCTION_DEFINITION,
     ILLEGAL_TYPE_MODIFIER,
     ILLEGAL_EXPLICIT_TYPE,
     EXPLICIT_FN_TYPE_HAS_BODY,
     ILLEGAL_OUTER_SCOPE_TYPE,
     ILLEGAL_FUNCTION_TYPE_MODIFIER,
-    ILLEGAL_RETURN_TYPE_MODIFIER,
+    ILLEGAL_NORETURN_TYPE_MODIFIER,
+    ILLEGAL_VOID_TYPE_MODIFIER,
+    ILLEGAL_TYPE_TYPE_MODIFIER,
+    COMMA_WITH_MISSING_CALL_ARGUMENT,
 };
 
 using ParserDiagnostic = Diagnostic<ParserError>;
@@ -98,6 +102,35 @@ class Parser {
     using PrefixFn    = Expected<Box<ast::Expression>, ParserDiagnostic> (*)(Parser&);
     using InfixFn     = Expected<Box<ast::Expression>, ParserDiagnostic> (*)(Parser&,
                                                                          Box<ast::Expression>);
+
+    class Checkpoint {
+      public:
+        explicit Checkpoint(const Parser& p) noexcept;
+
+      private:
+        Lexer::Snapshot snapshot_;
+        Token           current_;
+        Token           peek_;
+
+        friend class Parser;
+    };
+
+    // An RAII checkpoint-rollback transaction
+    class Transaction {
+      public:
+        explicit Transaction(Parser& parser) : p_{parser}, checkpoint_{parser} {}
+        ~Transaction() {
+            if (!committed_) { p_.rollback(checkpoint_); }
+        }
+
+        // Prevent a rollback from happening at the end of the transaction
+        void commit() { committed_ = true; }
+
+      private:
+        Parser&            p_;
+        Parser::Checkpoint checkpoint_;
+        bool               committed_ = false;
+    };
 
   public:
     Parser() noexcept = default;
@@ -155,6 +188,13 @@ class Parser {
 
   private:
     static auto tt_mismatch_error(TokenType expected, const Token& actual) -> ParserDiagnostic;
+
+    // Reverts the parser to the state from the checkpoint.
+    auto rollback(const Checkpoint& checkpoint) noexcept -> void {
+        lexer_.restore(checkpoint.snapshot_);
+        current_token_ = checkpoint.current_;
+        peek_token_    = checkpoint.peek_;
+    }
 
   private:
     std::string_view input_;

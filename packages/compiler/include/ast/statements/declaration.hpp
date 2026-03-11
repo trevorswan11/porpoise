@@ -4,6 +4,8 @@
 #include <array>
 #include <bit>
 
+#include <magic_enum/magic_enum_flags.hpp>
+
 #include "ast/node.hpp"
 
 #include "parser/parser.hpp"
@@ -57,24 +59,22 @@ class DeclStatement : public StmtBase<DeclStatement> {
     auto                      accept(Visitor& v) const -> void override;
     [[nodiscard]] static auto parse(Parser& parser) -> Expected<Box<Statement>, ParserDiagnostic>;
 
-    [[nodiscard]] auto get_ident() const noexcept -> const IdentifierExpression& { return *ident_; }
-    [[nodiscard]] auto get_type() const noexcept -> const TypeExpression& { return *type_; }
-    [[nodiscard]] auto has_value() const noexcept -> bool { return value_.has_value(); }
-    [[nodiscard]] auto get_value() const noexcept -> Optional<const Expression&> {
-        return value_ ? Optional<const Expression&>{**value_} : nullopt;
-    }
+    MAKE_AST_GETTER(ident, const IdentifierExpression&, *)
+    MAKE_AST_GETTER(type, const TypeExpression&, *)
+    MAKE_OPTIONAL_UNPACKER(value, Expression, value_, **)
+    MAKE_AST_GETTER(modifiers, const DeclModifiers&, )
 
-    [[nodiscard]] auto get_modifiers() const noexcept -> const DeclModifiers& { return modifiers_; }
     [[nodiscard]] auto has_modifier(DeclModifiers flag) const noexcept -> bool {
-        return static_cast<bool>(modifiers_ & flag);
-    }
-
-    static auto modifiers_has(DeclModifiers modifiers, DeclModifiers flag) noexcept -> bool {
-        return static_cast<bool>(modifiers & flag);
+        return modifiers_has(modifiers_, flag);
     }
 
   protected:
     auto is_equal(const Node& other) const noexcept -> bool override;
+
+  private:
+    static auto modifiers_has(DeclModifiers modifiers, DeclModifiers flag) noexcept -> bool {
+        return static_cast<bool>(modifiers & flag);
+    }
 
   private:
     using ModifierMapping                 = std::pair<TokenType, DeclModifiers>;
@@ -124,3 +124,7 @@ class DeclStatement : public StmtBase<DeclStatement> {
 };
 
 } // namespace conch::ast
+
+template <> struct magic_enum::customize::enum_range<conch::ast::DeclModifiers> {
+    static constexpr bool is_flags = true;
+};

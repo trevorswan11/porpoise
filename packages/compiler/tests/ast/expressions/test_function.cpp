@@ -87,6 +87,16 @@ TEST_CASE("Function with self & parameters but no body") {
             ast::ExplicitType{mods::BASE, helpers::make_ident("int")}));
 }
 
+TEST_CASE("Function with type types") {
+    helpers::test_expr_stmt("fn(self, A: type): type;",
+                            helpers::function_expr_from(
+                                ast::SelfParameter{mods::BASE, helpers::make_ident("self")},
+                                helpers::make_parameters(ast::FunctionParameter{
+                                    helpers::make_ident("A"),
+                                    ast::ExplicitType{mods::BASE, helpers::make_ident("type")}}),
+                                ast::ExplicitType{mods::BASE, helpers::make_ident("type")}));
+}
+
 TEST_CASE("Full function expression") {
     helpers::test_expr_stmt(
         "fn(*mut this, a: A, b: *B, ): int { c; };",
@@ -134,6 +144,22 @@ TEST_CASE("Out-of-place self parameter") {
 TEST_CASE("Default function parameter") {
     helpers::test_fail("fn(a: A = 2): int;",
                        ParserDiagnostic{ParserError::FUNCTION_PARAMETER_HAS_DEFAULT_VALUE, 1, 5});
+}
+
+TEST_CASE("Noreturn function types") {
+    helpers::test_fail("fn(a: &noreturn): int;",
+                       ParserDiagnostic{ParserError::ILLEGAL_NORETURN_TYPE_MODIFIER, 1, 7});
+    helpers::test_fail("fn(a: noreturn): int;",
+                       ParserDiagnostic{ParserError::FUNCTION_PARAMETER_IS_NORETURN, 1, 5});
+    helpers::test_fail("fn(a: A): &noreturn;",
+                       ParserDiagnostic{ParserError::ILLEGAL_NORETURN_TYPE_MODIFIER, 1, 11});
+}
+
+TEST_CASE("Illegal type function types") {
+    helpers::test_fail("fn(A: &type): int;",
+                       ParserDiagnostic{ParserError::ILLEGAL_TYPE_TYPE_MODIFIER, 1, 7});
+    helpers::test_fail("fn(A: type): &type;",
+                       ParserDiagnostic{ParserError::ILLEGAL_TYPE_TYPE_MODIFIER, 1, 14});
 }
 
 TEST_CASE("Non-terminated parameter list") {

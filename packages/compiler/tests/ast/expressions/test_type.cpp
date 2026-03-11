@@ -59,7 +59,7 @@ TEST_CASE("Function types") {
                               nullopt)});
 }
 
-TEST_CASE("Array types") {
+TEST_CASE("Array type") {
     helpers::test_type_expr(
         "[5uz]*ulong",
         ast::ExplicitType{
@@ -67,6 +67,15 @@ TEST_CASE("Array types") {
             ast::ExplicitArrayType{
                 make_box<ast::USizeIntegerExpression>(Token{TokenType::UZINT_10, "5uz"}, 5uz),
                 make_box<ast::ExplicitType>(mods::PTR, helpers::make_ident("ulong"))}});
+}
+
+TEST_CASE("Slice type") {
+    helpers::test_type_expr(
+        "[]*ulong",
+        ast::ExplicitType{
+            mods::BASE,
+            ast::ExplicitArrayType{
+                {}, make_box<ast::ExplicitType>(mods::PTR, helpers::make_ident("ulong"))}});
 }
 
 TEST_CASE("Recursive types") {
@@ -118,6 +127,7 @@ TEST_CASE("Array type requirement") {
                        ParserDiagnostic{ParserError::ILLEGAL_ARRAY_SIZE_TYPE, 1, 9});
     helpers::test_fail(R"(var a: ["e"]int;)",
                        ParserDiagnostic{ParserError::ILLEGAL_ARRAY_SIZE_TYPE, 1, 9});
+    helpers::test_fail("var a: [0uz]int;", ParserDiagnostic{ParserError::EMPTY_ARRAY, 1, 9});
 }
 
 TEST_CASE("Function type restrictions") {
@@ -125,6 +135,7 @@ TEST_CASE("Function type restrictions") {
         "var a: *mut fn(): void;",
         "var a: &fn(): void;",
         "var a: &mut fn(): void;",
+        "var a: *mut fn(): void { b; };",
     });
     for (const auto& illegal : illegals) {
         helpers::test_fail(illegal,
@@ -134,9 +145,11 @@ TEST_CASE("Function type restrictions") {
 
 TEST_CASE("Function return type restrictions") {
     helpers::test_fail("var a: fn(): &void;",
-                       ParserDiagnostic{ParserError::ILLEGAL_RETURN_TYPE_MODIFIER, 1, 14});
+                       ParserDiagnostic{ParserError::ILLEGAL_VOID_TYPE_MODIFIER, 1, 14});
+    helpers::test_fail("var a: fn(): &type;",
+                       ParserDiagnostic{ParserError::ILLEGAL_TYPE_TYPE_MODIFIER, 1, 14});
     helpers::test_fail("var a: fn(): &noreturn;",
-                       ParserDiagnostic{ParserError::ILLEGAL_RETURN_TYPE_MODIFIER, 1, 14});
+                       ParserDiagnostic{ParserError::ILLEGAL_NORETURN_TYPE_MODIFIER, 1, 14});
 }
 
 } // namespace conch::tests

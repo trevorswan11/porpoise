@@ -38,6 +38,10 @@ using Optional = std::conditional_t<std::is_reference_v<T>,
 
 using std::nullopt;
 
+#define MAKE_OPTIONAL_UNPACKER(name, ReturnType, member, deref)                                  \
+    [[nodiscard]] auto get_##name() const noexcept -> const ReturnType& { return deref member; } \
+    [[nodiscard]] auto has_##name() const noexcept -> bool { return member.has_value(); }
+
 namespace optional {
 
 // Compares two values, forwarding safety concerns to the comparator.

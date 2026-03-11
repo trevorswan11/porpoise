@@ -11,17 +11,21 @@
 
 namespace conch::ast {
 
-FunctionParameter::FunctionParameter(Box<IdentifierExpression> name, ExplicitType&& type) noexcept
-    : name_{std::move(name)}, type_{std::move(type)} {}
+FunctionParameter::FunctionParameter(Box<IdentifierExpression> ident, ExplicitType&& type) noexcept
+    : ident_{std::move(ident)}, type_{std::move(type)} {}
 FunctionParameter::~FunctionParameter() = default;
 
 auto FunctionParameter::is_equal(const FunctionParameter& other) const noexcept -> bool {
-    return *name_ == *other.name_ && type_ == other.type_;
+    return *ident_ == *other.ident_ && type_ == other.type_;
 }
 
-SelfParameter::SelfParameter(TypeModifier modifier, Box<IdentifierExpression> name) noexcept
-    : modifier_{std::move(modifier)}, name_{std::move(name)} {}
+SelfParameter::SelfParameter(TypeModifier modifier, Box<IdentifierExpression> ident) noexcept
+    : modifier_{std::move(modifier)}, ident_{std::move(ident)} {}
 SelfParameter::~SelfParameter() = default;
+
+auto SelfParameter::is_equal(const SelfParameter& other) const noexcept -> bool {
+    return optional::safe_eq<TypeModifier>(modifier_, other.modifier_) && *ident_ == *other.ident_;
+}
 
 FunctionExpression::FunctionExpression(const Token&                   start_token,
                                        Optional<SelfParameter>        self,
@@ -84,6 +88,15 @@ auto FunctionExpression::parse(Parser& parser) -> Expected<Box<Expression>, Pars
                                               type->get_token());
             }
 
+            const auto& explicit_type = type->get_explicit_type();
+            if (explicit_type.is_ident_type()) {
+                // noreturn is not allowed for parameters
+                if (explicit_type.get_ident_type().get_token().type == TokenType::NORETURN) {
+                    return make_parser_unexpected(ParserError::FUNCTION_PARAMETER_IS_NORETURN,
+                                                  type->get_token());
+                }
+            }
+
             parameters.emplace_back(std::move(name), std::move(*(type->explicit_)));
             if (!parser.peek_token_is(TokenType::RPAREN)) {
                 TRY(parser.expect_peek(TokenType::COMMA));
@@ -113,13 +126,9 @@ auto FunctionExpression::parse(Parser& parser) -> Expected<Box<Expression>, Pars
 }
 
 auto FunctionExpression::is_equal(const Node& other) const noexcept -> bool {
-    const auto& casted = as<FunctionExpression>(other);
-    const auto  self_matches =
-        optional::safe_eq<SelfParameter>(self_, casted.self_, [](const auto& a, const auto& b) {
-            return optional::safe_eq<TypeModifier>(a.modifier_, b.modifier_) &&
-                   *a.name_ == *b.name_;
-        });
-    const auto parameters_eq = std::ranges::equal(parameters_, casted.parameters_);
+    const auto& casted        = as<FunctionExpression>(other);
+    const auto  self_matches  = optional::safe_eq<SelfParameter>(self_, casted.self_);
+    const auto  parameters_eq = std::ranges::equal(parameters_, casted.parameters_);
     return self_matches && parameters_eq && return_type_ == casted.return_type_ &&
            optional::unsafe_eq<BlockStatement>(body_, casted.body_);
 }

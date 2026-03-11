@@ -7,10 +7,13 @@
 
 namespace conch::ast {
 
-Enumeration::Enumeration(Box<IdentifierExpression> enumeration,
-                         Optional<Box<Expression>> value) noexcept
-    : enumeration_{std::move(enumeration)}, value_{std::move(value)} {}
+Enumeration::Enumeration(Box<IdentifierExpression> ident, Optional<Box<Expression>> value) noexcept
+    : ident_{std::move(ident)}, value_{std::move(value)} {}
 Enumeration::~Enumeration() = default;
+
+auto Enumeration::is_equal(const Enumeration& other) const noexcept -> bool {
+    return *ident_ == *other.ident_ && optional::unsafe_eq<Expression>(value_, other.value_);
+}
 
 EnumExpression::EnumExpression(const Token&                        start_token,
                                Optional<Box<IdentifierExpression>> underlying,
@@ -60,11 +63,7 @@ auto EnumExpression::parse(Parser& parser) -> Expected<Box<Expression>, ParserDi
 auto EnumExpression::is_equal(const Node& other) const noexcept -> bool {
     const auto& casted = as<EnumExpression>(other);
     return optional::unsafe_eq<IdentifierExpression>(underlying_, casted.underlying_) &&
-           std::ranges::equal(
-               enumerations_, casted.enumerations_, [](const auto& a, const auto& b) {
-                   return *a.enumeration_ == *b.enumeration_ &&
-                          optional::unsafe_eq<Expression>(a.value_, b.value_);
-               });
+           std::ranges::equal(enumerations_, casted.enumerations_);
 }
 
 } // namespace conch::ast

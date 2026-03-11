@@ -4,6 +4,10 @@
 
 namespace conch::ast {
 
+auto MatchArm::is_equal(const MatchArm& other) const noexcept -> bool {
+    return *pattern_ == *other.pattern_ && *dispatch_ == *other.dispatch_;
+}
+
 auto MatchExpression::accept(Visitor& v) const -> void { v.visit(*this); }
 
 auto MatchExpression::parse(Parser& parser) -> Expected<Box<Expression>, ParserDiagnostic> {

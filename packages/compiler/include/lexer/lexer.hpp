@@ -43,6 +43,20 @@ class Lexer {
         Token  current_token_;
     };
 
+    class Snapshot {
+      public:
+        explicit Snapshot(const Lexer& l) noexcept;
+
+      private:
+        usize pos_;
+        usize peek_pos_;
+        byte  current_byte_;
+        usize line_no_;
+        usize col_no_;
+
+        friend class Lexer;
+    };
+
   public:
     Lexer() noexcept = default;
     explicit Lexer(std::string_view input) noexcept : input_{input} { read_character(); }
@@ -72,6 +86,15 @@ class Lexer {
     auto read_byte_literal() noexcept -> Token;
     auto read_comment() noexcept -> Token;
 
+    // Sets the lexer to the snapshot, very cheap operation.
+    auto restore(const Snapshot& state) noexcept -> void {
+        pos_          = state.pos_;
+        peek_pos_     = state.peek_pos_;
+        current_byte_ = state.current_byte_;
+        line_no_      = state.line_no_;
+        col_no_       = state.col_no_;
+    }
+
   private:
     std::string_view input_{};
     usize            pos_{0};
@@ -80,6 +103,8 @@ class Lexer {
 
     usize line_no_{1};
     usize col_no_{0};
+
+    friend class Parser;
 };
 
 } // namespace conch

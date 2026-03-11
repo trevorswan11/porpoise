@@ -25,15 +25,10 @@ class WhileLoopExpression : public ExprBase<WhileLoopExpression> {
     auto                      accept(Visitor& v) const -> void override;
     [[nodiscard]] static auto parse(Parser& parser) -> Expected<Box<Expression>, ParserDiagnostic>;
 
-    [[nodiscard]] auto get_condition() const noexcept -> const Expression& { return *condition_; }
-    [[nodiscard]] auto get_continuation() const noexcept -> Optional<const Expression&> {
-        return continuation_ ? Optional<const Expression&>{**continuation_} : nullopt;
-    }
-    [[nodiscard]] auto get_block() const noexcept -> const BlockStatement& { return *block_; }
-    [[nodiscard]] auto has_non_break() const noexcept -> bool { return non_break_.has_value(); }
-    [[nodiscard]] auto get_non_break() const noexcept -> Optional<const Statement&> {
-        return non_break_ ? Optional<const Statement&>{**non_break_} : nullopt;
-    }
+    MAKE_AST_GETTER(condition, const Expression&, *)
+    MAKE_OPTIONAL_UNPACKER(continuation, Expression, continuation_, **)
+    MAKE_AST_GETTER(block, const BlockStatement&, *)
+    MAKE_OPTIONAL_UNPACKER(non_break, Statement, non_break_, **)
 
   protected:
     auto is_equal(const Node& other) const noexcept -> bool override;

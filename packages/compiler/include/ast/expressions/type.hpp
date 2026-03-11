@@ -20,22 +20,20 @@ class ExplicitType;
 
 class ExplicitArrayType {
   public:
-    explicit ExplicitArrayType(Box<Expression> dimension, Box<ExplicitType> inner_type) noexcept;
+    explicit ExplicitArrayType(Optional<Box<Expression>> dimension,
+                               Box<ExplicitType>         inner_type) noexcept;
     ~ExplicitArrayType();
 
     MAKE_AST_COPY_MOVE(ExplicitArrayType)
 
-    [[nodiscard]] auto get_dimensions() const noexcept -> const Expression& { return *dimension_; }
-    [[nodiscard]] auto get_inner_type() const noexcept -> const ExplicitType& {
-        return *inner_type_;
-    }
+    MAKE_OPTIONAL_UNPACKER(dimension, Expression, dimension_, **)
+    MAKE_AST_GETTER(inner_type, const ExplicitType&, *)
+
+    MAKE_AST_DEPENDENT_EQ(ExplicitArrayType)
 
   private:
-    Box<Expression>   dimension_;
-    Box<ExplicitType> inner_type_;
-
-    friend class ExplicitType;
-    friend class TypeExpression;
+    Optional<Box<Expression>> dimension_;
+    Box<ExplicitType>         inner_type_;
 };
 
 class ExplicitType {
@@ -55,27 +53,19 @@ class ExplicitType {
 
     [[nodiscard]] static auto parse(Parser& parser) -> Expected<ExplicitType, ParserDiagnostic>;
 
-    [[nodiscard]] auto get_modifier() const noexcept -> const TypeModifier& { return modifier_; }
-    [[nodiscard]] auto get_type() const noexcept -> const ExplicitTypeVariant& { return type_; }
-
+    MAKE_AST_GETTER(modifier, const TypeModifier&, )
+    MAKE_AST_GETTER(type, const ExplicitTypeVariant&, )
     MAKE_VARIANT_UNPACKER(ident_type, IdentifierExpression, ExplicitIdentType, type_, *std::get)
     MAKE_VARIANT_UNPACKER(function_type, FunctionExpression, ExplicitFunctionType, type_, *std::get)
     MAKE_VARIANT_UNPACKER(array_type, ExplicitArrayType, ExplicitArrayType, type_, std::get)
     MAKE_VARIANT_UNPACKER(
         recursive_type, ExplicitRecursiveType, ExplicitRecursiveType, type_, std::get)
 
-    friend auto operator==(const ExplicitType& lhs, const ExplicitType& rhs) noexcept -> bool {
-        return lhs.is_equal(rhs);
-    }
-
-  private:
-    auto is_equal(const ExplicitType& other) const noexcept -> bool;
+    MAKE_AST_DEPENDENT_EQ(ExplicitType)
 
   private:
     TypeModifier        modifier_;
     ExplicitTypeVariant type_;
-
-    friend class TypeExpression;
 };
 
 class TypeExpression : public ExprBase<TypeExpression> {
@@ -92,10 +82,7 @@ class TypeExpression : public ExprBase<TypeExpression> {
     [[nodiscard]] static auto parse(Parser& parser)
         -> Expected<std::pair<Box<Expression>, bool>, ParserDiagnostic>;
 
-    [[nodiscard]] auto has_explicit_type() const noexcept -> bool { return explicit_.has_value(); }
-    [[nodiscard]] auto get_explicit_type() const noexcept -> const Optional<ExplicitType>& {
-        return explicit_;
-    }
+    MAKE_OPTIONAL_UNPACKER(explicit_type, ExplicitType, explicit_, *)
 
   protected:
     auto is_equal(const Node& other) const noexcept -> bool override;
@@ -103,6 +90,7 @@ class TypeExpression : public ExprBase<TypeExpression> {
   private:
     Optional<ExplicitType> explicit_;
 
+    // FunctionExpression needs to destructively move explicit on success
     friend class FunctionExpression;
 };
 

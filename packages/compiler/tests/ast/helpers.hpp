@@ -42,7 +42,6 @@ template <typename... Ds>
 auto test_fail(std::string_view failing, Ds&&... expected_diagnostics) -> void {
     Parser p{failing};
     auto [ast, errors] = p.consume();
-    for (const auto& n : ast) { fmt::println("{}", *n); }
     REQUIRE(ast.empty());
 
     std::array expected_arr{std::forward<Ds>(expected_diagnostics)...};

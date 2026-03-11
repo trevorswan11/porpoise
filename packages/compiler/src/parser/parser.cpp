@@ -17,6 +17,9 @@
 
 namespace conch {
 
+Parser::Checkpoint::Checkpoint(const Parser& parser) noexcept
+    : snapshot_{parser.lexer_}, current_{parser.current_token_}, peek_{parser.peek_token_} {}
+
 auto Parser::reset(std::string_view input) noexcept -> void { *this = Parser{input}; }
 
 auto Parser::advance(uint8_t times) noexcept -> const Token& {
@@ -111,6 +114,7 @@ auto Parser::parse_statement() -> Expected<Box<ast::Statement>, ParserDiagnostic
     case TokenType::IMPORT:     return ast::ImportStatement::parse(*this);
     case TokenType::LBRACE:     return ast::BlockStatement::parse(*this);
     case TokenType::UNDERSCORE: return ast::DiscardStatement::parse(*this);
+    case TokenType::USING:      return ast::UsingStatement::parse(*this);
     default:                    return ast::ExpressionStatement::parse(*this);
     }
 }
