@@ -7,7 +7,8 @@ const cppcheck = @import("packages/third-party/cppcheck.zig");
 const libarchive = @import("packages/third-party/libarchive.zig");
 const fmt = @import("packages/third-party/fmt.zig");
 const catch2 = @import("packages/third-party/catch2.zig");
-const Curl = @import("packages/third-party/Curl.zig");
+
+const CurlBuilder = @import("packages/third-party/kcov/CurlBuilder.zig");
 
 const LLVMBuilder = @import("packages/llvm/LLVMBuilder.zig");
 const ClangBuilder = @import("packages/llvm/ClangBuilder.zig");
@@ -22,7 +23,7 @@ pub fn build(b: *std.Build) !void {
     const clang: *ClangBuilder = .init(llvm);
     const cdb_gen: *CDBGenerator = .init(b);
 
-    const curl: Curl = try .build(b, .{
+    const curl: CurlBuilder = try .build(b, .{
         .target = b.graph.host,
         .optimize = .ReleaseFast,
     });

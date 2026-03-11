@@ -1,6 +1,6 @@
 const std = @import("std");
 
-const Dependency = @import("Dependency.zig");
+const Dependency = @import("../Dependency.zig");
 const Config = Dependency.Config;
 
 /// Compiles mbedtls from source as a static library.

@@ -1,10 +1,10 @@
 const std = @import("std");
 
-const Dependency = @import("Dependency.zig");
+const Dependency = @import("../Dependency.zig");
 const Config = Dependency.Config;
 
-const zlib = @import("zlib.zig");
-const zstd = @import("zstd.zig");
+const zlib = @import("../zlib.zig");
+const zstd = @import("../zstd.zig");
 const mbedtls = @import("mbedtls.zig");
 
 const version: std.SemanticVersion = .{
@@ -12,6 +12,7 @@ const version: std.SemanticVersion = .{
     .minor = 18,
     .patch = 0,
 };
+const version_str = std.fmt.comptimePrint("{f}", .{version});
 
 const Self = @This();
 
@@ -42,104 +43,6 @@ pub fn build(b: *std.Build, config: Config) !Self {
     const lib_root = upstream.path("lib");
     const src_root = upstream.path("src");
 
-    const use_schannel = false;
-    const use_mbedtls = true;
-    const use_wolfssl = false;
-    const use_gnutls = false;
-    const use_rustls = false;
-    const use_openssl = false;
-    const default_ssl_backend: ?bool = null;
-
-    // Dependencies
-    const use_brotli = false;
-    const use_gsasl = false;
-    const use_libpsl = false;
-    const use_libssh2 = false;
-    const use_libssh = false;
-    const use_libuv = false;
-    const use_zlib = true;
-    const use_zstd = true;
-    const enable_ares = false;
-    const use_apple_idn = false;
-    const use_libidn2 = false;
-    const use_librtmp = false;
-    const use_nghttp2 = false;
-    const use_ngtcp2 = false;
-    const use_quiche = false;
-    const use_win32_idn = false;
-    const use_win32_ldap = true;
-
-    // Enabling features
-
-    const enable_windows_sspi = false;
-    const enable_ipv6 = true;
-    const enable_threaded_resolver = true;
-    const enable_unix_sockets = true;
-    const ech = false;
-    const httpsrr = false;
-    const use_openssl_quic = false;
-    const disable_openssl_auto_load_config = false;
-
-    // Disabling features
-    const disable_altsvc = false;
-    const disable_cookies = false;
-    const disable_basic_auth = false;
-    const disable_bearer_auth = false;
-    const disable_digest_auth = false;
-    const disable_kerberos_auth = false;
-    const disable_negotiate_auth = false;
-    const disable_aws = false;
-    const disable_dict = false;
-    const disable_doh = false;
-    const disable_file = false;
-    const disable_ftp = false;
-    const disable_getoptions = false;
-    const disable_gopher = false;
-    const disable_headers_api = false;
-    const disable_hsts = false;
-    const disable_http = false;
-    const disable_http_auth = false;
-    const disable_imap = false;
-    const disable_ldap = true;
-    const disable_ldaps = true;
-    const disable_libcurl_option = false;
-    const disable_mime = false;
-    const disable_form_api = false;
-    const disable_mqtt = false;
-    const disable_bindlocal = false;
-    const disable_netrc = false;
-    const disable_ntlm = false;
-    const disable_parsedate = false;
-    const disable_pop3 = false;
-    const disable_progress_meter = false;
-    const disable_proxy = false;
-    const disable_ipfs = false;
-    const disable_rtsp = false;
-    const disable_sha512_256 = false;
-    const disable_shuffle_dns = false;
-    const disable_smb = false;
-    const disable_smtp = false;
-    const disable_socketpair = false;
-    const disable_websockets = false;
-    const disable_telnet = false;
-    const disable_tftp = false;
-    const disable_verbose_strings = false;
-
-    // CA bundle options
-    var ca_bundle: []const u8 = "auto";
-    const ca_fallback = false;
-    var ca_path: []const u8 = "auto";
-    const ca_embed: ?[]const u8 = null;
-
-    const disable_ca_search = false;
-    const ca_search_safe = false;
-
-    const use_ssls_export = false;
-
-    const hidden_symbols = true;
-
-    const c_flags: []const []const u8 = if (hidden_symbols) &.{"-fvisibility=hidden"} else &.{};
-
     lib_mod.addCMacro("BUILDING_LIBCURL", "1");
     lib_mod.addCMacro("CURL_STATICLIB", "1");
     lib_mod.addCMacro("CURL_HIDDEN_SYMBOLS", "1");
@@ -164,7 +67,6 @@ pub fn build(b: *std.Build, config: Config) !Self {
     });
 
     if (target.result.os.tag == .linux) {
-        // // Required for accept4(), pipe2(), sendmmsg()
         lib_mod.addCMacro("_GNU_SOURCE", "1");
     }
 
@@ -176,8 +78,6 @@ pub fn build(b: *std.Build, config: Config) !Self {
         lib_mod.linkFramework("CoreServices", .{});
         lib_mod.linkFramework("SystemConfiguration", .{});
     }
-
-    const with_multi_ssl = false;
 
     if (target.result.os.tag == .windows) {
         lib_mod.linkSystemLibrary("ws2_32", .{});
@@ -204,10 +104,11 @@ pub fn build(b: *std.Build, config: Config) !Self {
     });
     lib_mod.linkLibrary(zstd_dep.artifact);
 
-    const have_lber_h = false;
-    const have_ldap_ssl = false;
-
     // CA handling
+    var ca_bundle: []const u8 = "auto";
+    var ca_path: []const u8 = "auto";
+    const ca_embed: ?[]const u8 = null;
+
     const ca_bundle_autodetect = std.mem.eql(u8, ca_bundle, "auto") and target.query.isNative() and target.result.os.tag != .windows;
     var ca_bundle_set = false;
 
@@ -259,59 +160,59 @@ pub fn build(b: *std.Build, config: Config) !Self {
         .style = .{ .cmake = upstream.path("lib/curl_config-cmake.h.in") },
         .include_path = "curl_config.h",
     }, .{
-        .CURL_CA_BUNDLE = if (std.mem.eql(u8, ca_bundle, "auto")) null else ca_bundle,
-        .CURL_CA_FALLBACK = ca_fallback,
-        .CURL_CA_PATH = if (std.mem.eql(u8, ca_path, "auto")) null else ca_path,
-        .CURL_DEFAULT_SSL_BACKEND = if (default_ssl_backend) |backend| @tagName(backend) else null,
-        .CURL_DISABLE_ALTSVC = disable_altsvc,
-        .CURL_DISABLE_COOKIES = disable_cookies,
-        .CURL_DISABLE_BASIC_AUTH = disable_basic_auth,
-        .CURL_DISABLE_BEARER_AUTH = disable_bearer_auth,
-        .CURL_DISABLE_DIGEST_AUTH = disable_digest_auth,
-        .CURL_DISABLE_KERBEROS_AUTH = disable_kerberos_auth,
-        .CURL_DISABLE_NEGOTIATE_AUTH = disable_negotiate_auth,
-        .CURL_DISABLE_AWS = disable_aws,
-        .CURL_DISABLE_DICT = disable_dict,
-        .CURL_DISABLE_DOH = disable_doh,
-        .CURL_DISABLE_FILE = disable_file,
-        .CURL_DISABLE_FORM_API = disable_form_api,
-        .CURL_DISABLE_FTP = disable_ftp,
-        .CURL_DISABLE_GETOPTIONS = disable_getoptions,
-        .CURL_DISABLE_GOPHER = disable_gopher,
-        .CURL_DISABLE_HEADERS_API = disable_headers_api,
-        .CURL_DISABLE_HSTS = disable_hsts,
-        .CURL_DISABLE_HTTP = disable_http,
-        .CURL_DISABLE_HTTP_AUTH = disable_http_auth,
-        .CURL_DISABLE_IMAP = disable_imap,
-        .CURL_DISABLE_LDAP = disable_ldap,
-        .CURL_DISABLE_LDAPS = disable_ldaps,
-        .CURL_DISABLE_LIBCURL_OPTION = disable_libcurl_option,
-        .CURL_DISABLE_MIME = disable_mime,
-        .CURL_DISABLE_BINDLOCAL = disable_bindlocal,
-        .CURL_DISABLE_MQTT = disable_mqtt,
-        .CURL_DISABLE_NETRC = disable_netrc,
-        .CURL_DISABLE_NTLM = disable_ntlm,
-        .CURL_DISABLE_PARSEDATE = disable_parsedate,
-        .CURL_DISABLE_POP3 = disable_pop3,
-        .CURL_DISABLE_PROGRESS_METER = disable_progress_meter,
-        .CURL_DISABLE_PROXY = disable_proxy,
-        .CURL_DISABLE_IPFS = disable_ipfs,
-        .CURL_DISABLE_RTSP = disable_rtsp,
-        .CURL_DISABLE_SHA512_256 = disable_sha512_256,
-        .CURL_DISABLE_SHUFFLE_DNS = disable_shuffle_dns,
-        .CURL_DISABLE_SMB = disable_smb,
-        .CURL_DISABLE_SMTP = disable_smtp,
-        .CURL_DISABLE_WEBSOCKETS = disable_websockets,
-        .CURL_DISABLE_SOCKETPAIR = disable_socketpair,
-        .CURL_DISABLE_TELNET = disable_telnet,
-        .CURL_DISABLE_TFTP = disable_tftp,
-        .CURL_DISABLE_VERBOSE_STRINGS = disable_verbose_strings,
-        .CURL_DISABLE_CA_SEARCH = disable_ca_search,
-        .CURL_CA_SEARCH_SAFE = ca_search_safe,
+        .CURL_CA_BUNDLE = null,
+        .CURL_CA_FALLBACK = false,
+        .CURL_CA_PATH = null,
+        .CURL_DEFAULT_SSL_BACKEND = null,
+        .CURL_DISABLE_ALTSVC = false,
+        .CURL_DISABLE_COOKIES = false,
+        .CURL_DISABLE_BASIC_AUTH = false,
+        .CURL_DISABLE_BEARER_AUTH = false,
+        .CURL_DISABLE_DIGEST_AUTH = false,
+        .CURL_DISABLE_KERBEROS_AUTH = false,
+        .CURL_DISABLE_NEGOTIATE_AUTH = false,
+        .CURL_DISABLE_AWS = false,
+        .CURL_DISABLE_DICT = false,
+        .CURL_DISABLE_DOH = false,
+        .CURL_DISABLE_FILE = false,
+        .CURL_DISABLE_FORM_API = false,
+        .CURL_DISABLE_FTP = false,
+        .CURL_DISABLE_GETOPTIONS = false,
+        .CURL_DISABLE_GOPHER = false,
+        .CURL_DISABLE_HEADERS_API = false,
+        .CURL_DISABLE_HSTS = false,
+        .CURL_DISABLE_HTTP = false,
+        .CURL_DISABLE_HTTP_AUTH = false,
+        .CURL_DISABLE_IMAP = false,
+        .CURL_DISABLE_LDAP = true,
+        .CURL_DISABLE_LDAPS = true,
+        .CURL_DISABLE_LIBCURL_OPTION = false,
+        .CURL_DISABLE_MIME = false,
+        .CURL_DISABLE_BINDLOCAL = false,
+        .CURL_DISABLE_MQTT = false,
+        .CURL_DISABLE_NETRC = false,
+        .CURL_DISABLE_NTLM = false,
+        .CURL_DISABLE_PARSEDATE = false,
+        .CURL_DISABLE_POP3 = false,
+        .CURL_DISABLE_PROGRESS_METER = false,
+        .CURL_DISABLE_PROXY = false,
+        .CURL_DISABLE_IPFS = false,
+        .CURL_DISABLE_RTSP = false,
+        .CURL_DISABLE_SHA512_256 = false,
+        .CURL_DISABLE_SHUFFLE_DNS = false,
+        .CURL_DISABLE_SMB = false,
+        .CURL_DISABLE_SMTP = false,
+        .CURL_DISABLE_WEBSOCKETS = false,
+        .CURL_DISABLE_SOCKETPAIR = false,
+        .CURL_DISABLE_TELNET = false,
+        .CURL_DISABLE_TFTP = false,
+        .CURL_DISABLE_VERBOSE_STRINGS = false,
+        .CURL_DISABLE_CA_SEARCH = false,
+        .CURL_CA_SEARCH_SAFE = false,
         .CURL_EXTERN_SYMBOL = "__attribute__((__visibility__(\"default\")))",
         .USE_WIN32_CRYPTO = target.result.os.tag == .windows, // Assumes 'NOT WINDOWS_STORE'
-        .USE_WIN32_LDAP = target.result.os.tag == .windows and use_win32_ldap and !disable_ldap, // Assumes 'NOT WINDOWS_STORE'
-        .USE_IPV6 = enable_ipv6,
+        .USE_WIN32_LDAP = false,
+        .USE_IPV6 = true,
         .HAVE_ALARM = target.result.os.tag != .windows and target.result.os.tag != .wasi,
         .HAVE_ARC4RANDOM = switch (target.result.os.tag) {
             .dragonfly,
@@ -399,16 +300,16 @@ pub fn build(b: *std.Build, config: Config) !Self {
         .HAVE_IOCTL_FIONBIO = target.result.os.tag != .windows,
         .HAVE_IOCTL_SIOCGIFADDR = target.result.os.tag != .windows and target.result.os.tag != .wasi,
         .HAVE_IO_H = target.result.os.tag == .windows,
-        .HAVE_LBER_H = have_lber_h,
-        .HAVE_LDAP_SSL = have_ldap_ssl,
+        .HAVE_LBER_H = false,
+        .HAVE_LDAP_SSL = false,
         .HAVE_LDAP_SSL_H = null,
         .HAVE_LDAP_URL_PARSE = null,
         .HAVE_LIBGEN_H = true,
-        .HAVE_LIBIDN2 = use_libidn2 and !use_apple_idn and !use_win32_idn,
-        .HAVE_IDN2_H = use_libidn2 and !use_apple_idn and !use_win32_idn,
-        .HAVE_LIBZ = use_zlib,
-        .HAVE_BROTLI = use_brotli,
-        .HAVE_ZSTD = use_zstd,
+        .HAVE_LIBIDN2 = false,
+        .HAVE_IDN2_H = false,
+        .HAVE_LIBZ = true,
+        .HAVE_BROTLI = false,
+        .HAVE_ZSTD = true,
         .HAVE_LOCALE_H = true,
         .HAVE_LOCALTIME_R = target.result.os.tag != .windows,
         .HAVE_LONGLONG = true,
@@ -440,11 +341,11 @@ pub fn build(b: *std.Build, config: Config) !Self {
         .HAVE_POLL_H = target.result.os.tag != .windows,
         .HAVE_POSIX_STRERROR_R = switch (target.result.os.tag) {
             .windows => false,
-            .linux => true, // TODO why not target.result.isMuslLibC()?
+            .linux => true,
             else => true,
         },
         .HAVE_PWD_H = target.result.os.tag != .windows,
-        .HAVE_SSL_SET0_WBIO = null, // TODO
+        .HAVE_SSL_SET0_WBIO = null,
         .HAVE_RECV = true,
         .HAVE_SELECT = true,
         .HAVE_SCHED_YIELD = target.result.os.tag != .windows,
@@ -523,60 +424,60 @@ pub fn build(b: *std.Build, config: Config) !Self {
         .PACKAGE_NAME = "a suitable curl mailing list: https://curl.se/mail/",
         .PACKAGE_STRING = "curl",
         .PACKAGE_TARNAME = "curl",
-        .PACKAGE_VERSION = b.fmt("{f}", .{version}),
+        .PACKAGE_VERSION = version_str,
         .STDC_HEADERS = true,
-        .USE_ARES = enable_ares,
-        .USE_THREADS_POSIX = enable_threaded_resolver and target.result.os.tag != .windows and !target.result.os.tag.isBSD(),
-        .USE_THREADS_WIN32 = enable_threaded_resolver and target.result.os.tag == .windows,
-        .USE_GNUTLS = use_gnutls,
-        .USE_SSLS_EXPORT = use_ssls_export,
-        .USE_MBEDTLS = use_mbedtls,
-        .USE_RUSTLS = use_rustls,
-        .USE_WOLFSSL = use_wolfssl,
-        .HAVE_WOLFSSL_DES_ECB_ENCRYPT = false, // TODO
-        .HAVE_WOLFSSL_BIO = false, // TODO
-        .HAVE_WOLFSSL_FULL_BIO = false, // TODO
-        .USE_LIBSSH = use_libssh and !use_libssh2,
-        .USE_LIBSSH2 = use_libssh2,
-        .USE_LIBPSL = use_libpsl,
-        .USE_OPENLDAP = !disable_ldap and !use_win32_ldap, // TODO
-        .USE_OPENSSL = use_openssl,
-        .USE_AMISSL = null, // AMIGA
-        .USE_LIBRTMP = use_librtmp,
-        .USE_GSASL = use_gsasl,
-        .USE_LIBUV = use_libuv,
-        .HAVE_UV_H = use_libuv,
-        .CURL_DISABLE_OPENSSL_AUTO_LOAD_CONFIG = disable_openssl_auto_load_config,
-        .USE_NGHTTP2 = use_nghttp2,
-        .USE_NGTCP2 = use_ngtcp2,
-        .USE_NGHTTP3 = use_ngtcp2, // same condition
-        .USE_QUICHE = use_quiche,
-        .USE_OPENSSL_QUIC = use_openssl_quic,
-        .HAVE_QUICHE_CONN_SET_QLOG_FD = null, // TODO
-        .USE_UNIX_SOCKETS = target.result.os.tag == .windows or enable_unix_sockets,
+        .USE_ARES = false,
+        .USE_THREADS_POSIX = target.result.os.tag != .windows and !target.result.os.tag.isBSD(),
+        .USE_THREADS_WIN32 = target.result.os.tag == .windows,
+        .USE_GNUTLS = false,
+        .USE_SSLS_EXPORT = false,
+        .USE_MBEDTLS = true,
+        .USE_RUSTLS = false,
+        .USE_WOLFSSL = false,
+        .HAVE_WOLFSSL_DES_ECB_ENCRYPT = false,
+        .HAVE_WOLFSSL_BIO = false,
+        .HAVE_WOLFSSL_FULL_BIO = false,
+        .USE_LIBSSH = false,
+        .USE_LIBSSH2 = false,
+        .USE_LIBPSL = false,
+        .USE_OPENLDAP = false,
+        .USE_OPENSSL = false,
+        .USE_AMISSL = null,
+        .USE_LIBRTMP = false,
+        .USE_GSASL = false,
+        .USE_LIBUV = false,
+        .HAVE_UV_H = false,
+        .CURL_DISABLE_OPENSSL_AUTO_LOAD_CONFIG = false,
+        .USE_NGHTTP2 = false,
+        .USE_NGTCP2 = false,
+        .USE_NGHTTP3 = false,
+        .USE_QUICHE = false,
+        .USE_OPENSSL_QUIC = false,
+        .HAVE_QUICHE_CONN_SET_QLOG_FD = null,
+        .USE_UNIX_SOCKETS = true,
         .USE_WIN32_LARGE_FILES = target.result.os.tag == .windows,
-        .USE_WINDOWS_SSPI = enable_windows_sspi,
-        .USE_SCHANNEL = use_schannel,
-        .USE_WATT32 = null, // DOS
-        .CURL_WITH_MULTI_SSL = with_multi_ssl,
+        .USE_WINDOWS_SSPI = false,
+        .USE_SCHANNEL = false,
+        .USE_WATT32 = null,
+        .CURL_WITH_MULTI_SSL = false,
         .VERSION = b.fmt("{f}", .{version}),
         ._FILE_OFFSET_BITS = 64,
-        ._LARGE_FILES = null, // OS/400
-        ._THREAD_SAFE = null, // AIX 4.3
+        ._LARGE_FILES = null,
+        ._THREAD_SAFE = null,
         .@"const" = null,
         .size_t = null,
         .ssize_t = null,
         .HAVE_MACH_ABSOLUTE_TIME = target.result.os.tag.isDarwin(),
-        .USE_WIN32_IDN = target.result.os.tag == .windows and use_win32_idn,
-        .USE_APPLE_IDN = target.result.os.tag.isDarwin() and use_apple_idn,
-        .HAVE_OPENSSL_SRP = null, // TODO
-        .HAVE_GNUTLS_SRP = null, // TODO
-        .USE_TLS_SRP = null, // TODO
-        .USE_HTTPSRR = httpsrr,
-        .USE_ECH = ech,
-        .HAVE_WOLFSSL_CTX_GENERATEECHCONFIG = null, // TODO
-        .HAVE_SSL_SET1_ECH_CONFIG_LIST = null, // TODO
-        .HAVE_DES_ECB_ENCRYPT = false, // TODO
+        .USE_WIN32_IDN = false,
+        .USE_APPLE_IDN = false,
+        .HAVE_OPENSSL_SRP = null,
+        .HAVE_GNUTLS_SRP = null,
+        .USE_TLS_SRP = null,
+        .USE_HTTPSRR = false,
+        .USE_ECH = false,
+        .HAVE_WOLFSSL_CTX_GENERATEECHCONFIG = null,
+        .HAVE_SSL_SET1_ECH_CONFIG_LIST = null,
+        .HAVE_DES_ECB_ENCRYPT = false,
     });
     lib_mod.addConfigHeader(curl_config);
     exe_mod.addConfigHeader(curl_config);
@@ -608,6 +509,8 @@ pub fn addFrameworkSearchPaths(mod: *std.Build.Module, target: std.Build.Resolve
         mod.addSystemIncludePath(.{ .cwd_relative = b.fmt("{s}/usr/include", .{sdkroot}) });
     }
 }
+
+const c_flags: []const []const u8 = &.{"-fvisibility=hidden"};
 
 /// `LIB_CURLX_CFILES` in `lib/Makefile.inc`.
 const lib_curlx_sources: []const []const u8 = &.{
