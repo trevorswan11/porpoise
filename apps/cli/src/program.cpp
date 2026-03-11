@@ -35,6 +35,9 @@ auto Program::interactive() -> void {
             ast::ASTDumper dumper{std::cout};
             for (const auto& node : ast) { node->accept(dumper); }
         }
+        if(line.empty()) {
+            std::cout << "Line '" << line << "' is empty.";
+        }
     }
 }
 
