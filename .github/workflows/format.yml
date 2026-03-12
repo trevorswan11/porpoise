@@ -40,6 +40,10 @@ jobs:
                 restore-keys: |
                   ${{ runner.os }}-zig-
 
+            - name: Fetch dependencies
+              run: |
+                  zig build --fetch=all -j2
+
             - name: Check formatting
               run: zig build fmt-check
 

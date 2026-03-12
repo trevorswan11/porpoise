@@ -42,7 +42,7 @@ jobs:
 
             - name: Fetch dependencies
               run: |
-                  zig build --fetch -j2
+                  zig build --fetch=all -j2
 
             - name: Run coverage reporter
               run: |
