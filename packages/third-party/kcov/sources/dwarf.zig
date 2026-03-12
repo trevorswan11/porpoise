@@ -1,4 +1,35 @@
 //! https://github.com/davea42/libdwarf-code/blob/v2.3.1/src/lib/libdwarf/CMakeLists.txt
+const std = @import("std");
+
+const version: std.SemanticVersion = .{
+    .major = 2,
+    .minor = 3,
+    .patch = 1,
+};
+const version_str = std.fmt.comptimePrint("{f}", .{version});
+
+/// Generated with reference to a mock CMake run on my machine
+pub fn configHeader(
+    b: *std.Build,
+    target: std.Build.ResolvedTarget,
+) *std.Build.Step.ConfigHeader {
+    return b.addConfigHeader(.{ .style = .blank }, .{
+        .HAVE_UNISTD_H = 1,
+        .HAVE_SYS_TYPES_H = 1,
+        .HAVE_STDINT_H = 1,
+        .HAVE_STDDEF_H = 1,
+        .HAVE_FCNTL_H = 1,
+        .HAVE_SYS_STAT_H = 1,
+        .HAVE_FULL_MMAP = 1,
+        .PACKAGE_NAME = "libdwarf",
+        .PACKAGE_VERSION = version_str,
+        .PACKAGE_STRING = "libdwarf " ++ version_str,
+        .PACKAGE_BUGREPORT = "https://github.com/davea42/libdwarf-code/issues",
+        .PACKAGE_URL = "https://github.com/davea42/libdwarf-code.git",
+        .WORDS_BIGENDIAN = if (target.result.cpu.arch.endian() == .big) @as(i32, 1) else null,
+    });
+}
+
 pub const root = "src/lib/libdwarf";
 pub const sources = [_][]const u8{
     "dwarf_64machoread.c",

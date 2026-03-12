@@ -1,12 +1,11 @@
 //! https://github.com/allyourcodebase/binutils/blob/master/build.zig
 const std = @import("std");
 
-const BinutilsBuilder = @import("../BinutilsBuilder.zig");
-
 pub fn configHeader(
     b: *std.Build,
     style: std.Build.Step.ConfigHeader.Style,
     target: std.Build.ResolvedTarget,
+    comptime version_str: []const u8,
 ) *std.Build.Step.ConfigHeader {
     return b.addConfigHeader(.{ .style = style }, .{
         .ENABLE_CHECKING = null,
@@ -36,17 +35,17 @@ pub fn configHeader(
         .PACKAGE = "opcodes",
         .PACKAGE_BUGREPORT = "",
         .PACKAGE_NAME = "opcodes",
-        .PACKAGE_STRING = "opcodes " ++ BinutilsBuilder.version_str,
+        .PACKAGE_STRING = "opcodes " ++ version_str,
         .PACKAGE_TARNAME = "opcodes",
         .PACKAGE_URL = "",
-        .PACKAGE_VERSION = BinutilsBuilder.version_str,
+        .PACKAGE_VERSION = version_str,
         .STDC_HEADERS = true,
         ._ALL_SOURCE = true,
         ._GNU_SOURCE = true,
         ._POSIX_PTHREAD_SEMANTICS = true,
         ._TANDEM_SOURCE = true,
         .__EXTENSIONS__ = true,
-        .VERSION = BinutilsBuilder.version_str,
+        .VERSION = version_str,
         ._MINIX = null,
         ._POSIX_1_SOURCE = null,
         ._POSIX_SOURCE = null,

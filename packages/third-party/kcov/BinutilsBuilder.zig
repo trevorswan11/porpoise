@@ -41,12 +41,12 @@ libopcodes: Artifact = undefined,
 
 /// Compiles binutils from source as a static library.
 /// https://github.com/allyourcodebase/binutils
-pub fn build(b: *std.Build, config: Config) ?Self {
+pub fn build(b: *std.Build, config: Config) ?*Self {
     const upstream = b.lazyDependency("binutils", .{}) orelse return null;
-    const target = config.target;
-    var self: Self = .{
+    const self = b.allocator.create(Self) catch @panic("OOM");
+    self.* = .{
         .b = b,
-        .vector_archs = .init(target),
+        .vector_archs = .init(config.target),
         .metadata = .{
             .upstream = upstream,
             .config = config,
@@ -54,20 +54,20 @@ pub fn build(b: *std.Build, config: Config) ?Self {
         },
     };
 
-    self.libsframe = self.buildLibsframe();
-    self.libiberty = self.buildLibiberty();
-    const libbfd, const bfd_configs = self.buildLibbfd();
+    self.libsframe = self.buildSframe();
+    self.libiberty = self.buildIberty();
+    const libbfd, const bfd_configs = self.buildBfd();
     self.libbfd = libbfd;
-    self.libopcodes = self.buildLibopcodes(bfd_configs.bfd);
+    self.libopcodes = self.buildOpcodes(bfd_configs.bfd);
 
     return self;
 }
 
-fn buildLibsframe(self: *const Self) Artifact {
+fn buildSframe(self: *const Self) Artifact {
     const b = self.b;
     const target = self.metadata.config.target;
 
-    const config = sframe.configHeader(b, target);
+    const config = sframe.configHeader(b, target, version_str);
 
     const mod = b.createModule(.{
         .target = target,
@@ -101,7 +101,7 @@ fn buildLibsframe(self: *const Self) Artifact {
     return lib;
 }
 
-fn buildLibiberty(self: *const Self) Artifact {
+fn buildIberty(self: *const Self) Artifact {
     const b = self.b;
     const target = self.metadata.config.target;
 
@@ -145,7 +145,7 @@ fn buildLibiberty(self: *const Self) Artifact {
     return lib;
 }
 
-fn buildLibbfd(self: *const Self) struct { Artifact, bfd.ConfigHeaders } {
+fn buildBfd(self: *const Self) struct { Artifact, bfd.ConfigHeaders } {
     const b = self.b;
     const config = self.metadata.config;
     const target = config.target;
@@ -155,7 +155,7 @@ fn buildLibbfd(self: *const Self) struct { Artifact, bfd.ConfigHeaders } {
         .config = .{ .autoconf_undef = root.path(b, "config.in") },
         .bfd = .{ .autoconf_at = root.path(b, "bfd-in2.h") },
         .bfdver = .{ .autoconf_at = root.path(b, "version.h") },
-    }, target);
+    }, target, version_str);
 
     const mod = b.createModule(.{
         .target = target,
@@ -174,7 +174,7 @@ fn buildLibbfd(self: *const Self) struct { Artifact, bfd.ConfigHeaders } {
     mod.linkLibrary(self.libsframe);
     mod.addIncludePath(root);
     mod.addIncludePath(include);
-    mod.addIncludePath(b.path("packages/third-party/kcov/sources/"));
+    mod.addIncludePath(b.path("packages/third-party/kcov/gen"));
     mod.addCSourceFiles(.{
         .root = root,
         .files = &bfd.sources,
@@ -240,12 +240,17 @@ fn buildLibbfd(self: *const Self) struct { Artifact, bfd.ConfigHeaders } {
     return .{ lib, configs };
 }
 
-fn buildLibopcodes(self: *const Self, bfd_header: *std.Build.Step.ConfigHeader) Artifact {
+fn buildOpcodes(self: *const Self, bfd_header: *std.Build.Step.ConfigHeader) Artifact {
     const b = self.b;
     const target = self.metadata.config.target;
 
     const root = self.metadata.upstream.path("opcodes");
-    const opcodes_config_header = opcodes.configHeader(b, .{ .autoconf_undef = root.path(b, "config.in") }, target);
+    const opcodes_config_header = opcodes.configHeader(
+        b,
+        .{ .autoconf_undef = root.path(b, "config.in") },
+        target,
+        version_str,
+    );
 
     const mod = b.createModule(.{
         .target = target,

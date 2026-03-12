@@ -1,8 +1,6 @@
 //! https://github.com/allyourcodebase/binutils/blob/master/build.zig
 const std = @import("std");
 
-const BinutilsBuilder = @import("../BinutilsBuilder.zig");
-
 pub const ConfigHeaders = struct {
     config: *std.Build.Step.ConfigHeader,
     bfd: *std.Build.Step.ConfigHeader,
@@ -17,6 +15,7 @@ pub fn configHeaders(
         bfdver: std.Build.Step.ConfigHeader.Style,
     },
     target: std.Build.ResolvedTarget,
+    comptime version_str: []const u8,
 ) ConfigHeaders {
     const config = b.addConfigHeader(.{ .style = styles.config }, .{
         .AC_APPLE_UNIVERSAL_BUILD = null,
@@ -111,10 +110,10 @@ pub fn configHeaders(
         .PACKAGE = "bfd",
         .PACKAGE_BUGREPORT = "",
         .PACKAGE_NAME = "bfd",
-        .PACKAGE_STRING = "bfd " ++ BinutilsBuilder.version_str,
+        .PACKAGE_STRING = "bfd " ++ version_str,
         .PACKAGE_TARNAME = "bfd",
         .PACKAGE_URL = "",
-        .PACKAGE_VERSION = BinutilsBuilder.version_str,
+        .PACKAGE_VERSION = version_str,
         .SIZEOF_INT = target.result.cTypeByteSize(.int),
         .SIZEOF_LONG = target.result.cTypeByteSize(.long),
         .SIZEOF_LONG_LONG = target.result.cTypeByteSize(.longlong),
@@ -133,7 +132,7 @@ pub fn configHeaders(
         ._POSIX_PTHREAD_SEMANTICS = true,
         ._TANDEM_SOURCE = true,
         .__EXTENSIONS__ = true,
-        .VERSION = BinutilsBuilder.version_str,
+        .VERSION = version_str,
         .WORDS_BIGENDIAN = if (target.result.cpu.arch.endian() == .big) @as(i64, 1) else null,
         ._FILE_OFFSET_BITS = null,
         ._LARGE_FILES = null,
@@ -160,7 +159,7 @@ pub fn configHeaders(
     }, .{
         .bfd_version = 245000000,
         .bfd_version_package = "\"(GNU Binutils) \"",
-        .bfd_version_string = "\"" ++ BinutilsBuilder.version_str ++ "\"",
+        .bfd_version_string = "\"" ++ version_str ++ "\"",
         .report_bugs_to = "\"<https://sourceware.org/bugzilla/>\"",
     });
 
@@ -193,7 +192,7 @@ pub fn generateHeaders(b: *std.Build, root: std.Build.LazyPath, mod: *std.Build.
     const sed_exe = b.addExecutable(.{
         .name = "sed",
         .root_module = b.createModule(.{
-            .root_source_file = b.path("packages/third-party/kcov/sources/sed.zig"),
+            .root_source_file = b.path("packages/third-party/kcov/utils/sed.zig"),
             .target = b.graph.host,
         }),
     });

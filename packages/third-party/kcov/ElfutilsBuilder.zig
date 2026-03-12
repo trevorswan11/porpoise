@@ -5,17 +5,10 @@ const Config = Dependency.Config;
 const Artifact = Dependency.Artifact;
 
 const elfutils = @import("sources/elfutils.zig");
+const argp = @import("sources/argp.zig");
 
 const zlib = @import("../zlib.zig");
 const zstd = @import("../zstd.zig");
-const argp = @import("argp.zig");
-
-const version: std.SemanticVersion = .{
-    .major = 0,
-    .minor = 192,
-    .patch = 0,
-};
-pub const version_str = std.fmt.comptimePrint("{d}.{d}", .{ version.major, version.major });
 
 const Metadata = struct {
     upstream: *std.Build.Dependency,
@@ -28,6 +21,7 @@ const Self = @This();
 b: *std.Build,
 metadata: Metadata,
 
+libargp: Artifact = undefined,
 libeu: Artifact = undefined,
 libelf: Artifact = undefined,
 libdwelf: Artifact = undefined,
@@ -38,30 +32,85 @@ libdw: Artifact = undefined,
 /// Only available on linux.
 ///
 /// https://github.com/allyourcodebase/elfutils
-pub fn build(b: *std.Build, config: Config) ?Self {
-    if (config.target.result.os.tag != .linux) return null;
-    const upstream_dep = b.lazyDependency("elfutils", .{});
-    const argp_dep = argp.build(b, config);
-    if (upstream_dep != null and argp_dep != null) {
-        var self: Self = .{
-            .b = b,
-            .metadata = .{
-                .upstream = upstream_dep.?,
-                .config = config,
-                .config_header = elfutils.configHeader(b, config),
-            },
-        };
+pub fn build(b: *std.Build, config: Config) ?*Self {
+    const libargp = buildArgp(b, config);
+    const upstream = b.lazyDependency("elfutils", .{});
+    if (libargp == null or upstream == null) return null;
 
-        self.libeu = self.buildEu(argp_dep.?);
-        self.libelf = self.buildElf();
-        self.libdwelf = self.buildDwelf();
-        self.libebl = self.buildEbl();
-        self.libdw = self.buildDw();
-        return self;
+    const self = b.allocator.create(Self) catch @panic("OOM");
+    self.* = .{
+        .b = b,
+        .metadata = .{
+            .upstream = upstream.?,
+            .config = config,
+            .config_header = elfutils.configHeader(b, config),
+        },
+        .libargp = libargp.?,
+    };
+
+    self.libeu = self.buildEu();
+    self.libelf = self.buildElf();
+    self.libdwelf = self.buildDwelf();
+    self.libebl = self.buildEbl();
+    self.libdw = self.buildDw();
+    return self;
+}
+
+/// Compiles argp-standalone from source as a static library.
+/// https://github.com/allyourcodebase/argp-standalone
+fn buildArgp(b: *std.Build, config: Config) ?Artifact {
+    const upstream_dep = b.lazyDependency("argp", .{});
+    const target = config.target;
+    const mod = b.createModule(.{
+        .target = target,
+        .optimize = config.optimize,
+        .link_libc = true,
+    });
+
+    const is_gnu_lib_c_version_2_3 = target.result.isGnuLibC() and target.result.os.isAtLeast(
+        .linux,
+        .{ .major = 2, .minor = 3, .patch = 0 },
+    ) orelse false;
+
+    const have_strchrnul = is_gnu_lib_c_version_2_3;
+    const have_strndup = if (target.result.isGnuLibC())
+        is_gnu_lib_c_version_2_3
+    else
+        target.result.os.tag != .windows;
+    const have_mempcpy = target.result.os.tag == .windows;
+
+    const config_header = argp.configHeader(b, .{
+        .target = target,
+        .is_gnu_lib_c_version_2_3 = is_gnu_lib_c_version_2_3,
+        .have_mempcpy = have_mempcpy,
+        .have_strchrnul = have_strchrnul,
+        .have_strndup = have_strndup,
+    });
+
+    if (upstream_dep) |upstream| {
+        const root = upstream.path("");
+        if (!have_strchrnul) mod.addCSourceFile(.{ .file = root.path(b, "strchrnul.c") });
+        if (!have_strndup) mod.addCSourceFile(.{ .file = root.path(b, "strndup.c") });
+        if (!have_mempcpy) mod.addCSourceFile(.{ .file = root.path(b, "mempcpy.c") });
+
+        mod.addConfigHeader(config_header);
+        mod.addCMacro("HAVE_CONFIG_H", "1");
+        mod.addIncludePath(root);
+        mod.addCSourceFiles(.{
+            .root = root,
+            .files = &argp.sources,
+        });
+
+        const lib = b.addLibrary(.{
+            .name = "argp",
+            .root_module = mod,
+        });
+        lib.installHeader(upstream.path("argp.h"), "argp.h");
+        return lib;
     } else return null;
 }
 
-fn buildEu(self: *const Self, argp_dep: Dependency) Artifact {
+fn buildEu(self: *const Self) Artifact {
     const b = self.b;
     const target = self.metadata.config.target;
     const mod = b.createModule(.{
@@ -86,7 +135,7 @@ fn buildEu(self: *const Self, argp_dep: Dependency) Artifact {
     });
 
     if (!target.result.isGnuLibC()) {
-        mod.linkLibrary(argp_dep.artifact);
+        mod.linkLibrary(self.libargp);
     }
 
     return b.addLibrary(.{
@@ -246,7 +295,7 @@ fn buildDw(self: *const Self) Artifact {
         .root_module = mod,
     });
     lib.installHeader(root.path(b, "libdw.h"), "elfutils/libdw.h");
-    lib.installHeader(b.path("packages/third-party/kcov/sources/known-dwarf.h"), "elfutils/known-dwarf.h");
+    lib.installHeader(b.path("packages/third-party/kcov/gen/known-dwarf.h"), "elfutils/known-dwarf.h");
     lib.installHeader(root.path(b, "dwarf.h"), "dwarf.h");
     return lib;
 }

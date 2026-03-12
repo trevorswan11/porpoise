@@ -19,7 +19,7 @@ pub fn main() !void {
     const before = args[3];
     const after = args[4];
 
-    const input = try std.fs.cwd().readFileAlloc(gpa, input_filename, std.math.maxInt(u32));
+    const input = try std.fs.cwd().readFileAlloc(gpa, input_filename, std.math.maxInt(usize));
     defer gpa.free(input);
 
     const output = try std.mem.replaceOwned(u8, gpa, input, before, after);

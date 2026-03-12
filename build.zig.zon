@@ -40,6 +40,11 @@
             .url = "https://github.com/libarchive/libarchive/archive/refs/tags/v3.8.5.tar.gz",
             .hash = "N-V-__8AABtbCwHDmVvgXlm5f-07LtFZjUQNvvJrBnG-HeqN",
         },
+        .kcov = .{
+            .url = "https://github.com/SimonKagstrom/kcov/archive/refs/tags/v43.tar.gz",
+            .hash = "N-V-__8AACKwDgClVrsguz3LNqiw8Qg95GMitZzo8mLHTRKT",
+            .lazy = true,
+        },
         .curl = .{
             .url = "https://github.com/curl/curl/archive/refs/tags/curl-8_18_0.tar.gz",
             .hash = "N-V-__8AAHcEBgHdCKCoETva5Llwxgbs_1fqyMcAIdbywrg6",

@@ -1,11 +1,10 @@
 //! https://github.com/allyourcodebase/binutils/blob/master/build.zig
 const std = @import("std");
 
-const BinutilsBuilder = @import("../BinutilsBuilder.zig");
-
 pub fn configHeader(
     b: *std.Build,
     target: std.Build.ResolvedTarget,
+    comptime version_str: []const u8,
 ) *std.Build.Step.ConfigHeader {
     return b.addConfigHeader(.{}, .{
         .HAVE_BYTESWAP_H = if (target.result.os.tag == .linux or target.result.os.tag == .wasi) true else null,
@@ -33,8 +32,8 @@ pub fn configHeader(
         .PACKAGE_STRING = "libsframe ",
         .PACKAGE_TARNAME = "libsframe",
         .PACKAGE_URL = "",
-        .PACKAGE_VERSION = BinutilsBuilder.version_str,
+        .PACKAGE_VERSION = version_str,
         .STDC_HEADERS = true,
-        .VERSION = BinutilsBuilder.version_str,
+        .VERSION = version_str,
     });
 }

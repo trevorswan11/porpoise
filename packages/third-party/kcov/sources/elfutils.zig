@@ -4,11 +4,19 @@ const std = @import("std");
 const Dependency = @import("../../Dependency.zig");
 const Config = Dependency.Config;
 
-const ElfutilsBuilder = @import("../ElfutilsBuilder.zig");
+const version: std.SemanticVersion = .{
+    .major = 0,
+    .minor = 192,
+    .patch = 0,
+};
+pub const version_str = std.fmt.comptimePrint("{d}.{d}", .{ version.major, version.major });
 
-pub fn configHeader(b: *std.Build, config: Config) *std.Build.Step.ConfigHeader {
+pub fn configHeader(
+    b: *std.Build,
+    config: Config,
+) *std.Build.Step.ConfigHeader {
     return b.addConfigHeader(.{
-        .style = .{ .autoconf_undef = b.path("packages/third-party/kcov/sources/elfutils-config.h.in") },
+        .style = .{ .autoconf_undef = b.path("packages/third-party/kcov/gen/elfutils-config.h.in") },
         .include_path = "config.h",
     }, .{
         .CHECK_UNDEFINED = switch (config.optimize) {
@@ -66,10 +74,10 @@ pub fn configHeader(b: *std.Build, config: Config) *std.Build.Step.ConfigHeader 
         .PACKAGE = "elfutils",
         .PACKAGE_BUGREPORT = "https://sourceware.org/bugzilla",
         .PACKAGE_NAME = "elfutils",
-        .PACKAGE_STRING = "elfutils " ++ ElfutilsBuilder.version_str,
+        .PACKAGE_STRING = "elfutils " ++ version_str,
         .PACKAGE_TARNAME = "elfutils",
         .PACKAGE_URL = "http://elfutils.org/",
-        .PACKAGE_VERSION = ElfutilsBuilder.version_str,
+        .PACKAGE_VERSION = version_str,
         .SIZEOF_LONG = config.target.result.cTypeByteSize(.long),
         .STDC_HEADERS = true,
         .STRERROR_R_CHAR_P = null,
@@ -80,7 +88,7 @@ pub fn configHeader(b: *std.Build, config: Config) *std.Build.Step.ConfigHeader 
         .USE_ZLIB = true,
         .USE_ZSTD = true,
         .USE_ZSTD_COMPRESS = true,
-        .VERSION = ElfutilsBuilder.version_str,
+        .VERSION = version_str,
         .YYTEXT_POINTER = null,
         ._FILE_OFFSET_BITS = null,
         ._LARGE_FILES = null,

@@ -1,4 +1,13 @@
 //! https://github.com/allyourcodebase/mbedtls/blob/main/build.zig
+const std = @import("std");
+
+const version: std.SemanticVersion = .{
+    .major = 3,
+    .minor = 46,
+    .patch = 0,
+};
+pub const version_str = std.fmt.comptimePrint("{f}", .{version});
+
 pub const sources = [_][]const u8{
     "x509_create.c",
     "x509_crt.c",

@@ -1,20 +1,27 @@
 //! https://github.com/allyourcodebase/curl/blob/master/build.zig
 const std = @import("std");
 
-const CurlBuilder = @import("../CurlBuilder.zig");
+const version: std.SemanticVersion = .{
+    .major = 8,
+    .minor = 18,
+    .patch = 0,
+};
+pub const version_str = std.fmt.comptimePrint("{f}", .{version});
 
 pub fn configHeader(
     b: *std.Build,
     style: std.Build.Step.ConfigHeader.Style,
     target: std.Build.ResolvedTarget,
+    ca_bundle: []const u8,
+    ca_path: []const u8,
 ) *std.Build.Step.ConfigHeader {
     return b.addConfigHeader(.{
         .style = style,
         .include_path = "curl_config.h",
     }, .{
-        .CURL_CA_BUNDLE = null,
+        .CURL_CA_BUNDLE = if (std.mem.eql(u8, ca_bundle, "auto")) null else ca_bundle,
         .CURL_CA_FALLBACK = false,
-        .CURL_CA_PATH = null,
+        .CURL_CA_PATH = if (std.mem.eql(u8, ca_path, "auto")) null else ca_path,
         .CURL_DEFAULT_SSL_BACKEND = null,
         .CURL_DISABLE_ALTSVC = false,
         .CURL_DISABLE_COOKIES = false,
@@ -276,7 +283,7 @@ pub fn configHeader(
         .PACKAGE_NAME = "a suitable curl mailing list: https://curl.se/mail/",
         .PACKAGE_STRING = "curl",
         .PACKAGE_TARNAME = "curl",
-        .PACKAGE_VERSION = CurlBuilder.version_str,
+        .PACKAGE_VERSION = version_str,
         .STDC_HEADERS = true,
         .USE_ARES = false,
         .USE_THREADS_POSIX = target.result.os.tag != .windows and !target.result.os.tag.isBSD(),
@@ -312,7 +319,7 @@ pub fn configHeader(
         .USE_SCHANNEL = false,
         .USE_WATT32 = null,
         .CURL_WITH_MULTI_SSL = false,
-        .VERSION = CurlBuilder.version_str,
+        .VERSION = version_str,
         ._FILE_OFFSET_BITS = 64,
         ._LARGE_FILES = null,
         ._THREAD_SAFE = null,
