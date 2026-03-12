@@ -224,7 +224,10 @@ ExpressionStatement
                 └─ ExplicitType (modifier: BASE)
                     └─ IdentifierExpression: int (primitive)
 ExpressionStatement
-└─ Expr: PointerExpression (ARROW)
+└─ Expr: ImplicitDereferenceExpression (ARROW)
     ├─ Object: IdentifierExpression: a
     └─ Member: IdentifierExpression: b
+ExpressionStatement
+└─ Expr: ImplicitAccessExpression (DOT)
+    └─ Operand: IdentifierExpression: a
 )"

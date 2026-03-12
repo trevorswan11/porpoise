@@ -259,7 +259,7 @@ MAKE_INFIX_DUMP(AssignmentExpression, Assignee, Value)
 MAKE_INFIX_DUMP(BinaryExpression, LHS, RHS)
 MAKE_INFIX_DUMP(DotExpression, Object, Member)
 MAKE_INFIX_DUMP(RangeExpression, Lower, Upper)
-MAKE_INFIX_DUMP(PointerExpression, Object, Member)
+MAKE_INFIX_DUMP(ImplicitDereferenceExpression, Object, Member)
 
 auto ASTDumper::visit(const MatchExpression& node) -> void {
     fmt::println(out_, "MatchExpression");
@@ -297,6 +297,7 @@ auto ASTDumper::visit(const MatchExpression& node) -> void {
 MAKE_PREFIX_DUMP(ReferenceExpression)
 MAKE_PREFIX_DUMP(DereferenceExpression)
 MAKE_PREFIX_DUMP(UnaryExpression)
+MAKE_PREFIX_DUMP(ImplicitAccessExpression)
 
 MAKE_LEAF_DUMP(StringExpression)
 MAKE_LEAF_DUMP(SignedIntegerExpression)

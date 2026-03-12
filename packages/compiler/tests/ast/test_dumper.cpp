@@ -37,6 +37,7 @@ constexpr std::string_view input{R"(
     using T = int;
     a(&mut r, t, *[N]int);
     a->b;
+    .a;
 )"};
 
 constexpr std::string_view expected{

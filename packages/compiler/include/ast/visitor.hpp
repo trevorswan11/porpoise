@@ -17,10 +17,11 @@ namespace conch::ast {
     X(BinaryExpression)              \
     X(DotExpression)                 \
     X(RangeExpression)               \
-    X(PointerExpression)             \
+    X(ImplicitDereferenceExpression) \
     X(MatchExpression)               \
     X(ReferenceExpression)           \
     X(DereferenceExpression)         \
+    X(ImplicitAccessExpression)      \
     X(UnaryExpression)               \
     X(StringExpression)              \
     X(SignedIntegerExpression)       \

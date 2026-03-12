@@ -292,7 +292,7 @@ TEST_CASE("Comments") {
         {TokenType::VAR, "var"},      {TokenType::IDENT, "four_and_some"},
         {TokenType::WALRUS, ":="},    {TokenType::FLOAT, "4.2f"},
         {TokenType::SEMICOLON, ";"},  {TokenType::IDENT, "work"},
-        {TokenType::ARROW, "->"},  {TokenType::IDENT, "more"},
+        {TokenType::ARROW, "->"},     {TokenType::IDENT, "more"},
         {TokenType::SEMICOLON, ";"},  {TokenType::END, ""},
     });
 
