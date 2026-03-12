@@ -265,7 +265,7 @@ auto ASTDumper::visit(const MatchExpression& node) -> void {
     fmt::println(out_, "MatchExpression");
     {
         const Indent::Guard g{indent_, false};
-        fmt::print(out_, "{}Input: ", indent_.current_branch());
+        fmt::print(out_, "{}Matcher: ", indent_.current_branch());
         node.get_matcher().accept(*this);
     }
 
@@ -273,7 +273,7 @@ auto ASTDumper::visit(const MatchExpression& node) -> void {
         const Indent::Guard g{indent_, !node.has_catch_all()};
         fmt::println(out_, "{}Arms:", indent_.current_branch());
         dump_container(node.get_arms(), [this](const MatchArm& arm) {
-            fmt::println(out_, "{}Arm", indent_.current_branch());
+            fmt::println(out_, "{}Arm:", indent_.current_branch());
             {
                 const Indent::Guard g_pattern{indent_, false};
                 fmt::print(out_, "{}Pattern: ", indent_.current_branch());
@@ -349,9 +349,26 @@ auto ASTDumper::visit(const TypeExpression& node) -> void {
     }
 }
 
+auto ASTDumper::visit(const UnionExpression& node) -> void {
+    fmt::println(out_, "UnionExpression");
+    dump_container(node.get_fields(), [this](const UnionField& field) {
+        fmt::println(out_, "{}Field:", indent_.current_branch());
+        {
+            const Indent::Guard g_pattern{indent_, false};
+            fmt::print(out_, "{}Tag: ", indent_.current_branch());
+            field.get_ident().accept(*this);
+        }
+
+        {
+            const Indent::Guard g_result{indent_, true};
+            fmt::print(out_, "{}Type: ", indent_.current_branch());
+            dump_explicit_type(field.get_type(), false);
+        }
+    });
+}
+
 auto ASTDumper::visit(const WhileLoopExpression& node) -> void {
     fmt::println(out_, "WhileLoopExpression");
-
     {
         const Indent::Guard g{indent_, false};
         fmt::print(out_, "{}Condition: ", indent_.current_branch());

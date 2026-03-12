@@ -3,8 +3,8 @@
 - Match expressions can easily switch over enum values, but are also helpful when working with unions
 - When matching a union, you must use a capture group with each match arm
     - This will capture the active field value of the union
-    - This can also be discarded using the `_` operator
-    - There is no concept of a modifier with this capture, with access modifiers being dependent on the match object and the union's field types
+    - This can also be discarded using an underscore `_`
+    - There is no concept of a modifier with this capture, with access modifiers being dependent on the match object/the union's field types
 - Match expressions must always be exhaustive
     - To catch all arms that were not explicitly listed, you can use a catch-all clause
     - Similar to `for` and `while` non-break, the catch-all clause is a restricted statement, meaning it can only be a:

@@ -12,3 +12,4 @@ A WIP reference of the conch programming language
 - [match](syntax/match.md)
 - [structs](syntax/structs.md)
 - [types](syntax/types.md)
+- [unions](syntax/unions.md)

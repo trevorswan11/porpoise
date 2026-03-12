@@ -37,6 +37,7 @@ namespace conch::ast {
     X(ScopeResolutionExpression)     \
     X(StructExpression)              \
     X(TypeExpression)                \
+    X(UnionExpression)               \
     X(WhileLoopExpression)           \
     X(BlockStatement)                \
     X(DeclStatement)                 \

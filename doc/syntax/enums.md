@@ -17,3 +17,4 @@ const Shapes := enum : ulong { CIRCLE, SQUARE };
 ```conch
 Colors::RED;
 ```
+- You can not put methods on an enum as you would with a struct

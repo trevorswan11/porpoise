@@ -129,19 +129,19 @@ ExpressionStatement
     └─ Operand: IdentifierExpression: a
 ExpressionStatement
 └─ Expr: MatchExpression
-    ├─ Input: IdentifierExpression: a
+    ├─ Matcher: IdentifierExpression: a
     ├─ Arms:
-    │   ├─ Arm
+    │   ├─ Arm:
     │   │   ├─ Pattern: IdentifierExpression: b
     │   │   ├─ Capture: IdentifierExpression: c
     │   │   └─ Dispatch: ExpressionStatement
     │   │       └─ Expr: IdentifierExpression: d
-    │   ├─ Arm
+    │   ├─ Arm:
     │   │   ├─ Pattern: IdentifierExpression: e
     │   │   ├─ Capture: <discarded>
     │   │   └─ Dispatch: ExpressionStatement
     │   │       └─ Expr: IdentifierExpression: f
-    │   └─ Arm
+    │   └─ Arm:
     │       ├─ Pattern: IdentifierExpression: g
     │       └─ Dispatch: ExpressionStatement
     │           └─ Expr: IdentifierExpression: h
@@ -239,4 +239,14 @@ ExpressionStatement
 ExpressionStatement
 └─ Expr: ImplicitAccessExpression (DOT)
     └─ Operand: IdentifierExpression: a
+ExpressionStatement
+└─ Expr: UnionExpression
+    ├─ Field:
+    │   ├─ Tag: IdentifierExpression: a
+    │   └─ Type: ExplicitType (modifier: BASE)
+    │       └─ IdentifierExpression: int (primitive)
+    └─ Field:
+        ├─ Tag: IdentifierExpression: b
+        └─ Type: ExplicitType (modifier: MUT_REF)
+            └─ IdentifierExpression: T
 )"

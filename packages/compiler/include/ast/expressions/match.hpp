@@ -1,8 +1,6 @@
 #pragma once
 
-#include <algorithm>
 #include <span>
-#include <utility>
 #include <variant>
 
 #include "ast/node.hpp"
@@ -54,9 +52,8 @@ class MatchExpression : public ExprBase<MatchExpression> {
     explicit MatchExpression(const Token&             start_token,
                              Box<Expression>          matcher,
                              std::vector<MatchArm>    arms,
-                             Optional<Box<Statement>> catch_all) noexcept
-        : ExprBase{start_token}, matcher_{std::move(matcher)}, arms_{std::move(arms)},
-          catch_all_{std::move(catch_all)} {}
+                             Optional<Box<Statement>> catch_all) noexcept;
+    ~MatchExpression() override;
 
     MAKE_AST_COPY_MOVE(MatchExpression)
 
@@ -68,12 +65,7 @@ class MatchExpression : public ExprBase<MatchExpression> {
     MAKE_OPTIONAL_UNPACKER(catch_all, Statement, catch_all_, **)
 
   protected:
-    auto is_equal(const Node& other) const noexcept -> bool override {
-        const auto& casted  = as<MatchExpression>(other);
-        const auto  arms_eq = std::ranges::equal(arms_, casted.arms_);
-        return *matcher_ == *casted.matcher_ && arms_eq &&
-               optional::unsafe_eq<Statement>(catch_all_, casted.catch_all_);
-    }
+    auto is_equal(const Node& other) const noexcept -> bool override;
 
   private:
     Box<Expression>          matcher_;

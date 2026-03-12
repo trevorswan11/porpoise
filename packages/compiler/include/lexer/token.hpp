@@ -124,6 +124,7 @@ enum class TokenType : u8 {
     COMPTIME,
     STRUCT,
     ENUM,
+    UNION,
     TRUE,
     FALSE,
     BOOLEAN_AND,

@@ -87,6 +87,7 @@ enum class ParserError : u8 {
     ILLEGAL_VOID_TYPE_MODIFIER,
     ILLEGAL_TYPE_TYPE_MODIFIER,
     COMMA_WITH_MISSING_CALL_ARGUMENT,
+    EMPTY_UNION,
 };
 
 using ParserDiagnostic = Diagnostic<ParserError>;
