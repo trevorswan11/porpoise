@@ -15,7 +15,7 @@
 - Arrays do not decay to pointers implicitly as they do in C
 - To call a C function that takes in a pointer that is actually an array, you can use the builtin `@ptrFromArray`
     - This erases the underlying size of the array and is not reversible. It is only recommended for use with C interop
-- If you have a pointer and its size, you can recreate a conch-style slice using the `@sliceFromPtr` builtin    
+- If you have a pointer and its size, you can recreate a conch-style slice using the `@sliceFromPtr` builtin
 
 ## Types
 - There are two types of Array types 
@@ -34,6 +34,8 @@
 var a: &[S]&*mut T; // Normal array type
 var a: &[]&*mut T; // Analogous slice type
 ```
+- Arrays do not implicitly 'decay' to slices
+    - To pass an array to a function that expects a slice, you should use the respective reference operator (`&` or `&mut`) depending on the context. This is similar to Zig's array/slice syntax
 
 ## Indexing
 - Array indexing is bounds-checked, and follows a familiar syntax

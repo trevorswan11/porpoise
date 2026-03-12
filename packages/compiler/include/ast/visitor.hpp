@@ -17,6 +17,7 @@ namespace conch::ast {
     X(BinaryExpression)              \
     X(DotExpression)                 \
     X(RangeExpression)               \
+    X(PointerExpression)             \
     X(MatchExpression)               \
     X(ReferenceExpression)           \
     X(DereferenceExpression)         \
@@ -30,6 +31,7 @@ namespace conch::ast {
     X(USizeIntegerExpression)        \
     X(ByteExpression)                \
     X(FloatExpression)               \
+    X(DoubleExpression)              \
     X(BoolExpression)                \
     X(ScopeResolutionExpression)     \
     X(StructExpression)              \

@@ -12,12 +12,12 @@ namespace conch::ast {
         fmt::println(out_, #NodeType " ({})", magic_enum::enum_name(node.get_op())); \
         {                                                                            \
             const Indent::Guard g{indent_, false};                                   \
-            fmt::print(out_, "{}" #LeftLabel " ", indent_.current_branch());         \
+            fmt::print(out_, "{}" #LeftLabel ": ", indent_.current_branch());        \
             node.get_lhs().accept(*this);                                            \
         }                                                                            \
         {                                                                            \
             const Indent::Guard g{indent_, true};                                    \
-            fmt::print(out_, "{}" #RightLabel " ", indent_.current_branch());        \
+            fmt::print(out_, "{}" #RightLabel ": ", indent_.current_branch());       \
             node.get_rhs().accept(*this);                                            \
         }                                                                            \
     }
@@ -205,7 +205,7 @@ auto ASTDumper::visit(const FunctionExpression& node) -> void {
     }
 }
 
-auto ASTDumper ::visit(const IdentifierExpression& node) -> void {
+auto ASTDumper::visit(const IdentifierExpression& node) -> void {
     fmt::print(out_, "IdentifierExpression: {}", node);
     if (node.get_token().is_builtin()) {
         fmt::print(out_, " (builtin)");
@@ -259,6 +259,7 @@ MAKE_INFIX_DUMP(AssignmentExpression, Assignee, Value)
 MAKE_INFIX_DUMP(BinaryExpression, LHS, RHS)
 MAKE_INFIX_DUMP(DotExpression, Object, Member)
 MAKE_INFIX_DUMP(RangeExpression, Lower, Upper)
+MAKE_INFIX_DUMP(PointerExpression, Object, Member)
 
 auto ASTDumper::visit(const MatchExpression& node) -> void {
     fmt::println(out_, "MatchExpression");
@@ -306,6 +307,7 @@ MAKE_LEAF_DUMP(UnsignedLongIntegerExpression)
 MAKE_LEAF_DUMP(USizeIntegerExpression)
 MAKE_LEAF_DUMP(ByteExpression)
 MAKE_LEAF_DUMP(FloatExpression)
+MAKE_LEAF_DUMP(DoubleExpression)
 MAKE_LEAF_DUMP(BoolExpression)
 
 auto ASTDumper::visit(const ScopeResolutionExpression& node) -> void {

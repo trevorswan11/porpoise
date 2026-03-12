@@ -13,22 +13,22 @@ R"(ExpressionStatement
         └─ StringExpression: 54
 ExpressionStatement
 └─ Expr: BinaryExpression (BOOLEAN_AND)
-    ├─ LHS BinaryExpression (BOOLEAN_OR)
-    │   ├─ LHS BinaryExpression (LT_EQ)
-    │   │   ├─ LHS IdentifierExpression: a
-    │   │   └─ RHS IdentifierExpression: b
-    │   └─ RHS BinaryExpression (EQ)
-    │       ├─ LHS IdentifierExpression: c
-    │       └─ RHS IdentifierExpression: d
-    └─ RHS IdentifierExpression: e
+    ├─ LHS: BinaryExpression (BOOLEAN_OR)
+    │   ├─ LHS: BinaryExpression (LT_EQ)
+    │   │   ├─ LHS: IdentifierExpression: a
+    │   │   └─ RHS: IdentifierExpression: b
+    │   └─ RHS: BinaryExpression (EQ)
+    │       ├─ LHS: IdentifierExpression: c
+    │       └─ RHS: IdentifierExpression: d
+    └─ RHS: IdentifierExpression: e
 ExpressionStatement
 └─ Expr: BinaryExpression (BOOLEAN_OR)
-    ├─ LHS IdentifierExpression: a
-    └─ RHS BinaryExpression (EQ)
-        ├─ LHS IndexExpression
+    ├─ LHS: IdentifierExpression: a
+    └─ RHS: BinaryExpression (EQ)
+        ├─ LHS: IndexExpression
         │   ├─ Object: IdentifierExpression: b
         │   └─ Index: USizeIntegerExpression: 3
-        └─ RHS UnaryExpression (BANG)
+        └─ RHS: UnaryExpression (BANG)
             └─ Operand: IdentifierExpression: c
 JumpStatement (CONTINUE)
 JumpStatement (RETURN)
@@ -61,8 +61,8 @@ ExpressionStatement
 └─ Expr: WhileLoopExpression
     ├─ Condition: BoolExpression: true
     ├─ Continuation: AssignmentExpression (PLUS_ASSIGN)
-    │   ├─ Assignee IdentifierExpression: i
-    │   └─ Value SignedIntegerExpression: 1
+    │   ├─ Assignee: IdentifierExpression: i
+    │   └─ Value: SignedIntegerExpression: 1
     ├─ Body: BlockStatement
     │   └─ ExpressionStatement
     │       └─ Expr: IdentifierExpression: a
@@ -144,13 +144,13 @@ ExpressionStatement
         └─ Expr: IdentifierExpression: a
 ExpressionStatement
 └─ Expr: AssignmentExpression (ASSIGN)
-    ├─ Assignee DereferenceExpression (STAR)
+    ├─ Assignee: DereferenceExpression (STAR)
     │   └─ Operand: IndexExpression
     │       ├─ Object: IndexExpression
     │       │   ├─ Object: IdentifierExpression: arr
     │       │   └─ Index: IdentifierExpression: i
     │       └─ Index: IdentifierExpression: j
-    └─ Value SignedIntegerExpression: 2
+    └─ Value: SignedIntegerExpression: 2
 ExpressionStatement
 └─ Expr: IfExpression
     ├─ Condition: IdentifierExpression: a
@@ -223,4 +223,8 @@ ExpressionStatement
                 ├─ Dimensions: IdentifierExpression: N
                 └─ ExplicitType (modifier: BASE)
                     └─ IdentifierExpression: int (primitive)
+ExpressionStatement
+└─ Expr: PointerExpression (ARROW)
+    ├─ Object: IdentifierExpression: a
+    └─ Member: IdentifierExpression: b
 )"

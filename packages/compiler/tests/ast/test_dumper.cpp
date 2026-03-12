@@ -36,6 +36,7 @@ constexpr std::string_view input{R"(
     @ptrAdd(a, 4uz);
     using T = int;
     a(&mut r, t, *[N]int);
+    a->b;
 )"};
 
 constexpr std::string_view expected{

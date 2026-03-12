@@ -52,6 +52,7 @@ enum class TokenType : u8 {
     UZINT_16,
 
     FLOAT,
+    DOUBLE,
     STRING,
     BYTE,
 
@@ -93,6 +94,7 @@ enum class TokenType : u8 {
     DOT,
     DOT_DOT,
     DOT_DOT_EQ,
+    ARROW,
     FAT_ARROW,
 
     COMMENT,
@@ -148,6 +150,7 @@ enum class TokenType : u8 {
     USIZE_TYPE,
     BYTE_TYPE,
     FLOAT_TYPE,
+    DOUBLE_TYPE,
     STRING_TYPE,
     BOOL_TYPE,
     VOID_TYPE,

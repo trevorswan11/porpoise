@@ -6,4 +6,4 @@ A WIP reference of the conch programming language
 - [declarations](syntax/declarations.md)
 - [functions](syntax/functions.md)
 - [structs](syntax/structs.md)
-
+- [types](syntax/types.md)
