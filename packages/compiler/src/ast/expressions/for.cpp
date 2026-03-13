@@ -43,7 +43,7 @@ auto ForLoopExpression::parse(Parser& parser) -> Expected<Box<Expression>, Parse
     // Iterables have to be surrounded by parentheses
     TRY(parser.expect_peek(TokenType::LPAREN));
     if (parser.peek_token_is(TokenType::RPAREN)) {
-        return make_parser_unexpected(ParserError::WHILE_MISSING_CONDITION, start_token);
+        return make_parser_unexpected(ParserError::FOR_MISSING_ITERABLES, start_token);
     }
 
     std::vector<Box<Expression>> iterables;

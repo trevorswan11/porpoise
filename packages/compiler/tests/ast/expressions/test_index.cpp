@@ -30,11 +30,7 @@ TEST_CASE("Index on an index") {
 }
 
 TEST_CASE("No index") {
-    helpers::test_fail("arr[]",
-                       ParserDiagnostic{"No prefix parse function for RBRACKET(]) found",
-                                        ParserError::MISSING_PREFIX_PARSER,
-                                        1,
-                                        5});
+    helpers::test_fail("arr[]", ParserDiagnostic{ParserError::INDEX_MISSING_EXPRESSION, 1, 1});
 }
 
 } // namespace conch::tests

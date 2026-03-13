@@ -25,7 +25,7 @@ template <typename T, usize... Ns>
 
 // Calculates the array's combinations with itself, given by:
 // [A, B, C] -> [[A, B], [A, C], [B, B]]
-template <typename T, usize N> auto combinations(std::array<T, N> input) {
+template <typename T, usize N> constexpr auto combinations(std::array<T, N> input) {
     constexpr auto                    size = (N * (N - 1)) / 2;
     std::array<std::pair<T, T>, size> results;
     if (input.size() < 2) { return results; }

@@ -249,4 +249,50 @@ ExpressionStatement
         ├─ Tag: IdentifierExpression: b
         └─ Type: ExplicitType (modifier: MUT_REF)
             └─ IdentifierExpression: T
+ExpressionStatement
+└─ Expr: DoWhileLoopExpression
+    ├─ Body: BlockStatement
+    │   └─ ExpressionStatement
+    │       └─ Expr: IdentifierExpression: a
+    └─ Condition: BoolExpression: true
+ExpressionStatement
+└─ Expr: SignedLongIntegerExpression: 1
+ExpressionStatement
+└─ Expr: ISizeIntegerExpression: 2
+ExpressionStatement
+└─ Expr: UnsignedIntegerExpression: 3
+ExpressionStatement
+└─ Expr: ByteExpression: a
+ExpressionStatement
+└─ Expr: FloatExpression: 2.3
+ExpressionStatement
+└─ Expr: DoubleExpression: 2.3
+ExpressionStatement
+└─ Expr: ArrayExpression
+    ├─ Size: USizeIntegerExpression: 1
+    ├─ Type: ExplicitType (modifier: BASE)
+    │   └─ IdentifierExpression: A
+    └─ Items: 
+        └─ IdentifierExpression: a
+ExpressionStatement
+└─ Expr: DotExpression (DOT)
+    ├─ Object: IdentifierExpression: a
+    └─ Member: IdentifierExpression: b
+ExpressionStatement
+└─ Expr: RangeExpression (DOT_DOT)
+    ├─ Lower: IdentifierExpression: a
+    └─ Upper: IdentifierExpression: b
+ExpressionStatement
+└─ Expr: RangeExpression (DOT_DOT_EQ)
+    ├─ Lower: IdentifierExpression: a
+    └─ Upper: IdentifierExpression: b
+DeclStatement (a)
+├─ Modifiers: VARIABLE
+└─ Type: ExplicitType (modifier: BASE)
+    └─ ArrayType
+        ├─ Dimensions: (slice)
+        └─ ExplicitType (modifier: BASE)
+            └─ IdentifierExpression: int (primitive)
+BlockStatement
+└─ <empty>
 )"

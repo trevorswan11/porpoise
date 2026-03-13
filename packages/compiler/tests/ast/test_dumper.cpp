@@ -39,6 +39,13 @@ constexpr std::string_view input{R"(
     a->b;
     .a;
     union { a: int, b: &mut T, };
+    do { a;} while (true);
+    1l; 2z; 3u; 'a'; 2.3f; 2.3;
+    [1uz]A{a};
+    a.b;
+    a..b; a..=b;
+    var a: []int;
+    {};
 )"};
 
 constexpr std::string_view expected{

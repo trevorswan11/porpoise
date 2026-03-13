@@ -33,20 +33,15 @@ enum class ParserError : u8 {
     ILLEGAL_IDENTIFIER,
     END_OF_TOKEN_STREAM,
     CONST_DECL_MISSING_VALUE,
-    FORWARD_VAR_DECL_MISSING_TYPE,
     EMPTY_USER_IMPORT,
     ILLEGAL_IMPORT_TYPE,
     USER_IMPORT_MISSING_ALIAS,
     DUPLICATE_DECL_MODIFIER,
     ILLEGAL_DECL_MODIFIERS,
     INTEGER_OVERFLOW,
-    MALFORMED_INTEGER,
     FLOAT_OVERFLOW,
     DOUBLE_OVERFLOW,
-    MALFORMED_FLOAT,
-    MALFORMED_DOUBLE,
     UNKNOWN_CHARACTER_ESCAPE,
-    MALFORMED_CHARACTER,
     MALFORMED_STRING,
     PREFIX_MISSING_OPERAND,
     INDEX_MISSING_EXPRESSION,
@@ -58,8 +53,8 @@ enum class ParserError : u8 {
     PACKED_AFTER_STRUCT_KEYWORD,
     EMPTY_STRUCT,
     EXTERN_VALUE_INITIALIZED,
-    EXTERN_MISSING_TYPE,
     ILLEGAL_LOOP_NON_BREAK,
+    FOR_MISSING_ITERABLES,
     ILLEGAL_FOR_LOOP_CAPTURE,
     EMPTY_FOR_LOOP,
     FOR_ITERABLE_CAPTURE_MISMATCH,
@@ -149,15 +144,6 @@ class Parser {
 
     auto current_token_is(TokenType t) const noexcept -> bool { return current_token_.type == t; }
     auto peek_token_is(TokenType t) const noexcept -> bool { return peek_token_.type == t; }
-
-    // Advances the cursor tokens only if the expected token type matches the actual current token.
-    [[nodiscard]] auto expect_current(TokenType expected)
-        -> Expected<std::monostate, ParserDiagnostic>;
-
-    // Indiscriminately returns an error citing the current token.
-    [[nodiscard]] auto current_error(TokenType expected) -> ParserDiagnostic {
-        return tt_mismatch_error(expected, current_token_);
-    }
 
     // Advances the cursor tokens only if the expected token type matches the actual peek token.
     [[nodiscard]] auto expect_peek(TokenType expected)

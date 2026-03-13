@@ -66,6 +66,13 @@ TEST_CASE("Non-terminated iterables") {
 }
 
 TEST_CASE("Missing iterables") {
+    helpers::test_fail("for () |i| { a; } else return b;",
+                       ParserDiagnostic{ParserError::FOR_MISSING_ITERABLES, 1, 1},
+                       ParserDiagnostic{"No prefix parse function for RBRACE(}) found",
+                                        ParserError::MISSING_PREFIX_PARSER,
+                                        1,
+                                        17});
+
     helpers::test_fail(
         "for |i| { a; } else return b;",
         ParserDiagnostic{"Expected token LPAREN, found BW_OR", ParserError::UNEXPECTED_TOKEN, 1, 5},

@@ -60,6 +60,7 @@ TEST_CASE("Size mismatch") {
 }
 
 TEST_CASE("Array size token requirement") {
+    helpers::test_fail("[]int{2};", ParserDiagnostic{ParserError::MISSING_ARRAY_SIZE_TOKEN, 1, 1});
     helpers::test_fail("[3]int{1,2,3};",
                        ParserDiagnostic{ParserError::ILLEGAL_ARRAY_SIZE_TYPE, 1, 2});
     helpers::test_fail(R"(["e"]int{1};)",
