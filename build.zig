@@ -1025,7 +1025,6 @@ fn addPackageStep(b: *std.Build, config: struct {
             .{ b.path("LICENSE"), "LICENSE" },
             .{ b.path("README.md"), "README.md" },
             .{ b.path(".github/CHANGELOG.md"), "CHANGELOG.md" },
-            .{ b.path(".github/AUTHORS.md"), "AUTHORS.md" },
         };
 
         for (legal_paths) |path| {
