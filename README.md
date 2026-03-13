@@ -1,7 +1,7 @@
 <h1 align="center">🐚conch🐚</h1>
 
 <p align="center">
-<img src="https://img.shields.io/badge/C%2B%2B-23-blue?logo=c%2B%2B&logoColor=white" alt="C++23" /> <img src="https://img.shields.io/badge/Zig-0.15.2-orange?logo=zig" alt="Zig 0.15.2" /> <a href="LICENSE"><img src="https://img.shields.io/github/license/trevorswan11/conch" alt="License" /></a> <a href="https://github.com/trevorswan11/conch/actions/workflows/format.yml"><img src="https://github.com/trevorswan11/conch/actions/workflows/format.yml/badge.svg" alt="Formatting" /></a> <a href="https://github.com/trevorswan11/conch/actions/workflows/ci.yml"><img src="https://github.com/trevorswan11/conch/actions/workflows/ci.yml/badge.svg" alt="CI" /></a> <img src="https://raw.githubusercontent.com/trevorswan11/conch/badges/coverage.svg" alt="Coverage" />
+<img src="https://img.shields.io/badge/C%2B%2B-23-blue?logo=c%2B%2B&logoColor=white" alt="C++23" /> <img src="https://img.shields.io/badge/Zig-0.15.2-orange?logo=zig" alt="Zig 0.15.2" /> <a href="LICENSE"><img src="https://img.shields.io/github/license/trevorswan11/conch" alt="License" /></a> <a href="https://github.com/trevorswan11/conch/actions/workflows/format.yml"><img src="https://github.com/trevorswan11/conch/actions/workflows/format.yml/badge.svg" alt="Formatting" /></a> <a href="https://github.com/trevorswan11/conch/actions/workflows/ci.yml"><img src="https://github.com/trevorswan11/conch/actions/workflows/ci.yml/badge.svg" alt="CI" /></a> <img src="https://raw.githubusercontent.com/trevorswan11/conch/coverage/coverage.svg" alt="Coverage" />
 </p>
 
 <p align="center">
@@ -21,13 +21,6 @@ Conch is a compiled systems language powered by LLVM, C++, and Zig. It attempts 
 ### Built With Zig!
 
 Zig is used as the primary orchestrator for all things Conch. Conch uses Zig's `build.zig` to provide a hermetic build. Necessary dependencies are automatically fetched and all required dependencies are built from source. This unified build system manages LLVM compilation (including tools like clang-format), kcov coverage reporting (on supported platforms), and core maintainer tools such as a custom archiver for releases. Conch aims to be reproducible anywhere that has a valid and correctly versioned Zig. **No manual linking or hoop-jumping is required to build Conch, ever, on any platform**.
-
-### Core Principles
-- Learn for the sake of learning
-- Experiment freely
-- KISS & DRY
-
-Using AI for the development of Conch should be seen as a last resort. All code pushed should be deeply understood. Development speed is _not_ and _will never be_ a core principle of Conch.
 
 <details>
 <summary><b>Full dependency breakdown</b></summary>
@@ -51,6 +44,13 @@ The following are "standalone" dependencies, required and manually fetched by Co
     - [libdwarf-code](https://github.com/davea42/libdwarf-code) is required on MacOS only.
 
 </details>
+
+### Core Principles
+- Learn for the sake of learning
+- Experiment freely
+- KISS & DRY
+
+Using AI for the development of Conch should be seen as a last resort. All code pushed should be deeply understood. Development speed is _not_ and _will never be_ a core principle of Conch.
 
 ### Usage Example
 ```conch
