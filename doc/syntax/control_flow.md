@@ -17,3 +17,19 @@
 ```conch
 a = if (a) b; else c; // Assigns a conditionally
 ```
+
+## Defer
+- Defer statements defer execution to the end of their scope
+- They are executed in reverse order with respect to their declaration
+- A defer statement can be an expression, block, or discard statement
+    - All other inner statement variants are disallowed
+```conch
+import std;
+
+const main := fn(): void {
+    defer std::io::println("World!");
+    defer std::io::print("Hello, ");
+};
+```
+- This example prints "Hello, World!"
+    - Every defer statement pushes execution onto a LIFO stack that is executed at the end of scope
