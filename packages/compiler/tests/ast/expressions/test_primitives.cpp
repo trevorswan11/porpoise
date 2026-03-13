@@ -132,6 +132,12 @@ TEST_CASE("Unsigned size integer parsing") {
 TEST_CASE("Byte parsing") {
     using N = ast::ByteExpression;
     helpers::test_primitive<N>("'3';", TokenType::BYTE, '3');
+    helpers::test_primitive<N>("'\\n';", TokenType::BYTE, '\n');
+    helpers::test_primitive<N>("'\\r';", TokenType::BYTE, '\r');
+    helpers::test_primitive<N>("'\\t';", TokenType::BYTE, '\t');
+    helpers::test_primitive<N>("'\\\\';", TokenType::BYTE, '\\');
+    helpers::test_primitive<N>("'\\\'';", TokenType::BYTE, '\'');
+    helpers::test_primitive<N>("'\\\"';", TokenType::BYTE, '\"');
     helpers::test_primitive<N>("'\\0';", TokenType::BYTE, '\0');
 
     helpers::test_primitive<N>(

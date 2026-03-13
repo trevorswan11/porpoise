@@ -142,6 +142,7 @@ enum class TokenType : u8 {
     TYPE_TYPE,
     DO,
     AS,
+    DEFER,
 
     INT_TYPE,
     LONG_TYPE,

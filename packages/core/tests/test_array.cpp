@@ -24,7 +24,7 @@ TEST_CASE("Array concatenation") {
 TEST_CASE("Array combinations") {
     constexpr auto A        = std::array{0, 1, 2};
     constexpr auto expected = std::to_array<std::pair<int, int>>({{0, 1}, {0, 2}, {1, 2}});
-    const auto     actual   = array::combinations<int>(A);
+    constexpr auto actual   = array::combinations<int>(A);
     REQUIRE(std::ranges::equal(expected, actual));
 }
 

@@ -90,12 +90,6 @@ auto MatchExpression::parse(Parser& parser) -> Expected<Box<Expression>, ParserD
         auto consequence = TRY(parser.parse_restricted_statement(ParserError::ILLEGAL_MATCH_ARM));
         arms.emplace_back(std::move(pattern), std::move(capture), std::move(consequence));
     }
-
-    // Empty match statements aren't ever allowed
-    if (arms.empty()) {
-        return make_parser_unexpected(ParserError::ARMLESS_MATCH_EXPR, start_token);
-    }
-
     TRY(parser.expect_peek(TokenType::RBRACE));
     auto catch_all =
         TRY(parser.try_parse_restricted_alternate(ParserError::ILLEGAL_MATCH_CATCH_ALL));

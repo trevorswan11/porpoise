@@ -30,11 +30,6 @@ auto ByteExpression::accept(Visitor& v) const -> void { v.visit(*this); }
 auto ByteExpression::parse(Parser& parser) -> Expected<Box<Expression>, ParserDiagnostic> {
     const auto start_token = parser.current_token();
     const auto slice       = start_token.slice;
-
-    if (slice.size() != 3 && slice.size() != 4) {
-        return make_parser_unexpected(ParserError::MALFORMED_CHARACTER, start_token);
-    }
-
     if (slice[1] != '\\') { return make_box<ByteExpression>(start_token, slice[1]); }
 
     const auto escaped = slice[2];

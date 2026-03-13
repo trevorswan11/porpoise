@@ -1,5 +1,6 @@
 #pragma once
 
+#include <cassert>
 #include <charconv>
 #include <string>
 #include <utility>
@@ -48,20 +49,12 @@ template <typename Derived, typename T> class PrimitiveExpression : public ExprB
             return make_box<Derived>(start_token, v);
         }
 
-        if (result.ec == std::errc::result_out_of_range) {
-            return make_parser_unexpected(std::is_same_v<value_type, f64>
-                                              ? ParserError::DOUBLE_OVERFLOW
-                                              : (std::is_same_v<value_type, f32>
-                                                     ? ParserError::FLOAT_OVERFLOW
-                                                     : ParserError::INTEGER_OVERFLOW),
-                                          start_token);
-        }
-
+        assert(result.ec == std::errc::result_out_of_range);
         return make_parser_unexpected(std::is_same_v<value_type, f64>
-                                          ? ParserError::MALFORMED_DOUBLE
+                                          ? ParserError::DOUBLE_OVERFLOW
                                           : (std::is_same_v<value_type, f32>
-                                                 ? ParserError::MALFORMED_FLOAT
-                                                 : ParserError::MALFORMED_INTEGER),
+                                                 ? ParserError::FLOAT_OVERFLOW
+                                                 : ParserError::INTEGER_OVERFLOW),
                                       start_token);
     }
 

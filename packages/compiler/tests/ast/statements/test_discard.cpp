@@ -44,11 +44,7 @@ TEST_CASE("Malformed discardees") {
 
 TEST_CASE("Missing discardee") {
     helpers::test_fail("_ = ", ParserDiagnostic{ParserError::DISCARD_MISSING_DISCARDEE, 1, 3});
-    helpers::test_fail("_ = ;",
-                       ParserDiagnostic{"No prefix parse function for SEMICOLON(;) found",
-                                        ParserError::MISSING_PREFIX_PARSER,
-                                        1,
-                                        5});
+    helpers::test_fail("_ = ;", ParserDiagnostic{ParserError::DISCARD_MISSING_DISCARDEE, 1, 3});
 }
 
 } // namespace conch::tests

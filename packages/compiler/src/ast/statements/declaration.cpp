@@ -47,24 +47,11 @@ auto DeclStatement::parse(Parser& parser) -> Expected<Box<Statement>, ParserDiag
         if (modifiers_has(modifiers, DeclModifiers::EXTERN)) {
             return make_parser_unexpected(ParserError::EXTERN_VALUE_INITIALIZED, start_token);
         }
-    } else {
-        // Extern decls must have a type and not have a value
-        if (modifiers_has(modifiers, DeclModifiers::EXTERN) &&
-            !decl_type_expr->has_explicit_type()) {
-            return make_parser_unexpected(ParserError::EXTERN_MISSING_TYPE, start_token);
-        }
-
+    } else if ((modifiers_has(modifiers, DeclModifiers::CONSTANT) &&
+                !modifiers_has(modifiers, DeclModifiers::EXTERN)) ||
+               modifiers_has(modifiers, DeclModifiers::COMPTIME)) {
         // Constant decls must be declared with a value unless they are extern
-        if ((modifiers_has(modifiers, DeclModifiers::CONSTANT) &&
-             !modifiers_has(modifiers, DeclModifiers::EXTERN)) ||
-            modifiers_has(modifiers, DeclModifiers::COMPTIME)) {
-            return make_parser_unexpected(ParserError::CONST_DECL_MISSING_VALUE, start_token);
-        }
-
-        // Forward declarations must be declared with a type
-        if (!decl_type_expr->has_explicit_type()) {
-            return make_parser_unexpected(ParserError::FORWARD_VAR_DECL_MISSING_TYPE, start_token);
-        }
+        return make_parser_unexpected(ParserError::CONST_DECL_MISSING_VALUE, start_token);
     }
 
     if (!parser.current_token_is(TokenType::SEMICOLON)) {

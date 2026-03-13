@@ -35,6 +35,16 @@ namespace conch::ast {
         fmt::println(out_, #NodeType ": {}", node);       \
     }
 
+#define MAKE_BASIC_STMT_DUMP(NodeType, FieldName, getter)                     \
+    auto ASTDumper::visit(const NodeType& node) -> void {                     \
+        fmt::println(out_, #NodeType);                                        \
+        {                                                                     \
+            const Indent::Guard g{indent_, true};                             \
+            fmt::print(out_, "{}" #FieldName ": ", indent_.current_branch()); \
+            node.getter.accept(*this);                                        \
+        }                                                                     \
+    }
+
 auto ASTDumper::visit(const ArrayExpression& node) -> void {
     fmt::println(out_, "ArrayExpression");
     {
@@ -426,23 +436,9 @@ auto ASTDumper::visit(const DeclStatement& node) -> void {
     }
 }
 
-auto ASTDumper::visit(const DiscardStatement& node) -> void {
-    fmt::println(out_, "DiscardStatement");
-    {
-        const Indent::Guard g{indent_, true};
-        fmt::print(out_, "{}Discarded: ", indent_.current_branch());
-        node.get_discarded().accept(*this);
-    }
-}
-
-auto ASTDumper::visit(const ExpressionStatement& node) -> void {
-    fmt::println(out_, "ExpressionStatement");
-    {
-        const Indent::Guard g{indent_, true};
-        fmt::print(out_, "{}Expr: ", indent_.current_branch());
-        node.get_expression().accept(*this);
-    }
-}
+MAKE_BASIC_STMT_DUMP(DeferStatement, Deferred, get_deferred())
+MAKE_BASIC_STMT_DUMP(DiscardStatement, Discarded, get_discarded())
+MAKE_BASIC_STMT_DUMP(ExpressionStatement, Expr, get_expression())
 
 auto ASTDumper::visit(const ImportStatement& node) -> void {
     fmt::println(out_, "ImportStatement");

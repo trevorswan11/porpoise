@@ -41,6 +41,7 @@ namespace conch::ast {
     X(WhileLoopExpression)           \
     X(BlockStatement)                \
     X(DeclStatement)                 \
+    X(DeferStatement)                \
     X(DiscardStatement)              \
     X(ExpressionStatement)           \
     X(ImportStatement)               \

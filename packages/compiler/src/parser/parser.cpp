@@ -72,14 +72,6 @@ auto Parser::consume() -> std::pair<ast::AST, Diagnostics> {
     return {std::move(ast), std::move(diagnostics)};
 }
 
-auto Parser::expect_current(TokenType expected) -> Expected<std::monostate, ParserDiagnostic> {
-    if (current_token_is(expected)) {
-        advance();
-        return {};
-    }
-    return Unexpected{current_error(expected)};
-}
-
 auto Parser::expect_peek(TokenType expected) -> Expected<std::monostate, ParserDiagnostic> {
     if (peek_token_is(expected)) {
         advance();
@@ -111,6 +103,7 @@ auto Parser::parse_statement() -> Expected<Box<ast::Statement>, ParserDiagnostic
     case TokenType::BREAK:
     case TokenType::RETURN:
     case TokenType::CONTINUE:   return ast::JumpStatement::parse(*this);
+    case TokenType::DEFER:      return ast::DeferStatement::parse(*this);
     case TokenType::IMPORT:     return ast::ImportStatement::parse(*this);
     case TokenType::LBRACE:     return ast::BlockStatement::parse(*this);
     case TokenType::UNDERSCORE: return ast::DiscardStatement::parse(*this);
