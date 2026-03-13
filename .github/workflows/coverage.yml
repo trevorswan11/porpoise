@@ -48,7 +48,7 @@ jobs:
               run: |
                   zig build coverage -Dinstall-merged
 
-            - name: Deploy Badge to 'badges' branch
+            - name: Deploy merged report
               uses: JamesIves/github-pages-deploy-action@v4
               with:
                 folder: zig-out

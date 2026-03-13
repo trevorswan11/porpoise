@@ -1,27 +1,37 @@
 <h1 align="center">🐚conch🐚</h1>
 
 <p align="center">
-<img src="https://img.shields.io/badge/C%2B%2B-23-blue?logo=c%2B%2B&logoColor=white" alt="C++23" /> <a href="LICENSE"><img src="https://img.shields.io/github/license/trevorswan11/conch" alt="License" /></a> <img src="https://img.shields.io/github/last-commit/trevorswan11/conch" alt="Last Commit" /> <a href="https://github.com/trevorswan11/conch/actions/workflows/format.yml"><img src="https://github.com/trevorswan11/conch/actions/workflows/format.yml/badge.svg" alt="Formatting" /></a> <a href="https://github.com/trevorswan11/conch/actions/workflows/ci.yml"><img src="https://github.com/trevorswan11/conch/actions/workflows/ci.yml/badge.svg" alt="CI" /></a> <img src="https://raw.githubusercontent.com/trevorswan11/conch/badges/coverage.svg" alt="Coverage" />
+<img src="https://img.shields.io/badge/C%2B%2B-23-blue?logo=c%2B%2B&logoColor=white" alt="C++23" /> <img src="https://img.shields.io/badge/Zig-0.15.2-orange?logo=zig" alt="Zig 0.15.2" /> <a href="LICENSE"><img src="https://img.shields.io/github/license/trevorswan11/conch" alt="License" /></a> <a href="https://github.com/trevorswan11/conch/actions/workflows/format.yml"><img src="https://github.com/trevorswan11/conch/actions/workflows/format.yml/badge.svg" alt="Formatting" /></a> <a href="https://github.com/trevorswan11/conch/actions/workflows/ci.yml"><img src="https://github.com/trevorswan11/conch/actions/workflows/ci.yml/badge.svg" alt="CI" /></a> <img src="https://raw.githubusercontent.com/trevorswan11/conch/badges/coverage.svg" alt="Coverage" />
 </p>
 
 <p align="center">
-A simple programming language.
+A hand-crafted systems programming language.
+<br />
+<a href="https://github.com/trevorswan11/conch/tree/main/doc"><strong>Explore the docs »</strong></a>
+<br />
+<br />
+<a href="https://github.com/trevorswan11/conch/issues/new?labels=bug&template=bug-report.md">Report Bug</a>
+&middot;
+<a href="https://github.com/trevorswan11/conch/issues/new?labels=enhancement&template=feature-request.md">Request Feature</a>
 </p>
 
-# Motivation
-This project is a revamp of [zlx](https://github.com/trevorswan11/zlx). Due to some upcoming coursework in compiler design, I wanted to take on this type of project with two main goals:
-- Become proficient in the C++ programming language _without_ the help of AI
-- Fully understand programming concepts relating to the internals of an interpreter, bytecode VM, and compiler
+## About the Project
+Conch is a compiled systems language powered by LLVM, C++, and Zig. It attempts to combine select features from its more popular predecessors (i.e. Zig, Rust, C, C++) into a performant low-level language.
 
-ZLX was a fun project and got me into Low-Level programming, but its design choices limited its extensibility. I hope to use this project to grow as a developer and as a problem solver, expanding my knowledge of core programming concepts and data structures.
+### Built With
+![Zig](https://img.shields.io/badge/Zig-%23F7A41D.svg?style=for-the-badge&logo=zig&logoColor=white)
+Zig is used as the primary orchestrator for all things Conch. Conch uses Zig's `build.zig` to provide a hermetic build. Necessary dependencies are automatically fetched and all required dependencies are built from source. This unified build system manages LLVM compilation (including tools like clang-format), kcov coverage reporting (on supported platforms), and core maintainer tools such as a custom archiver for releases. Conch aims to be reproducible anywhere that has a valid and correctly versioned Zig. **No manual linking or hoop-jumping is required to build Conch, ever, on any platform**.
 
-# Getting Started
-## System dependencies:
-1. [Zig 0.15.2](https://ziglang.org/download/) drives the build system, including artifact compilation, libcpp includes, and project tooling.
+### Core Principles
+- Learn for the sake of learning
+- Experiment freely
+- KISS & DRY
 
-The easiest way to get started with development is with [nix](https://nixos.org/). Just run `nix develop` to get started. Otherwise, you must manually install required dependencies in a way that fits your specific system.
+Using AI for the development of Conch should be seen as a last resort. All code pushed should be deeply understood. Development speed is _not_ and _will never be_ a core principle of Conch.
 
-## Other dependencies:
+<details>
+<summary><b>Full dependency breakdown</b></summary>
+
 The following are "standalone" dependencies, required and manually fetched by Conch's build system.
 1. [Catch2](https://github.com/catchorg/Catch2)'s amalgamated source code is compiled from source for test running. It is automatically configured in the project's build script and links statically to the test builds.
 2. [cppcheck](https://cppcheck.sourceforge.io/) is compiled from source for static analysis. It is licensed under the GNU GPLv3, but the associated compiled artifacts are neither linked with output artifacts nor shipped with releases.
@@ -40,16 +50,81 @@ The following are "standalone" dependencies, required and manually fetched by Co
         - [argp-standalone](https://github.com/argp-standalone/argp-standalone)
     - [libdwarf-code](https://github.com/davea42/libdwarf-code) is required on MacOS only.
 
-These are automatically downloaded by the zig build system, so building conch is as easy as running:
+</details>
+
+### Usage Example
+```conch
+import std;
+
+const main := fn(): void {
+    const message := "Hello, world!";
+    std::io::println(message);
+};
+```
+
+## Getting Started
+### For Nix Users
+This is by far the easiest way to get started with development. Just run `nix develop` to get started and automatically get the correct Zig version and some important development tools. Note that this provides optional preconfigured tools such as LLDB, Clangd, and ZLS to further enhance the developer experience.
+
+### For Others
+All you need to get started with Conch development is a valid 0.15.2 Zig installation, which can be found [here](https://ziglang.org/download/).
+
+In either case, assuming you have the Zig prerequisite on your system, building Conch is as easy as running:
 ```sh
 git clone https://github.com/trevorswan11/conch
 cd conch
 zig build --release
 ```
 
-This builds the `ReleaseFast` configuration. You can read about Zig's different optimization levels [here](https://ziglang.org/documentation/master/#Build-Mode).
+## Roadmap
 
-# Correctness & Availability
-[Catch2](https://github.com/catchorg/Catch2) is used with a custom [Zig](https://ziglang.org/) allocator to run automated CI tests on Windows, macOS, and Linux. This choice allows me to take advantage of the best-in-class testing suite provided by catch2 while making use of the undefined behavior and leak sanitizers provided by Zig and its build system.
+- [x] Lexical analysis
+- [x] Pratt parsing
+    - [x] Syntax documentation
+- [ ] Two-pass Semantic Analysis (to support order independent declarations)
+    - [ ] Symbol registration pass
+    - [ ] Type checking pass
+- [ ] LLVM Integration
+    - [ ] Build system integration
+        - [x] Compilation rules for Clang, LLD, and LLVM
+        - [x] In-house clang-format
+        - [x] Kaleidoscope examples
+        - [ ] Test parity through the build system
+    - [ ] Compiler backend integration
 
-As I cannot run hundreds of matrix tests, I am unable to verify support for arbitrary platforms. Please let me know if there's something I can do to make the project more widely available. While releases have prebuilt binaries for a myriad of systems, I cannot verify that they all work as intended out of the box. In the event that a release is shipped with a faulty binary, please open an issue!
+See the [open issues](https://github.com/trevorswan11/conch/issues) for a full list of proposed features (and known issues).
+
+## Contributing
+
+Contributions are what make the open source community such an amazing place to learn, inspire, and create. Any contributions you make are greatly appreciated.
+
+If you have a suggestion that would make this better, please fork the repo and create a pull request. You can also simply open an issue with the tag "enhancement". Don't forget to give the project a star! Thanks again!
+
+1. Fork the Project
+2. Create your Feature Branch (`git checkout -b feat/AmazingFeature`)
+3. Commit your Changes (`git commit -m '[feat]: Add some AmazingFeature'`)
+4. Push to the Branch (`git push origin feat/AmazingFeature`)
+5. Open a Pull Request
+
+### Top contributors:
+
+<a href="https://github.com/trevorswan11/conch/graphs/contributors">
+  <img src="https://contrib.rocks/image?repo=trevorswan11/conch" alt="contrib.rocks image" />
+</a>
+
+## License
+
+Distributed under the MIT License. See `LICENSE` for more information.
+
+## Contact
+
+[![LinkedIn](https://img.shields.io/badge/linkedin-%230077B5.svg?style=for-the-badge&logo=linkedin&logoColor=white)](https://www.linkedin.com/in/trevorswan11/) [![Gmail](https://img.shields.io/badge/Gmail-D14836?style=for-the-badge&logo=gmail&logoColor=white)](mailto:trevor.swan@case.edu)
+
+Project Link: [https://github.com/trevorswan11/conch](https://github.com/trevorswan11/conch)
+
+## Acknowledgments
+
+- [Zig](https://ziglang.org/)'s community, language features, and compiler source code
+- [Rust](https://rust-lang.org/)'s language features and philosophy
+- [cppreference](https://www.cppreference.com/)'s extensive C++ language documentation
+- [Thorsten Ball](https://store.thorstenball.com/)'s "Writing an Interpreter/Compiler in Go" two-book series
