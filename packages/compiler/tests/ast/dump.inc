@@ -295,4 +295,7 @@ DeclStatement (a)
             └─ IdentifierExpression: int (primitive)
 BlockStatement
 └─ <empty>
+DeferStatement
+└─ Deferred: ExpressionStatement
+    └─ Expr: SignedIntegerExpression: 3
 )"

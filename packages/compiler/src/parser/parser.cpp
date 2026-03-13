@@ -103,6 +103,7 @@ auto Parser::parse_statement() -> Expected<Box<ast::Statement>, ParserDiagnostic
     case TokenType::BREAK:
     case TokenType::RETURN:
     case TokenType::CONTINUE:   return ast::JumpStatement::parse(*this);
+    case TokenType::DEFER:      return ast::DeferStatement::parse(*this);
     case TokenType::IMPORT:     return ast::ImportStatement::parse(*this);
     case TokenType::LBRACE:     return ast::BlockStatement::parse(*this);
     case TokenType::UNDERSCORE: return ast::DiscardStatement::parse(*this);

@@ -28,6 +28,7 @@
 
 #include "ast/statements/block.hpp"
 #include "ast/statements/declaration.hpp"
+#include "ast/statements/defer.hpp"
 #include "ast/statements/discard.hpp"
 #include "ast/statements/expression.hpp"
 #include "ast/statements/import.hpp"

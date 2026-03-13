@@ -1,9 +1,9 @@
 #pragma once
 
+#include <cassert>
 #include <charconv>
 #include <string>
 #include <utility>
-#include <cassert>
 
 #include <fmt/format.h>
 

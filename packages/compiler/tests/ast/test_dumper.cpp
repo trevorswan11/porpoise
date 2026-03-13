@@ -46,6 +46,7 @@ constexpr std::string_view input{R"(
     a..b; a..=b;
     var a: []int;
     {};
+    defer 3;
 )"};
 
 constexpr std::string_view expected{
