@@ -269,7 +269,6 @@ MAKE_INFIX_DUMP(AssignmentExpression, Assignee, Value)
 MAKE_INFIX_DUMP(BinaryExpression, LHS, RHS)
 MAKE_INFIX_DUMP(DotExpression, Object, Member)
 MAKE_INFIX_DUMP(RangeExpression, Lower, Upper)
-MAKE_INFIX_DUMP(ImplicitDereferenceExpression, Object, Member)
 
 auto ASTDumper::visit(const MatchExpression& node) -> void {
     fmt::println(out_, "MatchExpression");
@@ -510,6 +509,15 @@ auto ASTDumper::dump_explicit_type(const ExplicitType& type, bool print_branch) 
                         fmt::println(out_, "(slice)");
                     }
                 }
+
+                {
+                    const Indent::Guard g_inner{indent_, false};
+                    fmt::println(out_,
+                                 "{}Null terminated: {}",
+                                 indent_.current_branch(),
+                                 a.is_null_terminated());
+                }
+
                 {
                     const Indent::Guard g_inner{indent_, true};
                     dump_explicit_type(a.get_inner_type(), true);

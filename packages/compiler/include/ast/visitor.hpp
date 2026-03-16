@@ -17,7 +17,6 @@ namespace conch::ast {
     X(BinaryExpression)              \
     X(DotExpression)                 \
     X(RangeExpression)               \
-    X(ImplicitDereferenceExpression) \
     X(MatchExpression)               \
     X(ReferenceExpression)           \
     X(DereferenceExpression)         \

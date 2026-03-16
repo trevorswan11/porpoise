@@ -98,8 +98,8 @@ TEST_CASE("Correct declaration modifiers") {
     // Modifiers are order independent
     test({keywords::EXPORT, keywords::CONST},
          ast::DeclModifiers::EXPORT | ast::DeclModifiers::CONSTANT);
-    test({keywords::PRIVATE, keywords::VAR},
-         ast::DeclModifiers::PRIVATE | ast::DeclModifiers::VARIABLE);
+    test({keywords::PUBLIC, keywords::VAR},
+         ast::DeclModifiers::PUBLIC | ast::DeclModifiers::VARIABLE);
     test({keywords::VAR, keywords::EXPORT},
          ast::DeclModifiers::VARIABLE | ast::DeclModifiers::EXPORT);
 
@@ -111,8 +111,8 @@ TEST_CASE("Correct declaration modifiers") {
     test({keywords::VAR, keywords::EXTERN},
          ast::DeclModifiers::VARIABLE | ast::DeclModifiers::EXTERN,
          false);
-    test({keywords::VAR, keywords::PRIVATE},
-         ast::DeclModifiers::VARIABLE | ast::DeclModifiers::PRIVATE,
+    test({keywords::VAR, keywords::PUBLIC},
+         ast::DeclModifiers::VARIABLE | ast::DeclModifiers::PUBLIC,
          false);
 }
 
@@ -152,17 +152,6 @@ TEST_CASE("ABI/Linkage restrictions") {
                        ParserDiagnostic{ParserError::ILLEGAL_DECL_MODIFIERS, 1, 1});
     }
     test_decl_fail({keywords::EXTERN, keywords::EXPORT},
-                   ParserDiagnostic{ParserError::ILLEGAL_DECL_MODIFIERS, 1, 1});
-}
-
-TEST_CASE("Access restrictions") {
-    const auto contending_access =
-        std::array{keywords::PRIVATE, keywords::EXTERN, keywords::EXPORT};
-    for (const auto& mut : array::combinations(contending_access)) {
-        test_decl_fail({mut.first, mut.second},
-                       ParserDiagnostic{ParserError::ILLEGAL_DECL_MODIFIERS, 1, 1});
-    }
-    test_decl_fail({keywords::PRIVATE, keywords::EXTERN, keywords::EXPORT},
                    ParserDiagnostic{ParserError::ILLEGAL_DECL_MODIFIERS, 1, 1});
 }
 

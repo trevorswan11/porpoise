@@ -12,6 +12,8 @@
     - Identifier types: Consist of an identifier (either a keyword or user defined type)
     - Function types: Consist of the functions argument types and return type.
     - Array types: Consist of an optional size (required if array, not if slice) and type which can be any of these types. These are recursively defined.
+        - You can annotate an array type to indicate that it is null-terminated by suffixing the size with `:0` (i.e. `[N:0]`)
+        - You can annotate a slice type to indicate that it is null-terminated by placing `:0` in between the brackets (i.e. `[:0]`)
     - Nested types: Consist of an outer type modifier acting on any of these types in a recursive fashion
 - The location of the type modifier is extremely important:
 ```conch
@@ -48,10 +50,11 @@ const register := fn(cb: Callback): void { ... };
     - This is the only use-case for a built-in null in conch
 - A reference to an object can access its internal fields using the dot operator
 - You can reference a pointer by using the `*` operator
-- A pointer to an object can access its internal fields using the arrow (`->`) operator
-    - Note that this is just syntactic sugar for an explicit dereference expression
+- A pointer to an object can access its internal fields using the standard dot operator
+    - Note that this is just syntactic sugar for an explicit dereference expression followed by a dot operator
 ```conch
-a->b;   // Syntactic sugar
+var a: *A = ...;
+a.b;   // Syntactic sugar
 (*a).b; // Equivalent expression
 ```
 
@@ -70,6 +73,6 @@ a->b;   // Syntactic sugar
 - `float`: A 32-bit floating point, represented by a `f` suffixed number, decimal, or scientific notation
 - `double`: A 64-bit floating point, represented by a standalone decimal or scientific notation
 - `byte`: An unsigned 8-bit value, typically used for characters (i.e. `'a'`) or ascii values
-- `string`: A compile time (static storage duration) string constant consisting of a size and data which is an array of bytes.
+    - There is no string type in conch. Instead you must use an array or slice of bytes (i.e. `[]byte` or `[N]byte`)
 - `bool`: True or false
 - `void`: The unit type

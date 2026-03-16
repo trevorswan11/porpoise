@@ -234,20 +234,20 @@ TEST_CASE("Integer base variants") {
 }
 
 TEST_CASE("Iterator with other keywords") {
-    Lexer l{"and or private extern export packed volatile static "
-            "int long isize uint ulong usize float byte string bool void type"};
+    Lexer l{"and or pub extern export packed volatile static "
+            "int long isize uint ulong usize float byte bool void type"};
 
     const auto expecteds = std::to_array<ExpectedLexeme>({
-        {TokenType::BOOLEAN_AND, "and"},    {TokenType::BOOLEAN_OR, "or"},
-        {TokenType::PRIVATE, "private"},    {TokenType::EXTERN, "extern"},
-        {TokenType::EXPORT, "export"},      {TokenType::PACKED, "packed"},
-        {TokenType::VOLATILE, "volatile"},  {TokenType::STATIC, "static"},
-        {TokenType::INT_TYPE, "int"},       {TokenType::LONG_TYPE, "long"},
-        {TokenType::ISIZE_TYPE, "isize"},   {TokenType::UINT_TYPE, "uint"},
-        {TokenType::ULONG_TYPE, "ulong"},   {TokenType::USIZE_TYPE, "usize"},
-        {TokenType::FLOAT_TYPE, "float"},   {TokenType::BYTE_TYPE, "byte"},
-        {TokenType::STRING_TYPE, "string"}, {TokenType::BOOL_TYPE, "bool"},
-        {TokenType::VOID_TYPE, "void"},     {TokenType::TYPE_TYPE, "type"},
+        {TokenType::BOOLEAN_AND, "and"},   {TokenType::BOOLEAN_OR, "or"},
+        {TokenType::PUBLIC, "pub"},        {TokenType::EXTERN, "extern"},
+        {TokenType::EXPORT, "export"},     {TokenType::PACKED, "packed"},
+        {TokenType::VOLATILE, "volatile"}, {TokenType::STATIC, "static"},
+        {TokenType::INT_TYPE, "int"},      {TokenType::LONG_TYPE, "long"},
+        {TokenType::ISIZE_TYPE, "isize"},  {TokenType::UINT_TYPE, "uint"},
+        {TokenType::ULONG_TYPE, "ulong"},  {TokenType::USIZE_TYPE, "usize"},
+        {TokenType::FLOAT_TYPE, "float"},  {TokenType::BYTE_TYPE, "byte"},
+        {TokenType::BOOL_TYPE, "bool"},    {TokenType::VOID_TYPE, "void"},
+        {TokenType::TYPE_TYPE, "type"},
     });
 
     size_t i = 0;
@@ -266,8 +266,7 @@ TEST_CASE("Comments") {
             "   x + y;\n"
             "};\n\n"
             "var result := add(five, ten); // EOL\n"
-            "var four_and_some := 4.2f;\n"
-            "work->more;"};
+            "var four_and_some := 4.2f;"};
 
     const auto expecteds = std::to_array<ExpectedLexeme>({
         {TokenType::CONST, "const"},  {TokenType::IDENT, "five"},
@@ -291,8 +290,6 @@ TEST_CASE("Comments") {
         {TokenType::SEMICOLON, ";"},  {TokenType::COMMENT, " EOL"},
         {TokenType::VAR, "var"},      {TokenType::IDENT, "four_and_some"},
         {TokenType::WALRUS, ":="},    {TokenType::FLOAT, "4.2f"},
-        {TokenType::SEMICOLON, ";"},  {TokenType::IDENT, "work"},
-        {TokenType::ARROW, "->"},     {TokenType::IDENT, "more"},
         {TokenType::SEMICOLON, ";"},  {TokenType::END, ""},
     });
 
@@ -340,7 +337,7 @@ TEST_CASE("Character literals") {
 
 TEST_CASE("String literals") {
     Lexer l{
-        R"("This is a string";const five := "Hello, World!";var ten: string = "Hello\n, World!\0";var one := "Hello, World!;)"};
+        R"("This is a string";const five := "Hello, World!";var ten: [:0]byte = "Hello\n, World!\0";var one := "Hello, World!;)"};
 
     const auto expecteds = std::to_array<ExpectedLexeme>({
         {TokenType::STRING, R"("This is a string")"},
@@ -353,7 +350,10 @@ TEST_CASE("String literals") {
         {TokenType::VAR, "var"},
         {TokenType::IDENT, "ten"},
         {TokenType::COLON, ":"},
-        {TokenType::STRING_TYPE, "string"},
+        {TokenType::LBRACKET, "["},
+        {TokenType::NULL_TERMINATED, ":0"},
+        {TokenType::RBRACKET, "]"},
+        {TokenType::BYTE_TYPE, "byte"},
         {TokenType::ASSIGN, "="},
         {TokenType::STRING, R"("Hello\n, World!\0")"},
         {TokenType::SEMICOLON, ";"},

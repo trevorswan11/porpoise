@@ -35,8 +35,7 @@ constexpr std::string_view input{R"(
     enum : ulong {A = 1ul, B = T, C, };
     @ptrAdd(a, 4uz);
     using T = int;
-    a(&mut r, t, *[N]int);
-    a->b;
+    a(&mut r, t, *[N:0]byte);
     .a;
     union { a: int, b: &mut T, };
     do { a;} while (true);

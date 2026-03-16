@@ -7,10 +7,10 @@
 
 ```conch
 const a := 2;           // Type deduced to be a signed 32 bit int
-const b := "str";       // Type deduced to be a string
+const b := "str";       // Type deduced to be a constant size array of bytes (non-null terminated)
 const c: byte = 's';    // Explicitly typed, so value must agree
 const d :=;             // Illegal, walrus needs a value!
-var e: string;          // Allowed, e is forward declared and future assignments must be a string
+var e: []byte;         // Allowed, e is forward declared and future assignments must be a slice of bytes
 ```
 
 ## Runtime Constants
@@ -43,13 +43,13 @@ var c := &mut a;    // Illegal, cannot take mutable reference of constant
 
 ## Modifiers
 - Declarations have many different modifiers that affect linkage, access, and ownership
-    - `private`: When used inside of a struct, this restricts access to struct-local functions (i.e. member functions) only. When used on a top-level declaration, this prohibits importing files from accessing the declaration. The presence of this keyword correctly implies that all declarations are `public` unless explicitly stated otherwise. This keyword is not valid with the `export` modifier.
+    - `pub`: When used inside of a struct, this opens access to non-struct-local functions (i.e. member functions). When used on a top-level declaration, this lets importing files access the declaration. The presence of this keyword correctly implies that all declarations are *private* unless explicitly stated otherwise.
     - `extern`: Denotes a declaration as relating to a symbol yet-to-be defined (i.e. external linkage). This currently supports only C symbols. This keyword cannot be combined with the `export` modifier. 
     - `export`: Forwards the declaration to the 'outside world'. This means that the symbol is treated as a C symbol. This keyword cannot be combined with the `extern` modifier.
     - `static`: This keyword is only valid for struct members. It denotes a symbol as being owned (namespaced) by the struct itself, not by instances of said struct.
 
 ```conch
-private var c := 2;     // Allowed, symbol can no longer be exported
+pub var c := 2;         // Allowed, symbol can be imported
 extern const a: int;    // Allowed, externs must be explicitly typed without values
 export var b := 1;      // Allowed
 static var c := 33;     // Illegal, cannot use static on a non-struct member

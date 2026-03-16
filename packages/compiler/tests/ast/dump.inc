@@ -81,9 +81,11 @@ DeclStatement (f_ptr)
         └─ Returns: ExplicitType (modifier: REF)
             └─ ArrayType
                 ├─ Dimensions: USizeIntegerExpression: 2
+                ├─ Null terminated: false
                 └─ ExplicitType (modifier: BASE)
                     └─ ArrayType
                         ├─ Dimensions: IdentifierExpression: N
+                        ├─ Null terminated: false
                         └─ ExplicitType (modifier: PTR)
                             └─ IdentifierExpression: E
 ExpressionStatement
@@ -230,12 +232,9 @@ ExpressionStatement
         └─ ExplicitType (modifier: PTR)
             └─ ArrayType
                 ├─ Dimensions: IdentifierExpression: N
+                ├─ Null terminated: true
                 └─ ExplicitType (modifier: BASE)
-                    └─ IdentifierExpression: int (primitive)
-ExpressionStatement
-└─ Expr: ImplicitDereferenceExpression (ARROW)
-    ├─ Object: IdentifierExpression: a
-    └─ Member: IdentifierExpression: b
+                    └─ IdentifierExpression: byte (primitive)
 ExpressionStatement
 └─ Expr: ImplicitAccessExpression (DOT)
     └─ Operand: IdentifierExpression: a
@@ -291,6 +290,7 @@ DeclStatement (a)
 └─ Type: ExplicitType (modifier: BASE)
     └─ ArrayType
         ├─ Dimensions: (slice)
+        ├─ Null terminated: false
         └─ ExplicitType (modifier: BASE)
             └─ IdentifierExpression: int (primitive)
 BlockStatement

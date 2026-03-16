@@ -94,11 +94,11 @@ enum class TokenType : u8 {
     DOT,
     DOT_DOT,
     DOT_DOT_EQ,
-    ARROW,
     FAT_ARROW,
 
     COMMENT,
     MULTILINE_STRING,
+    NULL_TERMINATED,
 
     COMMA,
     COLON,
@@ -153,11 +153,10 @@ enum class TokenType : u8 {
     BYTE_TYPE,
     FLOAT_TYPE,
     DOUBLE_TYPE,
-    STRING_TYPE,
     BOOL_TYPE,
     VOID_TYPE,
 
-    PRIVATE,
+    PUBLIC,
     EXTERN,
     EXPORT,
     PACKED,

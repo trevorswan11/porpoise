@@ -19,7 +19,7 @@ enum class DeclModifiers : u8 {
     VARIABLE = 1 << 0,
     CONSTANT = 1 << 1,
     COMPTIME = 1 << 2,
-    PRIVATE  = 1 << 3,
+    PUBLIC   = 1 << 3,
     EXTERN   = 1 << 4,
     EXPORT   = 1 << 5,
     STATIC   = 1 << 6,
@@ -82,7 +82,7 @@ class DeclStatement : public StmtBase<DeclStatement> {
         {TokenType::VAR, DeclModifiers::VARIABLE},
         {TokenType::CONST, DeclModifiers::CONSTANT},
         {TokenType::COMPTIME, DeclModifiers::COMPTIME},
-        {TokenType::PRIVATE, DeclModifiers::PRIVATE},
+        {TokenType::PUBLIC, DeclModifiers::PUBLIC},
         {TokenType::EXTERN, DeclModifiers::EXTERN},
         {TokenType::EXPORT, DeclModifiers::EXPORT},
         {TokenType::STATIC, DeclModifiers::STATIC},
@@ -103,12 +103,7 @@ class DeclStatement : public StmtBase<DeclStatement> {
         const auto valid_abi =
             std::popcount(std::to_underlying(modifiers &
                                              (DeclModifiers::EXTERN | DeclModifiers::EXPORT))) <= 1;
-
-        // At most one access flag can be set
-        const auto valid_access =
-            std::popcount(std::to_underlying(
-                modifiers & (DeclModifiers::PRIVATE | DeclModifiers::EXPORT))) <= 1;
-        return valid_mut && valid_comptime && valid_abi && valid_access;
+        return valid_mut && valid_comptime && valid_abi;
     }
 
     static constexpr auto token_to_modifier(const Token& tok) -> Optional<DeclModifiers> {

@@ -57,10 +57,10 @@ constexpr Operator COLON_COLON{"::", TokenType::COLON_COLON};
 constexpr Operator DOT{".", TokenType::DOT};
 constexpr Operator DOT_DOT{"..", TokenType::DOT_DOT};
 constexpr Operator DOT_DOT_EQ{"..=", TokenType::DOT_DOT_EQ};
-constexpr Operator ARROW{"->", TokenType::ARROW};
 constexpr Operator FAT_ARROW{"=>", TokenType::FAT_ARROW};
 constexpr Operator COMMENT{"//", TokenType::COMMENT};
 constexpr Operator MULTILINE_STRING{"\\\\", TokenType::MULTILINE_STRING};
+constexpr Operator NULL_TERMINATED{":0", TokenType::NULL_TERMINATED};
 
 } // namespace operators
 
@@ -105,10 +105,10 @@ constexpr auto ALL_OPERATORS = []() {
         operators::DOT,
         operators::DOT_DOT,
         operators::DOT_DOT_EQ,
-        operators::ARROW,
         operators::FAT_ARROW,
         operators::COMMENT,
         operators::MULTILINE_STRING,
+        operators::NULL_TERMINATED,
     };
 
     std::ranges::sort(all_operators, {}, &Operator::first);

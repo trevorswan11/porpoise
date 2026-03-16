@@ -58,6 +58,9 @@ var a: &[]&*mut T; // Analogous slice type
     - They should be avoided unless strictly necessary (i.e. working with highly performance-critical code or C-interop)
 
 ## Memory layout
+- Arrays and slices of bytes are not implicitly null terminated
+    - If you wish to make a non-null terminated slice a null terminated one, you must do so explicitly
+        - You can indicate that a slice or array is null terminated by explicitly annotating the type with `:0`
 ### Arrays
 - Arrays are guaranteed to be contiguous in memory
 - Arrays do not support implicit sentinel termination, the size provided to an array at initialization is exactly the size of that array during use

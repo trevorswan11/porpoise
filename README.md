@@ -56,7 +56,7 @@ Using AI for the development of Conch should be seen as a last resort. All code 
 ```conch
 import std;
 
-const main := fn(): void {
+pub const main := fn(args: [][:0]byte): int {
     const message := "Hello, world!";
     std::io::println(message);
 };

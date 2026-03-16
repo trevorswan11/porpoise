@@ -64,6 +64,7 @@ TEST_CASE("Array type") {
             mods::BASE,
             ast::ExplicitArrayType{
                 make_box<ast::USizeIntegerExpression>(Token{TokenType::UZINT_10, "5uz"}, 5uz),
+                false,
                 make_box<ast::ExplicitType>(mods::PTR, helpers::make_ident("ulong"))}});
 }
 
@@ -73,7 +74,7 @@ TEST_CASE("Slice type") {
         ast::ExplicitType{
             mods::BASE,
             ast::ExplicitArrayType{
-                {}, make_box<ast::ExplicitType>(mods::PTR, helpers::make_ident("ulong"))}});
+                {}, false, make_box<ast::ExplicitType>(mods::PTR, helpers::make_ident("ulong"))}});
 }
 
 TEST_CASE("Recursive types") {
@@ -83,6 +84,7 @@ TEST_CASE("Recursive types") {
             mods::REF,
             ast::ExplicitArrayType{
                 helpers::make_ident("S"),
+                false,
                 make_box<ast::ExplicitType>(
                     mods::REF,
                     make_box<ast::ExplicitType>(mods::MUT_PTR, helpers::make_ident("T")))}});
@@ -90,7 +92,7 @@ TEST_CASE("Recursive types") {
 
 TEST_CASE("Complex function type (holistic)") {
     helpers::test_type_expr(
-        "*fn(&a, b: *mut B): &[0x2uz][N]*E",
+        "*fn(&a, b: *mut B): &[0x2uz][N:0]*E",
         ast::ExplicitType{
             mods::PTR,
             make_box<ast::FunctionExpression>(
@@ -104,9 +106,11 @@ TEST_CASE("Complex function type (holistic)") {
                     ast::ExplicitArrayType{
                         make_box<ast::USizeIntegerExpression>(Token{TokenType::UZINT_16, "0x2uz"},
                                                               0x2uz),
+                        false,
                         make_box<ast::ExplicitType>(
                             mods::BASE,
                             ast::ExplicitArrayType{helpers::make_ident("N"),
+                                                   true,
                                                    make_box<ast::ExplicitType>(
                                                        mods::PTR, helpers::make_ident("E"))})}},
                 nullopt)});

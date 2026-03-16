@@ -4,7 +4,7 @@
 - Struct definitions must be `const`
 - Struct members are simply declarations
     - Members cannot be marked `extern` or `export`
-    - Members can be marked `private` to prevent external access
+    - Members can be marked `pub` to allow external access
     - Members can be marked `static`, denoting struct-level ownership (as opposed to instance)
     - Member functions have a first argument which is an instance of the struct: `self`
         - A member function can provide this keyword in five different ways:
@@ -27,9 +27,9 @@
 ```conch
 const Foo := struct {           // Standard declaration with type inference
     var bar: int;               // Mutable member variable
-    const baz: string = "baz";  // Constant member variable, must be initialized in-line
+    const baz: []byte = "baz";  // Constant member variable, must be initialized in-line
 
-    private var boo := 4u;      // Members are public by default
+    pub var boo := 4u;          // Members are private by default
     static const foo := 3.4;    // Static variables are struct globals and are not instance specific
 
     const worker_one := fn(&self): void {           // Functions have an explicit 'self' parameter
@@ -40,7 +40,7 @@ const Foo := struct {           // Standard declaration with type inference
         // ...
     };
 
-    static const worker_three = fn(): void {        // Functions marked static cannot have a 'self' parameter
+    pub static const worker_three = fn(): void {        // Functions marked static cannot have a 'self' parameter
         // ...
     };
 
@@ -49,7 +49,7 @@ const Foo := struct {           // Standard declaration with type inference
     //
     // };
 
-    private const fee := "Hello, World!";           // Members can be placed anywhere in the struct definition
+    pub const fee := "Hello, World!";           // Members can be placed anywhere in the struct definition
 };
 
 Foo::foo;                                           // Static members are resolved using the '::' operator
