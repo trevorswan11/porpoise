@@ -1,36 +1,36 @@
-<h1 align="center">🐚conch🐚</h1>
+<h1 align="center">porpoise</h1>
 
 <p align="center">
-<img src="https://img.shields.io/badge/C%2B%2B-23-blue?logo=c%2B%2B&logoColor=white" alt="C++23" /> <img src="https://img.shields.io/badge/Zig-0.15.2-orange?logo=zig" alt="Zig 0.15.2" /> <a href="LICENSE"><img src="https://img.shields.io/github/license/trevorswan11/conch" alt="License" /></a> <a href="https://github.com/trevorswan11/conch/actions/workflows/format.yml"><img src="https://github.com/trevorswan11/conch/actions/workflows/format.yml/badge.svg" alt="Formatting" /></a> <a href="https://github.com/trevorswan11/conch/actions/workflows/ci.yml"><img src="https://github.com/trevorswan11/conch/actions/workflows/ci.yml/badge.svg" alt="CI" /></a> <img src="https://raw.githubusercontent.com/trevorswan11/conch/coverage/coverage.svg" alt="Coverage" />
+<img src="https://img.shields.io/badge/C%2B%2B-23-blue?logo=c%2B%2B&logoColor=white" alt="C++23" /> <img src="https://img.shields.io/badge/Zig-0.15.2-orange?logo=zig" alt="Zig 0.15.2" /> <a href="LICENSE"><img src="https://img.shields.io/github/license/trevorswan11/porpoise" alt="License" /></a> <a href="https://github.com/trevorswan11/porpoise/actions/workflows/format.yml"><img src="https://github.com/trevorswan11/porpoise/actions/workflows/format.yml/badge.svg" alt="Formatting" /></a> <a href="https://github.com/trevorswan11/porpoise/actions/workflows/ci.yml"><img src="https://github.com/trevorswan11/porpoise/actions/workflows/ci.yml/badge.svg" alt="CI" /></a> <img src="https://raw.githubusercontent.com/trevorswan11/porpoise/coverage/coverage.svg" alt="Coverage" />
 </p>
 
 <p align="center">
 A hand-crafted systems programming language.
 <br />
-<a href="https://github.com/trevorswan11/conch/tree/main/doc"><strong>Explore the docs »</strong></a>
+<a href="https://github.com/trevorswan11/porpoise/tree/main/doc"><strong>Explore the docs »</strong></a>
 <br />
 <br />
-<a href="https://github.com/trevorswan11/conch/issues/new?labels=bug&template=bug-report.md">Report Bug</a>
+<a href="https://github.com/trevorswan11/porpoise/issues/new?labels=bug&template=bug-report.md">Report Bug</a>
 &middot;
-<a href="https://github.com/trevorswan11/conch/issues/new?labels=enhancement&template=feature-request.md">Request Feature</a>
+<a href="https://github.com/trevorswan11/porpoise/issues/new?labels=enhancement&template=feature-request.md">Request Feature</a>
 </p>
 
 ## About the Project
-Conch is a compiled systems language powered by LLVM, C++, and Zig. It attempts to combine select features from its more popular predecessors (i.e. Zig, Rust, C, C++) into a performant low-level language.
+Porpoise is a compiled systems language powered by LLVM, C++, and Zig. It attempts to combine select features from its more popular predecessors (i.e. Zig, Rust, C, C++) into a performant low-level language.
 
 ### Built With Zig!
 
-Zig is used as the primary orchestrator for all things Conch. Conch uses Zig's `build.zig` to provide a hermetic build. Necessary dependencies are automatically fetched and all required dependencies are built from source. This unified build system manages LLVM compilation (including tools like clang-format), kcov coverage reporting (on supported platforms), and core maintainer tools such as a custom archiver for releases. Conch aims to be reproducible anywhere that has a valid and correctly versioned Zig. **No manual linking or hoop-jumping is required to build Conch, ever, on any platform**.
+Zig is used as the primary orchestrator for all things Porpoise. Porpoise uses Zig's `build.zig` to provide a hermetic build. Necessary dependencies are automatically fetched and all required dependencies are built from source. This unified build system manages LLVM compilation (including tools like clang-format), kcov coverage reporting (on supported platforms), and core maintainer tools such as a custom archiver for releases. Porpoise aims to be reproducible anywhere that has a valid and correctly versioned Zig. **No manual linking or hoop-jumping is required to build Porpoise, ever, on any platform**.
 
 <details>
 <summary><b>Full dependency breakdown</b></summary>
 
-The following are "standalone" dependencies, required and manually fetched by Conch's build system.
+The following are "standalone" dependencies, required and manually fetched by Porpoise's build system.
 1. [Catch2](https://github.com/catchorg/Catch2)'s amalgamated source code is compiled from source for test running. It is automatically configured in the project's build script and links statically to the test builds.
 2. [cppcheck](https://cppcheck.sourceforge.io/) is compiled from source for static analysis. It is licensed under the GNU GPLv3, but the associated compiled artifacts are neither linked with output artifacts nor shipped with releases.
 3. [magic_enum](https://github.com/Neargye/magic_enum) is used as a utility to reflect on enum values. Is is licensed under the permissible MIT license.
 4. [fmt](https://github.com/fmtlib/fmt) is used as a formatting utility in place of std::format, which is not as performant or feature-full. Is is licensed under the permissible MIT license.
-5. [LLVM 21.1.8](https://releases.llvm.org/21.1.0/docs/ReleaseNotes.html) is used as Conch's compilation backend. It is manually compiled and statically linked against conch through the build system. It is licensed under the permissible Apache License 2.0, and has the following dependencies:
+5. [LLVM 21.1.8](https://releases.llvm.org/21.1.0/docs/ReleaseNotes.html) is used as Porpoise's compilation backend. It is manually compiled and statically linked against Porpoise through the build system. It is licensed under the permissible Apache License 2.0, and has the following dependencies:
     - [libxml2](https://gitlab.gnome.org/GNOME/libxml2)
     - [zlib](https://github.com/madler/zlib)
     - [zstd](https://github.com/facebook/zstd)
@@ -50,10 +50,10 @@ The following are "standalone" dependencies, required and manually fetched by Co
 - Experiment freely
 - KISS & DRY
 
-Using AI for the development of Conch should be seen as a last resort. All code pushed should be deeply understood. Development speed is _not_ and _will never be_ a core principle of Conch.
+Using AI for the development of Porpoise should be seen as a last resort. All code pushed should be deeply understood. Development speed is _not_ and _will never be_ a core principle of Porpoise.
 
 ### Usage Example
-```conch
+```porpoise
 import std;
 
 pub const main := fn(args: [][:0]byte): int {
@@ -67,12 +67,12 @@ pub const main := fn(args: [][:0]byte): int {
 This is by far the easiest way to get started with development. Just run `nix develop` to get started and automatically get the correct Zig version and some important development tools. Note that this provides optional preconfigured tools such as LLDB, Clangd, and ZLS to further enhance the developer experience.
 
 ### For Others
-All you need to get started with Conch development is a valid 0.15.2 Zig installation, which can be found [here](https://ziglang.org/download/).
+All you need to get started with Porpoise development is a valid 0.15.2 Zig installation, which can be found [here](https://ziglang.org/download/).
 
-In either case, assuming you have the Zig prerequisite on your system, building Conch is as easy as running:
+In either case, assuming you have the Zig prerequisite on your system, building Porpoise is as easy as running:
 ```sh
-git clone https://github.com/trevorswan11/conch
-cd conch
+git clone https://github.com/trevorswan11/porpoise
+cd porpoise
 zig build --release
 ```
 
@@ -92,7 +92,7 @@ zig build --release
         - [ ] Test parity through the build system
     - [ ] Compiler backend integration
 
-See the [open issues](https://github.com/trevorswan11/conch/issues) for a full list of proposed features (and known issues).
+See the [open issues](https://github.com/trevorswan11/porpoise/issues) for a full list of proposed features (and known issues).
 
 ## Contributing
 
@@ -108,8 +108,8 @@ If you have a suggestion that would make this better, please fork the repo and c
 
 ### Top contributors:
 
-<a href="https://github.com/trevorswan11/conch/graphs/contributors">
-  <img src="https://contrib.rocks/image?repo=trevorswan11/conch" alt="contrib.rocks image" />
+<a href="https://github.com/trevorswan11/porpoise/graphs/contributors">
+  <img src="https://contrib.rocks/image?repo=trevorswan11/porpoise" alt="contrib.rocks image" />
 </a>
 
 ## License
@@ -120,7 +120,7 @@ Distributed under the MIT License. See `LICENSE` for more information.
 
 [![LinkedIn](https://img.shields.io/badge/linkedin-%230077B5.svg?style=for-the-badge&logo=linkedin&logoColor=white)](https://www.linkedin.com/in/trevorswan11/) [![Gmail](https://img.shields.io/badge/Gmail-D14836?style=for-the-badge&logo=gmail&logoColor=white)](mailto:trevor.swan@case.edu)
 
-Project Link: [https://github.com/trevorswan11/conch](https://github.com/trevorswan11/conch)
+Project Link: [https://github.com/trevorswan11/porpoise](https://github.com/trevorswan11/porpoise)
 
 ## Acknowledgments
 
