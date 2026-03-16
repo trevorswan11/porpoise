@@ -40,7 +40,7 @@ TEST_CASE("Builtin with multiple arguments") {
 TEST_CASE("Type arguments in call") {
     const Token func{TokenType::IDENT, "a"};
     helpers::test_expr_stmt(
-        "a(&mut r, t, *[N]int);",
+        "a(&mut r, t, *[N]int, [:0]byte);",
         ast::CallExpression{
             func,
             helpers::make_ident(func),
@@ -52,7 +52,14 @@ TEST_CASE("Type arguments in call") {
                     mods::PTR,
                     ast::ExplicitArrayType{
                         helpers::make_ident("N"),
-                        make_box<ast::ExplicitType>(mods::BASE, helpers::make_ident("int"))}})});
+                        false,
+                        make_box<ast::ExplicitType>(mods::BASE, helpers::make_ident("int"))}},
+                ast::ExplicitType{
+                    mods::BASE,
+                    ast::ExplicitArrayType{
+                        {},
+                        true,
+                        make_box<ast::ExplicitType>(mods::BASE, helpers::make_ident("byte"))}})});
 }
 
 TEST_CASE("No arguments with comma") {

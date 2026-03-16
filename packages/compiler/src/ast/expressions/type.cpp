@@ -8,8 +8,10 @@
 namespace conch::ast {
 
 ExplicitArrayType::ExplicitArrayType(Optional<Box<Expression>> dimension,
+                                     bool                      null_terminated,
                                      Box<ExplicitType>         inner_type) noexcept
-    : dimension_{std::move(dimension)}, inner_type_{std::move(inner_type)} {}
+    : dimension_{std::move(dimension)}, null_terminated_{null_terminated},
+      inner_type_{std::move(inner_type)} {}
 ExplicitArrayType::~ExplicitArrayType() = default;
 
 auto ExplicitArrayType::is_equal(const ExplicitArrayType& other) const noexcept -> bool {
@@ -50,22 +52,35 @@ auto ExplicitType::is_equal(const ExplicitType& other) const noexcept -> bool {
 
     // The array dimension of a type are only present conditionally
     if (parser.peek_token_is(TokenType::LBRACKET)) {
-        parser.advance(2);
+        parser.advance();
+
+        auto                      null_terminated = false;
         Optional<Box<Expression>> dimension;
-        if (!parser.current_token_is(TokenType::RBRACKET)) {
+        if (parser.peek_token_is(TokenType::NULL_TERMINATED)) {
+            parser.advance();
+            null_terminated = true;
+        } else if (!parser.peek_token_is(TokenType::RBRACKET)) {
+            parser.advance();
             dimension.emplace(TRY(parser.parse_expression()));
             if (!(*dimension)->any<USizeIntegerExpression, IdentifierExpression>()) {
                 return make_parser_unexpected(ParserError::ILLEGAL_ARRAY_SIZE_TYPE,
                                               (*dimension)->get_token());
             }
-            TRY(parser.expect_peek(TokenType::RBRACKET));
+
+            // The null terminated marker comes after the size for explicitly sized types
+            if (parser.peek_token_is(TokenType::NULL_TERMINATED)) {
+                parser.advance();
+                null_terminated = true;
+            }
         }
+        TRY(parser.expect_peek(TokenType::RBRACKET));
 
         // Arrays are recursively defined
         auto inner = TRY(ExplicitType::parse(parser));
-        return ExplicitType{
-            std::move(modifier),
-            ExplicitArrayType{std::move(dimension), make_box<ExplicitType>(std::move(inner))}};
+        return ExplicitType{std::move(modifier),
+                            ExplicitArrayType{std::move(dimension),
+                                              null_terminated,
+                                              make_box<ExplicitType>(std::move(inner))}};
     } else if (!TypeModifier::from_token(parser.peek_token()).is_value()) {
         // Don't advance since the parser does it implicitly here (costs two from_token calls)
         auto inner = TRY(ExplicitType::parse(parser));

@@ -21,18 +21,21 @@ class ExplicitType;
 class ExplicitArrayType {
   public:
     explicit ExplicitArrayType(Optional<Box<Expression>> dimension,
+                               bool                      null_terminated,
                                Box<ExplicitType>         inner_type) noexcept;
     ~ExplicitArrayType();
 
     MAKE_AST_COPY_MOVE(ExplicitArrayType)
 
     MAKE_OPTIONAL_UNPACKER(dimension, Expression, dimension_, **)
+    [[nodiscard]] auto is_null_terminated() const noexcept -> bool { return null_terminated_; }
     MAKE_AST_GETTER(inner_type, const ExplicitType&, *)
 
     MAKE_AST_DEPENDENT_EQ(ExplicitArrayType)
 
   private:
     Optional<Box<Expression>> dimension_;
+    bool                      null_terminated_;
     Box<ExplicitType>         inner_type_;
 };
 

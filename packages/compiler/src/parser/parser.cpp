@@ -97,7 +97,7 @@ auto Parser::parse_statement() -> Expected<Box<ast::Statement>, ParserDiagnostic
     case TokenType::VAR:
     case TokenType::CONST:
     case TokenType::COMPTIME:
-    case TokenType::PRIVATE:
+    case TokenType::PUBLIC:
     case TokenType::EXTERN:
     case TokenType::EXPORT:     return ast::DeclStatement::parse(*this);
     case TokenType::BREAK:
@@ -277,7 +277,6 @@ constexpr auto INFIX_FNS = []() {
         {TokenType::DOT, ast::DotExpression::parse},
         {TokenType::DOT_DOT, ast::RangeExpression::parse},
         {TokenType::DOT_DOT_EQ, ast::RangeExpression::parse},
-        {TokenType::ARROW, ast::ImplicitDereferenceExpression::parse},
         {TokenType::LPAREN, ast::CallExpression::parse},
         {TokenType::LBRACKET, ast::IndexExpression::parse},
         {TokenType::ASSIGN, ast::AssignmentExpression::parse},

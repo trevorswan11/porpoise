@@ -20,10 +20,12 @@ TEST_CASE("Well formed using statement") {
                 ast::ExplicitArrayType{
                     make_box<ast::USizeIntegerExpression>(Token{TokenType::UZINT_16, "0x2uz"},
                                                           0x2uz),
+                    false,
                     make_box<ast::ExplicitType>(
                         mods::BASE,
                         ast::ExplicitArrayType{
                             helpers::make_ident("N"),
+                            false,
                             make_box<ast::ExplicitType>(mods::PTR, helpers::make_ident("E"))})}}});
 }
 

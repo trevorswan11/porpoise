@@ -3,7 +3,6 @@
 #include <string>
 
 #include "string.hpp"
-#include "types.hpp"
 
 namespace conch {
 

@@ -1,5 +1,6 @@
 #pragma once
 
+#include <ranges>
 #include <string>
 #include <vector>
 
@@ -29,10 +30,15 @@ class Indent {
     auto push(bool last) -> void { levels_.push_back(last); }
     auto pop() -> void { levels_.pop_back(); }
 
-    [[nodiscard]] auto current_branch() const -> std::string;
-
-  private:
-    [[nodiscard]] auto prefix_only() const -> std::string;
+    [[nodiscard]] auto current_branch() const -> std::string {
+        if (levels_.empty()) { return {}; }
+        auto res = levels_ | std::views::take(levels_.size() - 1) |
+                   std::views::transform(
+                       [](auto level) { return level ? symbols::EMPTY : symbols::VERT_BAR; }) |
+                   std::views::join | std::ranges::to<std::string>();
+        res += levels_.back() ? symbols::L_BRANCH : symbols::T_BRANCH;
+        return res;
+    }
 
   private:
     std::vector<bool> levels_;
