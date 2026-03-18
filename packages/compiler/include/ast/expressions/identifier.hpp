@@ -9,7 +9,7 @@
 
 #include "parser/parser.hpp"
 
-namespace conch::ast {
+namespace porpoise::ast {
 
 class IdentifierExpression : public ExprBase<IdentifierExpression> {
   public:
@@ -30,12 +30,12 @@ class IdentifierExpression : public ExprBase<IdentifierExpression> {
     auto is_equal(const Node&) const noexcept -> bool override { return true; }
 };
 
-} // namespace conch::ast
+} // namespace porpoise::ast
 
-template <> struct fmt::formatter<conch::ast::IdentifierExpression> {
+template <> struct fmt::formatter<porpoise::ast::IdentifierExpression> {
     static constexpr auto parse(format_parse_context& ctx) noexcept { return ctx.begin(); }
 
-    template <typename F> static auto format(const conch::ast::IdentifierExpression& n, F& ctx) {
+    template <typename F> static auto format(const porpoise::ast::IdentifierExpression& n, F& ctx) {
         return fmt::format_to(ctx.out(), "{}", n.get_name());
     }
 };

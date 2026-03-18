@@ -5,7 +5,7 @@
 #include "ast/statements/declaration.hpp"
 #include "ast/visitor.hpp"
 
-namespace conch::ast {
+namespace porpoise::ast {
 
 StructExpression::StructExpression(const Token&                    start_token,
                                    std::vector<Box<DeclStatement>> members) noexcept
@@ -47,4 +47,4 @@ auto StructExpression::is_equal(const Node& other) const noexcept -> bool {
     return is_packed() == casted.is_packed() && members_eq;
 }
 
-} // namespace conch::ast
+} // namespace porpoise::ast

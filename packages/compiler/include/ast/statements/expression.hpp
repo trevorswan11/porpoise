@@ -6,7 +6,7 @@
 
 #include "parser/parser.hpp"
 
-namespace conch::ast {
+namespace porpoise::ast {
 
 class ExpressionStatement : public StmtBase<ExpressionStatement> {
   public:
@@ -33,4 +33,4 @@ class ExpressionStatement : public StmtBase<ExpressionStatement> {
     Box<Expression> expression_;
 };
 
-} // namespace conch::ast
+} // namespace porpoise::ast

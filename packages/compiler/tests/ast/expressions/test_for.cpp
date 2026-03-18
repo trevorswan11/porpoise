@@ -7,7 +7,7 @@
 #include "ast/expressions/primitive.hpp"
 #include "ast/statements/jump.hpp"
 
-namespace conch::tests {
+namespace porpoise::tests {
 
 TEST_CASE("For loop with base captures") {
     helpers::test_expr_stmt(
@@ -128,4 +128,4 @@ TEST_CASE("Illegal for-else clause") {
                        ParserDiagnostic{ParserError::ILLEGAL_LOOP_NON_BREAK, 1, 28});
 }
 
-} // namespace conch::tests
+} // namespace porpoise::tests

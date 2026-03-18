@@ -3,7 +3,7 @@
 #include "ast/expressions/identifier.hpp"
 #include "ast/visitor.hpp"
 
-namespace conch::ast {
+namespace porpoise::ast {
 
 ScopeResolutionExpression::ScopeResolutionExpression(const Token&              start_token,
                                                      Box<Expression>           outer,
@@ -30,4 +30,4 @@ auto ScopeResolutionExpression::is_equal(const Node& other) const noexcept -> bo
     return *outer_ == *casted.outer_ && *inner_ == *casted.inner_;
 }
 
-} // namespace conch::ast
+} // namespace porpoise::ast

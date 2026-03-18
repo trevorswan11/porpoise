@@ -4,7 +4,7 @@
 #include "ast/expressions/primitive.hpp"
 #include "ast/visitor.hpp"
 
-namespace conch::ast {
+namespace porpoise::ast {
 
 ImportStatement::ImportStatement(const Token&                           start_token,
                                  std::variant<ModuleImport, UserImport> imported,
@@ -64,4 +64,4 @@ auto ImportStatement::is_equal(const Node& other) const noexcept -> bool {
     return variant_eq && optional::unsafe_eq<IdentifierExpression>(alias_, casted.alias_);
 }
 
-} // namespace conch::ast
+} // namespace porpoise::ast

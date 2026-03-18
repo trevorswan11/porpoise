@@ -27,7 +27,7 @@
 - Static members are resolved using the `::` operator
 - Instance members are resolved using the `.` operator
 
-```conch
+```porpoise
 const Foo := struct {           // Standard declaration with type inference
     var bar: int;               // Mutable member variable
     const baz: []byte = "baz";  // Constant member variable, must be initialized in-line
@@ -61,7 +61,7 @@ Foo::worker_three();                                // The same goes for functio
 
 - Structs can be marked `packed` to prevent the compiler from reordering members or from adding additional padding
 
-```conch
+```porpoise
 const Bar := packed struct {
     // ...
 };

@@ -1,5 +1,5 @@
 # Unions
-- Unions in conch act very similar to Zig-style tagged unions
+- Unions in porpoise act very similar to Zig-style tagged unions
 - Unions are defined using the standard declaration syntax
     - As unions are types, they can also be defined with a `using` statement. This restricts the modifiers you can use, preventing access/abi restrictions
 - A union is defined by a a comma separated list of key-value pairs, where:
@@ -11,7 +11,7 @@
     - You can also use this to match over an enum, capturing the active fields value with a capture clause
 - The inner types of a union are not restricted to any subset or superset of the language (i.e. you are not restricted to only primitive types nor are you prohibited from using user-defined types)
 - Initializing a union is done through Call initialization syntax and can be combined with an implicit access expression
-```conch
+```porpoise
 const Hand := union {
     card: bool,
     pen: int,

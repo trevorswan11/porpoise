@@ -8,7 +8,7 @@
 #include "lexer/lexer.hpp"
 #include "lexer/token.hpp"
 
-namespace conch::tests {
+namespace porpoise::tests {
 
 using ExpectedLexeme = std::pair<TokenType, std::string_view>;
 
@@ -455,4 +455,4 @@ TEST_CASE("Illegal builtins") {
     REQUIRE(input == illegal.slice);
 }
 
-} // namespace conch::tests
+} // namespace porpoise::tests

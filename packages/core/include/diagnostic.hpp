@@ -11,7 +11,7 @@
 #include "source_loc.hpp"
 #include "types.hpp"
 
-namespace conch {
+namespace porpoise {
 
 namespace detail {
 
@@ -62,12 +62,12 @@ class Diagnostic {
     friend struct fmt::formatter<Diagnostic>;
 };
 
-} // namespace conch
+} // namespace porpoise
 
-template <typename E> struct fmt::formatter<conch::Diagnostic<E>> {
+template <typename E> struct fmt::formatter<porpoise::Diagnostic<E>> {
     static constexpr auto parse(format_parse_context& ctx) noexcept { return ctx.begin(); }
 
-    template <typename F> static auto format(const conch::Diagnostic<E>& d, F& ctx) {
+    template <typename F> static auto format(const porpoise::Diagnostic<E>& d, F& ctx) {
         return fmt::format_to(ctx.out(), "{}", d.to_string());
     }
 };

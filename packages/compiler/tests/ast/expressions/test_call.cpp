@@ -7,7 +7,7 @@
 #include "ast/expressions/primitive.hpp"
 #include "lexer/operators.hpp"
 
-namespace conch::tests {
+namespace porpoise::tests {
 
 namespace mods = helpers::type_modifiers;
 
@@ -74,4 +74,4 @@ TEST_CASE("Non-comma separated arguments") {
             "Expected token COMMA, found INT_10", ParserError::UNEXPECTED_TOKEN, 1, 8});
 }
 
-} // namespace conch::tests
+} // namespace porpoise::tests

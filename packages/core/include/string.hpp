@@ -4,7 +4,7 @@
 
 #include "types.hpp"
 
-namespace conch::string {
+namespace porpoise::string {
 
 [[nodiscard]] auto is_space(byte b) noexcept -> bool;
 
@@ -15,4 +15,4 @@ namespace conch::string {
 [[nodiscard]] auto trim(std::string_view str, bool (*pred)(byte) = is_space) noexcept
     -> std::string_view;
 
-} // namespace conch::string
+} // namespace porpoise::string

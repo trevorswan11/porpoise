@@ -4,7 +4,7 @@
 
 #include "diagnostic.hpp"
 
-namespace conch::detail {
+namespace porpoise::detail {
 
 auto format_diagnostic(const std::optional<std::string>&    message,
                        std::string_view                     error_name,
@@ -17,4 +17,4 @@ auto format_diagnostic(const std::optional<std::string>&    message,
     return ss.str();
 }
 
-} // namespace conch::detail
+} // namespace porpoise::detail

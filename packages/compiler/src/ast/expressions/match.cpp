@@ -6,7 +6,7 @@
 #include "ast/expressions/identifier.hpp"
 #include "ast/visitor.hpp"
 
-namespace conch::ast {
+namespace porpoise::ast {
 
 MatchArm::MatchArm(Box<Expression>   pattern,
                    Optional<Capture> capture,
@@ -105,4 +105,4 @@ auto MatchExpression::is_equal(const Node& other) const noexcept -> bool {
            optional::unsafe_eq<Statement>(catch_all_, casted.catch_all_);
 }
 
-} // namespace conch::ast
+} // namespace porpoise::ast

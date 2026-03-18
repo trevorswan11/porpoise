@@ -20,17 +20,17 @@ Porpoise is a compiled systems language powered by LLVM, C++, and Zig. It attemp
 
 ### Built With Zig!
 
-Zig is used as the primary orchestrator for all things Porpoise. Porpoise uses Zig's `build.zig` to provide a hermetic build. Necessary dependencies are automatically fetched and all required dependencies are built from source. This unified build system manages LLVM compilation (including tools like clang-format), kcov coverage reporting (on supported platforms), and core maintainer tools such as a custom archiver for releases. Porpoise aims to be reproducible anywhere that has a valid and correctly versioned Zig. **No manual linking or hoop-jumping is required to build Porpoise, ever, on any platform**.
+Zig is used as the primary orchestrator for all things porpoise. Porpoise uses Zig's `build.zig` to provide a hermetic build. Necessary dependencies are automatically fetched and all required dependencies are built from source. This unified build system manages LLVM compilation (including tools like clang-format), kcov coverage reporting (on supported platforms), and core maintainer tools such as a custom archiver for releases. Porpoise aims to be reproducible anywhere that has a valid and correctly versioned Zig. **No manual linking or hoop-jumping is required to build porpoise, ever, on any platform**.
 
 <details>
 <summary><b>Full dependency breakdown</b></summary>
 
-The following are "standalone" dependencies, required and manually fetched by Porpoise's build system.
+The following are "standalone" dependencies, required and manually fetched by porpoise's build system.
 1. [Catch2](https://github.com/catchorg/Catch2)'s amalgamated source code is compiled from source for test running. It is automatically configured in the project's build script and links statically to the test builds.
 2. [cppcheck](https://cppcheck.sourceforge.io/) is compiled from source for static analysis. It is licensed under the GNU GPLv3, but the associated compiled artifacts are neither linked with output artifacts nor shipped with releases.
 3. [magic_enum](https://github.com/Neargye/magic_enum) is used as a utility to reflect on enum values. Is is licensed under the permissible MIT license.
 4. [fmt](https://github.com/fmtlib/fmt) is used as a formatting utility in place of std::format, which is not as performant or feature-full. Is is licensed under the permissible MIT license.
-5. [LLVM 21.1.8](https://releases.llvm.org/21.1.0/docs/ReleaseNotes.html) is used as Porpoise's compilation backend. It is manually compiled and statically linked against Porpoise through the build system. It is licensed under the permissible Apache License 2.0, and has the following dependencies:
+5. [LLVM 21.1.8](https://releases.llvm.org/21.1.0/docs/ReleaseNotes.html) is used as porpoise's compilation backend. It is manually compiled and statically linked against porpoise through the build system. It is licensed under the permissible Apache License 2.0, and has the following dependencies:
     - [libxml2](https://gitlab.gnome.org/GNOME/libxml2)
     - [zlib](https://github.com/madler/zlib)
     - [zstd](https://github.com/facebook/zstd)
@@ -50,7 +50,7 @@ The following are "standalone" dependencies, required and manually fetched by Po
 - Experiment freely
 - KISS & DRY
 
-Using AI for the development of Porpoise should be seen as a last resort. All code pushed should be deeply understood. Development speed is _not_ and _will never be_ a core principle of Porpoise.
+Using AI for the development of porpoise should be seen as a last resort. All code pushed should be deeply understood. Development speed is _not_ and _will never be_ a core principle of porpoise.
 
 ### Usage Example
 ```porpoise
@@ -67,9 +67,9 @@ pub const main := fn(args: [][:0]byte): int {
 This is by far the easiest way to get started with development. Just run `nix develop` to get started and automatically get the correct Zig version and some important development tools. Note that this provides optional preconfigured tools such as LLDB, Clangd, and ZLS to further enhance the developer experience.
 
 ### For Others
-All you need to get started with Porpoise development is a valid 0.15.2 Zig installation, which can be found [here](https://ziglang.org/download/).
+All you need to get started with porpoise development is a valid 0.15.2 Zig installation, which can be found [here](https://ziglang.org/download/).
 
-In either case, assuming you have the Zig prerequisite on your system, building Porpoise is as easy as running:
+In either case, assuming you have the Zig prerequisite on your system, building porpoise is as easy as running:
 ```sh
 git clone https://github.com/trevorswan11/porpoise
 cd porpoise

@@ -6,7 +6,7 @@
 
 #include "types.hpp"
 
-namespace conch::array {
+namespace porpoise::array {
 
 // Materializes a sized view into its corresponding array representation
 template <auto N, typename Range> [[nodiscard]] constexpr auto materialize_sized_view(Range&& r) {
@@ -36,4 +36,4 @@ template <typename T, usize N> constexpr auto combinations(std::array<T, N> inpu
     return results;
 }
 
-} // namespace conch::array
+} // namespace porpoise::array

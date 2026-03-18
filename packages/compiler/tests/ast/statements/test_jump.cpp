@@ -6,7 +6,7 @@
 #include "ast/expressions/primitive.hpp"
 #include "ast/statements/jump.hpp"
 
-namespace conch::tests {
+namespace porpoise::tests {
 
 TEST_CASE("Expressionless jumps") {
     helpers::test_stmt("continue;", ast::JumpStatement{Token{keywords::CONTINUE}, {}});
@@ -58,4 +58,4 @@ TEST_CASE("Illegal control flow") {
             "Expected token SEMICOLON, found INT_10", ParserError::UNEXPECTED_TOKEN, 1, 7});
 }
 
-} // namespace conch::tests
+} // namespace porpoise::tests

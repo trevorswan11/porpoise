@@ -6,7 +6,7 @@
 #include "ast/expressions/primitive.hpp"
 #include "ast/statements/discard.hpp"
 
-namespace conch::tests {
+namespace porpoise::tests {
 
 TEST_CASE("Discard statements") {
     const Token start_token{TokenType::UNDERSCORE, "_"};
@@ -47,4 +47,4 @@ TEST_CASE("Missing discardee") {
     helpers::test_fail("_ = ;", ParserDiagnostic{ParserError::DISCARD_MISSING_DISCARDEE, 1, 3});
 }
 
-} // namespace conch::tests
+} // namespace porpoise::tests

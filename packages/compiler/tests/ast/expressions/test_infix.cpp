@@ -13,7 +13,7 @@
 
 #include "lexer/operators.hpp"
 
-namespace conch::tests {
+namespace porpoise::tests {
 
 namespace helpers {
 
@@ -319,4 +319,4 @@ TEST_CASE("Non-terminated infix") {
     helpers::test_fail("a and", ParserDiagnostic{ParserError::INFIX_MISSING_RHS, 1, 3});
 }
 
-} // namespace conch::tests
+} // namespace porpoise::tests

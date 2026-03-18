@@ -4,7 +4,7 @@
 #include <optional>
 #include <type_traits>
 
-namespace conch {
+namespace porpoise {
 
 template <typename T> class OptionalRef {
   public:
@@ -80,4 +80,4 @@ auto unsafe_eq(const Optional<std::unique_ptr<T>>& a,
 
 } // namespace optional
 
-} // namespace conch
+} // namespace porpoise

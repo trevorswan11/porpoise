@@ -4,9 +4,9 @@
 
 #include "string.hpp"
 
-namespace conch {
+namespace porpoise {
 
-static_assert(std::is_same_v<std::string::value_type, conch::byte>);
+static_assert(std::is_same_v<std::string::value_type, porpoise::byte>);
 
 namespace string {
 
@@ -28,4 +28,4 @@ auto trim(std::string_view str, bool (*pred)(byte)) noexcept -> std::string_view
 }
 
 } // namespace string
-} // namespace conch
+} // namespace porpoise

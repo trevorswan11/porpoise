@@ -5,7 +5,7 @@
 #include "ast/expressions/type.hpp"
 #include "ast/visitor.hpp"
 
-namespace conch::ast {
+namespace porpoise::ast {
 
 DeclStatement::DeclStatement(const Token&              start_token,
                              Box<IdentifierExpression> ident,
@@ -71,4 +71,4 @@ auto DeclStatement::is_equal(const Node& other) const noexcept -> bool {
            modifiers_ == casted.modifiers_;
 }
 
-} // namespace conch::ast
+} // namespace porpoise::ast

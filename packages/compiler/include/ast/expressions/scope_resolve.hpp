@@ -4,7 +4,7 @@
 
 #include "parser/parser.hpp"
 
-namespace conch::ast {
+namespace porpoise::ast {
 
 class IdentifierExpression;
 
@@ -35,4 +35,4 @@ class ScopeResolutionExpression : public ExprBase<ScopeResolutionExpression> {
     Box<IdentifierExpression> inner_;
 };
 
-} // namespace conch::ast
+} // namespace porpoise::ast

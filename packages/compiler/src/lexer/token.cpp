@@ -5,7 +5,7 @@
 #include "lexer/keywords.hpp"
 #include "lexer/token.hpp"
 
-namespace conch {
+namespace porpoise {
 
 auto base_idx(Base base) noexcept -> int {
     switch (base) {
@@ -145,4 +145,4 @@ auto Token::is_valid_ident() const noexcept -> bool {
            type == TokenType::TYPE_TYPE || is_primitive() || is_builtin();
 }
 
-} // namespace conch
+} // namespace porpoise

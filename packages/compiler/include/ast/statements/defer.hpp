@@ -6,7 +6,7 @@
 
 #include "parser/parser.hpp"
 
-namespace conch::ast {
+namespace porpoise::ast {
 
 class DeferStatement : public StmtBase<DeferStatement> {
   public:
@@ -33,4 +33,4 @@ class DeferStatement : public StmtBase<DeferStatement> {
     Box<Statement> deferred_;
 };
 
-} // namespace conch::ast
+} // namespace porpoise::ast

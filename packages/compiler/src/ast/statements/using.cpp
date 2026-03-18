@@ -6,7 +6,7 @@
 #include "ast/expressions/identifier.hpp"
 #include "ast/visitor.hpp"
 
-namespace conch::ast {
+namespace porpoise::ast {
 
 UsingStatement::UsingStatement(const Token&              start_token,
                                Box<IdentifierExpression> alias,
@@ -33,4 +33,4 @@ auto UsingStatement::is_equal(const Node& other) const noexcept -> bool {
     return *alias_ == *casted.alias_ && type_ == casted.type_;
 }
 
-} // namespace conch::ast
+} // namespace porpoise::ast

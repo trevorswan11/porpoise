@@ -1,14 +1,14 @@
 # Types
 ## Explicit Types
-- Types in conch are first class values and can be assigned to values and passed to functions
-- There are 4 different explicit type modifiers in conch
+- Types in porpoise are first class values and can be assigned to values and passed to functions
+- There are 4 different explicit type modifiers in porpoise
     - `*`: Denotes a constant pointer
     - `*mut`: Denotes a mutable pointer
     - `&`: Denotes a constant reference
     - `&mut`: Denotes a mutable reference
 - These modifiers act in an opposite way to languages like C, C++, and Zig, while behaving similar to Rust
     - Mutability is opt-in, with everything else being constant by default
-- There are 4 different explicit types in conch
+- There are 4 different explicit types in porpoise
     - Identifier types: Consist of an identifier (either a keyword or user defined type)
     - Function types: Consist of the functions argument types and return type.
     - Array types: Consist of an optional size (required if array, not if slice) and type which can be any of these types. These are recursively defined.
@@ -16,7 +16,7 @@
         - You can annotate a slice type to indicate that it is null-terminated by placing `:0` in between the brackets (i.e. `[:0]`)
     - Nested types: Consist of an outer type modifier acting on any of these types in a recursive fashion
 - The location of the type modifier is extremely important:
-```conch
+```porpoise
 *mut [5uz]int // A mutable pointer to an array of 5 integers.
 [5uz]*mut int // A constant array of 5 mutable pointers to integers
 ```
@@ -24,13 +24,13 @@
     `&&&&&&&&&&&&&&&int` is technically a valid type, though it likely would never be used
 - Types can be passed to functions whose parameter has the type `type`
     - Function argument parsing prioritizes expressions over types
-```conch
+```porpoise
 const func := fn(p: type): void { ... };
 func(&mut P);
 ```
 - In the above example, the call expression is parsed as taking in a mutable reference to a declaration P
 - If you instead meant for `&mut P` to be a type, you can circumvent this priority by using a `using` statement
-```conch
+```porpoise
 using tP = &mut P;
 const func := fn(p: type): void { ... };
 func(tP);
@@ -38,7 +38,7 @@ func(tP);
 - In this example, the identifier `tP` is aliased to a type which is a mutable reference to a type `P`
 - Types can also be returned from functions, assuming the type can be fully constructed at compile time
 - Function types require parameter names for clarity and maintainability:
-```conch
+```porpoise
 using Callback = fn(status: int, result: *bool): void;
 const register := fn(cb: Callback): void { ... };
 ```
@@ -47,12 +47,12 @@ const register := fn(cb: Callback): void { ... };
 - When possible, references should be used over pointers
 - While references and pointers act similarly, references are guaranteed to be non-null
 - Any pointer type can receive the builtin `nullptr` pointer
-    - This is the only use-case for a built-in null in conch
+    - This is the only use-case for a built-in null in porpoise
 - A reference to an object can access its internal fields using the dot operator
 - You can reference a pointer by using the `*` operator
 - A pointer to an object can access its internal fields using the standard dot operator
     - Note that this is just syntactic sugar for an explicit dereference expression followed by a dot operator
-```conch
+```porpoise
 var a: *A = ...;
 a.b;   // Syntactic sugar
 (*a).b; // Equivalent expression
@@ -73,6 +73,6 @@ a.b;   // Syntactic sugar
 - `float`: A 32-bit floating point, represented by a `f` suffixed number, decimal, or scientific notation
 - `double`: A 64-bit floating point, represented by a standalone decimal or scientific notation
 - `byte`: An unsigned 8-bit value, typically used for characters (i.e. `'a'`) or ascii values
-    - There is no string type in conch. Instead you must use an array or slice of bytes (i.e. `[]byte` or `[N]byte`)
+    - There is no string type in porpoise. Instead you must use an array or slice of bytes (i.e. `[]byte` or `[N]byte`)
 - `bool`: True or false
 - `void`: The unit type

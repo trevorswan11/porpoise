@@ -4,7 +4,7 @@
 #include <string>
 #include <vector>
 
-namespace conch {
+namespace porpoise {
 
 namespace symbols {
 
@@ -44,4 +44,4 @@ class Indent {
     std::vector<bool> levels_;
 };
 
-} // namespace conch
+} // namespace porpoise

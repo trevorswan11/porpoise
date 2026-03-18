@@ -5,7 +5,7 @@
 
 #include "variant.hpp"
 
-namespace conch::tests {
+namespace porpoise::tests {
 
 TEST_CASE("Variant visitor") {
     std::variant<std::string, int, double> one_of_many;
@@ -27,4 +27,4 @@ TEST_CASE("Variant visitor") {
     REQUIRE(std::visit(visitor, one_of_many));
 }
 
-} // namespace conch::tests
+} // namespace porpoise::tests

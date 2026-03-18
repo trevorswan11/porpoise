@@ -9,7 +9,7 @@
 
 #include "lexer/token.hpp"
 
-namespace conch {
+namespace porpoise {
 
 enum class Precedence : u8 {
     LOWEST,
@@ -78,4 +78,4 @@ constexpr auto get_binding(TokenType tt) noexcept -> Optional<Binding> {
     return Optional<Binding>{*it};
 }
 
-} // namespace conch
+} // namespace porpoise

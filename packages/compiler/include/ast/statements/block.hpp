@@ -8,7 +8,7 @@
 
 #include "parser/parser.hpp"
 
-namespace conch::ast {
+namespace porpoise::ast {
 
 class BlockStatement : public StmtBase<BlockStatement> {
   public:
@@ -48,4 +48,4 @@ class BlockStatement : public StmtBase<BlockStatement> {
     std::vector<Box<Statement>> statements_;
 };
 
-} // namespace conch::ast
+} // namespace porpoise::ast

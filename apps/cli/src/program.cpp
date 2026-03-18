@@ -11,7 +11,7 @@
 
 #include "string.hpp"
 
-namespace conch::cli {
+namespace porpoise::cli {
 
 auto Program::interactive() -> void {
     std::string line;
@@ -34,4 +34,4 @@ auto Program::interactive() -> void {
     }
 }
 
-} // namespace conch::cli
+} // namespace porpoise::cli

@@ -3,7 +3,7 @@
 #include "ast/statements/import.hpp"
 #include "ast/visitor.hpp"
 
-namespace conch::ast {
+namespace porpoise::ast {
 
 auto BlockStatement::accept(Visitor& v) const -> void { v.visit(*this); }
 
@@ -27,4 +27,4 @@ auto BlockStatement::parse(Parser& parser) -> Expected<Box<Statement>, ParserDia
     return make_box<BlockStatement>(start_token, std::move(statements));
 }
 
-} // namespace conch::ast
+} // namespace porpoise::ast

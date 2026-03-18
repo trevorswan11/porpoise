@@ -4,7 +4,7 @@
 
 #include "ast/expressions/union.hpp"
 
-namespace conch::tests {
+namespace porpoise::tests {
 
 namespace mods = helpers::type_modifiers;
 
@@ -36,4 +36,4 @@ TEST_CASE("Empty union") {
     helpers::test_fail("union { };", ParserDiagnostic{ParserError::EMPTY_UNION, 1, 1});
 }
 
-} // namespace conch::tests
+} // namespace porpoise::tests

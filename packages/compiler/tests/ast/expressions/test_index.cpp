@@ -5,7 +5,7 @@
 #include "ast/expressions/index.hpp"
 #include "ast/expressions/primitive.hpp"
 
-namespace conch::tests {
+namespace porpoise::tests {
 
 TEST_CASE("Single-level index") {
     const Token arr{TokenType::IDENT, "arr"};
@@ -33,4 +33,4 @@ TEST_CASE("No index") {
     helpers::test_fail("arr[]", ParserDiagnostic{ParserError::INDEX_MISSING_EXPRESSION, 1, 1});
 }
 
-} // namespace conch::tests
+} // namespace porpoise::tests

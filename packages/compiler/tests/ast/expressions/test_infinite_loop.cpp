@@ -4,7 +4,7 @@
 
 #include "ast/expressions/infinite_loop.hpp"
 
-namespace conch::tests {
+namespace porpoise::tests {
 
 TEST_CASE("Correct infinite loop") {
     helpers::test_expr_stmt(
@@ -17,4 +17,4 @@ TEST_CASE("Empty infinite loop") {
     helpers::test_fail("loop {};", ParserDiagnostic{ParserError::EMPTY_LOOP, 1, 6});
 }
 
-} // namespace conch::tests
+} // namespace porpoise::tests

@@ -7,7 +7,7 @@
 #include "ast/expressions/type.hpp"
 #include "ast/visitor.hpp"
 
-namespace conch::ast {
+namespace porpoise::ast {
 
 CallArgument::CallArgument(Box<Expression> argument) noexcept : argument_{std::move(argument)} {}
 CallArgument::CallArgument(ExplicitType&& argument) noexcept : argument_{std::move(argument)} {}
@@ -70,4 +70,4 @@ auto CallExpression::is_equal(const Node& other) const noexcept -> bool {
     return *function_ == *casted.function_ && std::ranges::equal(arguments_, casted.arguments_);
 }
 
-} // namespace conch::ast
+} // namespace porpoise::ast

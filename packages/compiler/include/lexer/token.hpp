@@ -13,7 +13,7 @@
 #include "source_loc.hpp"
 #include "types.hpp"
 
-namespace conch {
+namespace porpoise {
 
 enum class TokenError : u8 {
     NON_STRING_TOKEN,
@@ -319,12 +319,12 @@ template <> struct SourceInfo<Token> {
     static auto get(const Token& t) -> SourceLocation { return {t.line, t.column}; }
 };
 
-} // namespace conch
+} // namespace porpoise
 
-template <> struct fmt::formatter<conch::Token> {
+template <> struct fmt::formatter<porpoise::Token> {
     static constexpr auto parse(format_parse_context& ctx) noexcept { return ctx.begin(); }
 
-    template <typename F> static auto format(const conch::Token& t, F& ctx) {
+    template <typename F> static auto format(const porpoise::Token& t, F& ctx) {
         return fmt::format_to(
             ctx.out(), "{}({}) [{}, {}]", magic_enum::enum_name(t.type), t.slice, t.line, t.column);
     }

@@ -12,7 +12,7 @@
 #include "lexer/lexer.hpp"
 #include "lexer/token.hpp"
 
-namespace conch::ast {
+namespace porpoise::ast {
 
 class Node;
 class Statement;
@@ -20,9 +20,9 @@ class Expression;
 
 using AST = std::vector<Box<Node>>;
 
-} // namespace conch::ast
+} // namespace porpoise::ast
 
-namespace conch {
+namespace porpoise {
 
 enum class ParserError : u8 {
     UNEXPECTED_TOKEN,
@@ -192,4 +192,4 @@ class Parser {
     Token            peek_token_{};
 };
 
-} // namespace conch
+} // namespace porpoise

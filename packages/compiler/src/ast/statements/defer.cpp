@@ -5,7 +5,7 @@
 #include "ast/statements/expression.hpp"
 #include "ast/visitor.hpp"
 
-namespace conch::ast {
+namespace porpoise::ast {
 
 auto DeferStatement::accept(Visitor& v) const -> void { v.visit(*this); }
 
@@ -24,4 +24,4 @@ auto DeferStatement::parse(Parser& parser) -> Expected<Box<Statement>, ParserDia
     return make_box<DeferStatement>(start_token, std::move(stmt));
 }
 
-} // namespace conch::ast
+} // namespace porpoise::ast

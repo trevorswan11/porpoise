@@ -5,7 +5,7 @@
 - The walrus operator `:=` can be used to declare a value who's type is inferred based on the assigned value
     - The walrus operator can only be used with value-initialized declarations
 
-```conch
+```porpoise
 const a := 2;           // Type deduced to be a signed 32 bit int
 const b := "str";       // Type deduced to be a constant size array of bytes (non-null terminated)
 const c: byte = 's';    // Explicitly typed, so value must agree
@@ -35,7 +35,7 @@ var e: []byte;         // Allowed, e is forward declared and future assignments 
 - A variable's value does not have to be compile-time known
 - A variable may be assigned to a constant
 
-```conch
+```porpoise
 const a := 1;       // Allowed, see above
 var b := a;         // Allowed, a is copied by value
 var c := &mut a;    // Illegal, cannot take mutable reference of constant
@@ -48,7 +48,7 @@ var c := &mut a;    // Illegal, cannot take mutable reference of constant
     - `export`: Forwards the declaration to the 'outside world'. This means that the symbol is treated as a C symbol. This keyword cannot be combined with the `extern` modifier.
     - `static`: This keyword is only valid for struct members. It denotes a symbol as being owned (namespaced) by the struct itself, not by instances of said struct.
 
-```conch
+```porpoise
 pub var c := 2;         // Allowed, symbol can be imported
 extern const a: int;    // Allowed, externs must be explicitly typed without values
 export var b := 1;      // Allowed

@@ -7,7 +7,7 @@
 
 #include "parser/parser.hpp"
 
-namespace conch::ast {
+namespace porpoise::ast {
 
 template <typename Derived> class InfixExpression : public ExprBase<Derived> {
   public:
@@ -67,4 +67,4 @@ DECLARE_INFIX_EXPRESSION(RangeExpression, NodeKind::RANGE_EXPRESSION)
 
 #undef DECLARE_INFIX_EXPRESSION
 
-} // namespace conch::ast
+} // namespace porpoise::ast

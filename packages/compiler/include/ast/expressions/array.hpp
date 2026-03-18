@@ -8,7 +8,7 @@
 
 #include "parser/parser.hpp"
 
-namespace conch::ast {
+namespace porpoise::ast {
 
 class ArrayExpression : public ExprBase<ArrayExpression> {
   public:
@@ -39,4 +39,4 @@ class ArrayExpression : public ExprBase<ArrayExpression> {
     std::vector<Box<Expression>> items_;
 };
 
-} // namespace conch::ast
+} // namespace porpoise::ast

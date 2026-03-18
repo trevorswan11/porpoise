@@ -2,7 +2,7 @@
 
 #include "ast/visitor.hpp"
 
-namespace conch::ast {
+namespace porpoise::ast {
 
 auto IndexExpression::accept(Visitor& v) const -> void { v.visit(*this); }
 
@@ -19,4 +19,4 @@ auto IndexExpression::parse(Parser& parser, Box<Expression> array)
     return make_box<IndexExpression>(start_token, std::move(array), std::move(idx_expr));
 }
 
-} // namespace conch::ast
+} // namespace porpoise::ast
