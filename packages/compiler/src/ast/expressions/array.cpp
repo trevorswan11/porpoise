@@ -7,7 +7,7 @@
 #include "ast/expressions/primitive.hpp"
 #include "ast/visitor.hpp"
 
-namespace conch::ast {
+namespace porpoise::ast {
 
 ArrayExpression::ArrayExpression(const Token&                 start_token,
                                  Optional<Box<Expression>>    size,
@@ -75,4 +75,4 @@ auto ArrayExpression::is_equal(const Node& other) const noexcept -> bool {
                items_, casted.items_, [](const auto& a, const auto& b) { return *a == *b; });
 }
 
-} // namespace conch::ast
+} // namespace porpoise::ast

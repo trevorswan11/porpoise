@@ -17,7 +17,7 @@
 
 #include "lexer/keywords.hpp"
 
-namespace conch::tests::helpers {
+namespace porpoise::tests::helpers {
 
 // Thin wrapper around Node is/as pattern with test assertion.
 template <ast::LeafNode To, typename From> auto try_into(const From& node) -> const To& {
@@ -155,4 +155,4 @@ const ast::TypeModifier MUT_PTR{ast::TypeModifier::Modifier::MUT_PTR};
 
 } // namespace type_modifiers
 
-} // namespace conch::tests::helpers
+} // namespace porpoise::tests::helpers

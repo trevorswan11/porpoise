@@ -10,7 +10,7 @@
 
 #include "parser/parser.hpp"
 
-namespace conch::ast {
+namespace porpoise::ast {
 
 class IdentifierExpression;
 class TypeExpression;
@@ -118,8 +118,8 @@ class DeclStatement : public StmtBase<DeclStatement> {
     DeclModifiers             modifiers_;
 };
 
-} // namespace conch::ast
+} // namespace porpoise::ast
 
-template <> struct magic_enum::customize::enum_range<conch::ast::DeclModifiers> {
+template <> struct magic_enum::customize::enum_range<porpoise::ast::DeclModifiers> {
     static constexpr bool is_flags = true;
 };

@@ -7,7 +7,7 @@
 #include "ast/expressions/while.hpp"
 #include "ast/statements/jump.hpp"
 
-namespace conch::tests {
+namespace porpoise::tests {
 
 TEST_CASE("While without continuation or else") {
     helpers::test_expr_stmt(
@@ -124,4 +124,4 @@ TEST_CASE("Illegal while-else clause") {
                                         32});
 }
 
-} // namespace conch::tests
+} // namespace porpoise::tests

@@ -6,7 +6,7 @@
 
 #include "parser/parser.hpp"
 
-namespace conch::ast {
+namespace porpoise::ast {
 
 class DiscardStatement : public StmtBase<DiscardStatement> {
   public:
@@ -33,4 +33,4 @@ class DiscardStatement : public StmtBase<DiscardStatement> {
     Box<Expression> discarded_;
 };
 
-} // namespace conch::ast
+} // namespace porpoise::ast

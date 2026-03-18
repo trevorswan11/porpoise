@@ -2,7 +2,7 @@
 
 #include "ast/visitor.hpp"
 
-namespace conch::ast {
+namespace porpoise::ast {
 
 auto ExpressionStatement::accept(Visitor& v) const -> void { v.visit(*this); }
 
@@ -16,4 +16,4 @@ auto ExpressionStatement::parse(Parser& parser) -> Expected<Box<Statement>, Pars
     return make_box<ExpressionStatement>(start_token, std::move(expr));
 }
 
-} // namespace conch::ast
+} // namespace porpoise::ast

@@ -5,7 +5,7 @@
 
 #include "ast/statements/defer.hpp"
 
-namespace conch::tests {
+namespace porpoise::tests {
 
 TEST_CASE("Correct defers") {
     const Token defer{keywords::DEFER};
@@ -35,4 +35,4 @@ TEST_CASE("Missing deferred statements") {
     helpers::test_fail("defer;", ParserDiagnostic{ParserError::DEFER_MISSING_DEFERREE, 1, 1});
 }
 
-} // namespace conch::tests
+} // namespace porpoise::tests

@@ -4,7 +4,7 @@
 
 #include "array.hpp"
 
-namespace conch::tests {
+namespace porpoise::tests {
 
 TEST_CASE("View materialization") {
     constexpr auto nums         = std::ranges::views::iota(0, 100);
@@ -28,4 +28,4 @@ TEST_CASE("Array combinations") {
     REQUIRE(std::ranges::equal(expected, actual));
 }
 
-} // namespace conch::tests
+} // namespace porpoise::tests

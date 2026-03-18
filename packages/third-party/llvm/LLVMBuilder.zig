@@ -678,9 +678,9 @@ fn createConfigHeaders(self: *const Self, target: std.Target) ConfigHeaders {
     }, .{
         .PACKAGE_NAME = "LLVM",
         .PACKAGE_VERSION = version_str,
-        .PACKAGE_STRING = "LLVM-conch-" ++ version_str,
+        .PACKAGE_STRING = "LLVM-porpoise-" ++ version_str,
         .PACKAGE_BUGREPORT = "https://github.com/llvm/llvm-project/issues/",
-        .PACKAGE_VENDOR = "https://github.com/trevorswan11/conch",
+        .PACKAGE_VENDOR = "https://github.com/trevorswan11/porpoise",
         .BUG_REPORT_URL = "https://github.com/llvm/llvm-project/issues/",
 
         .ENABLE_BACKTRACES = 1,
@@ -725,7 +725,17 @@ fn createConfigHeaders(self: *const Self, target: std.Target) ConfigHeaders {
 
         // Allocation & Threading
         .HAVE_MALLINFO = @intFromBool(is_linux),
-        .HAVE_MALLINFO2 = @intFromBool(is_linux),
+        .HAVE_MALLINFO2 = @intFromBool(is_linux and blk: {
+            if (target.os.versionRange().gnuLibCVersion()) |semver| {
+                const order = semver.order(.{
+                    .major = 2,
+                    .minor = 33,
+                    .patch = 0,
+                });
+                break :blk order == .eq or order == .gt;
+            }
+            break :blk false;
+        }),
         .HAVE_MALLCTL = 0,
         .HAVE_PTHREAD_GETNAME_NP = @intFromBool(is_linux or is_darwin),
         .HAVE_PTHREAD_SETNAME_NP = @intFromBool(is_linux or is_darwin),

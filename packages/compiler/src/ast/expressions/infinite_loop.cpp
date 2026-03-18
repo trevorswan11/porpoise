@@ -3,7 +3,7 @@
 #include "ast/statements/block.hpp"
 #include "ast/visitor.hpp"
 
-namespace conch::ast {
+namespace porpoise::ast {
 
 InfiniteLoopExpression::InfiniteLoopExpression(const Token&        start_token,
                                                Box<BlockStatement> block) noexcept
@@ -28,4 +28,4 @@ auto InfiniteLoopExpression::is_equal(const Node& other) const noexcept -> bool 
     return *block_ == *casted.block_;
 }
 
-} // namespace conch::ast
+} // namespace porpoise::ast

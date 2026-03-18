@@ -5,7 +5,7 @@
 #include "ast/expressions/enum.hpp"
 #include "ast/expressions/primitive.hpp"
 
-namespace conch::tests {
+namespace porpoise::tests {
 
 TEST_CASE("Basic enums") {
     helpers::test_expr_stmt(
@@ -61,4 +61,4 @@ TEST_CASE("Illegal underlying type") {
                        ParserDiagnostic{ParserError::ILLEGAL_IDENTIFIER, 1, 8});
 }
 
-} // namespace conch::tests
+} // namespace porpoise::tests

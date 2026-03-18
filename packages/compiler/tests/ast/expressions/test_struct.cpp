@@ -9,7 +9,7 @@
 
 #include "lexer/operators.hpp"
 
-namespace conch::tests {
+namespace porpoise::tests {
 
 namespace helpers {
 
@@ -87,4 +87,4 @@ TEST_CASE("Packed keyword out of order") {
                                         35});
 }
 
-} // namespace conch::tests
+} // namespace porpoise::tests

@@ -3,7 +3,7 @@
 #include "ast/statements/block.hpp"
 #include "ast/visitor.hpp"
 
-namespace conch::ast {
+namespace porpoise::ast {
 
 WhileLoopExpression::WhileLoopExpression(const Token&              start_token,
                                          Box<Expression>           condition,
@@ -74,4 +74,4 @@ auto WhileLoopExpression::is_equal(const Node& other) const noexcept -> bool {
            optional::unsafe_eq<Statement>(non_break_, casted.non_break_);
 }
 
-} // namespace conch::ast
+} // namespace porpoise::ast

@@ -11,7 +11,7 @@
 
 #include "parser/parser.hpp"
 
-namespace conch::ast {
+namespace porpoise::ast {
 
 // cppcheck-suppress-begin [constParameterReference, duplInheritedMember]
 
@@ -206,9 +206,9 @@ template <> struct disable_default_parse<BoolExpression> : std::true_type {};
 
 // cppcheck-suppress-end [constParameterReference, duplInheritedMember]
 
-} // namespace conch::ast
+} // namespace porpoise::ast
 
-template <conch::ast::PrimitiveNode P> struct fmt::formatter<P> {
+template <porpoise::ast::PrimitiveNode P> struct fmt::formatter<P> {
     static constexpr auto parse(format_parse_context& ctx) noexcept { return ctx.begin(); }
 
     template <typename F> static auto format(const P& p, F& ctx) {

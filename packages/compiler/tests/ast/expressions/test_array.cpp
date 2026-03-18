@@ -7,7 +7,7 @@
 #include "ast/expressions/primitive.hpp"
 #include "ast/expressions/type.hpp"
 
-namespace conch::tests {
+namespace porpoise::tests {
 
 using Items = std::vector<Box<ast::Expression>>;
 
@@ -67,4 +67,4 @@ TEST_CASE("Array size token requirement") {
                        ParserDiagnostic{ParserError::ILLEGAL_ARRAY_SIZE_TYPE, 1, 2});
 }
 
-} // namespace conch::tests
+} // namespace porpoise::tests

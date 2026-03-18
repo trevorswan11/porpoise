@@ -9,7 +9,7 @@
 
 #include "lexer/token.hpp"
 
-namespace conch {
+namespace porpoise {
 
 using Operator = std::pair<std::string_view, TokenType>;
 
@@ -125,4 +125,4 @@ constexpr auto get_operator(std::string_view sv) noexcept -> Optional<Operator> 
     return Optional<Operator>{*it};
 }
 
-} // namespace conch
+} // namespace porpoise

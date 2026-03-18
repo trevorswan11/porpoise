@@ -7,7 +7,7 @@
 #include "lexer/operators.hpp"
 #include "lexer/token.hpp"
 
-namespace conch {
+namespace porpoise {
 
 Lexer::Snapshot::Snapshot(const Lexer& l) noexcept
     : pos_{l.pos_}, peek_pos_{l.peek_pos_}, current_byte_{l.current_byte_}, line_no_{l.line_no_},
@@ -86,8 +86,8 @@ auto Lexer::lu_ident(std::string_view ident) noexcept -> TokenType {
         .value_or(TokenType::IDENT);
 }
 
-auto Lexer::read_character(uint8_t n) noexcept -> void {
-    for (uint8_t i = 0; i < n; ++i) {
+auto Lexer::read_character(u8 n) noexcept -> void {
+    for (u8 i = 0; i < n; ++i) {
         if (peek_pos_ >= input_.size()) {
             current_byte_ = '\0';
         } else {
@@ -447,4 +447,4 @@ auto Lexer::read_comment() noexcept -> Token {
     return {TokenType::COMMENT, input_.substr(start, pos_ - start), start_line, start_col};
 }
 
-} // namespace conch
+} // namespace porpoise

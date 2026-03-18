@@ -4,7 +4,7 @@
 
 #include "ast/expressions/primitive.hpp"
 
-namespace conch::tests {
+namespace porpoise::tests {
 
 TEST_CASE("Single statement blocks") {
     helpers::test_stmt("{a;};", helpers::expr_block_stmt_from(helpers::ident_from("a")));
@@ -38,4 +38,4 @@ TEST_CASE("Illegal block inner statement") {
                        ParserDiagnostic{ParserError::ILLEGAL_BLOCK_STATEMENT, 1, 3});
 }
 
-} // namespace conch::tests
+} // namespace porpoise::tests

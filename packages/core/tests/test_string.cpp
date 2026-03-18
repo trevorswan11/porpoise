@@ -2,7 +2,7 @@
 
 #include "string.hpp"
 
-namespace conch::tests {
+namespace porpoise::tests {
 
 TEST_CASE("Is space") {
     REQUIRE(string::is_space(' '));
@@ -42,4 +42,4 @@ TEST_CASE("Trim pred") {
                          [](byte b) { return std::string_view{"asdaefae"}.contains(b); }) == "th");
 }
 
-} // namespace conch::tests
+} // namespace porpoise::tests

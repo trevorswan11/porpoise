@@ -10,7 +10,7 @@
 
 #include "variant.hpp"
 
-namespace conch::ast {
+namespace porpoise::ast {
 
 class BlockStatement;
 class IdentifierExpression;
@@ -84,4 +84,4 @@ class ForLoopExpression : public ExprBase<ForLoopExpression> {
     Optional<Box<Statement>>     non_break_;
 };
 
-} // namespace conch::ast
+} // namespace porpoise::ast

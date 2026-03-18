@@ -6,7 +6,7 @@
 #include "ast/expressions/type.hpp"
 #include "ast/statements/block.hpp"
 
-namespace conch::tests {
+namespace porpoise::tests {
 
 using Parameters = std::vector<ast::FunctionParameter>;
 
@@ -166,4 +166,4 @@ TEST_CASE("Non-terminated parameter list") {
     helpers::test_fail("fn(a: A, : int;", ParserDiagnostic{ParserError::ILLEGAL_IDENTIFIER, 1, 10});
 }
 
-} // namespace conch::tests
+} // namespace porpoise::tests

@@ -6,7 +6,7 @@
 
 #include "parser/parser.hpp"
 
-namespace conch::ast {
+namespace porpoise::ast {
 
 class IdentifierExpression;
 
@@ -53,4 +53,4 @@ class EnumExpression : public ExprBase<EnumExpression> {
     std::vector<Enumeration>            enumerations_;
 };
 
-} // namespace conch::ast
+} // namespace porpoise::ast

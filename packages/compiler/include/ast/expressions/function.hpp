@@ -7,7 +7,7 @@
 
 #include "parser/parser.hpp"
 
-namespace conch::ast {
+namespace porpoise::ast {
 
 class IdentifierExpression;
 class ExplicitType;
@@ -79,4 +79,4 @@ class FunctionExpression : public ExprBase<FunctionExpression> {
     Optional<Box<BlockStatement>>  body_;
 };
 
-} // namespace conch::ast
+} // namespace porpoise::ast

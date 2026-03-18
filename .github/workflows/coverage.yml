@@ -36,7 +36,7 @@ jobs:
                 path: |
                   ${{ env.ZIG_LOCAL_CACHE_DIR }}
                   ${{ env.ZIG_GLOBAL_CACHE_DIR }}
-                key: zig-${{ runner.os }}-${{ hashFiles('build.zig.zon') }}
+                key: ${{ runner.os }}-zig-${{ hashFiles('build.zig.zon') }}
                 restore-keys: |
                   ${{ runner.os }}-zig-
 

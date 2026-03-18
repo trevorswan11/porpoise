@@ -4,7 +4,7 @@
 
 #include "parser/parser.hpp"
 
-namespace conch::ast {
+namespace porpoise::ast {
 
 class BlockStatement;
 
@@ -34,4 +34,4 @@ class DoWhileLoopExpression : public ExprBase<DoWhileLoopExpression> {
     Box<Expression>     condition_;
 };
 
-} // namespace conch::ast
+} // namespace porpoise::ast

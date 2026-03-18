@@ -4,7 +4,7 @@
 #include "ast/expressions/primitive.hpp"
 #include "ast/visitor.hpp"
 
-namespace conch::ast {
+namespace porpoise::ast {
 
 // cppcheck-suppress-begin [constParameterReference, duplInheritedMember]
 
@@ -77,4 +77,4 @@ auto BoolExpression::parse(Parser& parser) -> Expected<Box<Expression>, ParserDi
 
 // cppcheck-suppress-end [constParameterReference, duplInheritedMember]
 
-} // namespace conch::ast
+} // namespace porpoise::ast

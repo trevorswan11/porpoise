@@ -6,7 +6,7 @@
 
 #include "variant.hpp"
 
-namespace conch::ast {
+namespace porpoise::ast {
 
 class IdentifierExpression;
 class StringExpression;
@@ -41,4 +41,4 @@ class ImportStatement : public StmtBase<ImportStatement> {
     Optional<Box<IdentifierExpression>>    alias_;
 };
 
-} // namespace conch::ast
+} // namespace porpoise::ast

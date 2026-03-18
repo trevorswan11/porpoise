@@ -4,7 +4,7 @@
 
 #include "parser/parser.hpp"
 
-namespace conch::ast {
+namespace porpoise::ast {
 
 class GroupedExpression {
   public:
@@ -16,4 +16,4 @@ class GroupedExpression {
     }
 };
 
-} // namespace conch::ast
+} // namespace porpoise::ast

@@ -271,19 +271,24 @@ fn addArtifacts(b: *std.Build, config: struct {
 
     // The shippable executable links only against libcli which has a transitive dep of the compiler
     const cli = createExecutable(b, .{
-        .name = "conch",
+        .name = "porpoise",
         .target = target,
         .optimize = config.optimize,
-        .include_paths = &.{b.path(ProjectPaths.cli.inc)},
+        .include_paths = &.{
+            b.path(ProjectPaths.cli.inc),
+            b.path(ProjectPaths.compiler.inc),
+            b.path(ProjectPaths.core.inc),
+        },
         .cxx = .{
             .files = &.{ProjectPaths.cli.src ++ "main.cpp"},
             .flags = config.cxx_flags,
         },
+        .system_include_paths = &.{magic_enum_inc},
         .link_libraries = &.{ libcli, fmt_dep.artifact },
         .behavior = config.behavior orelse .{
             .runnable = .{
                 .cmd_name = "run",
-                .cmd_desc = "Run conch with provided command line arguments",
+                .cmd_desc = "Run porpoise with provided command line arguments",
             },
         },
     });
@@ -860,7 +865,7 @@ const LOCCounter = struct {
         }
     };
 
-    const counted_extensions = [_][]const u8{ ".cpp", ".hpp", ".zig", ".conch" };
+    const counted_extensions = [_][]const u8{ ".cpp", ".hpp", ".zig", ".p" };
     const dropped_file_config: CollectFilesConfig = .{
         .allowed_extensions = &.{ ".zig", ".h", ".in" },
         .return_basenames_only = true,
@@ -1012,7 +1017,7 @@ fn addPackageStep(b: *std.Build, config: struct {
         };
         artifacts.cli.root_module.strip = true;
 
-        const package_artifact_dirname = b.fmt("conch-{s}-{s}", .{
+        const package_artifact_dirname = b.fmt("porpoise-{s}-{s}", .{
             try query.zigTriple(b.allocator),
             version,
         });

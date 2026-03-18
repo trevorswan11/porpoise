@@ -9,7 +9,7 @@
 
 #include "variant.hpp"
 
-namespace conch::ast {
+namespace porpoise::ast {
 
 class IdentifierExpression;
 
@@ -73,4 +73,4 @@ class MatchExpression : public ExprBase<MatchExpression> {
     Optional<Box<Statement>> catch_all_;
 };
 
-} // namespace conch::ast
+} // namespace porpoise::ast

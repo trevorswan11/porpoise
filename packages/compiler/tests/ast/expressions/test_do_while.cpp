@@ -4,7 +4,7 @@
 #include "ast/expressions/primitive.hpp"
 #include "ast/helpers.hpp"
 
-namespace conch::tests {
+namespace porpoise::tests {
 
 TEST_CASE("Correct do-while") {
     helpers::test_expr_stmt(
@@ -37,4 +37,4 @@ TEST_CASE("Unclosed do-while condition") {
             "Expected token RPAREN, found SEMICOLON", ParserError::UNEXPECTED_TOKEN, 1, 21});
 }
 
-} // namespace conch::tests
+} // namespace porpoise::tests

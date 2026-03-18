@@ -2,7 +2,7 @@
 
 #include "ast/helpers.hpp"
 
-namespace conch::tests {
+namespace porpoise::tests {
 
 namespace helpers {
 
@@ -34,4 +34,4 @@ TEST_CASE("Builtin identifiers") {
     for (const auto& [str, tok] : ALL_BUILTINS) { helpers::test_ident(fmt::format("{};", str)); }
 }
 
-} // namespace conch::tests
+} // namespace porpoise::tests

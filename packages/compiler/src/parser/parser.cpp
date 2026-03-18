@@ -15,15 +15,15 @@
 
 #include "ast/ast.hpp"
 
-namespace conch {
+namespace porpoise {
 
 Parser::Checkpoint::Checkpoint(const Parser& parser) noexcept
     : snapshot_{parser.lexer_}, current_{parser.current_token_}, peek_{parser.peek_token_} {}
 
 auto Parser::reset(std::string_view input) noexcept -> void { *this = Parser{input}; }
 
-auto Parser::advance(uint8_t times) noexcept -> const Token& {
-    for (uint8_t i = 0; i < times; ++i) {
+auto Parser::advance(u8 times) noexcept -> const Token& {
+    for (u8 i = 0; i < times; ++i) {
         if (current_token_.type == TokenType::END &&
             (input_.empty() && current_token_.is_at_start())) {
             break;
@@ -312,4 +312,4 @@ auto Parser::tt_mismatch_error(TokenType expected, const Token& actual) -> Parse
                             actual};
 }
 
-} // namespace conch
+} // namespace porpoise

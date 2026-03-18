@@ -15,7 +15,7 @@
 
 #include "lexer/operators.hpp"
 
-namespace conch::tests {
+namespace porpoise::tests {
 
 namespace mods = helpers::type_modifiers;
 
@@ -178,4 +178,4 @@ TEST_CASE("Non-terminated decls") {
             "Expected token SEMICOLON, found END", ParserError::UNEXPECTED_TOKEN, 1, 15});
 }
 
-} // namespace conch::tests
+} // namespace porpoise::tests

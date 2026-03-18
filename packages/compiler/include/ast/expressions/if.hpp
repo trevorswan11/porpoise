@@ -6,7 +6,7 @@
 
 #include "parser/parser.hpp"
 
-namespace conch::ast {
+namespace porpoise::ast {
 
 class IfExpression : public ExprBase<IfExpression> {
   public:
@@ -42,4 +42,4 @@ class IfExpression : public ExprBase<IfExpression> {
     Optional<Box<Statement>> alternate_;
 };
 
-} // namespace conch::ast
+} // namespace porpoise::ast

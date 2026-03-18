@@ -9,7 +9,7 @@
 
 #include "lexer/token.hpp"
 
-namespace conch {
+namespace porpoise {
 
 using Keyword = std::pair<std::string_view, TokenType>;
 
@@ -191,4 +191,4 @@ constexpr auto is_builtin(TokenType tt) noexcept -> bool {
     return it != ALL_BUILTINS_BY_TT.end() && it->second == tt;
 }
 
-} // namespace conch
+} // namespace porpoise

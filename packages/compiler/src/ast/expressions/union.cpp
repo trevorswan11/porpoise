@@ -7,7 +7,7 @@
 #include "ast/expressions/type.hpp"
 #include "ast/visitor.hpp"
 
-namespace conch::ast {
+namespace porpoise::ast {
 
 UnionField::UnionField(Box<IdentifierExpression> ident, ExplicitType&& type) noexcept
     : ident_{std::move(ident)}, type_{std::move(type)} {}
@@ -49,4 +49,4 @@ auto UnionExpression::is_equal(const Node& other) const noexcept -> bool {
     return std::ranges::equal(fields_, casted.fields_);
 }
 
-} // namespace conch::ast
+} // namespace porpoise::ast

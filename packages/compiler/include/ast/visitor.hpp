@@ -1,6 +1,6 @@
 #pragma once
 
-namespace conch::ast {
+namespace porpoise::ast {
 
 #define FOREACH_AST_NODE(X)          \
     X(ArrayExpression)               \
@@ -66,4 +66,4 @@ class Visitor {
     ABSTRACT_AST_VISITOR_DECLARATION()
 };
 
-} // namespace conch::ast
+} // namespace porpoise::ast

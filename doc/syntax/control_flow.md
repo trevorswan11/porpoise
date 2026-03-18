@@ -5,7 +5,7 @@
 - This function must take in a single parameter of type `[][:0]byte` representing the passed command line args
     - This is conventionally named `args` but can be named to your choosing
     - Note that these args are null terminated to respect C-interop with minimal friction
-```conch
+```porpoise
 import std;
 
 pub const main := fn(args: [][:0]byte): int {
@@ -29,7 +29,7 @@ pub const main := fn(args: [][:0]byte): int {
     - Expression statement
     - Block statement
 - If the consequence and alternate statements are both expression statements, then the resulting value is returned
-```conch
+```porpoise
 a = if (a) b; else c; // Assigns a conditionally
 ```
 
@@ -38,7 +38,7 @@ a = if (a) b; else c; // Assigns a conditionally
 - They are executed in reverse order with respect to their declaration
 - A defer statement can be an expression, block, or discard statement
     - All other inner statement variants are disallowed
-```conch
+```porpoise
 import std;
 
 const main := fn(): void {

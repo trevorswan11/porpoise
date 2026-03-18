@@ -10,7 +10,7 @@
 
 #include "variant.hpp"
 
-namespace conch::ast {
+namespace porpoise::ast {
 
 class CallArgument {
   public:
@@ -56,4 +56,4 @@ class CallExpression : public ExprBase<CallExpression> {
     std::vector<CallArgument> arguments_;
 };
 
-} // namespace conch::ast
+} // namespace porpoise::ast

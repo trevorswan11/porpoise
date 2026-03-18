@@ -4,7 +4,7 @@
 
 #include "parser/parser.hpp"
 
-namespace conch::ast {
+namespace porpoise::ast {
 
 class BlockStatement;
 
@@ -40,4 +40,4 @@ class WhileLoopExpression : public ExprBase<WhileLoopExpression> {
     Optional<Box<Statement>>  non_break_;
 };
 
-} // namespace conch::ast
+} // namespace porpoise::ast
