@@ -138,7 +138,7 @@ class Parser {
 
     // Advances the parser, returning the resulting current token.
     // This is a no-op at end of stream.
-    auto advance(uint8_t times = 1) noexcept -> const Token&;
+    auto advance(u8 times = 1) noexcept -> const Token&;
     auto consume() -> std::pair<ast::AST, Diagnostics>;
 
     auto current_token() const noexcept -> const Token& { return current_token_; }

@@ -86,8 +86,8 @@ auto Lexer::lu_ident(std::string_view ident) noexcept -> TokenType {
         .value_or(TokenType::IDENT);
 }
 
-auto Lexer::read_character(uint8_t n) noexcept -> void {
-    for (uint8_t i = 0; i < n; ++i) {
+auto Lexer::read_character(u8 n) noexcept -> void {
+    for (u8 i = 0; i < n; ++i) {
         if (peek_pos_ >= input_.size()) {
             current_byte_ = '\0';
         } else {

@@ -11,13 +11,13 @@ namespace conch::cli::win32 {
 // I hate that this exists, made with the help of Gemini because microslop
 
 #ifdef _WIN32
-static std::atomic<i32> REFERENCE_COUNT{0};
+static std::atomic<i32> REF_COUNT{0};
 static UINT             ORIGINAL_CODE_PAGE   = 0;
 static DWORD            ORIGINAL_STDOUT_MODE = 0;
 static DWORD            ORIGINAL_STDERR_MODE = 0;
 
 RichConsole::RichConsole() noexcept {
-    if (REFERENCE_COUNT.fetch_add(1) > 0) { return; }
+    if (REF_COUNT.fetch_add(1) > 0) { return; }
     ORIGINAL_CODE_PAGE = GetConsoleOutputCP();
     SetConsoleOutputCP(CP_UTF8);
 
@@ -33,7 +33,7 @@ RichConsole::RichConsole() noexcept {
 }
 
 RichConsole::~RichConsole() noexcept {
-    if (REFERENCE_COUNT.fetch_sub(1) != 1) { return; }
+    if (REF_COUNT.fetch_sub(1) != 1) { return; }
     SetConsoleOutputCP(ORIGINAL_CODE_PAGE);
 
     if (auto stdout_h = GetStdHandle(STD_OUTPUT_HANDLE); stdout_h != INVALID_HANDLE_VALUE) {
