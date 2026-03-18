@@ -8,7 +8,7 @@
 
 #include "indent.hpp"
 
-namespace conch::ast {
+namespace porpoise::ast {
 
 class ExplicitType;
 
@@ -40,4 +40,4 @@ class ASTDumper : public Visitor {
     Indent        indent_;
 };
 
-} // namespace conch::ast
+} // namespace porpoise::ast

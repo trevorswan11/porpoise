@@ -5,7 +5,7 @@
 #include "ast/expressions/primitive.hpp"
 #include "ast/statements/using.hpp"
 
-namespace conch::tests {
+namespace porpoise::tests {
 
 namespace mods = helpers::type_modifiers;
 
@@ -50,4 +50,4 @@ TEST_CASE("Illegal identifier alias") {
             "Expected token IDENT, found TYPE_TYPE", ParserError::UNEXPECTED_TOKEN, 1, 7});
 }
 
-} // namespace conch::tests
+} // namespace porpoise::tests

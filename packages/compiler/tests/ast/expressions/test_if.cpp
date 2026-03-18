@@ -4,7 +4,7 @@
 
 #include "ast/expressions/if.hpp"
 
-namespace conch::tests {
+namespace porpoise::tests {
 
 TEST_CASE("If without alternate") {
     helpers::test_expr_stmt(
@@ -51,4 +51,4 @@ TEST_CASE("If with illegal alternate") {
                        ParserDiagnostic{ParserError::ILLEGAL_IF_BRANCH, 1, 16});
 }
 
-} // namespace conch::tests
+} // namespace porpoise::tests

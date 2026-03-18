@@ -9,7 +9,7 @@
 #include "ast/statements/block.hpp" // IWYU pragma: keep
 #include "ast/statements/declaration.hpp"
 
-namespace conch::tests {
+namespace porpoise::tests {
 
 namespace helpers {
 
@@ -153,4 +153,4 @@ TEST_CASE("Function return type restrictions") {
                        ParserDiagnostic{ParserError::ILLEGAL_NORETURN_TYPE_MODIFIER, 1, 14});
 }
 
-} // namespace conch::tests
+} // namespace porpoise::tests

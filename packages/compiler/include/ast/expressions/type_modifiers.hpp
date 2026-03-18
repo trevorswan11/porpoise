@@ -11,7 +11,7 @@
 #include "optional.hpp"
 #include "types.hpp"
 
-namespace conch::ast {
+namespace porpoise::ast {
 
 #define MAKE_MUTUALLY_EXCLUSIVE_TYPE_QUERY(name, modifier)  \
     [[nodiscard]] auto is_##name() const noexcept -> bool { \
@@ -69,17 +69,17 @@ class TypeModifier {
   private:
     Optional<Modifier> underlying_;
 
-    friend struct fmt::formatter<conch::ast::TypeModifier>;
+    friend struct fmt::formatter<porpoise::ast::TypeModifier>;
 };
 
 #undef MAKE_MUTUALLY_EXCLUSIVE_TYPE_QUERY
 
-} // namespace conch::ast
+} // namespace porpoise::ast
 
-template <> struct fmt::formatter<conch::ast::TypeModifier> {
+template <> struct fmt::formatter<porpoise::ast::TypeModifier> {
     static constexpr auto parse(format_parse_context& ctx) noexcept { return ctx.begin(); }
 
-    template <typename F> static auto format(const conch::ast::TypeModifier& t, F& ctx) {
+    template <typename F> static auto format(const porpoise::ast::TypeModifier& t, F& ctx) {
         return fmt::format_to(
             ctx.out(),
             "{}",

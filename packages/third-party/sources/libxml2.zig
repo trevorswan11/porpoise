@@ -42,7 +42,7 @@ pub fn configHeaders(
     }, .{
         .VERSION = version_str,
         .LIBXML_VERSION_NUMBER = version_num,
-        .LIBXML_VERSION_EXTRA = "-conch",
+        .LIBXML_VERSION_EXTRA = "-porpoise",
         .WITH_THREADS = 1,
         .WITH_THREAD_ALLOC = 1,
         .WITH_OUTPUT = 1,

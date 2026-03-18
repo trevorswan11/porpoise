@@ -4,7 +4,7 @@
 
 #include "ast/expressions/primitive.hpp"
 
-namespace conch::tests {
+namespace porpoise::tests {
 
 namespace helpers {
 
@@ -169,4 +169,4 @@ TEST_CASE("Bool parsing") {
     helpers::test_primitive<N>("false;", TokenType::FALSE, false);
 }
 
-} // namespace conch::tests
+} // namespace porpoise::tests

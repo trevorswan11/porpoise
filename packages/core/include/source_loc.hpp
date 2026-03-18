@@ -4,7 +4,7 @@
 
 #include "types.hpp"
 
-namespace conch {
+namespace porpoise {
 
 struct SourceLocation {
     usize line   = 0;
@@ -24,4 +24,4 @@ concept Locateable = requires(T t) {
     { SourceInfo<T>::get(t) } -> std::same_as<SourceLocation>;
 };
 
-} // namespace conch
+} // namespace porpoise

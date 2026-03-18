@@ -6,7 +6,7 @@
 
 #include "lexer/operators.hpp"
 
-namespace conch::tests {
+namespace porpoise::tests {
 
 namespace helpers {
 
@@ -46,4 +46,4 @@ TEST_CASE("Prefix without operand") {
                                         2});
 }
 
-} // namespace conch::tests
+} // namespace porpoise::tests

@@ -9,7 +9,7 @@
 #include "optional.hpp"
 #include "types.hpp"
 
-namespace conch {
+namespace porpoise {
 
 class Lexer {
   public:
@@ -106,4 +106,4 @@ class Lexer {
     friend class Parser;
 };
 
-} // namespace conch
+} // namespace porpoise

@@ -6,7 +6,7 @@
 
 #include "parser/parser.hpp"
 
-namespace conch::ast {
+namespace porpoise::ast {
 
 class IndexExpression : public ExprBase<IndexExpression> {
   public:
@@ -38,4 +38,4 @@ class IndexExpression : public ExprBase<IndexExpression> {
     Box<Expression> index_;
 };
 
-} // namespace conch::ast
+} // namespace porpoise::ast

@@ -3,7 +3,7 @@
 #include "ast/statements/block.hpp"
 #include "ast/visitor.hpp"
 
-namespace conch::ast {
+namespace porpoise::ast {
 
 DoWhileLoopExpression::DoWhileLoopExpression(const Token&        start_token,
                                              Box<BlockStatement> block,
@@ -40,4 +40,4 @@ auto DoWhileLoopExpression::is_equal(const Node& other) const noexcept -> bool {
     return *block_ == *casted.block_ && *condition_ == *casted.condition_;
 }
 
-} // namespace conch::ast
+} // namespace porpoise::ast

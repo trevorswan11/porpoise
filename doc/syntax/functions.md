@@ -1,7 +1,7 @@
 # Functions
 - Functions are defined using the standard declaration syntax
 - Function parameters are immutable by default
-```conch
+```porpoise
 const foo := fn(a: int, b: uint): ulong {
     // ...
 };
@@ -18,7 +18,7 @@ const foo := fn(a: int, b: uint): ulong {
     - To call such a function, the call site must also indicate with the `&mut` operator
     - A mutable pointer is created with the same operator, but the definition denotes this with `*mut`
 - There are no default parameters
-```conch
+```porpoise
 const foo := fn(a: &int): ulong {
     // ...
 };
@@ -67,11 +67,11 @@ _ = baz(&mut b);    // Illegal, cannot mutate const
 ## Types
 - Function's signatures are their types, including parameter modifiers and the return type
 - A function can be declared verbosely by using the type before the declaration function
-```conch
+```porpoise
 const f: fn(): int = fn(): int { ... };
 ```
 
 - You can also use this to indicate that a function takes a function as an argument
-```conch
+```porpoise
 const f := fn(g: fn(): int): int { ... };
 ```

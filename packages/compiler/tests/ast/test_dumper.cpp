@@ -8,7 +8,7 @@
 #include "ast/ast.hpp"
 #include "ast/dumper.hpp"
 
-namespace conch::tests {
+namespace porpoise::tests {
 
 constexpr std::string_view input{R"(
     [_]*N{a, b, c, d, e, 3, "54" };
@@ -17,7 +17,7 @@ constexpr std::string_view input{R"(
     continue;
     return enum { RED };
     import std;
-    import "ast/node.conch" as node;
+    import "ast/node.p" as node;
     _ = enum { RED };
     comptime SIZE := 2uz;
     { a; b; 2; c; };
@@ -63,4 +63,4 @@ TEST_CASE("Comprehensive dump") {
     REQUIRE(expected == oss.view());
 }
 
-} // namespace conch::tests
+} // namespace porpoise::tests

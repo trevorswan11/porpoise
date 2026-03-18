@@ -9,7 +9,7 @@
 
 #include "variant.hpp"
 
-namespace conch::ast {
+namespace porpoise::ast {
 
 class IdentifierExpression;
 class TypeExpression;
@@ -97,4 +97,4 @@ class TypeExpression : public ExprBase<TypeExpression> {
     friend class FunctionExpression;
 };
 
-} // namespace conch::ast
+} // namespace porpoise::ast

@@ -1,6 +1,6 @@
 #include "program.hpp"
 
 auto main() -> int {
-    conch::cli::Program p;
+    porpoise::cli::Program p;
     p.interactive();
 }

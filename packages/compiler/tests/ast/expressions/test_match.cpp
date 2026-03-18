@@ -4,7 +4,7 @@
 
 #include "ast/expressions/match.hpp"
 
-namespace conch::tests {
+namespace porpoise::tests {
 
 TEST_CASE("Match without alternate") {
     helpers::test_expr_stmt(
@@ -114,4 +114,4 @@ TEST_CASE("Illegal match alternate") {
                        ParserDiagnostic{ParserError::ILLEGAL_MATCH_CATCH_ALL, 1, 28});
 }
 
-} // namespace conch::tests
+} // namespace porpoise::tests

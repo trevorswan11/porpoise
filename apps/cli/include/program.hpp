@@ -6,7 +6,7 @@
 #    include "platform/win32.hpp"
 #endif
 
-namespace conch::cli {
+namespace porpoise::cli {
 
 class Program {
   public:
@@ -21,4 +21,4 @@ class Program {
 #endif
 };
 
-} // namespace conch::cli
+} // namespace porpoise::cli

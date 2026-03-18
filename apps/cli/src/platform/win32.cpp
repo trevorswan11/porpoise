@@ -6,7 +6,7 @@
 #include "platform/win32.hpp"
 #include "types.hpp"
 
-namespace conch::cli::win32 {
+namespace porpoise::cli::win32 {
 
 // I hate that this exists, made with the help of Gemini because microslop
 
@@ -47,4 +47,4 @@ RichConsole::~RichConsole() noexcept {
 
 #endif
 
-} // namespace conch::cli::win32
+} // namespace porpoise::cli::win32

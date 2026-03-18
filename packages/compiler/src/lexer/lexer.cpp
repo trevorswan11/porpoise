@@ -7,7 +7,7 @@
 #include "lexer/operators.hpp"
 #include "lexer/token.hpp"
 
-namespace conch {
+namespace porpoise {
 
 Lexer::Snapshot::Snapshot(const Lexer& l) noexcept
     : pos_{l.pos_}, peek_pos_{l.peek_pos_}, current_byte_{l.current_byte_}, line_no_{l.line_no_},
@@ -447,4 +447,4 @@ auto Lexer::read_comment() noexcept -> Token {
     return {TokenType::COMMENT, input_.substr(start, pos_ - start), start_line, start_col};
 }
 
-} // namespace conch
+} // namespace porpoise

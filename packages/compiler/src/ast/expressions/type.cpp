@@ -5,7 +5,7 @@
 #include "ast/expressions/primitive.hpp"
 #include "ast/visitor.hpp"
 
-namespace conch::ast {
+namespace porpoise::ast {
 
 ExplicitArrayType::ExplicitArrayType(Optional<Box<Expression>> dimension,
                                      bool                      null_terminated,
@@ -178,4 +178,4 @@ auto TypeExpression::is_equal(const Node& other) const noexcept -> bool {
     return optional::safe_eq<ExplicitType>(explicit_, casted.explicit_);
 }
 
-} // namespace conch::ast
+} // namespace porpoise::ast

@@ -3,7 +3,7 @@
 #include <string_view>
 #include <type_traits>
 
-namespace conch {
+namespace porpoise {
 
 using u8    = std::uint8_t;
 using i8    = std::int8_t;
@@ -21,4 +21,4 @@ using f64 = double;
 
 using byte = std::string_view::value_type;
 
-} // namespace conch
+} // namespace porpoise

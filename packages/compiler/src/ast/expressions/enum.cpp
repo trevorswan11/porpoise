@@ -5,7 +5,7 @@
 #include "ast/expressions/identifier.hpp"
 #include "ast/visitor.hpp"
 
-namespace conch::ast {
+namespace porpoise::ast {
 
 Enumeration::Enumeration(Box<IdentifierExpression> ident, Optional<Box<Expression>> value) noexcept
     : ident_{std::move(ident)}, value_{std::move(value)} {}
@@ -66,4 +66,4 @@ auto EnumExpression::is_equal(const Node& other) const noexcept -> bool {
            std::ranges::equal(enumerations_, casted.enumerations_);
 }
 
-} // namespace conch::ast
+} // namespace porpoise::ast

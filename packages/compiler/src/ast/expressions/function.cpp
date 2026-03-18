@@ -9,7 +9,7 @@
 #include "ast/visitor.hpp"
 #include "optional.hpp"
 
-namespace conch::ast {
+namespace porpoise::ast {
 
 FunctionParameter::FunctionParameter(Box<IdentifierExpression> ident, ExplicitType&& type) noexcept
     : ident_{std::move(ident)}, type_{std::move(type)} {}
@@ -133,4 +133,4 @@ auto FunctionExpression::is_equal(const Node& other) const noexcept -> bool {
            optional::unsafe_eq<BlockStatement>(body_, casted.body_);
 }
 
-} // namespace conch::ast
+} // namespace porpoise::ast

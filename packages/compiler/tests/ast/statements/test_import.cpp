@@ -5,7 +5,7 @@
 #include "ast/expressions/primitive.hpp"
 #include "ast/statements/import.hpp"
 
-namespace conch::tests {
+namespace porpoise::tests {
 
 TEST_CASE("Module imports") {
     helpers::test_stmt(
@@ -19,11 +19,11 @@ TEST_CASE("Module imports") {
 }
 
 TEST_CASE("User imports") {
-    helpers::test_stmt(R"(import "ast/node.conch" as node;)",
+    helpers::test_stmt(R"(import "ast/node.p" as node;)",
                        ast::ImportStatement{Token{keywords::IMPORT},
                                             make_box<ast::StringExpression>(
-                                                Token{TokenType::STRING, R"("ast/node.conch")"},
-                                                std::string{"ast/node.conch"}),
+                                                Token{TokenType::STRING, R"("ast/node.p")"},
+                                                std::string{"ast/node.p"}),
                                             helpers::make_ident("node")});
 }
 
@@ -41,12 +41,12 @@ TEST_CASE("Incorrect user imports ") {
     helpers::test_fail(R"(import "";)", ParserDiagnostic{ParserError::EMPTY_USER_IMPORT, 1, 8});
     helpers::test_fail(R"(import "" as e;)",
                        ParserDiagnostic{ParserError::EMPTY_USER_IMPORT, 1, 8});
-    helpers::test_fail(R"(import "ast/node.conch";)",
+    helpers::test_fail(R"(import "ast/node.p";)",
                        ParserDiagnostic{ParserError::USER_IMPORT_MISSING_ALIAS, 1, 1});
     helpers::test_fail(
-        R"(import "ast/node.conch" as 2;)",
+        R"(import "ast/node.p" as 2;)",
         ParserDiagnostic{
-            "Expected token IDENT, found INT_10", ParserError::UNEXPECTED_TOKEN, 1, 28});
+            "Expected token IDENT, found INT_10", ParserError::UNEXPECTED_TOKEN, 1, 24});
 }
 
 TEST_CASE("Non-terminated imports") {
@@ -56,4 +56,4 @@ TEST_CASE("Non-terminated imports") {
             "Expected token SEMICOLON, found END", ParserError::UNEXPECTED_TOKEN, 1, 11});
 }
 
-} // namespace conch::tests
+} // namespace porpoise::tests

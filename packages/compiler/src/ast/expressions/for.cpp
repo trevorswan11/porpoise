@@ -7,7 +7,7 @@
 #include "ast/statements/block.hpp"
 #include "ast/visitor.hpp"
 
-namespace conch::ast {
+namespace porpoise::ast {
 
 ForLoopCapture::Valued::Valued(TypeModifier modifier, Box<IdentifierExpression> ident) noexcept
     : modifier_{std::move(modifier)}, ident_{std::move(ident)} {}
@@ -109,4 +109,4 @@ auto ForLoopExpression::is_equal(const Node& other) const noexcept -> bool {
            optional::unsafe_eq<Statement>(non_break_, casted.non_break_);
 }
 
-} // namespace conch::ast
+} // namespace porpoise::ast

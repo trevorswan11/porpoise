@@ -2,7 +2,7 @@
 
 #include "ast/visitor.hpp"
 
-namespace conch::ast {
+namespace porpoise::ast {
 
 auto IdentifierExpression::accept(Visitor& v) const -> void { v.visit(*this); }
 
@@ -16,4 +16,4 @@ auto IdentifierExpression::parse(Parser& parser) // cppcheck-suppress constParam
     return make_box<IdentifierExpression>(start_token);
 }
 
-} // namespace conch::ast
+} // namespace porpoise::ast

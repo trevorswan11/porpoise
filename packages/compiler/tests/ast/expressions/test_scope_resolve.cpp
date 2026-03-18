@@ -4,7 +4,7 @@
 
 #include "ast/expressions/scope_resolve.hpp"
 
-namespace conch::tests {
+namespace porpoise::tests {
 
 TEST_CASE("Basic scope") {
     const Token a{TokenType::IDENT, "A"};
@@ -41,4 +41,4 @@ TEST_CASE("Illegal outer scope") {
     helpers::test_fail("2::A;", ParserDiagnostic{ParserError::ILLEGAL_OUTER_SCOPE_TYPE, 1, 1});
 }
 
-} // namespace conch::tests
+} // namespace porpoise::tests

@@ -7,7 +7,7 @@
 
 #include "parser/parser.hpp"
 
-namespace conch::ast {
+namespace porpoise::ast {
 
 template <typename Derived> class PrefixExpression : public ExprBase<Derived> {
   public:
@@ -59,4 +59,4 @@ DECLARE_PREFIX_EXPRESSION(ImplicitAccessExpression, NodeKind::IMPLICIT_ACCESS_EX
 
 #undef DECLARE_PREFIX_EXPRESSION
 
-} // namespace conch::ast
+} // namespace porpoise::ast

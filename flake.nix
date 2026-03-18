@@ -1,5 +1,5 @@
 {
-  description = "Conch language development.";
+  description = "Porpoise language development.";
 
   inputs = {
     nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable";

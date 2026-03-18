@@ -2,7 +2,7 @@
 
 #include "ast/visitor.hpp"
 
-namespace conch::ast {
+namespace porpoise::ast {
 
 auto JumpStatement::accept(Visitor& v) const -> void { v.visit(*this); }
 
@@ -20,4 +20,4 @@ auto JumpStatement::parse(Parser& parser) -> Expected<Box<Statement>, ParserDiag
     return make_box<JumpStatement>(start_token, std::move(value));
 }
 
-} // namespace conch::ast
+} // namespace porpoise::ast

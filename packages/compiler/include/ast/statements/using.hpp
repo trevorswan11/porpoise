@@ -5,7 +5,7 @@
 
 #include "parser/parser.hpp"
 
-namespace conch::ast {
+namespace porpoise::ast {
 
 class IdentifierExpression;
 
@@ -35,4 +35,4 @@ class UsingStatement : public StmtBase<UsingStatement> {
     ExplicitType              type_;
 };
 
-} // namespace conch::ast
+} // namespace porpoise::ast

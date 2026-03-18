@@ -6,7 +6,7 @@
 
 #include "parser/parser.hpp"
 
-namespace conch::ast {
+namespace porpoise::ast {
 
 class FunctionExpression;
 class DeclStatement;
@@ -37,4 +37,4 @@ class StructExpression : public ExprBase<StructExpression> {
     std::vector<Box<DeclStatement>> members_;
 };
 
-} // namespace conch::ast
+} // namespace porpoise::ast

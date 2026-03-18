@@ -1,5 +1,5 @@
-# Conch Language Reference
-A WIP reference of the conch programming language
+# Porpoise Language Reference
+A WIP reference of the porpoise programming language
 
 ## Syntax
 - [arrays](syntax/arrays.md)

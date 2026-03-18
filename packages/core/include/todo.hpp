@@ -7,7 +7,7 @@
 
 #include <fmt/format.h>
 
-namespace conch {
+namespace porpoise {
 
 namespace detail {
 
@@ -19,8 +19,8 @@ auto todo_impl(std::source_location loc, [[maybe_unused]] Args&&... args) noexce
 
 } // namespace detail
 
-#define TODO(...)                                                             \
-    ::conch::detail::todo_impl(std::source_location::current(), __VA_ARGS__); \
+#define TODO(...)                                                                \
+    ::porpoise::detail::todo_impl(std::source_location::current(), __VA_ARGS__); \
     std::unreachable()
 
-} // namespace conch
+} // namespace porpoise

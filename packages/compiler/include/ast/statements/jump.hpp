@@ -6,7 +6,7 @@
 
 #include "parser/parser.hpp"
 
-namespace conch::ast {
+namespace porpoise::ast {
 
 class JumpStatement : public StmtBase<JumpStatement> {
   public:
@@ -33,4 +33,4 @@ class JumpStatement : public StmtBase<JumpStatement> {
     Optional<Box<Expression>> expression_;
 };
 
-} // namespace conch::ast
+} // namespace porpoise::ast

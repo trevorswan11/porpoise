@@ -15,7 +15,7 @@
 
 #include "ast/ast.hpp"
 
-namespace conch {
+namespace porpoise {
 
 Parser::Checkpoint::Checkpoint(const Parser& parser) noexcept
     : snapshot_{parser.lexer_}, current_{parser.current_token_}, peek_{parser.peek_token_} {}
@@ -312,4 +312,4 @@ auto Parser::tt_mismatch_error(TokenType expected, const Token& actual) -> Parse
                             actual};
 }
 
-} // namespace conch
+} // namespace porpoise

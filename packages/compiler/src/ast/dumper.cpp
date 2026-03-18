@@ -5,7 +5,7 @@
 #include "ast/ast.hpp"
 #include "ast/dumper.hpp"
 
-namespace conch::ast {
+namespace porpoise::ast {
 
 #define MAKE_INFIX_DUMP(NodeType, LeftLabel, RightLabel)                             \
     auto ASTDumper::visit(const NodeType& node) -> void {                            \
@@ -528,4 +528,4 @@ auto ASTDumper::dump_explicit_type(const ExplicitType& type, bool print_branch) 
         type.get_type());
 }
 
-} // namespace conch::ast
+} // namespace porpoise::ast

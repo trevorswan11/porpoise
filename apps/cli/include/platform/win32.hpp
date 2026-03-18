@@ -1,6 +1,6 @@
 #pragma once
 
-namespace conch::cli::win32 {
+namespace porpoise::cli::win32 {
 
 // Enables UTF8 on creation, disables on destruction
 //
@@ -13,4 +13,4 @@ class RichConsole {
 #endif
 };
 
-} // namespace conch::cli::win32
+} // namespace porpoise::cli::win32

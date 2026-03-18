@@ -12,7 +12,7 @@
 #include "memory.hpp"
 #include "types.hpp"
 
-namespace conch::ast {
+namespace porpoise::ast {
 
 class Visitor;
 
@@ -172,4 +172,4 @@ template <typename Derived> class StmtBase : public NodeBase<Derived, Statement>
   private:                                                                                  \
     auto is_equal(const NodeType& other) const noexcept -> bool;
 
-} // namespace conch::ast
+} // namespace porpoise::ast

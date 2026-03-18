@@ -8,7 +8,7 @@
 
 #include "parser/parser.hpp"
 
-namespace conch::ast {
+namespace porpoise::ast {
 
 class IdentifierExpression;
 
@@ -51,4 +51,4 @@ class UnionExpression : public ExprBase<UnionExpression> {
     std::vector<UnionField> fields_;
 };
 
-} // namespace conch::ast
+} // namespace porpoise::ast

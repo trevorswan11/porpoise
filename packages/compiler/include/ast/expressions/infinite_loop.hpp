@@ -4,7 +4,7 @@
 
 #include "parser/parser.hpp"
 
-namespace conch::ast {
+namespace porpoise::ast {
 
 class BlockStatement;
 
@@ -30,4 +30,4 @@ class InfiniteLoopExpression : public ExprBase<InfiniteLoopExpression> {
     Box<BlockStatement> block_;
 };
 
-} // namespace conch::ast
+} // namespace porpoise::ast
