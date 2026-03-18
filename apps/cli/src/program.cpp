@@ -6,18 +6,14 @@
 
 #include "program.hpp"
 
-#include "parser/parser.hpp"
-
-#include "ast/ast.hpp"
 #include "ast/dumper.hpp"
+#include "ast/node.hpp"
 
 #include "string.hpp"
 
 namespace conch::cli {
 
 auto Program::interactive() -> void {
-    Parser p;
-
     std::string line;
     while (true) {
         fmt::print(">>> ");
@@ -27,8 +23,8 @@ auto Program::interactive() -> void {
         const auto trimmed = string::trim(line);
         if (trimmed == "exit") { break; }
 
-        p.reset(trimmed);
-        auto [ast, errors] = p.consume();
+        parser_.reset(trimmed);
+        auto [ast, errors] = parser_.consume();
         if (!errors.empty()) {
             fmt::println("{}", errors);
         } else {

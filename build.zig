@@ -274,11 +274,16 @@ fn addArtifacts(b: *std.Build, config: struct {
         .name = "conch",
         .target = target,
         .optimize = config.optimize,
-        .include_paths = &.{b.path(ProjectPaths.cli.inc)},
+        .include_paths = &.{
+            b.path(ProjectPaths.cli.inc),
+            b.path(ProjectPaths.compiler.inc),
+            b.path(ProjectPaths.core.inc),
+        },
         .cxx = .{
             .files = &.{ProjectPaths.cli.src ++ "main.cpp"},
             .flags = config.cxx_flags,
         },
+        .system_include_paths = &.{magic_enum_inc},
         .link_libraries = &.{ libcli, fmt_dep.artifact },
         .behavior = config.behavior orelse .{
             .runnable = .{
