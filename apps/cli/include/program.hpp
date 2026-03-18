@@ -2,7 +2,9 @@
 
 #include "parser/parser.hpp"
 
-#include "platform/win32.hpp"
+#ifdef _WIN32
+#    include "platform/win32.hpp"
+#endif
 
 namespace conch::cli {
 
@@ -13,8 +15,10 @@ class Program {
     auto interactive() -> void;
 
   private:
-    Parser             parser_;
+    Parser parser_;
+#ifdef _WIN32
     win32::RichConsole console_;
+#endif
 };
 
 } // namespace conch::cli
