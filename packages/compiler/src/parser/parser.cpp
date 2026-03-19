@@ -107,6 +107,7 @@ auto Parser::parse_statement() -> Expected<Box<ast::Statement>, ParserDiagnostic
     case TokenType::IMPORT:     return ast::ImportStatement::parse(*this);
     case TokenType::LBRACE:     return ast::BlockStatement::parse(*this);
     case TokenType::UNDERSCORE: return ast::DiscardStatement::parse(*this);
+    case TokenType::MODULE:     return ast::ModuleStatement::parse(*this);
     case TokenType::USING:      return ast::UsingStatement::parse(*this);
     default:                    return ast::ExpressionStatement::parse(*this);
     }

@@ -45,6 +45,7 @@ namespace porpoise::ast {
     X(ExpressionStatement)           \
     X(ImportStatement)               \
     X(JumpStatement)                 \
+    X(ModuleStatement)               \
     X(UsingStatement)
 
 // The following use '()' since it messes with Zed's syntax highlighting otherwise :(

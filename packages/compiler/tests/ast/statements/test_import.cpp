@@ -4,10 +4,13 @@
 
 #include "ast/expressions/primitive.hpp"
 #include "ast/statements/import.hpp"
+#include "ast/statements/module.hpp"
 
 namespace porpoise::tests {
 
 TEST_CASE("Module imports") {
+    helpers::test_stmt("module;", ast::ModuleStatement{Token{keywords::MODULE}});
+
     helpers::test_stmt(
         "import std;",
         ast::ImportStatement{Token{keywords::IMPORT}, helpers::make_ident("std"), {}});
@@ -27,7 +30,16 @@ TEST_CASE("User imports") {
                                             helpers::make_ident("node")});
 }
 
-TEST_CASE("Incorrect module imports ") {
+TEST_CASE("Incorrect module imports") {
+    helpers::test_fail(
+        "module",
+        ParserDiagnostic{
+            "Expected token SEMICOLON, found END", ParserError::UNEXPECTED_TOKEN, 1, 7});
+    helpers::test_fail(
+        "module std;",
+        ParserDiagnostic{
+            "Expected token SEMICOLON, found IDENT", ParserError::UNEXPECTED_TOKEN, 1, 8});
+
     helpers::test_fail("import 2;", ParserDiagnostic{ParserError::ILLEGAL_IMPORT_TYPE, 1, 8});
     helpers::test_fail("import as 2;", ParserDiagnostic{ParserError::ILLEGAL_IMPORT_TYPE, 1, 8});
     helpers::test_fail("import 2 as 3;", ParserDiagnostic{ParserError::ILLEGAL_IMPORT_TYPE, 1, 8});

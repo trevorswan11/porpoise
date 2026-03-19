@@ -1,7 +1,9 @@
 # Declarations
 - The assignment operator `=` can be used to assign an existing non-constant value
     - It is also used to assign a value to an explicitly typed variable in-line
-    - The operator can also be used to discard a value using the `_ = ...` syntax 
+    - The operator can also be used to discard a value using the `_ = ...` syntax
+- You can discard expression results using the `_ = ...` syntax
+    - In porpoise, identifiers cannot start with `_` and thus cannot be named `_`
 - The walrus operator `:=` can be used to declare a value who's type is inferred based on the assigned value
     - The walrus operator can only be used with value-initialized declarations
 - There is no shadowing in porpoise

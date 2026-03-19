@@ -468,6 +468,8 @@ auto ASTDumper::visit(const JumpStatement& node) -> void {
     }
 }
 
+auto ASTDumper::visit(const ModuleStatement&) -> void { fmt::println(out_, "ModuleStatement"); }
+
 auto ASTDumper::visit(const UsingStatement& node) -> void {
     fmt::println(out_, "UsingStatement");
     {
