@@ -3,6 +3,7 @@
 #include "ast/node.hpp"
 #include "ast/visitor.hpp"
 
+#include "sema/error.hpp"
 #include "sema/symbol.hpp"
 
 namespace porpoise::sema {
@@ -13,14 +14,17 @@ namespace porpoise::sema {
 // - Does not verify undeclared identifier use
 class SymbolCollector : public ast::Visitor {
   public:
-    explicit SymbolCollector(SymbolTable& table) noexcept : table_{table} {}
-
-    [[nodiscard]] static auto collect(const ast::AST& ast) -> SymbolTable;
+    [[nodiscard]] static auto collect(const ast::AST& ast) -> std::pair<SymbolTable, Diagnostics>;
 
     MAKE_AST_VISITOR_OVERRIDES()
 
   private:
-    SymbolTable table_;
+    explicit SymbolCollector(SymbolTable& table, Diagnostics& diagnostics) noexcept
+        : table_{table}, diagnostics_{diagnostics} {}
+
+  private:
+    SymbolTable& table_;
+    Diagnostics& diagnostics_;
 };
 
 } // namespace porpoise::sema

@@ -23,7 +23,16 @@ auto SymbolTable::insert(std::string_view name, SymbolicNode node)
     return std::monostate{};
 }
 
-auto SymbolTable::get(std::string_view name) noexcept -> Optional<Symbol&> {
+auto SymbolTable::has(std::string_view name) noexcept -> bool { return symbols_.contains(name); }
+
+// Differs from `get_opt` by asserting that the name is present.
+auto SymbolTable::get(std::string_view name) noexcept -> Symbol& {
+    auto it = symbols_.find(name);
+    assert(it != symbols_.end() && "Illegal get on missing key");
+    return it->second;
+}
+
+auto SymbolTable::get_opt(std::string_view name) noexcept -> Optional<Symbol&> {
     auto it = symbols_.find(name);
     if (it == symbols_.end()) { return nullopt; }
     return it->second;
