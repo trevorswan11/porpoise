@@ -24,8 +24,8 @@ class UsingStatement : public StmtBase<UsingStatement> {
     auto                      accept(Visitor& v) const -> void override;
     [[nodiscard]] static auto parse(Parser& parser) -> Expected<Box<Statement>, ParserDiagnostic>;
 
-    MAKE_AST_GETTER(alias, const IdentifierExpression&, *)
-    MAKE_AST_GETTER(type, const ExplicitType&, )
+    MAKE_GETTER(alias, const IdentifierExpression&, *)
+    MAKE_GETTER(type, const ExplicitType&, )
 
   protected:
     auto is_equal(const Node& other) const noexcept -> bool override;

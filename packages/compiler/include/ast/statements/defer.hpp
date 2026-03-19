@@ -21,7 +21,7 @@ class DeferStatement : public StmtBase<DeferStatement> {
     auto                      accept(Visitor& v) const -> void override;
     [[nodiscard]] static auto parse(Parser& parser) -> Expected<Box<Statement>, ParserDiagnostic>;
 
-    MAKE_AST_GETTER(deferred, const Statement&, *)
+    MAKE_GETTER(deferred, const Statement&, *)
 
   protected:
     auto is_equal(const Node& other) const noexcept -> bool override {

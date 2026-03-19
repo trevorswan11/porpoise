@@ -20,8 +20,8 @@ class FunctionParameter {
 
     MAKE_AST_COPY_MOVE(FunctionParameter)
 
-    MAKE_AST_GETTER(ident, const IdentifierExpression&, *)
-    MAKE_AST_GETTER(type, const ExplicitType&, )
+    MAKE_GETTER(ident, const IdentifierExpression&, *)
+    MAKE_GETTER(type, const ExplicitType&, )
 
     MAKE_AST_DEPENDENT_EQ(FunctionParameter)
 
@@ -37,8 +37,8 @@ class SelfParameter {
 
     MAKE_AST_COPY_MOVE(SelfParameter)
 
-    MAKE_AST_GETTER(modifier, const TypeModifier&, )
-    MAKE_AST_GETTER(ident, const IdentifierExpression&, *)
+    MAKE_GETTER(modifier, const TypeModifier&, )
+    MAKE_GETTER(ident, const IdentifierExpression&, *)
 
     MAKE_AST_DEPENDENT_EQ(SelfParameter)
 
@@ -65,8 +65,8 @@ class FunctionExpression : public ExprBase<FunctionExpression> {
     [[nodiscard]] static auto parse(Parser& parser) -> Expected<Box<Expression>, ParserDiagnostic>;
 
     MAKE_OPTIONAL_UNPACKER(self, SelfParameter, self_, *)
-    MAKE_AST_GETTER(parameters, std::span<const FunctionParameter>, )
-    MAKE_AST_GETTER(return_type, const ExplicitType&, )
+    MAKE_GETTER(parameters, std::span<const FunctionParameter>, )
+    MAKE_GETTER(return_type, const ExplicitType&, )
     MAKE_OPTIONAL_UNPACKER(body, BlockStatement, body_, **)
 
   protected:

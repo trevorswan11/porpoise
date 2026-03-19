@@ -23,8 +23,8 @@ class DoWhileLoopExpression : public ExprBase<DoWhileLoopExpression> {
     auto                      accept(Visitor& v) const -> void override;
     [[nodiscard]] static auto parse(Parser& parser) -> Expected<Box<Expression>, ParserDiagnostic>;
 
-    MAKE_AST_GETTER(block, const BlockStatement&, *)
-    MAKE_AST_GETTER(condition, const Expression&, *)
+    MAKE_GETTER(block, const BlockStatement&, *)
+    MAKE_GETTER(condition, const Expression&, *)
 
   protected:
     auto is_equal(const Node& other) const noexcept -> bool override;

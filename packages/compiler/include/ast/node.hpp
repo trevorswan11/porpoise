@@ -9,6 +9,7 @@
 
 #include "lexer/token.hpp"
 
+#include "common.hpp"
 #include "memory.hpp"
 #include "types.hpp"
 
@@ -159,9 +160,6 @@ template <typename Derived> class StmtBase : public NodeBase<Derived, Statement>
   protected:
     using NodeBase<Derived, Statement>::NodeBase;
 };
-
-#define MAKE_AST_GETTER(name, ReturnType, getter) \
-    [[nodiscard]] auto get_##name() const noexcept -> ReturnType { return getter name##_; }
 
 #define MAKE_AST_DEPENDENT_EQ(NodeType)                                                     \
     [[nodiscard]] friend auto operator==(const NodeType& lhs, const NodeType& rhs) noexcept \

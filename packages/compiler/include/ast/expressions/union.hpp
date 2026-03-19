@@ -19,8 +19,8 @@ class UnionField {
 
     MAKE_AST_COPY_MOVE(UnionField)
 
-    MAKE_AST_GETTER(ident, const IdentifierExpression&, *)
-    MAKE_AST_GETTER(type, const ExplicitType&, )
+    MAKE_GETTER(ident, const IdentifierExpression&, *)
+    MAKE_GETTER(type, const ExplicitType&, )
 
     MAKE_AST_DEPENDENT_EQ(UnionField)
 
@@ -42,7 +42,7 @@ class UnionExpression : public ExprBase<UnionExpression> {
     auto                      accept(Visitor& v) const -> void override;
     [[nodiscard]] static auto parse(Parser& parser) -> Expected<Box<Expression>, ParserDiagnostic>;
 
-    MAKE_AST_GETTER(fields, std::span<const UnionField>, )
+    MAKE_GETTER(fields, std::span<const UnionField>, )
 
   protected:
     auto is_equal(const Node& other) const noexcept -> bool override;

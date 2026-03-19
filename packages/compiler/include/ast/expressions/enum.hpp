@@ -17,7 +17,7 @@ class Enumeration {
 
     MAKE_AST_COPY_MOVE(Enumeration)
 
-    MAKE_AST_GETTER(ident, const IdentifierExpression&, *)
+    MAKE_GETTER(ident, const IdentifierExpression&, *)
     MAKE_OPTIONAL_UNPACKER(default_value, Expression, value_, **)
 
     MAKE_AST_DEPENDENT_EQ(Enumeration)
@@ -43,7 +43,7 @@ class EnumExpression : public ExprBase<EnumExpression> {
     [[nodiscard]] static auto parse(Parser& parser) -> Expected<Box<Expression>, ParserDiagnostic>;
 
     MAKE_OPTIONAL_UNPACKER(underlying, IdentifierExpression, underlying_, **)
-    MAKE_AST_GETTER(enumerations, std::span<const Enumeration>, )
+    MAKE_GETTER(enumerations, std::span<const Enumeration>, )
 
   protected:
     auto is_equal(const Node& other) const noexcept -> bool override;

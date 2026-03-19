@@ -28,7 +28,7 @@ template <typename Derived> class PrefixExpression : public ExprBase<Derived> {
     }
 
     [[nodiscard]] auto get_op() const noexcept -> TokenType { return this->start_token_.type; }
-    MAKE_AST_GETTER(rhs, const Expression&, *)
+    MAKE_GETTER(rhs, const Expression&, *)
 
   protected:
     auto is_equal(const Node& other) const noexcept -> bool override {

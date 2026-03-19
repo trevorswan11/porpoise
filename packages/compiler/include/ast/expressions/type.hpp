@@ -29,7 +29,7 @@ class ExplicitArrayType {
 
     MAKE_OPTIONAL_UNPACKER(dimension, Expression, dimension_, **)
     [[nodiscard]] auto is_null_terminated() const noexcept -> bool { return null_terminated_; }
-    MAKE_AST_GETTER(inner_type, const ExplicitType&, *)
+    MAKE_GETTER(inner_type, const ExplicitType&, *)
 
     MAKE_AST_DEPENDENT_EQ(ExplicitArrayType)
 
@@ -56,8 +56,8 @@ class ExplicitType {
 
     [[nodiscard]] static auto parse(Parser& parser) -> Expected<ExplicitType, ParserDiagnostic>;
 
-    MAKE_AST_GETTER(modifier, const TypeModifier&, )
-    MAKE_AST_GETTER(type, const ExplicitTypeVariant&, )
+    MAKE_GETTER(modifier, const TypeModifier&, )
+    MAKE_GETTER(type, const ExplicitTypeVariant&, )
     MAKE_VARIANT_UNPACKER(ident_type, IdentifierExpression, ExplicitIdentType, type_, *std::get)
     MAKE_VARIANT_UNPACKER(function_type, FunctionExpression, ExplicitFunctionType, type_, *std::get)
     MAKE_VARIANT_UNPACKER(array_type, ExplicitArrayType, ExplicitArrayType, type_, std::get)

@@ -9,6 +9,9 @@
 
 namespace porpoise {
 
+#define MAKE_GETTER(name, ReturnType, getter) \
+    [[nodiscard]] auto get_##name() const noexcept -> ReturnType { return getter(name##_); }
+
 namespace detail {
 
 template <typename... Args>

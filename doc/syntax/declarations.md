@@ -4,6 +4,8 @@
     - The operator can also be used to discard a value using the `_ = ...` syntax 
 - The walrus operator `:=` can be used to declare a value who's type is inferred based on the assigned value
     - The walrus operator can only be used with value-initialized declarations
+- There is no shadowing in porpoise
+    - You cannot declare the same variable name in the same scope or enclosing scope
 
 ```porpoise
 const a := 2;           // Type deduced to be a signed 32 bit int

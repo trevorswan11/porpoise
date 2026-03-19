@@ -59,10 +59,10 @@ class DeclStatement : public StmtBase<DeclStatement> {
     auto                      accept(Visitor& v) const -> void override;
     [[nodiscard]] static auto parse(Parser& parser) -> Expected<Box<Statement>, ParserDiagnostic>;
 
-    MAKE_AST_GETTER(ident, const IdentifierExpression&, *)
-    MAKE_AST_GETTER(type, const TypeExpression&, *)
+    MAKE_GETTER(ident, const IdentifierExpression&, *)
+    MAKE_GETTER(type, const TypeExpression&, *)
     MAKE_OPTIONAL_UNPACKER(value, Expression, value_, **)
-    MAKE_AST_GETTER(modifiers, const DeclModifiers&, )
+    MAKE_GETTER(modifiers, const DeclModifiers&, )
 
     [[nodiscard]] auto has_modifier(DeclModifiers flag) const noexcept -> bool {
         return modifiers_has(modifiers_, flag);

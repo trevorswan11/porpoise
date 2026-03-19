@@ -25,7 +25,7 @@ class MatchArm {
 
     MAKE_AST_COPY_MOVE(MatchArm)
 
-    MAKE_AST_GETTER(pattern, const Expression&, *)
+    MAKE_GETTER(pattern, const Expression&, *)
     [[nodiscard]] auto has_capture_clause() const noexcept -> bool { return capture_.has_value(); }
     MAKE_VARIANT_UNPACKER(
         explicit_capture, IdentifierExpression, Box<IdentifierExpression>, *capture_, *std::get)
@@ -34,7 +34,7 @@ class MatchArm {
         return std::holds_alternative<std::monostate>(*capture_);
     }
 
-    MAKE_AST_GETTER(dispatch, const Statement&, *)
+    MAKE_GETTER(dispatch, const Statement&, *)
 
     MAKE_AST_DEPENDENT_EQ(MatchArm)
 
@@ -60,8 +60,8 @@ class MatchExpression : public ExprBase<MatchExpression> {
     auto                      accept(Visitor& v) const -> void override;
     [[nodiscard]] static auto parse(Parser& parser) -> Expected<Box<Expression>, ParserDiagnostic>;
 
-    MAKE_AST_GETTER(matcher, const Expression&, *)
-    MAKE_AST_GETTER(arms, std::span<const MatchArm>, )
+    MAKE_GETTER(matcher, const Expression&, *)
+    MAKE_GETTER(arms, std::span<const MatchArm>, )
     MAKE_OPTIONAL_UNPACKER(catch_all, Statement, catch_all_, **)
 
   protected:

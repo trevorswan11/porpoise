@@ -45,8 +45,8 @@ class CallExpression : public ExprBase<CallExpression> {
     [[nodiscard]] static auto parse(Parser& parser, Box<Expression> function)
         -> Expected<Box<Expression>, ParserDiagnostic>;
 
-    MAKE_AST_GETTER(function, const Expression&, *)
-    MAKE_AST_GETTER(arguments, std::span<const CallArgument>, )
+    MAKE_GETTER(function, const Expression&, *)
+    MAKE_GETTER(arguments, std::span<const CallArgument>, )
 
   protected:
     auto is_equal(const Node& other) const noexcept -> bool override;

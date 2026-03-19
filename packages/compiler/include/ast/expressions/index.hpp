@@ -24,8 +24,8 @@ class IndexExpression : public ExprBase<IndexExpression> {
     [[nodiscard]] static auto parse(Parser& parser, Box<Expression> array)
         -> Expected<Box<Expression>, ParserDiagnostic>;
 
-    MAKE_AST_GETTER(array, const Expression&, *)
-    MAKE_AST_GETTER(index, const Expression&, *)
+    MAKE_GETTER(array, const Expression&, *)
+    MAKE_GETTER(index, const Expression&, *)
 
   protected:
     auto is_equal(const Node& other) const noexcept -> bool override {
