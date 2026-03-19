@@ -5,8 +5,6 @@
 
 #include <ankerl/unordered_dense.h>
 
-#include <config.h>
-
 #include "sema/error.hpp"
 
 #include "common.hpp"
@@ -35,7 +33,7 @@ class Type;
 class Symbol {
   public:
     explicit Symbol(std::string_view name, SymbolicNode node) noexcept : name_{name}, node_{node} {
-#ifdef ASSERTIONS
+#ifndef NDEBUG
         std::visit([](const auto* inner) { assert(inner && "Sema received null node"); }, node);
 #endif
     }

@@ -208,11 +208,6 @@ fn addArtifacts(b: *std.Build, config: struct {
         .optimize = config.optimize,
     });
 
-    const config_h = makeConfigHeader(b, .{
-        .target = target,
-        .optimize = config.optimize,
-    });
-
     // Shared core functionality
     const libcore = b.addLibrary(.{
         .name = "core",
@@ -221,7 +216,6 @@ fn addArtifacts(b: *std.Build, config: struct {
             .optimize = config.optimize,
             .include_paths = &.{b.path(ProjectPaths.core.inc)},
             .system_include_paths = &system_includes,
-            .config_headers = &.{config_h},
             .cxx = .{
                 .files = try collectFiles(b, ProjectPaths.core.src, .{}),
                 .flags = config.cxx_flags,
@@ -252,7 +246,6 @@ fn addArtifacts(b: *std.Build, config: struct {
                 b.path(ProjectPaths.core.inc),
             },
             .system_include_paths = &system_includes,
-            .config_headers = &.{config_h},
             .link_libraries = &.{ libcore, fmt_dep.artifact },
             .cxx = .{
                 .files = try collectFiles(b, ProjectPaths.compiler.src, .{}),
@@ -275,7 +268,6 @@ fn addArtifacts(b: *std.Build, config: struct {
                 b.path(ProjectPaths.core.inc),
             },
             .system_include_paths = &system_includes,
-            .config_headers = &.{config_h},
             .link_libraries = &.{ libcompiler, fmt_dep.artifact },
             .cxx = .{
                 .files = try collectFiles(b, ProjectPaths.cli.src, .{
@@ -302,7 +294,6 @@ fn addArtifacts(b: *std.Build, config: struct {
             .flags = config.cxx_flags,
         },
         .system_include_paths = &system_includes,
-        .config_headers = &.{config_h},
         .link_libraries = &.{ libcli, fmt_dep.artifact },
     }, .{
         .name = "porpoise",
@@ -349,7 +340,6 @@ fn addArtifacts(b: *std.Build, config: struct {
                 b.path(ProjectPaths.core.tests),
             },
             .system_include_paths = &system_includes,
-            .config_headers = &.{config_h},
             .cxx = .{
                 .files = try collectFiles(b, ProjectPaths.core.tests, .{
                     .extra_files = &.{ProjectPaths.test_runner ++ "runner.cpp"},
@@ -378,7 +368,6 @@ fn addArtifacts(b: *std.Build, config: struct {
                 b.path(ProjectPaths.compiler.tests),
             },
             .system_include_paths = &system_includes,
-            .config_headers = &.{config_h},
             .cxx = .{
                 .files = try collectFiles(b, ProjectPaths.compiler.tests, .{
                     .extra_files = &.{ProjectPaths.test_runner ++ "runner.cpp"},
@@ -408,7 +397,6 @@ fn addArtifacts(b: *std.Build, config: struct {
                 b.path(ProjectPaths.cli.tests),
             },
             .system_include_paths = &system_includes,
-            .config_headers = &.{config_h},
             .cxx = .{
                 .files = try collectFiles(b, ProjectPaths.cli.tests, .{
                     .extra_files = &.{ProjectPaths.test_runner ++ "runner.cpp"},
@@ -448,16 +436,6 @@ fn addArtifacts(b: *std.Build, config: struct {
         .tests = tests,
         .cppcheck = if (cppcheck_dep) |dep| dep.artifact else null,
     };
-}
-
-fn makeConfigHeader(b: *std.Build, config: struct {
-    target: std.Build.ResolvedTarget,
-    optimize: std.builtin.OptimizeMode,
-}) *std.Build.Step.ConfigHeader {
-    return b.addConfigHeader(.{}, .{
-        .VERSION = zon.version,
-        .ASSERTIONS = config.optimize == .Debug or config.optimize == .ReleaseSafe,
-    });
 }
 
 const SystemLibraries = struct {
