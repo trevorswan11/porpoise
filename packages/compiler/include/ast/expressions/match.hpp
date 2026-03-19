@@ -61,7 +61,7 @@ class MatchExpression : public ExprBase<MatchExpression> {
     [[nodiscard]] static auto parse(Parser& parser) -> Expected<Box<Expression>, ParserDiagnostic>;
 
     MAKE_GETTER(matcher, const Expression&, *)
-    MAKE_GETTER(arms, std::span<const MatchArm>, )
+    MAKE_GETTER(arms, std::span<const MatchArm>)
     MAKE_OPTIONAL_UNPACKER(catch_all, Statement, catch_all_, **)
 
   protected:

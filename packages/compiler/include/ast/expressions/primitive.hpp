@@ -58,7 +58,7 @@ template <typename Derived, typename T> class PrimitiveExpression : public ExprB
                                       start_token);
     }
 
-    MAKE_GETTER(value, const value_type&, )
+    MAKE_GETTER(value, const value_type&)
 
   protected:
     auto is_equal(const Node& other) const noexcept -> bool override {

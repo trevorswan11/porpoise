@@ -198,6 +198,11 @@ fn addArtifacts(b: *std.Build, config: struct {
     const magic_enum = b.dependency("magic_enum", .{});
     const magic_enum_inc = magic_enum.path("include");
 
+    const unordered_dense = b.dependency("unordered_dense", .{});
+    const unordered_dense_inc = unordered_dense.path("include");
+
+    const system_includes = [_]std.Build.LazyPath{ magic_enum_inc, unordered_dense_inc };
+
     const fmt_dep = fmt.build(b, .{
         .target = target,
         .optimize = config.optimize,
@@ -209,7 +214,7 @@ fn addArtifacts(b: *std.Build, config: struct {
         .target = target,
         .optimize = config.optimize,
         .include_paths = &.{b.path(ProjectPaths.core.inc)},
-        .system_include_paths = &.{magic_enum_inc},
+        .system_include_paths = &system_includes,
         .cxx = .{
             .files = try collectFiles(b, ProjectPaths.core.src, .{}),
             .flags = config.cxx_flags,
@@ -237,7 +242,7 @@ fn addArtifacts(b: *std.Build, config: struct {
             b.path(ProjectPaths.compiler.inc),
             b.path(ProjectPaths.core.inc),
         },
-        .system_include_paths = &.{magic_enum_inc},
+        .system_include_paths = &system_includes,
         .link_libraries = &.{ libcore, fmt_dep.artifact },
         .cxx = .{
             .files = try collectFiles(b, ProjectPaths.compiler.src, .{}),
@@ -257,7 +262,7 @@ fn addArtifacts(b: *std.Build, config: struct {
             b.path(ProjectPaths.compiler.inc),
             b.path(ProjectPaths.core.inc),
         },
-        .system_include_paths = &.{magic_enum_inc},
+        .system_include_paths = &system_includes,
         .link_libraries = &.{ libcompiler, fmt_dep.artifact },
         .cxx = .{
             .files = try collectFiles(b, ProjectPaths.cli.src, .{
@@ -283,7 +288,7 @@ fn addArtifacts(b: *std.Build, config: struct {
             .files = &.{ProjectPaths.cli.src ++ "main.cpp"},
             .flags = config.cxx_flags,
         },
-        .system_include_paths = &.{magic_enum_inc},
+        .system_include_paths = &system_includes,
         .link_libraries = &.{ libcli, fmt_dep.artifact },
         .behavior = config.behavior orelse .{
             .runnable = .{
@@ -328,7 +333,7 @@ fn addArtifacts(b: *std.Build, config: struct {
                 b.path(ProjectPaths.core.inc),
                 b.path(ProjectPaths.core.tests),
             },
-            .system_include_paths = &.{magic_enum_inc},
+            .system_include_paths = &system_includes,
             .cxx = .{
                 .files = try collectFiles(b, ProjectPaths.core.tests, .{
                     .extra_files = &.{ProjectPaths.test_runner ++ "runner.cpp"},
@@ -355,7 +360,7 @@ fn addArtifacts(b: *std.Build, config: struct {
                 b.path(ProjectPaths.core.inc),
                 b.path(ProjectPaths.compiler.tests),
             },
-            .system_include_paths = &.{magic_enum_inc},
+            .system_include_paths = &system_includes,
             .cxx = .{
                 .files = try collectFiles(b, ProjectPaths.compiler.tests, .{
                     .extra_files = &.{ProjectPaths.test_runner ++ "runner.cpp"},
@@ -383,7 +388,7 @@ fn addArtifacts(b: *std.Build, config: struct {
                 b.path(ProjectPaths.core.inc),
                 b.path(ProjectPaths.cli.tests),
             },
-            .system_include_paths = &.{magic_enum_inc},
+            .system_include_paths = &system_includes,
             .cxx = .{
                 .files = try collectFiles(b, ProjectPaths.cli.tests, .{
                     .extra_files = &.{ProjectPaths.test_runner ++ "runner.cpp"},

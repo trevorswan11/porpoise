@@ -30,12 +30,13 @@ The following are "standalone" dependencies, required and manually fetched by po
 2. [cppcheck](https://cppcheck.sourceforge.io/) is compiled from source for static analysis. It is licensed under the GNU GPLv3, but the associated compiled artifacts are neither linked with output artifacts nor shipped with releases.
 3. [magic_enum](https://github.com/Neargye/magic_enum) is used as a utility to reflect on enum values. Is is licensed under the permissible MIT license.
 4. [fmt](https://github.com/fmtlib/fmt) is used as a formatting utility in place of std::format, which is not as performant or feature-full. Is is licensed under the permissible MIT license.
-5. [LLVM 21.1.8](https://releases.llvm.org/21.1.0/docs/ReleaseNotes.html) is used as porpoise's compilation backend. It is manually compiled and statically linked against porpoise through the build system. It is licensed under the permissible Apache License 2.0, and has the following dependencies:
+5. [unordered_dense](https://github.com/martinus/unordered_dense) provides a vastly improved hash map/set implementation that is used over the inefficient C++ standard implementation. Is is licensed under the permissible MIT license.
+6. [LLVM 21.1.8](https://releases.llvm.org/21.1.0/docs/ReleaseNotes.html) is used as porpoise's compilation backend. It is manually compiled and statically linked against porpoise through the build system. It is licensed under the permissible Apache License 2.0, and has the following dependencies:
     - [libxml2](https://gitlab.gnome.org/GNOME/libxml2)
     - [zlib](https://github.com/madler/zlib)
     - [zstd](https://github.com/facebook/zstd)
-6. [libarchive](https://github.com/libarchive/libarchive) is used for packaging releases, making use of zlib and zstd to create `zip` and `zst` archives. It is license under the BSD 2-Clause License, but the associated compiled artifacts are neither linked with output artifacts nor shipped with releases.
-7. [kcov](https://github.com/SimonKagstrom/kcov) is used for test coverage reporting. It has multiple dependencies, but they are all fetched lazily as kcov is only supported on Linux, MacOS, and FreeBSD:
+7. [libarchive](https://github.com/libarchive/libarchive) is used for packaging releases, making use of zlib and zstd to create `zip` and `zst` archives. It is license under the BSD 2-Clause License, but the associated compiled artifacts are neither linked with output artifacts nor shipped with releases.
+8. [kcov](https://github.com/SimonKagstrom/kcov) is used for test coverage reporting. It has multiple dependencies, but they are all fetched lazily as kcov is only supported on Linux, MacOS, and FreeBSD:
     - [curl](https://github.com/curl/curl) is required by all builds of kcov and is used for pulling the resulting badge. it has a single extra dependency which is chosen for cross-platform support:
         - [mbedtls](https://github.com/Mbed-TLS/mbedtls)
     - [binutils](https://sourceware.org/pub/binutils) is required for all kcov builds

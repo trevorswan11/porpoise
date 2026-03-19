@@ -46,7 +46,7 @@ class CallExpression : public ExprBase<CallExpression> {
         -> Expected<Box<Expression>, ParserDiagnostic>;
 
     MAKE_GETTER(function, const Expression&, *)
-    MAKE_GETTER(arguments, std::span<const CallArgument>, )
+    MAKE_GETTER(arguments, std::span<const CallArgument>)
 
   protected:
     auto is_equal(const Node& other) const noexcept -> bool override;

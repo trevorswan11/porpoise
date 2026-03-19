@@ -3,13 +3,19 @@
 #include <cassert>
 #include <string_view>
 
+#include <ankerl/unordered_dense.h>
+
+#include "sema/error.hpp"
+
 #include "common.hpp"
+#include "expected.hpp"
 #include "variant.hpp"
 
 namespace porpoise {
 
 namespace ast {
 
+class Node;
 class UsingStatement;
 class DeclStatement;
 class ImportStatement;
@@ -30,8 +36,8 @@ class Symbol {
         std::visit([](const auto* inner) { assert(inner && "Sema received null node"); }, node);
     }
 
-    MAKE_GETTER(name, std::string_view, )
-    MAKE_GETTER(node, const SymbolicNode&, )
+    MAKE_GETTER(name, std::string_view)
+    MAKE_GETTER(node, const SymbolicNode&)
 
     MAKE_VARIANT_UNPACKER(
         using_stmt, ast::UsingStatement, const ast::UsingStatement*, node_, *std::get)
@@ -56,6 +62,17 @@ class Symbol {
     std::string_view name_;
     SymbolicNode     node_;
     Type*            resolved_type_{nullptr}; // Not populated until pass 2
+};
+
+class SymbolTable {
+  public:
+    SymbolTable() noexcept = default;
+
+    auto insert(std::string_view name, SymbolicNode node)
+        -> Expected<std::monostate, SemaDiagnostic>;
+
+  private:
+    ankerl::unordered_dense::map<std::string_view, Symbol> symbols_;
 };
 
 } // namespace sema

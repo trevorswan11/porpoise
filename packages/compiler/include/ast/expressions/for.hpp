@@ -24,7 +24,7 @@ class ForLoopCapture {
 
         MAKE_AST_COPY_MOVE(Valued)
 
-        MAKE_GETTER(modifier, const TypeModifier&, )
+        MAKE_GETTER(modifier, const TypeModifier&)
         MAKE_GETTER(ident, const IdentifierExpression&, *)
 
         MAKE_AST_DEPENDENT_EQ(Valued)
@@ -69,8 +69,8 @@ class ForLoopExpression : public ExprBase<ForLoopExpression> {
     auto                      accept(Visitor& v) const -> void override;
     [[nodiscard]] static auto parse(Parser& parser) -> Expected<Box<Expression>, ParserDiagnostic>;
 
-    MAKE_GETTER(iterables, std::span<const Box<Expression>>, )
-    MAKE_GETTER(captures, std::span<const ForLoopCapture>, )
+    MAKE_GETTER(iterables, std::span<const Box<Expression>>)
+    MAKE_GETTER(captures, std::span<const ForLoopCapture>)
     MAKE_GETTER(block, const BlockStatement&, *)
     MAKE_OPTIONAL_UNPACKER(non_break, Statement, non_break_, **)
 

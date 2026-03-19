@@ -25,7 +25,7 @@ class UsingStatement : public StmtBase<UsingStatement> {
     [[nodiscard]] static auto parse(Parser& parser) -> Expected<Box<Statement>, ParserDiagnostic>;
 
     MAKE_GETTER(alias, const IdentifierExpression&, *)
-    MAKE_GETTER(type, const ExplicitType&, )
+    MAKE_GETTER(type, const ExplicitType&)
 
   protected:
     auto is_equal(const Node& other) const noexcept -> bool override;

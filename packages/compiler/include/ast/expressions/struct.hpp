@@ -25,7 +25,7 @@ class StructExpression : public ExprBase<StructExpression> {
     auto                      accept(Visitor& v) const -> void override;
     [[nodiscard]] static auto parse(Parser& parser) -> Expected<Box<Expression>, ParserDiagnostic>;
 
-    MAKE_GETTER(members, std::span<const Box<DeclStatement>>, )
+    MAKE_GETTER(members, std::span<const Box<DeclStatement>>)
     [[nodiscard]] auto is_packed() const noexcept -> bool {
         return start_token_.type == TokenType::PACKED;
     }

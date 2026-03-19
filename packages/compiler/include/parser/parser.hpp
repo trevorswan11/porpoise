@@ -91,7 +91,7 @@ using ParserDiagnostic = Diagnostic<ParserError>;
 
 template <typename... Args>
 auto make_parser_unexpected(Args&&... args) -> Unexpected<ParserDiagnostic> {
-    return Unexpected<ParserDiagnostic>{ParserDiagnostic{std::forward<Args>(args)...}};
+    return make_unexpected<ParserDiagnostic>(std::forward<Args>(args)...);
 }
 
 class Parser {

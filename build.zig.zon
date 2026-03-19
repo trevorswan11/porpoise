@@ -20,6 +20,10 @@
             .url = "https://github.com/fmtlib/fmt/archive/refs/tags/12.1.0.tar.gz",
             .hash = "N-V-__8AAPE8LgDK9Qn7tjvCIu78z8Y8e6SW8WIUCAQIszuf",
         },
+        .unordered_dense = .{
+            .url = "https://github.com/martinus/unordered_dense/archive/refs/tags/v4.8.1.tar.gz",
+            .hash = "N-V-__8AAGlLPgDtp5xVf4RWSebI05x30M4e2QYAaY26KyEc",
+        },
         .llvm = .{
             .url = "https://github.com/llvm/llvm-project/archive/refs/tags/llvmorg-21.1.8.tar.gz",
             .hash = "N-V-__8AABpqQW-SXByMsTbdc-Sm0xuxtXzfQBvflhYdUshy",

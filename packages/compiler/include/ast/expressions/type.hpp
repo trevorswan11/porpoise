@@ -56,8 +56,8 @@ class ExplicitType {
 
     [[nodiscard]] static auto parse(Parser& parser) -> Expected<ExplicitType, ParserDiagnostic>;
 
-    MAKE_GETTER(modifier, const TypeModifier&, )
-    MAKE_GETTER(type, const ExplicitTypeVariant&, )
+    MAKE_GETTER(modifier, const TypeModifier&)
+    MAKE_GETTER(type, const ExplicitTypeVariant&)
     MAKE_VARIANT_UNPACKER(ident_type, IdentifierExpression, ExplicitIdentType, type_, *std::get)
     MAKE_VARIANT_UNPACKER(function_type, FunctionExpression, ExplicitFunctionType, type_, *std::get)
     MAKE_VARIANT_UNPACKER(array_type, ExplicitArrayType, ExplicitArrayType, type_, std::get)

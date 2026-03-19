@@ -62,7 +62,7 @@ class DeclStatement : public StmtBase<DeclStatement> {
     MAKE_GETTER(ident, const IdentifierExpression&, *)
     MAKE_GETTER(type, const TypeExpression&, *)
     MAKE_OPTIONAL_UNPACKER(value, Expression, value_, **)
-    MAKE_GETTER(modifiers, const DeclModifiers&, )
+    MAKE_GETTER(modifiers, const DeclModifiers&)
 
     [[nodiscard]] auto has_modifier(DeclModifiers flag) const noexcept -> bool {
         return modifiers_has(modifiers_, flag);
