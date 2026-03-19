@@ -208,18 +208,26 @@ fn addArtifacts(b: *std.Build, config: struct {
         .optimize = config.optimize,
     });
 
-    // Shared core functionality
-    const libcore = createLibrary(b, .{
-        .name = "core",
+    const config_h = makeConfigHeader(b, .{
         .target = target,
         .optimize = config.optimize,
-        .include_paths = &.{b.path(ProjectPaths.core.inc)},
-        .system_include_paths = &system_includes,
-        .cxx = .{
-            .files = try collectFiles(b, ProjectPaths.core.src, .{}),
-            .flags = config.cxx_flags,
-        },
-        .link_libraries = &.{fmt_dep.artifact},
+    });
+
+    // Shared core functionality
+    const libcore = b.addLibrary(.{
+        .name = "core",
+        .root_module = createModule(b, .{
+            .target = target,
+            .optimize = config.optimize,
+            .include_paths = &.{b.path(ProjectPaths.core.inc)},
+            .system_include_paths = &system_includes,
+            .config_headers = &.{config_h},
+            .cxx = .{
+                .files = try collectFiles(b, ProjectPaths.core.src, .{}),
+                .flags = config.cxx_flags,
+            },
+            .link_libraries = &.{fmt_dep.artifact},
+        }),
     });
     if (config.auto_install) b.installArtifact(libcore);
     if (config.cdb_steps) |cdb_steps| try cdb_steps.append(b.allocator, &libcore.step);
@@ -234,49 +242,54 @@ fn addArtifacts(b: *std.Build, config: struct {
     });
 
     // The actual compiler static library
-    const libcompiler = createLibrary(b, .{
+    const libcompiler = b.addLibrary(.{
         .name = "compiler",
-        .target = target,
-        .optimize = config.optimize,
-        .include_paths = &.{
-            b.path(ProjectPaths.compiler.inc),
-            b.path(ProjectPaths.core.inc),
-        },
-        .system_include_paths = &system_includes,
-        .link_libraries = &.{ libcore, fmt_dep.artifact },
-        .cxx = .{
-            .files = try collectFiles(b, ProjectPaths.compiler.src, .{}),
-            .flags = config.cxx_flags,
-        },
+        .root_module = createModule(b, .{
+            .target = target,
+            .optimize = config.optimize,
+            .include_paths = &.{
+                b.path(ProjectPaths.compiler.inc),
+                b.path(ProjectPaths.core.inc),
+            },
+            .system_include_paths = &system_includes,
+            .config_headers = &.{config_h},
+            .link_libraries = &.{ libcore, fmt_dep.artifact },
+            .cxx = .{
+                .files = try collectFiles(b, ProjectPaths.compiler.src, .{}),
+                .flags = config.cxx_flags,
+            },
+        }),
     });
     if (config.auto_install) b.installArtifact(libcompiler);
     if (config.cdb_steps) |cdb_steps| try cdb_steps.append(b.allocator, &libcompiler.step);
 
     // The CLI library is stripped of main
-    const libcli = createLibrary(b, .{
+    const libcli = b.addLibrary(.{
         .name = "cli",
-        .target = target,
-        .optimize = config.optimize,
-        .include_paths = &.{
-            b.path(ProjectPaths.cli.inc),
-            b.path(ProjectPaths.compiler.inc),
-            b.path(ProjectPaths.core.inc),
-        },
-        .system_include_paths = &system_includes,
-        .link_libraries = &.{ libcompiler, fmt_dep.artifact },
-        .cxx = .{
-            .files = try collectFiles(b, ProjectPaths.cli.src, .{
-                .dropped_files = &.{"main.cpp"},
-            }),
-            .flags = config.cxx_flags,
-        },
+        .root_module = createModule(b, .{
+            .target = target,
+            .optimize = config.optimize,
+            .include_paths = &.{
+                b.path(ProjectPaths.cli.inc),
+                b.path(ProjectPaths.compiler.inc),
+                b.path(ProjectPaths.core.inc),
+            },
+            .system_include_paths = &system_includes,
+            .config_headers = &.{config_h},
+            .link_libraries = &.{ libcompiler, fmt_dep.artifact },
+            .cxx = .{
+                .files = try collectFiles(b, ProjectPaths.cli.src, .{
+                    .dropped_files = &.{"main.cpp"},
+                }),
+                .flags = config.cxx_flags,
+            },
+        }),
     });
     if (config.auto_install) b.installArtifact(libcli);
     if (config.cdb_steps) |cdb_steps| try cdb_steps.append(b.allocator, &libcli.step);
 
     // The shippable executable links only against libcli which has a transitive dep of the compiler
     const cli = createExecutable(b, .{
-        .name = "porpoise",
         .target = target,
         .optimize = config.optimize,
         .include_paths = &.{
@@ -289,7 +302,10 @@ fn addArtifacts(b: *std.Build, config: struct {
             .flags = config.cxx_flags,
         },
         .system_include_paths = &system_includes,
+        .config_headers = &.{config_h},
         .link_libraries = &.{ libcli, fmt_dep.artifact },
+    }, .{
+        .name = "porpoise",
         .behavior = config.behavior orelse .{
             .runnable = .{
                 .cmd_name = "run",
@@ -325,15 +341,15 @@ fn addArtifacts(b: *std.Build, config: struct {
 
         // Core tests depend on the test runner but not LLVM
         const core_tests = createExecutable(b, .{
-            .name = "core_tests",
-            .zig_main = test_runner,
             .target = target,
             .optimize = config.optimize,
+            .zig_main = test_runner,
             .include_paths = &.{
                 b.path(ProjectPaths.core.inc),
                 b.path(ProjectPaths.core.tests),
             },
             .system_include_paths = &system_includes,
+            .config_headers = &.{config_h},
             .cxx = .{
                 .files = try collectFiles(b, ProjectPaths.core.tests, .{
                     .extra_files = &.{ProjectPaths.test_runner ++ "runner.cpp"},
@@ -341,6 +357,8 @@ fn addArtifacts(b: *std.Build, config: struct {
                 .flags = config.cxx_flags,
             },
             .link_libraries = &.{ libcore, catch2_dep.artifact, fmt_dep.artifact },
+        }, .{
+            .name = "core_tests",
             .behavior = config.behavior orelse .{
                 .runnable = .{
                     .cmd_name = "test-core",
@@ -351,16 +369,16 @@ fn addArtifacts(b: *std.Build, config: struct {
 
         // Compiler tests can pull in core helpers
         const compiler_tests = createExecutable(b, .{
-            .name = "compiler_tests",
-            .zig_main = test_runner,
             .target = target,
             .optimize = config.optimize,
+            .zig_main = test_runner,
             .include_paths = &.{
                 b.path(ProjectPaths.compiler.inc),
                 b.path(ProjectPaths.core.inc),
                 b.path(ProjectPaths.compiler.tests),
             },
             .system_include_paths = &system_includes,
+            .config_headers = &.{config_h},
             .cxx = .{
                 .files = try collectFiles(b, ProjectPaths.compiler.tests, .{
                     .extra_files = &.{ProjectPaths.test_runner ++ "runner.cpp"},
@@ -368,6 +386,8 @@ fn addArtifacts(b: *std.Build, config: struct {
                 .flags = config.cxx_flags,
             },
             .link_libraries = &.{ libcompiler, catch2_dep.artifact, fmt_dep.artifact },
+        }, .{
+            .name = "compiler_tests",
             .behavior = config.behavior orelse .{
                 .runnable = .{
                     .cmd_name = "test-compiler",
@@ -378,10 +398,9 @@ fn addArtifacts(b: *std.Build, config: struct {
 
         // CLI tests can pull in core helpers
         const cli_tests = createExecutable(b, .{
-            .name = "cli_tests",
-            .zig_main = b.path(ProjectPaths.test_runner ++ "main.zig"),
             .target = target,
             .optimize = config.optimize,
+            .zig_main = b.path(ProjectPaths.test_runner ++ "main.zig"),
             .include_paths = &.{
                 b.path(ProjectPaths.compiler.inc),
                 b.path(ProjectPaths.cli.inc),
@@ -389,6 +408,7 @@ fn addArtifacts(b: *std.Build, config: struct {
                 b.path(ProjectPaths.cli.tests),
             },
             .system_include_paths = &system_includes,
+            .config_headers = &.{config_h},
             .cxx = .{
                 .files = try collectFiles(b, ProjectPaths.cli.tests, .{
                     .extra_files = &.{ProjectPaths.test_runner ++ "runner.cpp"},
@@ -396,6 +416,8 @@ fn addArtifacts(b: *std.Build, config: struct {
                 .flags = config.cxx_flags,
             },
             .link_libraries = &.{ libcompiler, libcli, catch2_dep.artifact, fmt_dep.artifact },
+        }, .{
+            .name = "cli_tests",
             .behavior = config.behavior orelse .{
                 .runnable = .{
                     .cmd_name = "test-cli",
@@ -428,6 +450,16 @@ fn addArtifacts(b: *std.Build, config: struct {
     };
 }
 
+fn makeConfigHeader(b: *std.Build, config: struct {
+    target: std.Build.ResolvedTarget,
+    optimize: std.builtin.OptimizeMode,
+}) *std.Build.Step.ConfigHeader {
+    return b.addConfigHeader(.{}, .{
+        .VERSION = zon.version,
+        .ASSERTIONS = config.optimize == .Debug or config.optimize == .ReleaseSafe,
+    });
+}
+
 const SystemLibraries = struct {
     search_paths: []const std.Build.LazyPath,
     libs: []const []const u8,
@@ -438,78 +470,20 @@ const CXXOpts = struct {
     flags: []const []const u8,
 };
 
-fn createLibrary(b: *std.Build, config: struct {
-    name: []const u8,
+const CreateModuleConfig = struct {
     target: std.Build.ResolvedTarget,
     optimize: std.builtin.OptimizeMode,
-    include_paths: []const std.Build.LazyPath,
+    zig_main: ?std.Build.LazyPath = null,
+    include_paths: ?[]const std.Build.LazyPath = null,
     system_include_paths: ?[]const std.Build.LazyPath = null,
+    config_headers: ?[]const *std.Build.Step.ConfigHeader = null,
     source_root: ?std.Build.LazyPath = null,
     link_libraries: ?[]const *std.Build.Step.Compile = null,
     system_libraries: ?SystemLibraries = null,
-    cxx: CXXOpts,
-}) *std.Build.Step.Compile {
-    const mod = b.createModule(.{
-        .target = config.target,
-        .optimize = config.optimize,
-        .link_libc = true,
-        .link_libcpp = true,
-    });
-
-    for (config.include_paths) |inc_path| {
-        mod.addIncludePath(inc_path);
-    }
-
-    if (config.system_include_paths) |system_includes| {
-        for (system_includes) |inc_path| {
-            mod.addSystemIncludePath(inc_path);
-        }
-    }
-
-    if (config.link_libraries) |link_libraries| {
-        for (link_libraries) |lib| {
-            mod.linkLibrary(lib);
-        }
-    }
-
-    mod.addCSourceFiles(.{
-        .root = config.source_root,
-        .files = config.cxx.files,
-        .flags = config.cxx.flags,
-        .language = .cpp,
-    });
-
-    if (config.system_libraries) |libs| {
-        for (libs.search_paths) |path| {
-            mod.addLibraryPath(path);
-        }
-
-        for (libs.libs) |lib| {
-            mod.linkSystemLibrary(lib, .{
-                .preferred_link_mode = .static,
-            });
-        }
-    }
-
-    return b.addLibrary(.{
-        .name = config.name,
-        .root_module = mod,
-    });
-}
-
-fn createExecutable(b: *std.Build, config: struct {
-    name: []const u8,
-    zig_main: ?std.Build.LazyPath = null,
-    target: ?std.Build.ResolvedTarget,
-    optimize: ?std.builtin.OptimizeMode,
-    include_paths: ?[]const std.Build.LazyPath = null,
-    system_include_paths: ?[]const std.Build.LazyPath = null,
-    source_root: ?std.Build.LazyPath = null,
     cxx: ?CXXOpts = null,
-    link_libraries: []const *std.Build.Step.Compile = &.{},
-    system_libraries: ?SystemLibraries = null,
-    behavior: ExecutableBehavior = .standalone,
-}) *std.Build.Step.Compile {
+};
+
+fn createModule(b: *std.Build, config: CreateModuleConfig) *std.Build.Module {
     const mod = b.createModule(.{
         .root_source_file = config.zig_main,
         .target = config.target,
@@ -519,19 +493,27 @@ fn createExecutable(b: *std.Build, config: struct {
     });
 
     if (config.include_paths) |include_paths| {
-        for (include_paths) |include| {
-            mod.addIncludePath(include);
+        for (include_paths) |inc_path| {
+            mod.addIncludePath(inc_path);
         }
     }
 
     if (config.system_include_paths) |system_includes| {
-        for (system_includes) |include| {
-            mod.addSystemIncludePath(include);
+        for (system_includes) |inc_path| {
+            mod.addSystemIncludePath(inc_path);
         }
     }
 
-    for (config.link_libraries) |library| {
-        mod.linkLibrary(library);
+    if (config.config_headers) |config_headers| {
+        for (config_headers) |header| {
+            mod.addConfigHeader(header);
+        }
+    }
+
+    if (config.link_libraries) |link_libraries| {
+        for (link_libraries) |lib| {
+            mod.linkLibrary(lib);
+        }
     }
 
     if (config.cxx) |cxx| {
@@ -555,12 +537,23 @@ fn createExecutable(b: *std.Build, config: struct {
         }
     }
 
+    return mod;
+}
+
+fn createExecutable(
+    b: *std.Build,
+    module_config: CreateModuleConfig,
+    executable_config: struct {
+        name: []const u8,
+        behavior: ExecutableBehavior = .standalone,
+    },
+) *std.Build.Step.Compile {
     const exe = b.addExecutable(.{
-        .name = config.name,
-        .root_module = mod,
+        .name = executable_config.name,
+        .root_module = createModule(b, module_config),
     });
 
-    switch (config.behavior) {
+    switch (executable_config.behavior) {
         .runnable => |run| {
             const run_cmd = b.addRunArtifact(exe);
             run_cmd.step.dependOn(b.getInstallStep());
@@ -972,11 +965,12 @@ fn addPackageStep(b: *std.Build, config: struct {
         .optimize = .ReleaseFast,
     });
     const compressor = createExecutable(b, .{
-        .name = "compressor",
         .zig_main = b.path(ProjectPaths.compressor ++ "main.zig"),
         .target = b.graph.host,
         .optimize = .ReleaseFast,
         .link_libraries = &.{libarchive_dep.artifact},
+    }, .{
+        .name = "compressor",
         .behavior = .standalone,
     });
 
