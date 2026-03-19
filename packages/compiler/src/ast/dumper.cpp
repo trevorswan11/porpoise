@@ -65,7 +65,7 @@ auto ASTDumper::visit(const ArrayExpression& node) -> void {
 
     {
         const Indent::Guard g{indent_, true};
-        fmt::println(out_, "{}Items: ", indent_.current_branch());
+        fmt::println(out_, "{}Items:", indent_.current_branch());
         dump_node_list(node.get_items());
     }
 }
@@ -80,7 +80,7 @@ auto ASTDumper::visit(const CallExpression& node) -> void {
 
     {
         const Indent::Guard g{indent_, true};
-        fmt::println(out_, "{}Arguments: ", indent_.current_branch());
+        fmt::println(out_, "{}Arguments:", indent_.current_branch());
         dump_container(node.get_arguments(), [this](const CallArgument& arg) {
             fmt::print(out_, "{}", indent_.current_branch());
             if (arg.is_expression()) {
@@ -188,7 +188,7 @@ auto ASTDumper::visit(const FunctionExpression& node) -> void {
         const Indent::Guard g{indent_, false};
         fmt::println(out_, "{}Parameters:", indent_.current_branch());
         dump_container(node.get_parameters(), [this](const FunctionParameter& param) {
-            fmt::println(out_, "{}Param: ", indent_.current_branch());
+            fmt::println(out_, "{}Param:", indent_.current_branch());
             {
                 const Indent::Guard g_name{indent_, false};
                 fmt::print(out_, "{}Name: ", indent_.current_branch());
