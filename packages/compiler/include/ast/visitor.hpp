@@ -52,11 +52,13 @@ namespace porpoise::ast {
 #define FORWARD_DECLARE_NODE(NodeType) class NodeType;
 #define FORWARD_DECLARE_AST_NODES() FOREACH_AST_NODE(FORWARD_DECLARE_NODE)
 
-#define GENERATE_ABSTRACT_AST_VISITOR(NodeType) virtual auto visit(const NodeType&) -> void = 0;
+#define GENERATE_ABSTRACT_AST_VISITOR(NodeType) \
+    virtual auto visit(const porpoise::ast::NodeType&) -> void = 0;
 #define ABSTRACT_AST_VISITOR_DECLARATION() FOREACH_AST_NODE(GENERATE_ABSTRACT_AST_VISITOR)
 
-#define GENERATE_OVERRIDE_AST_VISITOR(NodeType) auto visit(const NodeType&) -> void override;
-#define AST_VISITOR_OVERRIDES() FOREACH_AST_NODE(GENERATE_OVERRIDE_AST_VISITOR)
+#define GENERATE_OVERRIDE_AST_VISITOR(NodeType) \
+    auto visit(const porpoise::ast::NodeType&) -> void override;
+#define MAKE_AST_VISITOR_OVERRIDES() FOREACH_AST_NODE(GENERATE_OVERRIDE_AST_VISITOR)
 
 FORWARD_DECLARE_AST_NODES()
 

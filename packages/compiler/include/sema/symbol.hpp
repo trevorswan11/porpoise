@@ -9,6 +9,7 @@
 
 #include "common.hpp"
 #include "expected.hpp"
+#include "optional.hpp"
 #include "variant.hpp"
 
 namespace porpoise {
@@ -72,6 +73,7 @@ class SymbolTable {
 
     auto insert(std::string_view name, SymbolicNode node)
         -> Expected<std::monostate, SemaDiagnostic>;
+    auto get(std::string_view name) noexcept -> Optional<Symbol&>;
 
   private:
     ankerl::unordered_dense::map<std::string_view, Symbol> symbols_;

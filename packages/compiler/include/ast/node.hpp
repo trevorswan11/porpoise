@@ -4,6 +4,7 @@
 #include <cassert>
 #include <concepts>
 #include <utility>
+#include <vector>
 
 #include <magic_enum/magic_enum.hpp>
 
@@ -13,7 +14,11 @@
 #include "memory.hpp"
 #include "types.hpp"
 
-namespace porpoise::ast {
+namespace porpoise {
+
+namespace sema { class Type; } // namespace sema
+
+namespace ast {
 
 class Visitor;
 
@@ -93,6 +98,17 @@ class Node {
 
     auto get_token() const noexcept -> const Token& { return start_token_; }
     auto get_kind() const noexcept -> NodeKind { return kind_; }
+    auto get_sema_type() const noexcept -> sema::Type* { return sema_type_; }
+    auto set_sema_type(sema::Type* type) const noexcept -> void {
+        assert(type && "Cannot set a null type");
+        sema_type_ = type;
+    }
+
+    // Safety checked semantic type getter
+    auto get_resolved_type() const noexcept -> sema::Type* {
+        assert(sema_type_ && "Attempt to access type before resolution");
+        return sema_type_;
+    }
 
     friend auto operator==(const Node& lhs, const Node& rhs) noexcept -> bool {
         if (lhs.kind_ != rhs.kind_) { return false; }
@@ -124,11 +140,13 @@ class Node {
     }
 
   protected:
-    const Token    start_token_;
-    const NodeKind kind_;
-
+    const Token         start_token_;
+    const NodeKind      kind_;
+    mutable sema::Type* sema_type_{nullptr};
     friend class ExplicitType;
 };
+
+using AST = std::vector<Box<Node>>;
 
 template <typename Derived, typename Base> class NodeBase : public Base {
   protected:
@@ -170,4 +188,6 @@ template <typename Derived> class StmtBase : public NodeBase<Derived, Statement>
   private:                                                                                  \
     auto is_equal(const NodeType& other) const noexcept -> bool;
 
-} // namespace porpoise::ast
+} // namespace ast
+
+} // namespace porpoise

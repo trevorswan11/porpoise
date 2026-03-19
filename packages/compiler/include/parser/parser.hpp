@@ -5,22 +5,12 @@
 #include <variant>
 #include <vector>
 
-#include "memory.hpp"
+#include "ast/node.hpp"
 
 #include "parser/precedence.hpp"
 
 #include "lexer/lexer.hpp"
 #include "lexer/token.hpp"
-
-namespace porpoise::ast {
-
-class Node;
-class Statement;
-class Expression;
-
-using AST = std::vector<Box<Node>>;
-
-} // namespace porpoise::ast
 
 namespace porpoise {
 

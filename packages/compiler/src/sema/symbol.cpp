@@ -11,7 +11,7 @@ namespace porpoise::sema {
 auto SymbolTable::insert(std::string_view name, SymbolicNode node)
     -> Expected<std::monostate, SemaDiagnostic> {
     // Reserved identifier use is impossible due to a parser invariant
-    auto [it, inserted] = symbols_.try_emplace(name, name, node);
+    auto [_, inserted] = symbols_.try_emplace(name, name, node);
 
     // Check for redeclaration since there's no shadowing
     if (!inserted) {
@@ -21,6 +21,12 @@ auto SymbolTable::insert(std::string_view name, SymbolicNode node)
             std::visit([](const auto* inner) { return inner->get_token(); }, node));
     }
     return std::monostate{};
+}
+
+auto SymbolTable::get(std::string_view name) noexcept -> Optional<Symbol&> {
+    auto it = symbols_.find(name);
+    if (it == symbols_.end()) { return nullopt; }
+    return it->second;
 }
 
 } // namespace porpoise::sema
