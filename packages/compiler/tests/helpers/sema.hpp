@@ -25,17 +25,15 @@ auto test_collector(std::string_view input, KVs&&... kvs) -> void {
     REQUIRE_FALSE(ast.empty());
     check_errors<ParserDiagnostic>(parser_errors);
 
-    auto [table, errors] = sema::SymbolCollector::collect(ast);
+    auto [actual, errors] = sema::SymbolCollector::collect(ast);
     check_errors<sema::SemaDiagnostic>(errors);
-    REQUIRE(table.size() == sizeof...(KVs));
+    REQUIRE(actual.size() == sizeof...(KVs));
 
-    // clang-format off
-    ([&](auto&& kv) {
-        const auto actual = table.get_opt(kv.first);
-        REQUIRE(actual.has_value());
-        REQUIRE(*actual == kv.second);
-    }(std::forward<KVs>(kvs)), ...);
-    // clang-format on
+    sema::SymbolTable expected;
+    ([&expected](auto&& kv) { REQUIRE(expected.insert(kv.first, kv.second).has_value()); }(
+         std::forward<KVs>(kvs)),
+     ...);
+    REQUIRE(expected == actual);
 }
 
 // Tests a semantically failing input against the expected generated errors

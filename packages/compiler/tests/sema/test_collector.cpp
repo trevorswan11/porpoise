@@ -7,7 +7,7 @@ namespace porpoise::tests {
 TEST_CASE("Illegal module location") {
     helpers::test_collector_fail(
         "const a := 2; module;",
-        sema::SemaDiagnostic{"Module statement must be first statement of file",
+        sema::SemaDiagnostic{"Module indicator must be first statement of file",
                              sema::SemaError::ILLEGAL_MODULE_STATEMENT_LOCATION,
                              1,
                              15});

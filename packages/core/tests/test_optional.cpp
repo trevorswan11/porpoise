@@ -18,6 +18,19 @@ static_assert(std::is_same_v<Optional<int&>, OptionalRef<int>>);
 static_assert(std::is_same_v<Optional<const int&>, OptionalRef<const int>>);
 static_assert(std::is_same_v<Optional<int>, std::optional<int>>);
 
+static_assert(!std::is_constructible_v<NonNull<int>, int&&>);
+static_assert(!std::is_constructible_v<NonNull<int>, std::nullopt_t>);
+static_assert(std::is_trivially_copyable_v<NonNull<int>>);
+
+struct Base {
+    virtual ~Base() = default;
+    int x           = 10;
+};
+
+struct Derived : Base {
+    int y = 20;
+};
+
 TEST_CASE("OptRef basic construction") {
     int                    val = 42;
     const OptionalRef<int> opt{val};
@@ -54,15 +67,6 @@ TEST_CASE("OptRef conversions") {
     }
 
     SECTION("Derived -> Base") {
-        struct Base {
-            virtual ~Base() = default;
-            int x           = 10;
-        };
-
-        struct Derived : Base {
-            int y = 20;
-        };
-
         Derived                    d;
         const OptionalRef<Derived> d_opt{d};
         const OptionalRef<Base>    base_opt = d_opt;
@@ -141,6 +145,36 @@ TEST_CASE("Unsafe optional custom equality") {
     const Optional<Box<Node>> b = make_box<Node>(1, "bar");
     REQUIRE(optional::unsafe_eq<Node>(
         a, b, [](const Node& an, const Node& bn) { return an.type_id == bn.type_id; }));
+}
+
+TEST_CASE("NonNull basic usage") {
+    int                val = 42;
+    const NonNull<int> ptr{&val};
+
+    REQUIRE(*ptr == 42);
+    REQUIRE(ptr.get() == &val);
+    REQUIRE(static_cast<int>(ptr) == 42);
+}
+
+TEST_CASE("NonNull from OptRef") {
+    int                    val = 10;
+    const OptionalRef<int> opt{val};
+
+    const NonNull<int> ptr{opt};
+    REQUIRE(*ptr == 10);
+
+    const OptionalRef<int> empty;
+    REQUIRE_THROWS(NonNull<int>{empty}, std::bad_optional_access{});
+}
+
+TEST_CASE("NonNull conversions") {
+    Derived                d;
+    const NonNull<Derived> d_ptr(&d);
+
+    NonNull<Base> b_ptr{d_ptr};
+    REQUIRE(b_ptr->x == 10);
+    NonNull<const Derived> cd_ptr{d_ptr};
+    REQUIRE(cd_ptr->y == 20);
 }
 
 } // namespace porpoise::tests

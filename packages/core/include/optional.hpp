@@ -48,19 +48,23 @@ template <typename T>
     requires(!std::is_reference_v<T>)
 class NonNull {
   public:
-    explicit NonNull(T* ptr) noexcept : ptr_{ptr} {
+    // cppcheck-suppress-begin noExplicitConstructor
+    NonNull(T* ptr) noexcept : ptr_{ptr} {
         assert(ptr_ && "Attempt to create NonNull from nullptr");
     }
-    explicit NonNull(OptionalRef<T> opt) : ptr_{&opt.value()} {}
+    NonNull(OptionalRef<T> opt) : ptr_{&opt.value()} {}
     NonNull(std::nullopt_t) = delete;
     NonNull(T&&)            = delete;
 
     template <typename U, std::enable_if_t<std::is_convertible_v<U*, T*>, bool> = false>
-    explicit NonNull(const NonNull<U>& other) noexcept : ptr_{other.get()} {}
+    NonNull(const NonNull<U>& other) noexcept : ptr_{other.get()} {}
+    // cppcheck-suppress-end noExplicitConstructor
 
     auto operator->() const noexcept -> T* { return ptr_; }
     auto operator*() const noexcept -> T& { return *ptr_; }
     auto get() const noexcept -> T* { return ptr_; }
+
+    explicit operator T() const noexcept { return *ptr_; }
 
   private:
     T* ptr_;

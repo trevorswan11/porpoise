@@ -25,29 +25,25 @@ class ImportStatement;
 
 namespace sema {
 
+using SymbolicDecl   = NonNull<const ast::DeclStatement>;
+using SymbolicImport = NonNull<const ast::ImportStatement>;
+using SymbolicUsing  = NonNull<const ast::UsingStatement>;
+
 // No other nodes can ever be at the top level
-using SymbolicNode = std::
-    variant<const ast::DeclStatement*, const ast::ImportStatement*, const ast::UsingStatement*>;
+using SymbolicNode = std::variant<SymbolicDecl, SymbolicImport, SymbolicUsing>;
 
 class Type;
 
 class Symbol {
   public:
-    explicit Symbol(std::string_view name, SymbolicNode node) noexcept : name_{name}, node_{node} {
-#ifndef NDEBUG
-        std::visit([](const auto* inner) { assert(inner && "Sema received null node"); }, node);
-#endif
-    }
+    explicit Symbol(std::string_view name, SymbolicNode node) noexcept : name_{name}, node_{node} {}
 
     MAKE_GETTER(name, std::string_view)
     MAKE_GETTER(node, const SymbolicNode&)
 
-    MAKE_VARIANT_UNPACKER(
-        using_stmt, ast::UsingStatement, const ast::UsingStatement*, node_, *std::get)
-    MAKE_VARIANT_UNPACKER(
-        decl_stmt, ast::DeclStatement, const ast::DeclStatement*, node_, *std::get)
-    MAKE_VARIANT_UNPACKER(
-        import_stmt, ast::ImportStatement, const ast::ImportStatement*, node_, *std::get)
+    MAKE_VARIANT_UNPACKER(decl_stmt, ast::DeclStatement, SymbolicDecl, node_, *std::get)
+    MAKE_VARIANT_UNPACKER(using_stmt, ast::ImportStatement, SymbolicImport, node_, *std::get)
+    MAKE_VARIANT_UNPACKER(import_stmt, ast::UsingStatement, SymbolicUsing, node_, *std::get)
 
     MAKE_VARIANT_MATCHER(node_)
 
@@ -73,11 +69,22 @@ class SymbolTable {
     using Table = ankerl::unordered_dense::map<std::string_view, Symbol>;
     using KV    = Table::iterator::value_type;
 
+    using iterator       = typename Table::iterator;
+    using const_iterator = typename Table::const_iterator;
+
   public:
     SymbolTable() noexcept = default;
 
+    [[nodiscard]] auto begin() noexcept -> iterator { return symbols_.begin(); }
+    [[nodiscard]] auto end() noexcept -> iterator { return symbols_.end(); }
+
+    [[nodiscard]] auto begin() const noexcept -> const_iterator { return symbols_.begin(); }
+    [[nodiscard]] auto end() const noexcept -> const_iterator { return symbols_.end(); }
+
     auto insert(std::string_view name, SymbolicNode node)
         -> Expected<std::monostate, SemaDiagnostic>;
+
+    auto reserve(usize cap) -> void { symbols_.reserve(cap); }
 
     [[nodiscard]] auto empty() const noexcept -> bool { return symbols_.empty(); }
     [[nodiscard]] auto size() const noexcept -> usize { return symbols_.size(); }
@@ -106,8 +113,14 @@ class SymbolTable {
 
     // cppcheck-suppress-end functionStatic
 
+    // Treat this symbol table as an importable module in future passes
+    auto indicate_module() noexcept -> void { is_module_ = true; }
+
+    MAKE_EQ_DELEGATION(SymbolTable)
+
   private:
     Table symbols_;
+    bool  is_module_{false};
 };
 
 } // namespace sema
