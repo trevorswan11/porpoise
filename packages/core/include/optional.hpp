@@ -8,13 +8,22 @@ namespace porpoise {
 
 template <typename T> class OptionalRef {
   public:
+    // cppcheck-suppress-begin noExplicitConstructor
     OptionalRef() noexcept : ptr_{nullptr} {}
-    OptionalRef(std::nullopt_t) noexcept // cppcheck-suppress noExplicitConstructor
-        : ptr_{nullptr} {}
-    OptionalRef(T& ref) noexcept : ptr_{&ref} {} // cppcheck-suppress noExplicitConstructor
+    OptionalRef(std::nullopt_t) noexcept : ptr_{nullptr} {}
+    OptionalRef(T& ref) noexcept : ptr_{&ref} {}
+    OptionalRef(T&&) = delete;
 
-    OptionalRef(T&&)                                            = delete;
+    template <typename U, std::enable_if_t<std::is_convertible_v<U*, T*>, bool> = 0>
+    OptionalRef(const OptionalRef<U>& other) noexcept : ptr_{other.operator->()} {}
+    // cppcheck-suppress-end noExplicitConstructor
+
+    ~OptionalRef() = default;
+
+    OptionalRef(const OptionalRef&) noexcept                    = default;
     auto operator=(const OptionalRef&) noexcept -> OptionalRef& = default;
+    OptionalRef(OptionalRef&&) noexcept                         = default;
+    auto operator=(OptionalRef&&) noexcept -> OptionalRef&      = default;
 
     [[nodiscard]] auto     has_value() const noexcept -> bool { return ptr_ != nullptr; }
     [[nodiscard]] explicit operator bool() const noexcept { return ptr_ != nullptr; }

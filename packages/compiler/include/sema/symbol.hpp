@@ -52,20 +52,20 @@ class Symbol {
     MAKE_VARIANT_MATCHER(node_)
 
     // Fills the internal type. Should only be called once per Symbol.
-    auto resolve(Type* type) noexcept -> void {
-        assert(type && !resolved_type_);
-        resolved_type_ = type;
+    auto resolve(Type& type) const noexcept -> void { // cppcheck-suppress constParameterReference
+        assert(!type_);
+        type_ = type;
     }
 
-    // Provides mutable access to the symbol's potentially invalid type.
-    auto access_type() noexcept -> Type* { return resolved_type_; }
+    [[nodiscard]] auto has_type() const noexcept -> bool { return type_.has_value(); }
+    [[nodiscard]] auto get_type() const noexcept -> Type& { return *type_; }
 
     MAKE_EQ_DELEGATION(Symbol)
 
   private:
-    std::string_view name_;
-    SymbolicNode     node_;
-    Type*            resolved_type_{nullptr}; // Not populated until pass 2
+    std::string_view              name_;
+    SymbolicNode                  node_;
+    mutable Optional<sema::Type&> type_; // Not populated until pass 2
 };
 
 class SymbolTable {

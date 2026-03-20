@@ -13,6 +13,7 @@
 
 #include "common.hpp"
 #include "memory.hpp"
+#include "optional.hpp"
 #include "types.hpp"
 
 namespace porpoise {
@@ -100,18 +101,15 @@ class Node {
 
     auto get_token() const noexcept -> const Token& { return start_token_; }
     auto get_kind() const noexcept -> NodeKind { return kind_; }
-    auto get_sema_type() const noexcept -> sema::Type* { return sema_type_; }
-    auto set_sema_type(sema::Type* type) const noexcept -> void {
-        assert(type && "Cannot set a null type");
+
+    [[nodiscard]] auto has_sema_type() const noexcept -> bool { return sema_type_.has_value(); }
+    [[nodiscard]] auto get_sema_type() const noexcept -> sema::Type& { return *sema_type_; }
+    auto set_sema_type(sema::Type& type) const noexcept // cppcheck-suppress constParameterReference
+        -> void {
         sema_type_ = type;
     }
 
-    // Safety checked semantic type getter
-    auto get_resolved_type() const noexcept -> sema::Type* {
-        assert(sema_type_ && "Attempt to access type before resolution");
-        return sema_type_;
-    }
-
+    // Compares two nodes at the AST level, ignoring semantic differences.
     friend auto operator==(const Node& lhs, const Node& rhs) noexcept -> bool {
         if (lhs.kind_ != rhs.kind_) { return false; }
         if (lhs.start_token_.type != rhs.start_token_.type) { return false; }
@@ -142,9 +140,9 @@ class Node {
     }
 
   protected:
-    const Token         start_token_;
-    const NodeKind      kind_;
-    mutable sema::Type* sema_type_{nullptr};
+    const Token                   start_token_;
+    const NodeKind                kind_;
+    mutable Optional<sema::Type&> sema_type_;
     friend class ExplicitType;
 };
 
