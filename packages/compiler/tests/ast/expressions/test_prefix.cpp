@@ -4,15 +4,17 @@
 
 #include "ast/expressions/prefix.hpp"
 
-#include "lexer/operators.hpp"
+#include "syntax/operators.hpp"
 
 namespace porpoise::tests {
 
+namespace operators = syntax::operators;
+
 namespace helpers {
 
-template <ast::LeafNode N> auto test_prefix_expr(const Operator& op) -> void {
+template <ast::LeafNode N> auto test_prefix_expr(const syntax::Operator& op) -> void {
     const auto input = fmt::format("{}a;", op.first);
-    test_expr_stmt(input, N{Token{op}, make_ident("a")});
+    test_expr_stmt(input, N{syntax::Token{op}, make_ident("a")});
 }
 
 } // namespace helpers
@@ -38,12 +40,14 @@ TEST_CASE("Implicit access expression") {
 }
 
 TEST_CASE("Prefix without operand") {
-    helpers::test_parser_fail("!", ParserDiagnostic{ParserError::PREFIX_MISSING_OPERAND, 1, 1});
-    helpers::test_parser_fail("!;",
-                              ParserDiagnostic{"No prefix parse function for SEMICOLON(;) found",
-                                               ParserError::MISSING_PREFIX_PARSER,
-                                               1,
-                                               2});
+    helpers::test_parser_fail(
+        "!", syntax::ParserDiagnostic{syntax::ParserError::PREFIX_MISSING_OPERAND, 1, 1});
+    helpers::test_parser_fail(
+        "!;",
+        syntax::ParserDiagnostic{"No prefix parse function for SEMICOLON(;) found",
+                                 syntax::ParserError::MISSING_PREFIX_PARSER,
+                                 1,
+                                 2});
 }
 
 } // namespace porpoise::tests

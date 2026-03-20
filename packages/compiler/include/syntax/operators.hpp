@@ -5,11 +5,11 @@
 #include <string_view>
 #include <utility>
 
+#include "syntax/token.hpp"
+
 #include "optional.hpp"
 
-#include "lexer/token.hpp"
-
-namespace porpoise {
+namespace porpoise::syntax {
 
 using Operator = std::pair<std::string_view, TokenType>;
 
@@ -125,4 +125,4 @@ constexpr auto get_operator(std::string_view sv) noexcept -> Optional<Operator> 
     return Optional<Operator>{*it};
 }
 
-} // namespace porpoise
+} // namespace porpoise::syntax

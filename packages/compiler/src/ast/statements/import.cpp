@@ -23,43 +23,46 @@ auto UserImport::is_equal(const UserImport& rhs) const noexcept -> bool {
     return *file_ == *rhs.file_ && *alias_ == *rhs.alias_;
 }
 
-ImportStatement::ImportStatement(const Token& start_token, ImportVariant imported) noexcept
+ImportStatement::ImportStatement(const syntax::Token& start_token, ImportVariant imported) noexcept
     : StmtBase{start_token}, imported_{std::move(imported)} {}
 ImportStatement::~ImportStatement() = default;
 
 auto ImportStatement::accept(Visitor& v) const -> void { v.visit(*this); }
 
-auto ImportStatement::parse(Parser& parser) -> Expected<Box<Statement>, ParserDiagnostic> {
+auto ImportStatement::parse(syntax::Parser& parser)
+    -> Expected<Box<Statement>, syntax::ParserDiagnostic> {
     const auto start_token = parser.current_token();
 
     std::variant<Box<IdentifierExpression>, Box<StringExpression>> imported_core;
-    if (parser.peek_token_is(TokenType::IDENT)) {
-        TRY(parser.expect_peek(TokenType::IDENT));
+    if (parser.peek_token_is(syntax::TokenType::IDENT)) {
+        TRY(parser.expect_peek(syntax::TokenType::IDENT));
         imported_core = downcast<IdentifierExpression>(TRY(IdentifierExpression::parse(parser)));
-    } else if (parser.peek_token_is(TokenType::STRING)) {
-        TRY(parser.expect_peek(TokenType::STRING));
+    } else if (parser.peek_token_is(syntax::TokenType::STRING)) {
+        TRY(parser.expect_peek(syntax::TokenType::STRING));
         auto string = downcast<StringExpression>(TRY(StringExpression::parse(parser)));
 
         if (string->get_value().empty()) {
-            return make_parser_unexpected(ParserError::EMPTY_USER_IMPORT, string->get_token());
+            return make_parser_unexpected(syntax::ParserError::EMPTY_USER_IMPORT,
+                                          string->get_token());
         }
         imported_core = std::move(string);
     } else {
-        return make_parser_unexpected(ParserError::ILLEGAL_IMPORT_TYPE, parser.peek_token());
+        return make_parser_unexpected(syntax::ParserError::ILLEGAL_IMPORT_TYPE,
+                                      parser.peek_token());
     }
 
     Optional<Box<IdentifierExpression>> imported_alias;
-    if (parser.peek_token_is(TokenType::AS)) {
+    if (parser.peek_token_is(syntax::TokenType::AS)) {
         parser.advance();
-        TRY(parser.expect_peek(TokenType::IDENT));
+        TRY(parser.expect_peek(syntax::TokenType::IDENT));
 
         imported_alias = downcast<IdentifierExpression>(TRY(IdentifierExpression::parse(parser)));
     } else if (std::holds_alternative<Box<StringExpression>>(imported_core)) {
-        return make_parser_unexpected(ParserError::USER_IMPORT_MISSING_ALIAS, start_token);
+        return make_parser_unexpected(syntax::ParserError::USER_IMPORT_MISSING_ALIAS, start_token);
     }
 
-    if (!parser.current_token_is(TokenType::SEMICOLON)) {
-        TRY(parser.expect_peek(TokenType::SEMICOLON));
+    if (!parser.current_token_is(syntax::TokenType::SEMICOLON)) {
+        TRY(parser.expect_peek(syntax::TokenType::SEMICOLON));
     }
 
     return make_box<ImportStatement>(

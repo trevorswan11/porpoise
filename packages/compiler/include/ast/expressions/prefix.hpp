@@ -5,29 +5,33 @@
 #include "ast/node.hpp"
 #include "ast/visitor.hpp"
 
-#include "parser/parser.hpp"
+#include "syntax/parser.hpp"
 
 namespace porpoise::ast {
 
 template <typename Derived> class PrefixExpression : public ExprBase<Derived> {
   public:
-    explicit PrefixExpression(const Token& start_token, Box<Expression> rhs) noexcept
+    explicit PrefixExpression(const syntax::Token& start_token, Box<Expression> rhs) noexcept
         : ExprBase<Derived>{start_token}, rhs_{std::move(rhs)} {}
 
     auto accept(Visitor& v) const noexcept -> void override { v.visit(Node::as<Derived>(*this)); }
 
-    [[nodiscard]] static auto parse(Parser& parser) -> Expected<Box<Expression>, ParserDiagnostic> {
+    [[nodiscard]] static auto parse(syntax::Parser& parser)
+        -> Expected<Box<Expression>, syntax::ParserDiagnostic> {
         const auto prefix_token = parser.current_token();
-        if (parser.peek_token_is(TokenType::END)) {
-            return make_parser_unexpected(ParserError::PREFIX_MISSING_OPERAND, prefix_token);
+        if (parser.peek_token_is(syntax::TokenType::END)) {
+            return make_parser_unexpected(syntax::ParserError::PREFIX_MISSING_OPERAND,
+                                          prefix_token);
         }
         parser.advance();
 
-        auto operand = TRY(parser.parse_expression(Precedence::PREFIX));
+        auto operand = TRY(parser.parse_expression(syntax::Precedence::PREFIX));
         return make_box<Derived>(prefix_token, std::move(operand));
     }
 
-    [[nodiscard]] auto get_op() const noexcept -> TokenType { return this->start_token_.type; }
+    [[nodiscard]] auto get_op() const noexcept -> syntax::TokenType {
+        return this->start_token_.type;
+    }
     MAKE_GETTER(rhs, const Expression&, *)
 
   protected:

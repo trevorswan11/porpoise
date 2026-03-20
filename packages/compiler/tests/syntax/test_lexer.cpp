@@ -4,11 +4,13 @@
 
 #include <catch2/catch_test_macros.hpp>
 
-#include "lexer/keywords.hpp"
-#include "lexer/lexer.hpp"
-#include "lexer/token.hpp"
+#include "syntax/keywords.hpp"
+#include "syntax/lexer.hpp"
+#include "syntax/token.hpp"
 
 namespace porpoise::tests {
+
+using namespace syntax;
 
 using ExpectedLexeme = std::pair<TokenType, std::string_view>;
 
@@ -27,12 +29,12 @@ TEST_CASE("Illegal characters") {
 }
 
 TEST_CASE("Lexer over-consumption") {
-    Lexer l{"lexer"};
+    Lexer l{"Lexer"};
     l.consume();
     for (size_t i = 0; i < 100; ++i) { REQUIRE(l.advance().type == TokenType::END); }
 }
 
-TEST_CASE("Basic next token and lexer consuming") {
+TEST_CASE("Basic next token and Lexer consuming") {
     SECTION("Symbols Only") {
         Lexer l{"=+(){}[],;: !-/*<>_"};
 

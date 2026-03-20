@@ -6,7 +6,7 @@
 #include "ast/expressions/type.hpp"
 #include "ast/node.hpp"
 
-#include "parser/parser.hpp"
+#include "syntax/parser.hpp"
 
 namespace porpoise::ast {
 
@@ -15,7 +15,7 @@ class ArrayExpression : public ExprBase<ArrayExpression> {
     static constexpr auto KIND = NodeKind::ARRAY_EXPRESSION;
 
   public:
-    explicit ArrayExpression(const Token&                 start_token,
+    explicit ArrayExpression(const syntax::Token&         start_token,
                              Optional<Box<Expression>>    size,
                              ExplicitType&&               item_type,
                              std::vector<Box<Expression>> items) noexcept;
@@ -24,7 +24,8 @@ class ArrayExpression : public ExprBase<ArrayExpression> {
     MAKE_AST_COPY_MOVE(ArrayExpression)
 
     auto                      accept(Visitor& v) const -> void override;
-    [[nodiscard]] static auto parse(Parser& parser) -> Expected<Box<Expression>, ParserDiagnostic>;
+    [[nodiscard]] static auto parse(syntax::Parser& parser)
+        -> Expected<Box<Expression>, syntax::ParserDiagnostic>;
 
     MAKE_OPTIONAL_UNPACKER(explicit_size, Expression, size_, **)
     MAKE_GETTER(item_type, const ExplicitType&)

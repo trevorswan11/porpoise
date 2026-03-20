@@ -37,7 +37,7 @@ auto SymbolTable::insert(std::string_view name, SymbolicNode node)
             fmt::format("Redeclaration of symbol '{}'. Previous declaration here: {}",
                         name,
                         it->second.match([](const auto& inner) {
-                            return SourceInfo<Token>::get(inner->get_token());
+                            return SourceInfo<syntax::Token>::get(inner->get_token());
                         })),
             SemaError::IDENTIFIER_REDECLARATION,
             std::visit([](const auto& inner) { return inner->get_token(); }, node));

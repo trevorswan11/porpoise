@@ -4,9 +4,11 @@
 
 #include <catch2/catch_test_macros.hpp>
 
-#include "lexer/token.hpp"
+#include "syntax/token.hpp"
 
 namespace porpoise::tests {
+
+using namespace syntax;
 
 TEST_CASE("Promotion of invalid tokens") {
     const auto  input{"1"};

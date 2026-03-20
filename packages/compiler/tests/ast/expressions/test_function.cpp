@@ -8,6 +8,8 @@
 
 namespace porpoise::tests {
 
+namespace keywords = syntax::keywords;
+
 using Parameters = std::vector<ast::FunctionParameter>;
 
 namespace helpers {
@@ -17,7 +19,7 @@ auto function_expr_from(Optional<ast::SelfParameter>&&     self,
                         ast::ExplicitType&&                return_type,
                         Optional<Box<ast::BlockStatement>> block = std::nullopt)
     -> ast::FunctionExpression {
-    return ast::FunctionExpression{Token{keywords::FN},
+    return ast::FunctionExpression{syntax::Token{keywords::FN},
                                    std::move(self),
                                    std::move(parameters),
                                    std::move(return_type),
@@ -114,58 +116,66 @@ TEST_CASE("Full function expression") {
 TEST_CASE("Function missing return type") {
     helpers::test_parser_fail(
         "fn(*mut this, a: A, b: *B, );",
-        ParserDiagnostic{
-            "Expected token COLON, found SEMICOLON", ParserError::UNEXPECTED_TOKEN, 1, 29});
+        syntax::ParserDiagnostic{
+            "Expected token COLON, found SEMICOLON", syntax::ParserError::UNEXPECTED_TOKEN, 1, 29});
 
-    helpers::test_parser_fail("fn(*mut this, a: A, b: *B, ): ;",
-                              ParserDiagnostic{"No prefix parse function for SEMICOLON(;) found",
-                                               ParserError::MISSING_PREFIX_PARSER,
-                                               1,
-                                               31});
+    helpers::test_parser_fail(
+        "fn(*mut this, a: A, b: *B, ): ;",
+        syntax::ParserDiagnostic{"No prefix parse function for SEMICOLON(;) found",
+                                 syntax::ParserError::MISSING_PREFIX_PARSER,
+                                 1,
+                                 31});
 }
 
 TEST_CASE("Function parameter missing type") {
     helpers::test_parser_fail(
         "fn(*mut this, a): int;",
-        ParserDiagnostic{
-            "Expected token COLON, found RPAREN", ParserError::UNEXPECTED_TOKEN, 1, 16});
+        syntax::ParserDiagnostic{
+            "Expected token COLON, found RPAREN", syntax::ParserError::UNEXPECTED_TOKEN, 1, 16});
 }
 
 TEST_CASE("Out-of-place self parameter") {
-    helpers::test_parser_fail("fn(a: A, &self): int;",
-                              ParserDiagnostic{ParserError::ILLEGAL_IDENTIFIER, 1, 10});
+    helpers::test_parser_fail(
+        "fn(a: A, &self): int;",
+        syntax::ParserDiagnostic{syntax::ParserError::ILLEGAL_IDENTIFIER, 1, 10});
 
     helpers::test_parser_fail(
         "fn(a: A, self): int;",
-        ParserDiagnostic{
-            "Expected token COLON, found RPAREN", ParserError::UNEXPECTED_TOKEN, 1, 14});
+        syntax::ParserDiagnostic{
+            "Expected token COLON, found RPAREN", syntax::ParserError::UNEXPECTED_TOKEN, 1, 14});
 }
 
 TEST_CASE("Default function parameter") {
     helpers::test_parser_fail(
         "fn(a: A = 2): int;",
-        ParserDiagnostic{ParserError::FUNCTION_PARAMETER_HAS_DEFAULT_VALUE, 1, 5});
+        syntax::ParserDiagnostic{syntax::ParserError::FUNCTION_PARAMETER_HAS_DEFAULT_VALUE, 1, 5});
 }
 
 TEST_CASE("Noreturn function types") {
-    helpers::test_parser_fail("fn(a: &noreturn): int;",
-                              ParserDiagnostic{ParserError::ILLEGAL_NORETURN_TYPE_MODIFIER, 1, 7});
-    helpers::test_parser_fail("fn(a: noreturn): int;",
-                              ParserDiagnostic{ParserError::FUNCTION_PARAMETER_IS_NORETURN, 1, 5});
-    helpers::test_parser_fail("fn(a: A): &noreturn;",
-                              ParserDiagnostic{ParserError::ILLEGAL_NORETURN_TYPE_MODIFIER, 1, 11});
+    helpers::test_parser_fail(
+        "fn(a: &noreturn): int;",
+        syntax::ParserDiagnostic{syntax::ParserError::ILLEGAL_NORETURN_TYPE_MODIFIER, 1, 7});
+    helpers::test_parser_fail(
+        "fn(a: noreturn): int;",
+        syntax::ParserDiagnostic{syntax::ParserError::FUNCTION_PARAMETER_IS_NORETURN, 1, 5});
+    helpers::test_parser_fail(
+        "fn(a: A): &noreturn;",
+        syntax::ParserDiagnostic{syntax::ParserError::ILLEGAL_NORETURN_TYPE_MODIFIER, 1, 11});
 }
 
 TEST_CASE("Illegal type function types") {
-    helpers::test_parser_fail("fn(A: &type): int;",
-                              ParserDiagnostic{ParserError::ILLEGAL_TYPE_TYPE_MODIFIER, 1, 7});
-    helpers::test_parser_fail("fn(A: type): &type;",
-                              ParserDiagnostic{ParserError::ILLEGAL_TYPE_TYPE_MODIFIER, 1, 14});
+    helpers::test_parser_fail(
+        "fn(A: &type): int;",
+        syntax::ParserDiagnostic{syntax::ParserError::ILLEGAL_TYPE_TYPE_MODIFIER, 1, 7});
+    helpers::test_parser_fail(
+        "fn(A: type): &type;",
+        syntax::ParserDiagnostic{syntax::ParserError::ILLEGAL_TYPE_TYPE_MODIFIER, 1, 14});
 }
 
 TEST_CASE("Non-terminated parameter list") {
-    helpers::test_parser_fail("fn(a: A, : int;",
-                              ParserDiagnostic{ParserError::ILLEGAL_IDENTIFIER, 1, 10});
+    helpers::test_parser_fail(
+        "fn(a: A, : int;",
+        syntax::ParserDiagnostic{syntax::ParserError::ILLEGAL_IDENTIFIER, 1, 10});
 }
 
 } // namespace porpoise::tests

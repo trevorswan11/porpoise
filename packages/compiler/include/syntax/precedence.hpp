@@ -7,9 +7,9 @@
 #include "optional.hpp"
 #include "types.hpp"
 
-#include "lexer/token.hpp"
+#include "syntax/token.hpp"
 
-namespace porpoise {
+namespace porpoise::syntax {
 
 enum class Precedence : u8 {
     LOWEST,
@@ -78,4 +78,4 @@ constexpr auto get_binding(TokenType tt) noexcept -> Optional<Binding> {
     return Optional<Binding>{*it};
 }
 
-} // namespace porpoise
+} // namespace porpoise::syntax

@@ -7,12 +7,11 @@
 
 #include "ast/node.hpp"
 
-#include "parser/precedence.hpp"
+#include "syntax/lexer.hpp"
+#include "syntax/precedence.hpp"
+#include "syntax/token.hpp"
 
-#include "lexer/lexer.hpp"
-#include "lexer/token.hpp"
-
-namespace porpoise {
+namespace porpoise::syntax {
 
 enum class ParserError : u8 {
     UNEXPECTED_TOKEN,
@@ -106,13 +105,13 @@ class Parser {
     // An RAII checkpoint-rollback transaction
     class Transaction {
       public:
-        explicit Transaction(Parser& parser) : p_{parser}, checkpoint_{parser} {}
-        ~Transaction() {
+        explicit Transaction(Parser& parser) noexcept : p_{parser}, checkpoint_{parser} {}
+        ~Transaction() noexcept {
             if (!committed_) { p_.rollback(checkpoint_); }
         }
 
         // Prevent a rollback from happening at the end of the transaction
-        void commit() { committed_ = true; }
+        void commit() noexcept { committed_ = true; }
 
       private:
         Parser&            p_;
@@ -182,4 +181,4 @@ class Parser {
     Token            peek_token_{};
 };
 
-} // namespace porpoise
+} // namespace porpoise::syntax

@@ -12,7 +12,7 @@
 #include "sema/error.hpp"
 #include "sema/symbol.hpp"
 
-#include "parser/parser.hpp"
+#include "syntax/parser.hpp"
 
 namespace porpoise::tests::helpers {
 
@@ -20,10 +20,10 @@ namespace porpoise::tests::helpers {
 template <typename... KVs>
     requires(std::same_as<KVs, sema::SymbolTable::KV> && ...)
 auto test_collector(std::string_view input, KVs&&... kvs) -> void {
-    Parser p{input};
+    syntax::Parser p{input};
     auto [ast, parser_errors] = p.consume();
     REQUIRE_FALSE(ast.empty());
-    check_errors<ParserDiagnostic>(parser_errors);
+    check_errors<syntax::ParserDiagnostic>(parser_errors);
 
     auto [actual, errors] = sema::SymbolCollector::collect(ast);
     check_errors<sema::SemaDiagnostic>(errors);
@@ -40,7 +40,7 @@ auto test_collector(std::string_view input, KVs&&... kvs) -> void {
 template <typename... Ds>
     requires(std::same_as<Ds, sema::SemaDiagnostic> && ...)
 auto test_collector_fail(std::string_view failing, Ds&&... expected_diagnostics) -> void {
-    Parser p{failing};
+    syntax::Parser p{failing};
     auto [ast, parser_errors] = p.consume();
     REQUIRE_FALSE(ast.empty());
     REQUIRE(parser_errors.empty());

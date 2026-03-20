@@ -2,7 +2,7 @@
 
 #include "ast/node.hpp"
 
-#include "parser/parser.hpp"
+#include "syntax/parser.hpp"
 
 namespace porpoise::ast {
 
@@ -13,15 +13,16 @@ class DoWhileLoopExpression : public ExprBase<DoWhileLoopExpression> {
     static constexpr auto KIND = NodeKind::DO_WHILE_LOOP_EXPRESSION;
 
   public:
-    explicit DoWhileLoopExpression(const Token&        start_token,
-                                   Box<BlockStatement> block,
-                                   Box<Expression>     condition) noexcept;
+    explicit DoWhileLoopExpression(const syntax::Token& start_token,
+                                   Box<BlockStatement>  block,
+                                   Box<Expression>      condition) noexcept;
     ~DoWhileLoopExpression() override;
 
     MAKE_AST_COPY_MOVE(DoWhileLoopExpression)
 
     auto                      accept(Visitor& v) const -> void override;
-    [[nodiscard]] static auto parse(Parser& parser) -> Expected<Box<Expression>, ParserDiagnostic>;
+    [[nodiscard]] static auto parse(syntax::Parser& parser)
+        -> Expected<Box<Expression>, syntax::ParserDiagnostic>;
 
     MAKE_GETTER(block, const BlockStatement&, *)
     MAKE_GETTER(condition, const Expression&, *)

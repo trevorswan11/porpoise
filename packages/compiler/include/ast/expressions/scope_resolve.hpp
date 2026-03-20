@@ -2,7 +2,7 @@
 
 #include "ast/node.hpp"
 
-#include "parser/parser.hpp"
+#include "syntax/parser.hpp"
 
 namespace porpoise::ast {
 
@@ -13,7 +13,7 @@ class ScopeResolutionExpression : public ExprBase<ScopeResolutionExpression> {
     static constexpr auto KIND = NodeKind::SCOPE_RESOLUTION_EXPRESSION;
 
   public:
-    explicit ScopeResolutionExpression(const Token&              start_token,
+    explicit ScopeResolutionExpression(const syntax::Token&      start_token,
                                        Box<Expression>           outer,
                                        Box<IdentifierExpression> inner) noexcept;
     ~ScopeResolutionExpression() override;
@@ -21,8 +21,8 @@ class ScopeResolutionExpression : public ExprBase<ScopeResolutionExpression> {
     MAKE_AST_COPY_MOVE(ScopeResolutionExpression)
 
     auto                      accept(Visitor& v) const -> void override;
-    [[nodiscard]] static auto parse(Parser& parser, Box<Expression> outer)
-        -> Expected<Box<Expression>, ParserDiagnostic>;
+    [[nodiscard]] static auto parse(syntax::Parser& parser, Box<Expression> outer)
+        -> Expected<Box<Expression>, syntax::ParserDiagnostic>;
 
     MAKE_GETTER(outer, const Expression&, *)
     MAKE_GETTER(inner, const IdentifierExpression&, *)

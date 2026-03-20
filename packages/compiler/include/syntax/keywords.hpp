@@ -5,11 +5,11 @@
 #include <string_view>
 #include <utility>
 
+#include "syntax/token.hpp"
+
 #include "optional.hpp"
 
-#include "lexer/token.hpp"
-
-namespace porpoise {
+namespace porpoise::syntax {
 
 using Keyword = std::pair<std::string_view, TokenType>;
 
@@ -193,4 +193,4 @@ constexpr auto is_builtin(TokenType tt) noexcept -> bool {
     return it != ALL_BUILTINS_BY_TT.end() && it->second == tt;
 }
 
-} // namespace porpoise
+} // namespace porpoise::syntax

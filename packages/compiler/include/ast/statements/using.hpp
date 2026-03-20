@@ -3,7 +3,7 @@
 #include "ast/expressions/type.hpp"
 #include "ast/node.hpp"
 
-#include "parser/parser.hpp"
+#include "syntax/parser.hpp"
 
 namespace porpoise::ast {
 
@@ -14,7 +14,7 @@ class UsingStatement : public StmtBase<UsingStatement> {
     static constexpr auto KIND = NodeKind::USING_STATEMENT;
 
   public:
-    explicit UsingStatement(const Token&              start_token,
+    explicit UsingStatement(const syntax::Token&      start_token,
                             Box<IdentifierExpression> alias,
                             ExplicitType&&            type) noexcept;
     ~UsingStatement() override;
@@ -22,7 +22,8 @@ class UsingStatement : public StmtBase<UsingStatement> {
     MAKE_AST_COPY_MOVE(UsingStatement)
 
     auto                      accept(Visitor& v) const -> void override;
-    [[nodiscard]] static auto parse(Parser& parser) -> Expected<Box<Statement>, ParserDiagnostic>;
+    [[nodiscard]] static auto parse(syntax::Parser& parser)
+        -> Expected<Box<Statement>, syntax::ParserDiagnostic>;
 
     MAKE_GETTER(alias, const IdentifierExpression&, *)
     MAKE_GETTER(type, const ExplicitType&)

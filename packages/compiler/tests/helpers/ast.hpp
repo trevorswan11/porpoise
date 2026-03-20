@@ -15,7 +15,7 @@
 #include "ast/statements/block.hpp"
 #include "ast/statements/expression.hpp"
 
-#include "lexer/keywords.hpp"
+#include "syntax/keywords.hpp"
 
 namespace porpoise::tests::helpers {
 
@@ -32,9 +32,9 @@ auto into_expression_statement(const N& node) -> const ast::ExpressionStatement&
 
 // Tests a syntactically failing input against the expected generated errors
 template <typename... Ds>
-    requires(std::same_as<Ds, ParserDiagnostic> && ...)
+    requires(std::same_as<Ds, syntax::ParserDiagnostic> && ...)
 auto test_parser_fail(std::string_view failing, Ds&&... expected_diagnostics) -> void {
-    Parser p{failing};
+    syntax::Parser p{failing};
     auto [ast, errors] = p.consume();
     REQUIRE(ast.empty());
 
@@ -49,10 +49,10 @@ auto test_parser_fail(std::string_view failing, Ds&&... expected_diagnostics) ->
 }
 
 template <ast::LeafNode N> auto test_stmt(std::string_view input, const N& expected) -> void {
-    Parser p{input};
+    syntax::Parser p{input};
     auto [ast, errors] = p.consume();
 
-    check_errors<ParserDiagnostic>(errors);
+    check_errors<syntax::ParserDiagnostic>(errors);
     REQUIRE(ast.size() == 1);
 
     const auto  actual{std::move(ast[0])};
@@ -61,7 +61,7 @@ template <ast::LeafNode N> auto test_stmt(std::string_view input, const N& expec
 }
 
 template <ast::LeafNode N>
-auto expr_stmt_from(const Token& start_token, N&& expected) -> ast::ExpressionStatement {
+auto expr_stmt_from(const syntax::Token& start_token, N&& expected) -> ast::ExpressionStatement {
     return ast::ExpressionStatement{start_token, make_box<N>(std::move(expected))};
 }
 
@@ -71,7 +71,8 @@ template <ast::LeafNode N> auto make_expr_stmt(N&& expected) -> Box<ast::Express
 }
 
 template <ast::LeafNode N>
-auto test_expr_stmt(std::string_view input, const Token& start_token, N&& expected) -> void {
+auto test_expr_stmt(std::string_view input, const syntax::Token& start_token, N&& expected)
+    -> void {
     test_stmt(input, expr_stmt_from(start_token, std::move(expected)));
 }
 
@@ -88,12 +89,12 @@ template <typename T, typename... Ts> auto make_vector(Ts&&... es) -> std::vecto
 
 inline auto ident_from(std::string_view name) -> ast::IdentifierExpression {
     const auto extract = [](const auto& key) { return key.second; };
-    const auto tt      = get_keyword(name).transform(extract).value_or(
-        get_builtin(name).transform(extract).value_or(TokenType::IDENT));
-    return ast::IdentifierExpression{Token{tt, name}};
+    const auto tt      = syntax::get_keyword(name).transform(extract).value_or(
+        syntax::get_builtin(name).transform(extract).value_or(syntax::TokenType::IDENT));
+    return ast::IdentifierExpression{syntax::Token{tt, name}};
 }
 
-inline auto ident_from(const Token& tok) -> ast::IdentifierExpression {
+inline auto ident_from(const syntax::Token& tok) -> ast::IdentifierExpression {
     return ast::IdentifierExpression{tok};
 }
 
@@ -101,14 +102,14 @@ inline auto make_ident(std::string_view name) -> Box<ast::IdentifierExpression> 
     return make_box<ast::IdentifierExpression>(ident_from(name));
 }
 
-inline auto make_ident(const Token& tok) -> Box<ast::IdentifierExpression> {
+inline auto make_ident(const syntax::Token& tok) -> Box<ast::IdentifierExpression> {
     return make_box<ast::IdentifierExpression>(ident_from(tok));
 }
 
 // Creates a block statement by boxing all passed statements
 template <ast::LeafNode... Ns> auto block_stmt_from(Ns&&... nodes) -> ast::BlockStatement {
     return ast::BlockStatement{
-        Token{TokenType::LBRACE, "{"},
+        syntax::Token{syntax::TokenType::LBRACE, "{"},
         make_vector<Box<ast::Statement>>(make_box<Ns>(std::forward<Ns>(nodes))...)};
 }
 

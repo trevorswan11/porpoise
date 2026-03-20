@@ -9,7 +9,7 @@
 
 namespace porpoise::ast {
 
-ArrayExpression::ArrayExpression(const Token&                 start_token,
+ArrayExpression::ArrayExpression(const syntax::Token&         start_token,
                                  Optional<Box<Expression>>    size,
                                  ExplicitType&&               item_type,
                                  std::vector<Box<Expression>> items) noexcept
@@ -19,33 +19,38 @@ ArrayExpression::~ArrayExpression() = default;
 
 auto ArrayExpression::accept(Visitor& v) const -> void { v.visit(*this); }
 
-auto ArrayExpression::parse(Parser& parser) -> Expected<Box<Expression>, ParserDiagnostic> {
+auto ArrayExpression::parse(syntax::Parser& parser)
+    -> Expected<Box<Expression>, syntax::ParserDiagnostic> {
     const auto start_token = parser.current_token();
     parser.advance();
 
     Optional<Box<Expression>> size;
-    if (!parser.current_token_is(TokenType::UNDERSCORE)) {
-        if (parser.current_token_is(TokenType::RBRACKET)) {
-            return make_parser_unexpected(ParserError::MISSING_ARRAY_SIZE_TOKEN, start_token);
+    if (!parser.current_token_is(syntax::TokenType::UNDERSCORE)) {
+        if (parser.current_token_is(syntax::TokenType::RBRACKET)) {
+            return make_parser_unexpected(syntax::ParserError::MISSING_ARRAY_SIZE_TOKEN,
+                                          start_token);
         }
         size.emplace(TRY(parser.parse_expression()));
     }
 
-    TRY(parser.expect_peek(TokenType::RBRACKET));
+    TRY(parser.expect_peek(syntax::TokenType::RBRACKET));
     auto item_type = TRY(ExplicitType::parse(parser));
 
-    TRY(parser.expect_peek(TokenType::LBRACE));
+    TRY(parser.expect_peek(syntax::TokenType::LBRACE));
 
     // Current token is either the LBRACE at the start or a comma before parsing
     std::vector<Box<Expression>> items;
-    while (!parser.peek_token_is(TokenType::RBRACE) && !parser.peek_token_is(TokenType::END)) {
+    while (!parser.peek_token_is(syntax::TokenType::RBRACE) &&
+           !parser.peek_token_is(syntax::TokenType::END)) {
         parser.advance();
         items.emplace_back(TRY(parser.parse_expression()));
-        if (!parser.peek_token_is(TokenType::RBRACE)) { TRY(parser.expect_peek(TokenType::COMMA)); }
+        if (!parser.peek_token_is(syntax::TokenType::RBRACE)) {
+            TRY(parser.expect_peek(syntax::TokenType::COMMA));
+        }
     }
 
     // Perform last minute ident/size checks to reduce load on Sema
-    TRY(parser.expect_peek(TokenType::RBRACE));
+    TRY(parser.expect_peek(syntax::TokenType::RBRACE));
     if (size) {
         const auto& size_expr = *(*size);
         if (size_expr.is<USizeIntegerExpression>()) {
@@ -54,11 +59,11 @@ auto ArrayExpression::parse(Parser& parser) -> Expected<Box<Expression>, ParserD
 
             // Enforce full initialization
             if (items.size() != explicit_size.get_value()) {
-                return make_parser_unexpected(ParserError::EXPLICIT_ARRAY_SIZE_MISMATCH,
+                return make_parser_unexpected(syntax::ParserError::EXPLICIT_ARRAY_SIZE_MISMATCH,
                                               size_token);
             }
         } else if (!size_expr.is<IdentifierExpression>()) {
-            return make_parser_unexpected(ParserError::ILLEGAL_ARRAY_SIZE_TYPE,
+            return make_parser_unexpected(syntax::ParserError::ILLEGAL_ARRAY_SIZE_TYPE,
                                           size_expr.get_token());
         }
     }

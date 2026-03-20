@@ -5,7 +5,7 @@
 
 #include "ast/node.hpp"
 
-#include "parser/parser.hpp"
+#include "syntax/parser.hpp"
 
 #include "variant.hpp"
 
@@ -49,7 +49,7 @@ class MatchExpression : public ExprBase<MatchExpression> {
     static constexpr auto KIND = NodeKind::MATCH_EXPRESSION;
 
   public:
-    explicit MatchExpression(const Token&             start_token,
+    explicit MatchExpression(const syntax::Token&     start_token,
                              Box<Expression>          matcher,
                              std::vector<MatchArm>    arms,
                              Optional<Box<Statement>> catch_all) noexcept;
@@ -58,7 +58,8 @@ class MatchExpression : public ExprBase<MatchExpression> {
     MAKE_AST_COPY_MOVE(MatchExpression)
 
     auto                      accept(Visitor& v) const -> void override;
-    [[nodiscard]] static auto parse(Parser& parser) -> Expected<Box<Expression>, ParserDiagnostic>;
+    [[nodiscard]] static auto parse(syntax::Parser& parser)
+        -> Expected<Box<Expression>, syntax::ParserDiagnostic>;
 
     MAKE_GETTER(matcher, const Expression&, *)
     MAKE_GETTER(arms, std::span<const MatchArm>)

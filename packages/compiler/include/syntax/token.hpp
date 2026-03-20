@@ -15,6 +15,8 @@
 
 namespace porpoise {
 
+namespace syntax {
+
 enum class TokenError : u8 {
     NON_STRING_TOKEN,
     UNEXPECTED_CHAR,
@@ -316,16 +318,18 @@ struct Token {
     }
 };
 
-template <> struct SourceInfo<Token> {
-    static auto get(const Token& t) -> SourceLocation { return {t.line, t.column}; }
+} // namespace syntax
+
+template <> struct SourceInfo<syntax::Token> {
+    static auto get(const syntax::Token& t) -> SourceLocation { return {t.line, t.column}; }
 };
 
 } // namespace porpoise
 
-template <> struct fmt::formatter<porpoise::Token> {
+template <> struct fmt::formatter<porpoise::syntax::Token> {
     static constexpr auto parse(format_parse_context& ctx) noexcept { return ctx.begin(); }
 
-    template <typename F> static auto format(const porpoise::Token& t, F& ctx) {
+    template <typename F> static auto format(const porpoise::syntax::Token& t, F& ctx) {
         return fmt::format_to(
             ctx.out(), "{}({}) [{}, {}]", magic_enum::enum_name(t.type), t.slice, t.line, t.column);
     }

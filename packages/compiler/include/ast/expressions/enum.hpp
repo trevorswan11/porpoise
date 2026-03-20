@@ -4,7 +4,7 @@
 
 #include "ast/node.hpp"
 
-#include "parser/parser.hpp"
+#include "syntax/parser.hpp"
 
 namespace porpoise::ast {
 
@@ -32,7 +32,7 @@ class EnumExpression : public ExprBase<EnumExpression> {
     static constexpr auto KIND = NodeKind::ENUM_EXPRESSION;
 
   public:
-    explicit EnumExpression(const Token&                        start_token,
+    explicit EnumExpression(const syntax::Token&                start_token,
                             Optional<Box<IdentifierExpression>> underlying,
                             std::vector<Enumeration>            enumerations) noexcept;
     ~EnumExpression() override;
@@ -40,7 +40,8 @@ class EnumExpression : public ExprBase<EnumExpression> {
     MAKE_AST_COPY_MOVE(EnumExpression)
 
     auto                      accept(Visitor& v) const -> void override;
-    [[nodiscard]] static auto parse(Parser& parser) -> Expected<Box<Expression>, ParserDiagnostic>;
+    [[nodiscard]] static auto parse(syntax::Parser& parser)
+        -> Expected<Box<Expression>, syntax::ParserDiagnostic>;
 
     MAKE_OPTIONAL_UNPACKER(underlying, IdentifierExpression, underlying_, **)
     MAKE_GETTER(enumerations, std::span<const Enumeration>)

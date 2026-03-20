@@ -6,7 +6,7 @@
 
 #include "ast/node.hpp"
 
-#include "parser/parser.hpp"
+#include "syntax/parser.hpp"
 
 namespace porpoise::ast {
 
@@ -19,14 +19,15 @@ class BlockStatement : public StmtBase<BlockStatement> {
     using const_iterator = typename std::vector<Box<Statement>>::const_iterator;
 
   public:
-    explicit BlockStatement(const Token&                start_token,
+    explicit BlockStatement(const syntax::Token&        start_token,
                             std::vector<Box<Statement>> statements) noexcept
         : StmtBase{start_token}, statements_{std::move(statements)} {}
 
     MAKE_AST_COPY_MOVE(BlockStatement)
 
     auto                      accept(Visitor& v) const -> void override;
-    [[nodiscard]] static auto parse(Parser& parser) -> Expected<Box<Statement>, ParserDiagnostic>;
+    [[nodiscard]] static auto parse(syntax::Parser& parser)
+        -> Expected<Box<Statement>, syntax::ParserDiagnostic>;
 
     [[nodiscard]] auto begin() noexcept -> iterator { return statements_.begin(); }
     [[nodiscard]] auto end() noexcept -> iterator { return statements_.end(); }

@@ -6,7 +6,7 @@
 #include "ast/expressions/type.hpp"
 #include "ast/node.hpp"
 
-#include "parser/parser.hpp"
+#include "syntax/parser.hpp"
 
 #include "variant.hpp"
 
@@ -34,7 +34,7 @@ class CallExpression : public ExprBase<CallExpression> {
     static constexpr auto KIND = NodeKind::CALL_EXPRESSION;
 
   public:
-    explicit CallExpression(const Token&              start_token,
+    explicit CallExpression(const syntax::Token&      start_token,
                             Box<Expression>           function,
                             std::vector<CallArgument> arguments) noexcept;
     ~CallExpression() override;
@@ -42,8 +42,8 @@ class CallExpression : public ExprBase<CallExpression> {
     MAKE_AST_COPY_MOVE(CallExpression)
 
     auto                      accept(Visitor& v) const -> void override;
-    [[nodiscard]] static auto parse(Parser& parser, Box<Expression> function)
-        -> Expected<Box<Expression>, ParserDiagnostic>;
+    [[nodiscard]] static auto parse(syntax::Parser& parser, Box<Expression> function)
+        -> Expected<Box<Expression>, syntax::ParserDiagnostic>;
 
     MAKE_GETTER(function, const Expression&, *)
     MAKE_GETTER(arguments, std::span<const CallArgument>)

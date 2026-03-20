@@ -2,7 +2,7 @@
 
 #include "ast/node.hpp"
 
-#include "parser/parser.hpp"
+#include "syntax/parser.hpp"
 
 #include "variant.hpp"
 
@@ -53,13 +53,14 @@ class ImportStatement : public StmtBase<ImportStatement> {
     using ImportVariant = std::variant<ModuleImport, UserImport>;
 
   public:
-    explicit ImportStatement(const Token& start_token, ImportVariant imported) noexcept;
+    explicit ImportStatement(const syntax::Token& start_token, ImportVariant imported) noexcept;
     ~ImportStatement() override;
 
     MAKE_AST_COPY_MOVE(ImportStatement)
 
     auto                      accept(Visitor& v) const -> void override;
-    [[nodiscard]] static auto parse(Parser& parser) -> Expected<Box<Statement>, ParserDiagnostic>;
+    [[nodiscard]] static auto parse(syntax::Parser& parser)
+        -> Expected<Box<Statement>, syntax::ParserDiagnostic>;
 
     MAKE_VARIANT_UNPACKER(module_import, ModuleImport, ModuleImport, imported_, std::get)
     MAKE_VARIANT_UNPACKER(user_import, UserImport, UserImport, imported_, std::get)

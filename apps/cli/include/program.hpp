@@ -1,6 +1,6 @@
 #pragma once
 
-#include "parser/parser.hpp"
+#include "syntax/parser.hpp"
 
 #ifdef _WIN32
 #    include "platform/win32.hpp"
@@ -15,7 +15,7 @@ class Program {
     auto interactive() -> void;
 
   private:
-    Parser parser_;
+    syntax::Parser parser_;
 #ifdef _WIN32
     win32::RichConsole console_;
 #endif

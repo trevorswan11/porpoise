@@ -8,15 +8,17 @@
 
 namespace porpoise::tests {
 
+namespace keywords = syntax::keywords;
+
 TEST_CASE("Module imports") {
-    helpers::test_stmt("module;", ast::ModuleStatement{Token{keywords::MODULE}});
+    helpers::test_stmt("module;", ast::ModuleStatement{syntax::Token{keywords::MODULE}});
 
     helpers::test_stmt("import std;",
-                       ast::ImportStatement{Token{keywords::IMPORT},
+                       ast::ImportStatement{syntax::Token{keywords::IMPORT},
                                             ast::ModuleImport{helpers::make_ident("std"), {}}});
 
     helpers::test_stmt("import std as stud;",
-                       ast::ImportStatement{Token{keywords::IMPORT},
+                       ast::ImportStatement{syntax::Token{keywords::IMPORT},
                                             ast::ModuleImport{helpers::make_ident("std"),
                                                               helpers::make_ident("stud")}});
 }
@@ -24,53 +26,56 @@ TEST_CASE("Module imports") {
 TEST_CASE("User imports") {
     helpers::test_stmt(
         R"(import "ast/node.p" as node;)",
-        ast::ImportStatement{Token{keywords::IMPORT},
-                             ast::UserImport{make_box<ast::StringExpression>(
-                                                 Token{TokenType::STRING, R"("ast/node.p")"},
-                                                 std::string{"ast/node.p"}),
-                                             helpers::make_ident("node")}});
+        ast::ImportStatement{
+            syntax::Token{keywords::IMPORT},
+            ast::UserImport{make_box<ast::StringExpression>(
+                                syntax::Token{syntax::TokenType::STRING, R"("ast/node.p")"},
+                                std::string{"ast/node.p"}),
+                            helpers::make_ident("node")}});
 }
 
 TEST_CASE("Incorrect module imports") {
     helpers::test_parser_fail(
         "module",
-        ParserDiagnostic{
-            "Expected token SEMICOLON, found END", ParserError::UNEXPECTED_TOKEN, 1, 7});
+        syntax::ParserDiagnostic{
+            "Expected token SEMICOLON, found END", syntax::ParserError::UNEXPECTED_TOKEN, 1, 7});
     helpers::test_parser_fail(
         "module std;",
-        ParserDiagnostic{
-            "Expected token SEMICOLON, found IDENT", ParserError::UNEXPECTED_TOKEN, 1, 8});
+        syntax::ParserDiagnostic{
+            "Expected token SEMICOLON, found IDENT", syntax::ParserError::UNEXPECTED_TOKEN, 1, 8});
 
-    helpers::test_parser_fail("import 2;",
-                              ParserDiagnostic{ParserError::ILLEGAL_IMPORT_TYPE, 1, 8});
-    helpers::test_parser_fail("import as 2;",
-                              ParserDiagnostic{ParserError::ILLEGAL_IMPORT_TYPE, 1, 8});
-    helpers::test_parser_fail("import 2 as 3;",
-                              ParserDiagnostic{ParserError::ILLEGAL_IMPORT_TYPE, 1, 8});
+    helpers::test_parser_fail(
+        "import 2;", syntax::ParserDiagnostic{syntax::ParserError::ILLEGAL_IMPORT_TYPE, 1, 8});
+    helpers::test_parser_fail(
+        "import as 2;", syntax::ParserDiagnostic{syntax::ParserError::ILLEGAL_IMPORT_TYPE, 1, 8});
+    helpers::test_parser_fail(
+        "import 2 as 3;", syntax::ParserDiagnostic{syntax::ParserError::ILLEGAL_IMPORT_TYPE, 1, 8});
     helpers::test_parser_fail(
         "import std as 2;",
-        ParserDiagnostic{
-            "Expected token IDENT, found INT_10", ParserError::UNEXPECTED_TOKEN, 1, 15});
+        syntax::ParserDiagnostic{
+            "Expected token IDENT, found INT_10", syntax::ParserError::UNEXPECTED_TOKEN, 1, 15});
 }
 
 TEST_CASE("Incorrect user imports ") {
-    helpers::test_parser_fail(R"(import "";)",
-                              ParserDiagnostic{ParserError::EMPTY_USER_IMPORT, 1, 8});
-    helpers::test_parser_fail(R"(import "" as e;)",
-                              ParserDiagnostic{ParserError::EMPTY_USER_IMPORT, 1, 8});
-    helpers::test_parser_fail(R"(import "ast/node.p";)",
-                              ParserDiagnostic{ParserError::USER_IMPORT_MISSING_ALIAS, 1, 1});
+    helpers::test_parser_fail(
+        R"(import "";)", syntax::ParserDiagnostic{syntax::ParserError::EMPTY_USER_IMPORT, 1, 8});
+    helpers::test_parser_fail(
+        R"(import "" as e;)",
+        syntax::ParserDiagnostic{syntax::ParserError::EMPTY_USER_IMPORT, 1, 8});
+    helpers::test_parser_fail(
+        R"(import "ast/node.p";)",
+        syntax::ParserDiagnostic{syntax::ParserError::USER_IMPORT_MISSING_ALIAS, 1, 1});
     helpers::test_parser_fail(
         R"(import "ast/node.p" as 2;)",
-        ParserDiagnostic{
-            "Expected token IDENT, found INT_10", ParserError::UNEXPECTED_TOKEN, 1, 24});
+        syntax::ParserDiagnostic{
+            "Expected token IDENT, found INT_10", syntax::ParserError::UNEXPECTED_TOKEN, 1, 24});
 }
 
 TEST_CASE("Non-terminated imports") {
     helpers::test_parser_fail(
         "import std",
-        ParserDiagnostic{
-            "Expected token SEMICOLON, found END", ParserError::UNEXPECTED_TOKEN, 1, 11});
+        syntax::ParserDiagnostic{
+            "Expected token SEMICOLON, found END", syntax::ParserError::UNEXPECTED_TOKEN, 1, 11});
 }
 
 } // namespace porpoise::tests

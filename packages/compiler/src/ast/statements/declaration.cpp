@@ -7,7 +7,7 @@
 
 namespace porpoise::ast {
 
-DeclStatement::DeclStatement(const Token&              start_token,
+DeclStatement::DeclStatement(const syntax::Token&      start_token,
                              Box<IdentifierExpression> ident,
                              Box<TypeExpression>       type,
                              Optional<Box<Expression>> value,
@@ -18,7 +18,8 @@ DeclStatement::~DeclStatement() = default;
 
 auto DeclStatement::accept(Visitor& v) const -> void { v.visit(*this); }
 
-auto DeclStatement::parse(Parser& parser) -> Expected<Box<Statement>, ParserDiagnostic> {
+auto DeclStatement::parse(syntax::Parser& parser)
+    -> Expected<Box<Statement>, syntax::ParserDiagnostic> {
     const auto start_token = parser.current_token();
     auto       modifiers   = token_to_modifier(start_token).value();
 
@@ -26,16 +27,17 @@ auto DeclStatement::parse(Parser& parser) -> Expected<Box<Statement>, ParserDiag
     while ((current_modifier = token_to_modifier(parser.peek_token()))) {
         parser.advance();
         if (modifiers_has(modifiers, *current_modifier)) {
-            return make_parser_unexpected(ParserError::DUPLICATE_DECL_MODIFIER, start_token);
+            return make_parser_unexpected(syntax::ParserError::DUPLICATE_DECL_MODIFIER,
+                                          start_token);
         }
         modifiers |= *current_modifier;
     }
 
     if (!validate_modifiers(modifiers)) {
-        return make_parser_unexpected(ParserError::ILLEGAL_DECL_MODIFIERS, start_token);
+        return make_parser_unexpected(syntax::ParserError::ILLEGAL_DECL_MODIFIERS, start_token);
     }
 
-    TRY(parser.expect_peek(TokenType::IDENT));
+    TRY(parser.expect_peek(syntax::TokenType::IDENT));
     auto decl_name = downcast<IdentifierExpression>(TRY(IdentifierExpression::parse(parser)));
     auto [decl_type, value_initialized] = TRY(TypeExpression::parse(parser));
     auto decl_type_expr                 = downcast<TypeExpression>(std::move(decl_type));
@@ -45,17 +47,18 @@ auto DeclStatement::parse(Parser& parser) -> Expected<Box<Statement>, ParserDiag
         decl_value = TRY(parser.parse_expression());
         // If there is a value, then there cannot be an extern keyword
         if (modifiers_has(modifiers, DeclModifiers::EXTERN)) {
-            return make_parser_unexpected(ParserError::EXTERN_VALUE_INITIALIZED, start_token);
+            return make_parser_unexpected(syntax::ParserError::EXTERN_VALUE_INITIALIZED,
+                                          start_token);
         }
     } else if ((modifiers_has(modifiers, DeclModifiers::CONSTANT) &&
                 !modifiers_has(modifiers, DeclModifiers::EXTERN)) ||
                modifiers_has(modifiers, DeclModifiers::COMPTIME)) {
         // Constant decls must be declared with a value unless they are extern
-        return make_parser_unexpected(ParserError::CONST_DECL_MISSING_VALUE, start_token);
+        return make_parser_unexpected(syntax::ParserError::CONST_DECL_MISSING_VALUE, start_token);
     }
 
-    if (!parser.current_token_is(TokenType::SEMICOLON)) {
-        TRY(parser.expect_peek(TokenType::SEMICOLON));
+    if (!parser.current_token_is(syntax::TokenType::SEMICOLON)) {
+        TRY(parser.expect_peek(syntax::TokenType::SEMICOLON));
     }
     return make_box<DeclStatement>(start_token,
                                    std::move(decl_name),

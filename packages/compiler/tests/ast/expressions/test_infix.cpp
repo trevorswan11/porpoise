@@ -11,21 +11,23 @@
 #include "ast/expressions/primitive.hpp"
 #include "ast/expressions/scope_resolve.hpp"
 
-#include "lexer/operators.hpp"
+#include "syntax/operators.hpp"
 
 namespace porpoise::tests {
+
+namespace operators = syntax::operators;
 
 namespace helpers {
 
 template <ast::LeafNode N, ast::LeafNode L, ast::LeafNode R>
-auto test_infix_expr(std::string_view input, L&& lhs, TokenType op, R&& rhs) -> void {
-    Lexer       l{input};
-    const auto& start_token = l.advance();
+auto test_infix_expr(std::string_view input, L&& lhs, syntax::TokenType op, R&& rhs) -> void {
+    syntax::Lexer l{input};
+    const auto&   start_token = l.advance();
     test_expr_stmt(input,
                    N{start_token, make_box<L>(std::move(lhs)), op, make_box<R>(std::move(rhs))});
 }
 
-template <ast::LeafNode N> auto test_infix_op_list(std::span<const Operator> ops) -> void {
+template <ast::LeafNode N> auto test_infix_op_list(std::span<const syntax::Operator> ops) -> void {
     for (const auto& op : ops) {
         const auto input = fmt::format("a {} b;", op.first);
         helpers::test_infix_expr<N>(input, ident_from("a"), op.second, ident_from("b"));
@@ -33,13 +35,13 @@ template <ast::LeafNode N> auto test_infix_op_list(std::span<const Operator> ops
 }
 
 template <ast::LeafNode L, ast::LeafNode R>
-void test_binary_expr(std::string_view input, L&& lhs, TokenType op, R&& rhs) {
+void test_binary_expr(std::string_view input, L&& lhs, syntax::TokenType op, R&& rhs) {
     helpers::test_infix_expr<ast::BinaryExpression>(
         input, std::forward<L>(lhs), op, std::forward<R>(rhs));
 }
 
 void test_binary_expr(std::string_view        input,
-                      const Token&            start_token,
+                      const syntax::Token&    start_token,
                       ast::BinaryExpression&& expected) {
     test_expr_stmt(input, start_token, std::move(expected));
 }
@@ -103,153 +105,158 @@ TEST_CASE("Miscellaneous infixes") {
     }
 }
 
-const Token a{TokenType::IDENT, "a"};
-const Token b{TokenType::IDENT, "b"};
-const Token c{TokenType::IDENT, "c"};
+const syntax::Token a{syntax::TokenType::IDENT, "a"};
+const syntax::Token b{syntax::TokenType::IDENT, "b"};
+const syntax::Token c{syntax::TokenType::IDENT, "c"};
 
 TEST_CASE("Numerical precedence") {
     SECTION("Add/sub and mul/div") {
         helpers::test_binary_expr(
             "a + b * c;",
             helpers::ident_from(a),
-            TokenType::PLUS,
+            syntax::TokenType::PLUS,
             ast::BinaryExpression{
-                b, helpers::make_ident(b), TokenType::STAR, helpers::make_ident(c)});
+                b, helpers::make_ident(b), syntax::TokenType::STAR, helpers::make_ident(c)});
 
         helpers::test_binary_expr(
             "a + b / c;",
             helpers::ident_from(a),
-            TokenType::PLUS,
+            syntax::TokenType::PLUS,
             ast::BinaryExpression{
-                b, helpers::make_ident(b), TokenType::SLASH, helpers::make_ident(c)});
+                b, helpers::make_ident(b), syntax::TokenType::SLASH, helpers::make_ident(c)});
 
         helpers::test_binary_expr(
             "a * b - c;",
             ast::BinaryExpression{
-                a, helpers::make_ident(a), TokenType::STAR, helpers::make_ident(b)},
-            TokenType::MINUS,
+                a, helpers::make_ident(a), syntax::TokenType::STAR, helpers::make_ident(b)},
+            syntax::TokenType::MINUS,
             helpers::ident_from(c));
 
         helpers::test_binary_expr(
             "a + b - c;",
             ast::BinaryExpression{
-                a, helpers::make_ident(a), TokenType::PLUS, helpers::make_ident(b)},
-            TokenType::MINUS,
+                a, helpers::make_ident(a), syntax::TokenType::PLUS, helpers::make_ident(b)},
+            syntax::TokenType::MINUS,
             helpers::ident_from(c));
     }
 
     SECTION("Grouping") {
         helpers::test_binary_expr(
             "(a + b) * c;",
-            Token{TokenType::LPAREN, "("},
+            syntax::Token{syntax::TokenType::LPAREN, "("},
             ast::BinaryExpression{
                 a,
                 make_box<ast::BinaryExpression>(
-                    a, helpers::make_ident(a), TokenType::PLUS, helpers::make_ident(b)),
-                TokenType::STAR,
+                    a, helpers::make_ident(a), syntax::TokenType::PLUS, helpers::make_ident(b)),
+                syntax::TokenType::STAR,
                 helpers::make_ident(c)});
     }
 }
 
-const Token d{TokenType::IDENT, "d"};
+const syntax::Token d{syntax::TokenType::IDENT, "d"};
 
 TEST_CASE("Bitwise operations") {
     helpers::test_binary_expr(
         "a & b | c;",
-        ast::BinaryExpression{a, helpers::make_ident(a), TokenType::BW_AND, helpers::make_ident(b)},
-        TokenType::BW_OR,
+        ast::BinaryExpression{
+            a, helpers::make_ident(a), syntax::TokenType::BW_AND, helpers::make_ident(b)},
+        syntax::TokenType::BW_OR,
         helpers::ident_from(c));
 
     helpers::test_binary_expr(
         "a | b & c;",
         helpers::ident_from(a),
-        TokenType::BW_OR,
+        syntax::TokenType::BW_OR,
         ast::BinaryExpression{
-            b, helpers::make_ident(b), TokenType::BW_AND, helpers::make_ident(c)});
+            b, helpers::make_ident(b), syntax::TokenType::BW_AND, helpers::make_ident(c)});
 
     helpers::test_binary_expr(
         "a | b & c;",
         helpers::ident_from(a),
-        TokenType::BW_OR,
+        syntax::TokenType::BW_OR,
         ast::BinaryExpression{
-            b, helpers::make_ident(b), TokenType::BW_AND, helpers::make_ident(c)});
+            b, helpers::make_ident(b), syntax::TokenType::BW_AND, helpers::make_ident(c)});
 
     helpers::test_binary_expr(
         "(a | b) & c;",
-        Token{TokenType::LPAREN, "("},
+        syntax::Token{syntax::TokenType::LPAREN, "("},
         ast::BinaryExpression{
             a,
             make_box<ast::BinaryExpression>(
-                a, helpers::make_ident(a), TokenType::BW_OR, helpers::make_ident(b)),
-            TokenType::BW_AND,
+                a, helpers::make_ident(a), syntax::TokenType::BW_OR, helpers::make_ident(b)),
+            syntax::TokenType::BW_AND,
             helpers::make_ident(c)});
 
     helpers::test_binary_expr(
         "a | b ^ c & d;",
-        ast::BinaryExpression{a, helpers::make_ident(a), TokenType::BW_OR, helpers::make_ident(b)},
-        TokenType::XOR,
         ast::BinaryExpression{
-            c, helpers::make_ident(c), TokenType::BW_AND, helpers::make_ident(d)});
+            a, helpers::make_ident(a), syntax::TokenType::BW_OR, helpers::make_ident(b)},
+        syntax::TokenType::XOR,
+        ast::BinaryExpression{
+            c, helpers::make_ident(c), syntax::TokenType::BW_AND, helpers::make_ident(d)});
 }
 
-const Token e{TokenType::IDENT, "e"};
+const syntax::Token e{syntax::TokenType::IDENT, "e"};
 
 TEST_CASE("Boolean operations") {
     helpers::test_binary_expr(
         "a < b and c > d;",
-        ast::BinaryExpression{a, helpers::make_ident(a), TokenType::LT, helpers::make_ident(b)},
-        TokenType::BOOLEAN_AND,
-        ast::BinaryExpression{c, helpers::make_ident(c), TokenType::GT, helpers::make_ident(d)});
+        ast::BinaryExpression{
+            a, helpers::make_ident(a), syntax::TokenType::LT, helpers::make_ident(b)},
+        syntax::TokenType::BOOLEAN_AND,
+        ast::BinaryExpression{
+            c, helpers::make_ident(c), syntax::TokenType::GT, helpers::make_ident(d)});
 
     helpers::test_binary_expr(
         "a <= b or c == d and e;",
         ast::BinaryExpression{
             a,
             make_box<ast::BinaryExpression>(
-                a, helpers::make_ident(a), TokenType::LT_EQ, helpers::make_ident(b)),
-            TokenType::BOOLEAN_OR,
+                a, helpers::make_ident(a), syntax::TokenType::LT_EQ, helpers::make_ident(b)),
+            syntax::TokenType::BOOLEAN_OR,
             make_box<ast::BinaryExpression>(
-                c, helpers::make_ident(c), TokenType::EQ, helpers::make_ident(d))},
-        TokenType::BOOLEAN_AND,
+                c, helpers::make_ident(c), syntax::TokenType::EQ, helpers::make_ident(d))},
+        syntax::TokenType::BOOLEAN_AND,
         helpers::ident_from(e));
 }
 
 TEST_CASE("Prefix precedence") {
-    const Token minus{operators::MINUS};
+    const syntax::Token minus{operators::MINUS};
     helpers::test_binary_expr(
         "a + -b * c;",
         helpers::ident_from(a),
-        TokenType::PLUS,
+        syntax::TokenType::PLUS,
         ast::BinaryExpression{minus,
                               make_box<ast::UnaryExpression>(minus, helpers::make_ident(b)),
-                              TokenType::STAR,
+                              syntax::TokenType::STAR,
                               helpers::make_ident(c)});
 
     helpers::test_binary_expr(
         "a | b & ~c;",
         helpers::ident_from(a),
-        TokenType::BW_OR,
+        syntax::TokenType::BW_OR,
         ast::BinaryExpression{
             b,
             helpers::make_ident(b),
-            TokenType::BW_AND,
-            make_box<ast::UnaryExpression>(Token{operators::NOT}, helpers::make_ident(c))});
+            syntax::TokenType::BW_AND,
+            make_box<ast::UnaryExpression>(syntax::Token{operators::NOT}, helpers::make_ident(c))});
 
-    helpers::test_binary_expr("a and !b;",
-                              helpers::ident_from(a),
-                              TokenType::BOOLEAN_AND,
-                              ast::UnaryExpression{Token{operators::BANG}, helpers::make_ident(b)});
+    helpers::test_binary_expr(
+        "a and !b;",
+        helpers::ident_from(a),
+        syntax::TokenType::BOOLEAN_AND,
+        ast::UnaryExpression{syntax::Token{operators::BANG}, helpers::make_ident(b)});
 }
 
 TEST_CASE("Call precedence") {
     helpers::test_binary_expr(
         "a and b() != c;",
         helpers::ident_from(a),
-        TokenType::BOOLEAN_AND,
+        syntax::TokenType::BOOLEAN_AND,
         ast::BinaryExpression{b,
                               make_box<ast::CallExpression>(
                                   b, helpers::make_ident(b), std::vector<ast::CallArgument>{}),
-                              TokenType::NEQ,
+                              syntax::TokenType::NEQ,
                               helpers::make_ident(c)});
 }
 
@@ -257,66 +264,70 @@ TEST_CASE("Index precedence") {
     helpers::test_binary_expr(
         "a or b[3uz] == !c;",
         helpers::ident_from(a),
-        TokenType::BOOLEAN_OR,
-        ast::BinaryExpression{
-            b,
-            make_box<ast::IndexExpression>(
-                b,
-                helpers::make_ident(b),
-                make_box<ast::USizeIntegerExpression>(Token{TokenType::UZINT_10, "3uz"}, 3uz)),
-            TokenType::EQ,
-            make_box<ast::UnaryExpression>(Token{operators::BANG}, helpers::make_ident(c))});
+        syntax::TokenType::BOOLEAN_OR,
+        ast::BinaryExpression{b,
+                              make_box<ast::IndexExpression>(
+                                  b,
+                                  helpers::make_ident(b),
+                                  make_box<ast::USizeIntegerExpression>(
+                                      syntax::Token{syntax::TokenType::UZINT_10, "3uz"}, 3uz)),
+                              syntax::TokenType::EQ,
+                              make_box<ast::UnaryExpression>(syntax::Token{operators::BANG},
+                                                             helpers::make_ident(c))});
 }
 
 TEST_CASE("Scope resolution precedence") {
     helpers::test_binary_expr(
         "a or b.c >= d;",
         helpers::ident_from(a),
-        TokenType::BOOLEAN_OR,
+        syntax::TokenType::BOOLEAN_OR,
         ast::BinaryExpression{
             b,
             make_box<ast::DotExpression>(
-                b, helpers::make_ident(b), TokenType::DOT, helpers::make_ident(c)),
-            TokenType::GT_EQ,
+                b, helpers::make_ident(b), syntax::TokenType::DOT, helpers::make_ident(c)),
+            syntax::TokenType::GT_EQ,
             helpers::make_ident(d)});
 
     helpers::test_binary_expr(
         "a or b::c < d;",
         helpers::ident_from(a),
-        TokenType::BOOLEAN_OR,
+        syntax::TokenType::BOOLEAN_OR,
         ast::BinaryExpression{b,
                               make_box<ast::ScopeResolutionExpression>(
                                   b, helpers::make_ident(b), helpers::make_ident(c)),
-                              TokenType::LT,
+                              syntax::TokenType::LT,
                               helpers::make_ident(d)});
 
     helpers::test_binary_expr(
         "a or b.c >= d;",
         helpers::ident_from(a),
-        TokenType::BOOLEAN_OR,
+        syntax::TokenType::BOOLEAN_OR,
         ast::BinaryExpression{
             b,
             make_box<ast::DotExpression>(
-                b, helpers::make_ident(b), TokenType::DOT, helpers::make_ident(c)),
-            TokenType::GT_EQ,
+                b, helpers::make_ident(b), syntax::TokenType::DOT, helpers::make_ident(c)),
+            syntax::TokenType::GT_EQ,
             helpers::make_ident(d)});
 }
 
 TEST_CASE("Illegal infix node") {
-    helpers::test_parser_fail("a and import std;",
-                              ParserDiagnostic{"No prefix parse function for IMPORT(import) found",
-                                               ParserError::MISSING_PREFIX_PARSER,
-                                               1,
-                                               7});
+    helpers::test_parser_fail(
+        "a and import std;",
+        syntax::ParserDiagnostic{"No prefix parse function for IMPORT(import) found",
+                                 syntax::ParserError::MISSING_PREFIX_PARSER,
+                                 1,
+                                 7});
 }
 
 TEST_CASE("Non-terminated infix") {
-    helpers::test_parser_fail("a and;",
-                              ParserDiagnostic{"No prefix parse function for SEMICOLON(;) found",
-                                               ParserError::MISSING_PREFIX_PARSER,
-                                               1,
-                                               6});
-    helpers::test_parser_fail("a and", ParserDiagnostic{ParserError::INFIX_MISSING_RHS, 1, 3});
+    helpers::test_parser_fail(
+        "a and;",
+        syntax::ParserDiagnostic{"No prefix parse function for SEMICOLON(;) found",
+                                 syntax::ParserError::MISSING_PREFIX_PARSER,
+                                 1,
+                                 6});
+    helpers::test_parser_fail(
+        "a and", syntax::ParserDiagnostic{syntax::ParserError::INFIX_MISSING_RHS, 1, 3});
 }
 
 } // namespace porpoise::tests

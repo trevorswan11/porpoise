@@ -21,22 +21,24 @@ template <ast::LeafNode... Ns> auto make_items(Ns&&... nodes) -> Items {
 
 namespace mods = helpers::type_modifiers;
 
-const Token rbracket{TokenType::LBRACKET, "["};
+const syntax::Token rbracket{syntax::TokenType::LBRACKET, "["};
 
 TEST_CASE("Explicitly sized arrays") {
     helpers::test_expr_stmt(
         "[1uz]int{2};",
-        ast::ArrayExpression{
-            rbracket,
-            make_box<ast::USizeIntegerExpression>(Token{TokenType::UZINT_10, "1uz"}, 1),
-            ast::ExplicitType{mods::BASE, helpers::make_ident("int")},
-            helpers::make_items(ast::SignedIntegerExpression{Token{TokenType::INT_10, "2"}, 2})});
+        ast::ArrayExpression{rbracket,
+                             make_box<ast::USizeIntegerExpression>(
+                                 syntax::Token{syntax::TokenType::UZINT_10, "1uz"}, 1),
+                             ast::ExplicitType{mods::BASE, helpers::make_ident("int")},
+                             helpers::make_items(ast::SignedIntegerExpression{
+                                 syntax::Token{syntax::TokenType::INT_10, "2"}, 2})});
 
     helpers::test_expr_stmt(
         "[2uz]int{A, B, };",
         ast::ArrayExpression{
             rbracket,
-            make_box<ast::USizeIntegerExpression>(Token{TokenType::UZINT_10, "2uz"}, 2),
+            make_box<ast::USizeIntegerExpression>(syntax::Token{syntax::TokenType::UZINT_10, "2uz"},
+                                                  2),
             ast::ExplicitType{mods::BASE, helpers::make_ident("int")},
             helpers::make_items(helpers::ident_from("A"), helpers::ident_from("B"))});
 }
@@ -55,17 +57,20 @@ TEST_CASE("Implicitly sized array") {
 }
 
 TEST_CASE("Size mismatch") {
-    helpers::test_parser_fail("[1uz]int{2, 3};",
-                              ParserDiagnostic{ParserError::EXPLICIT_ARRAY_SIZE_MISMATCH, 1, 2});
+    helpers::test_parser_fail(
+        "[1uz]int{2, 3};",
+        syntax::ParserDiagnostic{syntax::ParserError::EXPLICIT_ARRAY_SIZE_MISMATCH, 1, 2});
 }
 
 TEST_CASE("Array size token requirement") {
-    helpers::test_parser_fail("[]int{2};",
-                              ParserDiagnostic{ParserError::MISSING_ARRAY_SIZE_TOKEN, 1, 1});
-    helpers::test_parser_fail("[3]int{1,2,3};",
-                              ParserDiagnostic{ParserError::ILLEGAL_ARRAY_SIZE_TYPE, 1, 2});
-    helpers::test_parser_fail(R"(["e"]int{1};)",
-                              ParserDiagnostic{ParserError::ILLEGAL_ARRAY_SIZE_TYPE, 1, 2});
+    helpers::test_parser_fail(
+        "[]int{2};", syntax::ParserDiagnostic{syntax::ParserError::MISSING_ARRAY_SIZE_TOKEN, 1, 1});
+    helpers::test_parser_fail(
+        "[3]int{1,2,3};",
+        syntax::ParserDiagnostic{syntax::ParserError::ILLEGAL_ARRAY_SIZE_TYPE, 1, 2});
+    helpers::test_parser_fail(
+        R"(["e"]int{1};)",
+        syntax::ParserDiagnostic{syntax::ParserError::ILLEGAL_ARRAY_SIZE_TYPE, 1, 2});
 }
 
 } // namespace porpoise::tests

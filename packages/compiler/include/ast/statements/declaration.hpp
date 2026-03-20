@@ -8,7 +8,7 @@
 
 #include "ast/node.hpp"
 
-#include "parser/parser.hpp"
+#include "syntax/parser.hpp"
 
 namespace porpoise::ast {
 
@@ -47,7 +47,7 @@ class DeclStatement : public StmtBase<DeclStatement> {
     static constexpr auto KIND = NodeKind::DECL_STATEMENT;
 
   public:
-    explicit DeclStatement(const Token&              start_token,
+    explicit DeclStatement(const syntax::Token&      start_token,
                            Box<IdentifierExpression> ident,
                            Box<TypeExpression>       type,
                            Optional<Box<Expression>> value,
@@ -57,7 +57,8 @@ class DeclStatement : public StmtBase<DeclStatement> {
     MAKE_AST_COPY_MOVE(DeclStatement)
 
     auto                      accept(Visitor& v) const -> void override;
-    [[nodiscard]] static auto parse(Parser& parser) -> Expected<Box<Statement>, ParserDiagnostic>;
+    [[nodiscard]] static auto parse(syntax::Parser& parser)
+        -> Expected<Box<Statement>, syntax::ParserDiagnostic>;
 
     MAKE_GETTER(ident, const IdentifierExpression&, *)
     MAKE_GETTER(type, const TypeExpression&, *)
@@ -77,15 +78,15 @@ class DeclStatement : public StmtBase<DeclStatement> {
     }
 
   private:
-    using ModifierMapping                 = std::pair<TokenType, DeclModifiers>;
+    using ModifierMapping                 = std::pair<syntax::TokenType, DeclModifiers>;
     static constexpr auto LEGAL_MODIFIERS = std::to_array<ModifierMapping>({
-        {TokenType::VAR, DeclModifiers::VARIABLE},
-        {TokenType::CONST, DeclModifiers::CONSTANT},
-        {TokenType::COMPTIME, DeclModifiers::COMPTIME},
-        {TokenType::PUBLIC, DeclModifiers::PUBLIC},
-        {TokenType::EXTERN, DeclModifiers::EXTERN},
-        {TokenType::EXPORT, DeclModifiers::EXPORT},
-        {TokenType::STATIC, DeclModifiers::STATIC},
+        {syntax::TokenType::VAR, DeclModifiers::VARIABLE},
+        {syntax::TokenType::CONST, DeclModifiers::CONSTANT},
+        {syntax::TokenType::COMPTIME, DeclModifiers::COMPTIME},
+        {syntax::TokenType::PUBLIC, DeclModifiers::PUBLIC},
+        {syntax::TokenType::EXTERN, DeclModifiers::EXTERN},
+        {syntax::TokenType::EXPORT, DeclModifiers::EXPORT},
+        {syntax::TokenType::STATIC, DeclModifiers::STATIC},
     });
 
     static constexpr auto validate_modifiers(DeclModifiers modifiers) noexcept -> bool {
@@ -106,7 +107,7 @@ class DeclStatement : public StmtBase<DeclStatement> {
         return valid_mut && valid_comptime && valid_abi;
     }
 
-    static constexpr auto token_to_modifier(const Token& tok) -> Optional<DeclModifiers> {
+    static constexpr auto token_to_modifier(const syntax::Token& tok) -> Optional<DeclModifiers> {
         const auto it = std::ranges::find(LEGAL_MODIFIERS, tok.type, &ModifierMapping::first);
         return it == LEGAL_MODIFIERS.end() ? std::nullopt : Optional<DeclModifiers>{it->second};
     }

@@ -5,7 +5,7 @@
 #include "ast/expressions/type_modifiers.hpp"
 #include "ast/node.hpp"
 
-#include "parser/parser.hpp"
+#include "syntax/parser.hpp"
 
 #include "variant.hpp"
 
@@ -54,7 +54,8 @@ class ExplicitType {
 
     MAKE_AST_COPY_MOVE(ExplicitType)
 
-    [[nodiscard]] static auto parse(Parser& parser) -> Expected<ExplicitType, ParserDiagnostic>;
+    [[nodiscard]] static auto parse(syntax::Parser& parser)
+        -> Expected<ExplicitType, syntax::ParserDiagnostic>;
 
     MAKE_GETTER(modifier, const TypeModifier&)
     MAKE_GETTER(type, const ExplicitTypeVariant&)
@@ -76,14 +77,14 @@ class TypeExpression : public ExprBase<TypeExpression> {
     static constexpr auto KIND = NodeKind::TYPE_EXPRESSION;
 
   public:
-    explicit TypeExpression(const Token& start_token, Optional<ExplicitType> exp) noexcept;
+    explicit TypeExpression(const syntax::Token& start_token, Optional<ExplicitType> exp) noexcept;
     ~TypeExpression() override;
 
     MAKE_AST_COPY_MOVE(TypeExpression)
 
     auto                      accept(Visitor& v) const -> void override;
-    [[nodiscard]] static auto parse(Parser& parser)
-        -> Expected<std::pair<Box<Expression>, bool>, ParserDiagnostic>;
+    [[nodiscard]] static auto parse(syntax::Parser& parser)
+        -> Expected<std::pair<Box<Expression>, bool>, syntax::ParserDiagnostic>;
 
     MAKE_OPTIONAL_UNPACKER(explicit_type, ExplicitType, explicit_, *)
 

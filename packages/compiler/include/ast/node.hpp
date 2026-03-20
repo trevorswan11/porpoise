@@ -9,7 +9,7 @@
 
 #include <magic_enum/magic_enum.hpp>
 
-#include "lexer/token.hpp"
+#include "syntax/token.hpp"
 
 #include "common.hpp"
 #include "memory.hpp"
@@ -99,7 +99,7 @@ class Node {
 
     virtual auto accept(Visitor& v) const -> void = 0;
 
-    auto get_token() const noexcept -> const Token& { return start_token_; }
+    auto get_token() const noexcept -> const syntax::Token& { return start_token_; }
     auto get_kind() const noexcept -> NodeKind { return kind_; }
 
     [[nodiscard]] auto has_sema_type() const noexcept -> bool { return sema_type_.has_value(); }
@@ -129,7 +129,8 @@ class Node {
     }
 
   protected:
-    explicit Node(const Token& tok, NodeKind kind) noexcept : start_token_{tok}, kind_{kind} {}
+    explicit Node(const syntax::Token& tok, NodeKind kind) noexcept
+        : start_token_{tok}, kind_{kind} {}
 
     virtual auto is_equal(const Node& other) const noexcept -> bool = 0;
 
@@ -140,7 +141,7 @@ class Node {
     }
 
   protected:
-    const Token                   start_token_;
+    const syntax::Token           start_token_;
     const NodeKind                kind_;
     mutable Optional<sema::Type&> sema_type_;
     friend class ExplicitType;
@@ -151,7 +152,7 @@ using ASTView = std::span<const Box<Node>>;
 
 template <typename Derived, typename Base> class NodeBase : public Base {
   protected:
-    explicit NodeBase(const Token& tok) noexcept : Base{tok, Derived::KIND} {}
+    explicit NodeBase(const syntax::Token& tok) noexcept : Base{tok, Derived::KIND} {}
 };
 
 class Expression : public Node {

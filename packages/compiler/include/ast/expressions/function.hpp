@@ -5,7 +5,7 @@
 #include "ast/expressions/type.hpp"
 #include "ast/node.hpp"
 
-#include "parser/parser.hpp"
+#include "syntax/parser.hpp"
 
 namespace porpoise::ast {
 
@@ -52,7 +52,7 @@ class FunctionExpression : public ExprBase<FunctionExpression> {
     static constexpr auto KIND = NodeKind::FUNCTION_EXPRESSION;
 
   public:
-    explicit FunctionExpression(const Token&                   start_token,
+    explicit FunctionExpression(const syntax::Token&           start_token,
                                 Optional<SelfParameter>        self,
                                 std::vector<FunctionParameter> parameters,
                                 ExplicitType&&                 return_type,
@@ -62,7 +62,8 @@ class FunctionExpression : public ExprBase<FunctionExpression> {
     MAKE_AST_COPY_MOVE(FunctionExpression)
 
     auto                      accept(Visitor& v) const -> void override;
-    [[nodiscard]] static auto parse(Parser& parser) -> Expected<Box<Expression>, ParserDiagnostic>;
+    [[nodiscard]] static auto parse(syntax::Parser& parser)
+        -> Expected<Box<Expression>, syntax::ParserDiagnostic>;
 
     MAKE_OPTIONAL_UNPACKER(self, SelfParameter, self_, *)
     MAKE_GETTER(parameters, std::span<const FunctionParameter>)

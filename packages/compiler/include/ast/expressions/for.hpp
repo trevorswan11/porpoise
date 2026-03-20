@@ -6,7 +6,7 @@
 #include "ast/expressions/type_modifiers.hpp"
 #include "ast/node.hpp"
 
-#include "parser/parser.hpp"
+#include "syntax/parser.hpp"
 
 #include "variant.hpp"
 
@@ -57,7 +57,7 @@ class ForLoopExpression : public ExprBase<ForLoopExpression> {
     static constexpr auto KIND = NodeKind::FOR_LOOP_EXPRESSION;
 
   public:
-    explicit ForLoopExpression(const Token&                 start_token,
+    explicit ForLoopExpression(const syntax::Token&         start_token,
                                std::vector<Box<Expression>> iterables,
                                std::vector<ForLoopCapture>  captures,
                                Box<BlockStatement>          block,
@@ -67,7 +67,8 @@ class ForLoopExpression : public ExprBase<ForLoopExpression> {
     MAKE_AST_COPY_MOVE(ForLoopExpression)
 
     auto                      accept(Visitor& v) const -> void override;
-    [[nodiscard]] static auto parse(Parser& parser) -> Expected<Box<Expression>, ParserDiagnostic>;
+    [[nodiscard]] static auto parse(syntax::Parser& parser)
+        -> Expected<Box<Expression>, syntax::ParserDiagnostic>;
 
     MAKE_GETTER(iterables, std::span<const Box<Expression>>)
     MAKE_GETTER(captures, std::span<const ForLoopCapture>)

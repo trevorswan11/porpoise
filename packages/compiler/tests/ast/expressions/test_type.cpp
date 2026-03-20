@@ -11,17 +11,20 @@
 
 namespace porpoise::tests {
 
+namespace keywords = syntax::keywords;
+
 namespace helpers {
 
 auto test_type_expr(std::string_view type_str, ast::ExplicitType&& expected) -> void {
     const auto input = fmt::format("var a: {};", type_str);
-    helpers::test_stmt(input,
-                       ast::DeclStatement{Token{keywords::VAR},
-                                          helpers::make_ident("a"),
-                                          make_box<ast::TypeExpression>(
-                                              Token{TokenType::COLON, ":"}, std::move(expected)),
-                                          std::nullopt,
-                                          ast::DeclModifiers::VARIABLE});
+    helpers::test_stmt(
+        input,
+        ast::DeclStatement{syntax::Token{keywords::VAR},
+                           helpers::make_ident("a"),
+                           make_box<ast::TypeExpression>(
+                               syntax::Token{syntax::TokenType::COLON, ":"}, std::move(expected)),
+                           std::nullopt,
+                           ast::DeclModifiers::VARIABLE});
 }
 
 } // namespace helpers
@@ -40,7 +43,7 @@ TEST_CASE("Function types") {
         "fn(): noreturn",
         ast::ExplicitType{mods::BASE,
                           make_box<ast::FunctionExpression>(
-                              Token{keywords::FN},
+                              syntax::Token{keywords::FN},
                               std::nullopt,
                               Parameters{},
                               ast::ExplicitType{mods::BASE, helpers::make_ident("noreturn")},
@@ -50,7 +53,7 @@ TEST_CASE("Function types") {
         "fn(&self): *mut E",
         ast::ExplicitType{mods::BASE,
                           make_box<ast::FunctionExpression>(
-                              Token{keywords::FN},
+                              syntax::Token{keywords::FN},
                               ast::SelfParameter{mods::REF, helpers::make_ident("self")},
                               Parameters{},
                               ast::ExplicitType{mods::MUT_PTR, helpers::make_ident("E")},
@@ -63,7 +66,8 @@ TEST_CASE("Array type") {
         ast::ExplicitType{
             mods::BASE,
             ast::ExplicitArrayType{
-                make_box<ast::USizeIntegerExpression>(Token{TokenType::UZINT_10, "5uz"}, 5uz),
+                make_box<ast::USizeIntegerExpression>(
+                    syntax::Token{syntax::TokenType::UZINT_10, "5uz"}, 5uz),
                 false,
                 make_box<ast::ExplicitType>(mods::PTR, helpers::make_ident("ulong"))}});
 }
@@ -96,7 +100,7 @@ TEST_CASE("Complex function type (holistic)") {
         ast::ExplicitType{
             mods::PTR,
             make_box<ast::FunctionExpression>(
-                Token{keywords::FN},
+                syntax::Token{keywords::FN},
                 ast::SelfParameter{mods::REF, helpers::make_ident("a")},
                 helpers::make_parameters(ast::FunctionParameter{
                     helpers::make_ident("b"),
@@ -104,8 +108,8 @@ TEST_CASE("Complex function type (holistic)") {
                 ast::ExplicitType{
                     mods::REF,
                     ast::ExplicitArrayType{
-                        make_box<ast::USizeIntegerExpression>(Token{TokenType::UZINT_16, "0x2uz"},
-                                                              0x2uz),
+                        make_box<ast::USizeIntegerExpression>(
+                            syntax::Token{syntax::TokenType::UZINT_16, "0x2uz"}, 0x2uz),
                         false,
                         make_box<ast::ExplicitType>(
                             mods::BASE,
@@ -119,17 +123,19 @@ TEST_CASE("Complex function type (holistic)") {
 TEST_CASE("Volatile restricted to declarations") {
     helpers::test_parser_fail(
         "var a: volatile int;",
-        ParserDiagnostic{"No prefix parse function for VOLATILE(volatile) found",
-                         ParserError::MISSING_PREFIX_PARSER,
-                         1,
-                         8});
+        syntax::ParserDiagnostic{"No prefix parse function for VOLATILE(volatile) found",
+                                 syntax::ParserError::MISSING_PREFIX_PARSER,
+                                 1,
+                                 8});
 }
 
 TEST_CASE("Array type requirement") {
-    helpers::test_parser_fail("var a: [9]int;",
-                              ParserDiagnostic{ParserError::ILLEGAL_ARRAY_SIZE_TYPE, 1, 9});
-    helpers::test_parser_fail(R"(var a: ["e"]int;)",
-                              ParserDiagnostic{ParserError::ILLEGAL_ARRAY_SIZE_TYPE, 1, 9});
+    helpers::test_parser_fail(
+        "var a: [9]int;",
+        syntax::ParserDiagnostic{syntax::ParserError::ILLEGAL_ARRAY_SIZE_TYPE, 1, 9});
+    helpers::test_parser_fail(
+        R"(var a: ["e"]int;)",
+        syntax::ParserDiagnostic{syntax::ParserError::ILLEGAL_ARRAY_SIZE_TYPE, 1, 9});
 }
 
 TEST_CASE("Function type restrictions") {
@@ -141,17 +147,21 @@ TEST_CASE("Function type restrictions") {
     });
     for (const auto& illegal : illegals) {
         helpers::test_parser_fail(
-            illegal, ParserDiagnostic{ParserError::ILLEGAL_FUNCTION_TYPE_MODIFIER, 1, 8});
+            illegal,
+            syntax::ParserDiagnostic{syntax::ParserError::ILLEGAL_FUNCTION_TYPE_MODIFIER, 1, 8});
     }
 }
 
 TEST_CASE("Function return type restrictions") {
-    helpers::test_parser_fail("var a: fn(): &void;",
-                              ParserDiagnostic{ParserError::ILLEGAL_VOID_TYPE_MODIFIER, 1, 14});
-    helpers::test_parser_fail("var a: fn(): &type;",
-                              ParserDiagnostic{ParserError::ILLEGAL_TYPE_TYPE_MODIFIER, 1, 14});
-    helpers::test_parser_fail("var a: fn(): &noreturn;",
-                              ParserDiagnostic{ParserError::ILLEGAL_NORETURN_TYPE_MODIFIER, 1, 14});
+    helpers::test_parser_fail(
+        "var a: fn(): &void;",
+        syntax::ParserDiagnostic{syntax::ParserError::ILLEGAL_VOID_TYPE_MODIFIER, 1, 14});
+    helpers::test_parser_fail(
+        "var a: fn(): &type;",
+        syntax::ParserDiagnostic{syntax::ParserError::ILLEGAL_TYPE_TYPE_MODIFIER, 1, 14});
+    helpers::test_parser_fail(
+        "var a: fn(): &noreturn;",
+        syntax::ParserDiagnostic{syntax::ParserError::ILLEGAL_NORETURN_TYPE_MODIFIER, 1, 14});
 }
 
 } // namespace porpoise::tests

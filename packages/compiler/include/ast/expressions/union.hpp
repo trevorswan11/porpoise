@@ -6,7 +6,7 @@
 #include "ast/expressions/type.hpp"
 #include "ast/node.hpp"
 
-#include "parser/parser.hpp"
+#include "syntax/parser.hpp"
 
 namespace porpoise::ast {
 
@@ -34,13 +34,15 @@ class UnionExpression : public ExprBase<UnionExpression> {
     static constexpr auto KIND = NodeKind::UNION_EXPRESSION;
 
   public:
-    explicit UnionExpression(const Token& start_token, std::vector<UnionField> fields) noexcept;
+    explicit UnionExpression(const syntax::Token&    start_token,
+                             std::vector<UnionField> fields) noexcept;
     ~UnionExpression() override;
 
     MAKE_AST_COPY_MOVE(UnionExpression)
 
     auto                      accept(Visitor& v) const -> void override;
-    [[nodiscard]] static auto parse(Parser& parser) -> Expected<Box<Expression>, ParserDiagnostic>;
+    [[nodiscard]] static auto parse(syntax::Parser& parser)
+        -> Expected<Box<Expression>, syntax::ParserDiagnostic>;
 
     MAKE_GETTER(fields, std::span<const UnionField>)
 
