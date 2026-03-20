@@ -2,7 +2,7 @@
 
 #include <catch2/catch_test_macros.hpp>
 
-#include "ast/helpers.hpp"
+#include "helpers/ast.hpp"
 
 #include "ast/expressions/call.hpp"
 #include "ast/expressions/index.hpp"
@@ -303,20 +303,20 @@ TEST_CASE("Scope resolution precedence") {
 }
 
 TEST_CASE("Illegal infix node") {
-    helpers::test_fail("a and import std;",
-                       ParserDiagnostic{"No prefix parse function for IMPORT(import) found",
-                                        ParserError::MISSING_PREFIX_PARSER,
-                                        1,
-                                        7});
+    helpers::test_parser_fail("a and import std;",
+                              ParserDiagnostic{"No prefix parse function for IMPORT(import) found",
+                                               ParserError::MISSING_PREFIX_PARSER,
+                                               1,
+                                               7});
 }
 
 TEST_CASE("Non-terminated infix") {
-    helpers::test_fail("a and;",
-                       ParserDiagnostic{"No prefix parse function for SEMICOLON(;) found",
-                                        ParserError::MISSING_PREFIX_PARSER,
-                                        1,
-                                        6});
-    helpers::test_fail("a and", ParserDiagnostic{ParserError::INFIX_MISSING_RHS, 1, 3});
+    helpers::test_parser_fail("a and;",
+                              ParserDiagnostic{"No prefix parse function for SEMICOLON(;) found",
+                                               ParserError::MISSING_PREFIX_PARSER,
+                                               1,
+                                               6});
+    helpers::test_parser_fail("a and", ParserDiagnostic{ParserError::INFIX_MISSING_RHS, 1, 3});
 }
 
 } // namespace porpoise::tests

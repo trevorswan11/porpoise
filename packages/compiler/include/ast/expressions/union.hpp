@@ -22,7 +22,7 @@ class UnionField {
     MAKE_GETTER(ident, const IdentifierExpression&, *)
     MAKE_GETTER(type, const ExplicitType&)
 
-    MAKE_AST_DEPENDENT_EQ(UnionField)
+    MAKE_EQ_DELEGATION(UnionField)
 
   private:
     Box<IdentifierExpression> ident_;

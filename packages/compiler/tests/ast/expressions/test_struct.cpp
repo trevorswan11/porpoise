@@ -1,6 +1,6 @@
 #include <catch2/catch_test_macros.hpp>
 
-#include "ast/helpers.hpp"
+#include "helpers/ast.hpp"
 
 #include "ast/expressions/function.hpp"
 #include "ast/expressions/struct.hpp"
@@ -70,21 +70,21 @@ TEST_CASE("Struct flavors") {
 }
 
 TEST_CASE("Illegal struct member") {
-    helpers::test_fail("struct { import std; };",
-                       ParserDiagnostic{ParserError::INVALID_STRUCT_MEMBER, 1, 10});
+    helpers::test_parser_fail("struct { import std; };",
+                              ParserDiagnostic{ParserError::INVALID_STRUCT_MEMBER, 1, 10});
 }
 
 TEST_CASE("Empty struct body") {
-    helpers::test_fail("struct {};", ParserDiagnostic{ParserError::EMPTY_STRUCT, 1, 1});
+    helpers::test_parser_fail("struct {};", ParserDiagnostic{ParserError::EMPTY_STRUCT, 1, 1});
 }
 
 TEST_CASE("Packed keyword out of order") {
-    helpers::test_fail("struct packed { var a: Foo = bar; };",
-                       ParserDiagnostic{ParserError::PACKED_AFTER_STRUCT_KEYWORD, 1, 1},
-                       ParserDiagnostic{"No prefix parse function for RBRACE(}) found",
-                                        ParserError::MISSING_PREFIX_PARSER,
-                                        1,
-                                        35});
+    helpers::test_parser_fail("struct packed { var a: Foo = bar; };",
+                              ParserDiagnostic{ParserError::PACKED_AFTER_STRUCT_KEYWORD, 1, 1},
+                              ParserDiagnostic{"No prefix parse function for RBRACE(}) found",
+                                               ParserError::MISSING_PREFIX_PARSER,
+                                               1,
+                                               35});
 }
 
 } // namespace porpoise::tests

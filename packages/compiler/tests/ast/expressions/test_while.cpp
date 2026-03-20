@@ -1,6 +1,6 @@
 #include <catch2/catch_test_macros.hpp>
 
-#include "ast/helpers.hpp"
+#include "helpers/ast.hpp"
 
 #include "ast/expressions/infix.hpp"
 #include "ast/expressions/primitive.hpp"
@@ -76,52 +76,53 @@ TEST_CASE("Empty while with continuation") {
 }
 
 TEST_CASE("Empty while") {
-    helpers::test_fail("while (true) {};", ParserDiagnostic{ParserError::EMPTY_WHILE_LOOP, 1, 14});
+    helpers::test_parser_fail("while (true) {};",
+                              ParserDiagnostic{ParserError::EMPTY_WHILE_LOOP, 1, 14});
 }
 
 TEST_CASE("Missing while condition") {
-    helpers::test_fail("while () {a;};",
-                       ParserDiagnostic{ParserError::WHILE_MISSING_CONDITION, 1, 1},
-                       ParserDiagnostic{"No prefix parse function for RBRACE(}) found",
-                                        ParserError::MISSING_PREFIX_PARSER,
-                                        1,
-                                        13});
+    helpers::test_parser_fail("while () {a;};",
+                              ParserDiagnostic{ParserError::WHILE_MISSING_CONDITION, 1, 1},
+                              ParserDiagnostic{"No prefix parse function for RBRACE(}) found",
+                                               ParserError::MISSING_PREFIX_PARSER,
+                                               1,
+                                               13});
 }
 
 TEST_CASE("Unclosed while body") {
-    helpers::test_fail("while (true) {;",
-                       ParserDiagnostic{"No prefix parse function for SEMICOLON(;) found",
-                                        ParserError::MISSING_PREFIX_PARSER,
-                                        1,
-                                        15});
+    helpers::test_parser_fail("while (true) {;",
+                              ParserDiagnostic{"No prefix parse function for SEMICOLON(;) found",
+                                               ParserError::MISSING_PREFIX_PARSER,
+                                               1,
+                                               15});
 }
 
 TEST_CASE("Unclosed while condition") {
-    helpers::test_fail(
+    helpers::test_parser_fail(
         "while (true {};",
         ParserDiagnostic{
             "Expected token RPAREN, found LBRACE", ParserError::UNEXPECTED_TOKEN, 1, 13});
 }
 
 TEST_CASE("Malformed while continuation") {
-    helpers::test_fail("while (true) : () {};",
-                       ParserDiagnostic{ParserError::EMPTY_WHILE_CONTINUATION, 1, 12});
+    helpers::test_parser_fail("while (true) : () {};",
+                              ParserDiagnostic{ParserError::EMPTY_WHILE_CONTINUATION, 1, 12});
 
-    helpers::test_fail(
+    helpers::test_parser_fail(
         "while (true) : (i += 1 {};",
         ParserDiagnostic{
             "Expected token RPAREN, found LBRACE", ParserError::UNEXPECTED_TOKEN, 1, 24});
 }
 
 TEST_CASE("Illegal while-else clause") {
-    helpers::test_fail("while (true) : (i += 1) {} else import std;",
-                       ParserDiagnostic{ParserError::ILLEGAL_LOOP_NON_BREAK, 1, 33});
+    helpers::test_parser_fail("while (true) : (i += 1) {} else import std;",
+                              ParserDiagnostic{ParserError::ILLEGAL_LOOP_NON_BREAK, 1, 33});
 
-    helpers::test_fail("while (true) : (i += 1) {} else;",
-                       ParserDiagnostic{"No prefix parse function for SEMICOLON(;) found",
-                                        ParserError::MISSING_PREFIX_PARSER,
-                                        1,
-                                        32});
+    helpers::test_parser_fail("while (true) : (i += 1) {} else;",
+                              ParserDiagnostic{"No prefix parse function for SEMICOLON(;) found",
+                                               ParserError::MISSING_PREFIX_PARSER,
+                                               1,
+                                               32});
 }
 
 } // namespace porpoise::tests

@@ -1,6 +1,6 @@
 #include <catch2/catch_test_macros.hpp>
 
-#include "ast/helpers.hpp"
+#include "helpers/ast.hpp"
 
 #include "ast/expressions/if.hpp"
 
@@ -38,17 +38,18 @@ TEST_CASE("If with alternate") {
 }
 
 TEST_CASE("If without condition") {
-    helpers::test_fail("if () b;", ParserDiagnostic{ParserError::IF_MISSING_CONDITION, 1, 1});
+    helpers::test_parser_fail("if () b;",
+                              ParserDiagnostic{ParserError::IF_MISSING_CONDITION, 1, 1});
 }
 
 TEST_CASE("If with illegal consequence") {
-    helpers::test_fail("if (a) import std;",
-                       ParserDiagnostic{ParserError::ILLEGAL_IF_BRANCH, 1, 8});
+    helpers::test_parser_fail("if (a) import std;",
+                              ParserDiagnostic{ParserError::ILLEGAL_IF_BRANCH, 1, 8});
 }
 
 TEST_CASE("If with illegal alternate") {
-    helpers::test_fail("if (a) {} else import std;",
-                       ParserDiagnostic{ParserError::ILLEGAL_IF_BRANCH, 1, 16});
+    helpers::test_parser_fail("if (a) {} else import std;",
+                              ParserDiagnostic{ParserError::ILLEGAL_IF_BRANCH, 1, 16});
 }
 
 } // namespace porpoise::tests

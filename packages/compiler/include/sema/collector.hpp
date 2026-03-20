@@ -14,7 +14,7 @@ namespace porpoise::sema {
 // - Does not verify undeclared identifier use
 class SymbolCollector : public ast::Visitor {
   public:
-    [[nodiscard]] static auto collect(const ast::AST& ast) -> std::pair<SymbolTable, Diagnostics>;
+    [[nodiscard]] static auto collect(ast::ASTView ast) -> std::pair<SymbolTable, Diagnostics>;
 
     MAKE_AST_VISITOR_OVERRIDES()
 

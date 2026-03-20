@@ -2,7 +2,7 @@
 
 namespace porpoise::ast {
 
-#define FOREACH_AST_NODE(X)          \
+#define FOREACH_AST_EXPR(X)          \
     X(ArrayExpression)               \
     X(CallExpression)                \
     X(DoWhileLoopExpression)         \
@@ -37,16 +37,22 @@ namespace porpoise::ast {
     X(StructExpression)              \
     X(TypeExpression)                \
     X(UnionExpression)               \
-    X(WhileLoopExpression)           \
-    X(BlockStatement)                \
-    X(DeclStatement)                 \
-    X(DeferStatement)                \
-    X(DiscardStatement)              \
-    X(ExpressionStatement)           \
-    X(ImportStatement)               \
-    X(JumpStatement)                 \
-    X(ModuleStatement)               \
+    X(WhileLoopExpression)
+
+#define FOREACH_AST_STMT(X) \
+    X(BlockStatement)       \
+    X(DeclStatement)        \
+    X(DeferStatement)       \
+    X(DiscardStatement)     \
+    X(ExpressionStatement)  \
+    X(ImportStatement)      \
+    X(JumpStatement)        \
+    X(ModuleStatement)      \
     X(UsingStatement)
+
+#define FOREACH_AST_NODE(X) \
+    FOREACH_AST_EXPR(X)     \
+    FOREACH_AST_STMT(X)
 
 // The following use '()' since it messes with Zed's syntax highlighting otherwise :(
 

@@ -23,7 +23,7 @@ class FunctionParameter {
     MAKE_GETTER(ident, const IdentifierExpression&, *)
     MAKE_GETTER(type, const ExplicitType&)
 
-    MAKE_AST_DEPENDENT_EQ(FunctionParameter)
+    MAKE_EQ_DELEGATION(FunctionParameter)
 
   private:
     Box<IdentifierExpression> ident_;
@@ -40,7 +40,7 @@ class SelfParameter {
     MAKE_GETTER(modifier, const TypeModifier&)
     MAKE_GETTER(ident, const IdentifierExpression&, *)
 
-    MAKE_AST_DEPENDENT_EQ(SelfParameter)
+    MAKE_EQ_DELEGATION(SelfParameter)
 
   private:
     TypeModifier              modifier_;

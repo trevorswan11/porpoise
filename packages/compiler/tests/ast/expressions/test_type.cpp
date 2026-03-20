@@ -1,6 +1,6 @@
 #include <catch2/catch_test_macros.hpp>
 
-#include "ast/helpers.hpp"
+#include "helpers/ast.hpp"
 
 #include "ast/expressions/function.hpp"
 #include "ast/expressions/primitive.hpp"
@@ -117,18 +117,19 @@ TEST_CASE("Complex function type (holistic)") {
 }
 
 TEST_CASE("Volatile restricted to declarations") {
-    helpers::test_fail("var a: volatile int;",
-                       ParserDiagnostic{"No prefix parse function for VOLATILE(volatile) found",
-                                        ParserError::MISSING_PREFIX_PARSER,
-                                        1,
-                                        8});
+    helpers::test_parser_fail(
+        "var a: volatile int;",
+        ParserDiagnostic{"No prefix parse function for VOLATILE(volatile) found",
+                         ParserError::MISSING_PREFIX_PARSER,
+                         1,
+                         8});
 }
 
 TEST_CASE("Array type requirement") {
-    helpers::test_fail("var a: [9]int;",
-                       ParserDiagnostic{ParserError::ILLEGAL_ARRAY_SIZE_TYPE, 1, 9});
-    helpers::test_fail(R"(var a: ["e"]int;)",
-                       ParserDiagnostic{ParserError::ILLEGAL_ARRAY_SIZE_TYPE, 1, 9});
+    helpers::test_parser_fail("var a: [9]int;",
+                              ParserDiagnostic{ParserError::ILLEGAL_ARRAY_SIZE_TYPE, 1, 9});
+    helpers::test_parser_fail(R"(var a: ["e"]int;)",
+                              ParserDiagnostic{ParserError::ILLEGAL_ARRAY_SIZE_TYPE, 1, 9});
 }
 
 TEST_CASE("Function type restrictions") {
@@ -139,18 +140,18 @@ TEST_CASE("Function type restrictions") {
         "var a: *mut fn(): void { b; };",
     });
     for (const auto& illegal : illegals) {
-        helpers::test_fail(illegal,
-                           ParserDiagnostic{ParserError::ILLEGAL_FUNCTION_TYPE_MODIFIER, 1, 8});
+        helpers::test_parser_fail(
+            illegal, ParserDiagnostic{ParserError::ILLEGAL_FUNCTION_TYPE_MODIFIER, 1, 8});
     }
 }
 
 TEST_CASE("Function return type restrictions") {
-    helpers::test_fail("var a: fn(): &void;",
-                       ParserDiagnostic{ParserError::ILLEGAL_VOID_TYPE_MODIFIER, 1, 14});
-    helpers::test_fail("var a: fn(): &type;",
-                       ParserDiagnostic{ParserError::ILLEGAL_TYPE_TYPE_MODIFIER, 1, 14});
-    helpers::test_fail("var a: fn(): &noreturn;",
-                       ParserDiagnostic{ParserError::ILLEGAL_NORETURN_TYPE_MODIFIER, 1, 14});
+    helpers::test_parser_fail("var a: fn(): &void;",
+                              ParserDiagnostic{ParserError::ILLEGAL_VOID_TYPE_MODIFIER, 1, 14});
+    helpers::test_parser_fail("var a: fn(): &type;",
+                              ParserDiagnostic{ParserError::ILLEGAL_TYPE_TYPE_MODIFIER, 1, 14});
+    helpers::test_parser_fail("var a: fn(): &noreturn;",
+                              ParserDiagnostic{ParserError::ILLEGAL_NORETURN_TYPE_MODIFIER, 1, 14});
 }
 
 } // namespace porpoise::tests

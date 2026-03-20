@@ -1,6 +1,6 @@
 #include <catch2/catch_test_macros.hpp>
 
-#include "ast/helpers.hpp"
+#include "helpers/ast.hpp"
 
 #include "ast/expressions/union.hpp"
 
@@ -21,19 +21,19 @@ TEST_CASE("Correct union") {
 }
 
 TEST_CASE("Illegal union field name") {
-    helpers::test_fail(
+    helpers::test_parser_fail(
         "union { 2: int };",
         ParserDiagnostic{
             "Expected token IDENT, found INT_10", ParserError::UNEXPECTED_TOKEN, 1, 9});
 }
 
 TEST_CASE("Illegal union field type") {
-    helpers::test_fail("union { a: 2 };",
-                       ParserDiagnostic{ParserError::ILLEGAL_EXPLICIT_TYPE, 1, 10});
+    helpers::test_parser_fail("union { a: 2 };",
+                              ParserDiagnostic{ParserError::ILLEGAL_EXPLICIT_TYPE, 1, 10});
 }
 
 TEST_CASE("Empty union") {
-    helpers::test_fail("union { };", ParserDiagnostic{ParserError::EMPTY_UNION, 1, 1});
+    helpers::test_parser_fail("union { };", ParserDiagnostic{ParserError::EMPTY_UNION, 1, 1});
 }
 
 } // namespace porpoise::tests

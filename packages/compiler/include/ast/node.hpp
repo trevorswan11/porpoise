@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <cassert>
 #include <concepts>
+#include <span>
 #include <utility>
 #include <vector>
 
@@ -147,7 +148,8 @@ class Node {
     friend class ExplicitType;
 };
 
-using AST = std::vector<Box<Node>>;
+using AST     = std::vector<Box<Node>>;
+using ASTView = std::span<const Box<Node>>;
 
 template <typename Derived, typename Base> class NodeBase : public Base {
   protected:
@@ -179,15 +181,6 @@ template <typename Derived> class StmtBase : public NodeBase<Derived, Statement>
   protected:
     using NodeBase<Derived, Statement>::NodeBase;
 };
-
-#define MAKE_AST_DEPENDENT_EQ(NodeType)                                                     \
-    [[nodiscard]] friend auto operator==(const NodeType& lhs, const NodeType& rhs) noexcept \
-        -> bool {                                                                           \
-        return lhs.is_equal(rhs);                                                           \
-    }                                                                                       \
-                                                                                            \
-  private:                                                                                  \
-    auto is_equal(const NodeType& other) const noexcept -> bool;
 
 } // namespace ast
 

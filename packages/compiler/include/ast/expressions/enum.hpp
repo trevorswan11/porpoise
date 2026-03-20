@@ -20,7 +20,7 @@ class Enumeration {
     MAKE_GETTER(ident, const IdentifierExpression&, *)
     MAKE_OPTIONAL_UNPACKER(default_value, Expression, value_, **)
 
-    MAKE_AST_DEPENDENT_EQ(Enumeration)
+    MAKE_EQ_DELEGATION(Enumeration)
 
   private:
     Box<IdentifierExpression> ident_;

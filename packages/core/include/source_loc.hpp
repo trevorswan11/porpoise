@@ -2,6 +2,8 @@
 
 #include <concepts>
 
+#include <fmt/format.h>
+
 #include "types.hpp"
 
 namespace porpoise {
@@ -10,7 +12,8 @@ struct SourceLocation {
     usize line   = 0;
     usize column = 0;
 
-    SourceLocation(usize line, usize column) : line{line}, column{column} {}
+    SourceLocation() noexcept = default;
+    SourceLocation(usize line, usize column) noexcept : line{line}, column{column} {}
 
     auto operator==(const SourceLocation& other) const noexcept -> bool {
         return line == other.line && column == other.column;
@@ -25,3 +28,11 @@ concept Locateable = requires(T t) {
 };
 
 } // namespace porpoise
+
+template <> struct fmt::formatter<porpoise::SourceLocation> {
+    static constexpr auto parse(format_parse_context& ctx) noexcept { return ctx.begin(); }
+
+    template <typename F> static auto format(const porpoise::SourceLocation& loc, F& ctx) {
+        return fmt::format_to(ctx.out(), "[{}, {}]", loc.line, loc.column);
+    }
+};

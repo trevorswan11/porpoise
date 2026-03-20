@@ -1,6 +1,6 @@
 #include <catch2/catch_test_macros.hpp>
 
-#include "ast/helpers.hpp"
+#include "helpers/ast.hpp"
 
 #include "ast/expressions/primitive.hpp"
 
@@ -28,14 +28,14 @@ TEST_CASE("Empty block") {
 }
 
 TEST_CASE("Non-terminated block") {
-    helpers::test_fail(
+    helpers::test_parser_fail(
         "{ ",
         ParserDiagnostic{"Expected token RBRACE, found END", ParserError::UNEXPECTED_TOKEN, 1, 3});
 }
 
 TEST_CASE("Illegal block inner statement") {
-    helpers::test_fail("{ import std; };",
-                       ParserDiagnostic{ParserError::ILLEGAL_BLOCK_STATEMENT, 1, 3});
+    helpers::test_parser_fail("{ import std; };",
+                              ParserDiagnostic{ParserError::ILLEGAL_BLOCK_STATEMENT, 1, 3});
 }
 
 } // namespace porpoise::tests

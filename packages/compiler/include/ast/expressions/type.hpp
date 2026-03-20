@@ -31,7 +31,7 @@ class ExplicitArrayType {
     [[nodiscard]] auto is_null_terminated() const noexcept -> bool { return null_terminated_; }
     MAKE_GETTER(inner_type, const ExplicitType&, *)
 
-    MAKE_AST_DEPENDENT_EQ(ExplicitArrayType)
+    MAKE_EQ_DELEGATION(ExplicitArrayType)
 
   private:
     Optional<Box<Expression>> dimension_;
@@ -64,7 +64,7 @@ class ExplicitType {
     MAKE_VARIANT_UNPACKER(
         recursive_type, ExplicitRecursiveType, ExplicitRecursiveType, type_, std::get)
 
-    MAKE_AST_DEPENDENT_EQ(ExplicitType)
+    MAKE_EQ_DELEGATION(ExplicitType)
 
   private:
     TypeModifier        modifier_;

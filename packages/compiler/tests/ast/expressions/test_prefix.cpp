@@ -1,6 +1,6 @@
 #include <catch2/catch_test_macros.hpp>
 
-#include "ast/helpers.hpp"
+#include "helpers/ast.hpp"
 
 #include "ast/expressions/prefix.hpp"
 
@@ -38,12 +38,12 @@ TEST_CASE("Implicit access expression") {
 }
 
 TEST_CASE("Prefix without operand") {
-    helpers::test_fail("!", ParserDiagnostic{ParserError::PREFIX_MISSING_OPERAND, 1, 1});
-    helpers::test_fail("!;",
-                       ParserDiagnostic{"No prefix parse function for SEMICOLON(;) found",
-                                        ParserError::MISSING_PREFIX_PARSER,
-                                        1,
-                                        2});
+    helpers::test_parser_fail("!", ParserDiagnostic{ParserError::PREFIX_MISSING_OPERAND, 1, 1});
+    helpers::test_parser_fail("!;",
+                              ParserDiagnostic{"No prefix parse function for SEMICOLON(;) found",
+                                               ParserError::MISSING_PREFIX_PARSER,
+                                               1,
+                                               2});
 }
 
 } // namespace porpoise::tests

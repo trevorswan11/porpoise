@@ -2,7 +2,7 @@
 
 #include "ast/expressions/do_while.hpp"
 #include "ast/expressions/primitive.hpp"
-#include "ast/helpers.hpp"
+#include "helpers/ast.hpp"
 
 namespace porpoise::tests {
 
@@ -15,23 +15,24 @@ TEST_CASE("Correct do-while") {
 }
 
 TEST_CASE("Empty do-while") {
-    helpers::test_fail("do {} while (true);", ParserDiagnostic{ParserError::EMPTY_LOOP, 1, 4});
+    helpers::test_parser_fail("do {} while (true);",
+                              ParserDiagnostic{ParserError::EMPTY_LOOP, 1, 4});
 }
 
 TEST_CASE("Missing do-while condition") {
-    helpers::test_fail("do {a; } while ();",
-                       ParserDiagnostic{ParserError::WHILE_MISSING_CONDITION, 1, 16});
+    helpers::test_parser_fail("do {a; } while ();",
+                              ParserDiagnostic{ParserError::WHILE_MISSING_CONDITION, 1, 16});
 }
 
 TEST_CASE("Unclosed do-while body") {
-    helpers::test_fail(
+    helpers::test_parser_fail(
         "do { while (true);",
         ParserDiagnostic{
             "Expected token LBRACE, found SEMICOLON", ParserError::UNEXPECTED_TOKEN, 1, 18});
 }
 
 TEST_CASE("Unclosed do-while condition") {
-    helpers::test_fail(
+    helpers::test_parser_fail(
         "do {a; } while (true;",
         ParserDiagnostic{
             "Expected token RPAREN, found SEMICOLON", ParserError::UNEXPECTED_TOKEN, 1, 21});

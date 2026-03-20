@@ -36,7 +36,7 @@ class MatchArm {
 
     MAKE_GETTER(dispatch, const Statement&, *)
 
-    MAKE_AST_DEPENDENT_EQ(MatchArm)
+    MAKE_EQ_DELEGATION(MatchArm)
 
   private:
     Box<Expression>   pattern_;

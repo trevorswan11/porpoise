@@ -1,6 +1,6 @@
 #include <catch2/catch_test_macros.hpp>
 
-#include "ast/helpers.hpp"
+#include "helpers/ast.hpp"
 
 #include "ast/expressions/infinite_loop.hpp"
 
@@ -14,7 +14,7 @@ TEST_CASE("Correct infinite loop") {
 }
 
 TEST_CASE("Empty infinite loop") {
-    helpers::test_fail("loop {};", ParserDiagnostic{ParserError::EMPTY_LOOP, 1, 6});
+    helpers::test_parser_fail("loop {};", ParserDiagnostic{ParserError::EMPTY_LOOP, 1, 6});
 }
 
 } // namespace porpoise::tests

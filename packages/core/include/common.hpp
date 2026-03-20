@@ -17,6 +17,14 @@ namespace porpoise {
 
 #define MAKE_GETTER(...) GET_GETTER_MACRO(__VA_ARGS__, MAKE_GETTER_3, MAKE_GETTER_2)(__VA_ARGS__)
 
+#define MAKE_EQ_DELEGATION(T)                                                           \
+    [[nodiscard]] friend auto operator==(const T& lhs, const T& rhs) noexcept -> bool { \
+        return lhs.is_equal(rhs);                                                       \
+    }                                                                                   \
+                                                                                        \
+  private:                                                                              \
+    auto is_equal(const T& other) const noexcept -> bool;
+
 namespace detail {
 
 template <typename... Args>

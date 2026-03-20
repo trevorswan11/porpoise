@@ -1,6 +1,6 @@
 #include <catch2/catch_test_macros.hpp>
 
-#include "ast/helpers.hpp"
+#include "helpers/ast.hpp"
 
 #include "ast/expressions/enum.hpp"
 #include "ast/expressions/primitive.hpp"
@@ -51,14 +51,17 @@ TEST_CASE("Underlying type") {
 }
 
 TEST_CASE("Empty enum") {
-    helpers::test_fail("enum {};", ParserDiagnostic{ParserError::ENUM_MISSING_VARIANTS, 1, 6});
-    helpers::test_fail("enum : T {};", ParserDiagnostic{ParserError::ENUM_MISSING_VARIANTS, 1, 10});
+    helpers::test_parser_fail("enum {};",
+                              ParserDiagnostic{ParserError::ENUM_MISSING_VARIANTS, 1, 6});
+    helpers::test_parser_fail("enum : T {};",
+                              ParserDiagnostic{ParserError::ENUM_MISSING_VARIANTS, 1, 10});
 }
 
 TEST_CASE("Illegal underlying type") {
-    helpers::test_fail("enum : 4 {A};", ParserDiagnostic{ParserError::ILLEGAL_IDENTIFIER, 1, 8});
-    helpers::test_fail(R"(enum : "e" {A};)",
-                       ParserDiagnostic{ParserError::ILLEGAL_IDENTIFIER, 1, 8});
+    helpers::test_parser_fail("enum : 4 {A};",
+                              ParserDiagnostic{ParserError::ILLEGAL_IDENTIFIER, 1, 8});
+    helpers::test_parser_fail(R"(enum : "e" {A};)",
+                              ParserDiagnostic{ParserError::ILLEGAL_IDENTIFIER, 1, 8});
 }
 
 } // namespace porpoise::tests

@@ -1,6 +1,6 @@
 #include <catch2/catch_test_macros.hpp>
 
-#include "ast/helpers.hpp"
+#include "helpers/ast.hpp"
 
 #include "ast/expressions/for.hpp"
 #include "ast/expressions/infix.hpp"
@@ -54,26 +54,26 @@ TEST_CASE("Full for loop with else") {
 }
 
 TEST_CASE("Non-terminated iterables") {
-    helpers::test_fail("for (0..4 |i| { a; } else return b;",
-                       ParserDiagnostic{"No prefix parse function for LBRACE({) found",
-                                        ParserError::MISSING_PREFIX_PARSER,
-                                        1,
-                                        15},
-                       ParserDiagnostic{"No prefix parse function for RBRACE(}) found",
-                                        ParserError::MISSING_PREFIX_PARSER,
-                                        1,
-                                        20});
+    helpers::test_parser_fail("for (0..4 |i| { a; } else return b;",
+                              ParserDiagnostic{"No prefix parse function for LBRACE({) found",
+                                               ParserError::MISSING_PREFIX_PARSER,
+                                               1,
+                                               15},
+                              ParserDiagnostic{"No prefix parse function for RBRACE(}) found",
+                                               ParserError::MISSING_PREFIX_PARSER,
+                                               1,
+                                               20});
 }
 
 TEST_CASE("Missing iterables") {
-    helpers::test_fail("for () |i| { a; } else return b;",
-                       ParserDiagnostic{ParserError::FOR_MISSING_ITERABLES, 1, 1},
-                       ParserDiagnostic{"No prefix parse function for RBRACE(}) found",
-                                        ParserError::MISSING_PREFIX_PARSER,
-                                        1,
-                                        17});
+    helpers::test_parser_fail("for () |i| { a; } else return b;",
+                              ParserDiagnostic{ParserError::FOR_MISSING_ITERABLES, 1, 1},
+                              ParserDiagnostic{"No prefix parse function for RBRACE(}) found",
+                                               ParserError::MISSING_PREFIX_PARSER,
+                                               1,
+                                               17});
 
-    helpers::test_fail(
+    helpers::test_parser_fail(
         "for |i| { a; } else return b;",
         ParserDiagnostic{"Expected token LPAREN, found BW_OR", ParserError::UNEXPECTED_TOKEN, 1, 5},
         ParserDiagnostic{"No prefix parse function for RBRACE(}) found",
@@ -83,7 +83,7 @@ TEST_CASE("Missing iterables") {
 }
 
 TEST_CASE("Non-terminated captures") {
-    helpers::test_fail(
+    helpers::test_parser_fail(
         "for (0..4) |i { a; } else return b;",
         ParserDiagnostic{
             "Expected token COMMA, found LBRACE", ParserError::UNEXPECTED_TOKEN, 1, 15},
@@ -94,7 +94,7 @@ TEST_CASE("Non-terminated captures") {
 }
 
 TEST_CASE("Missing captures") {
-    helpers::test_fail(
+    helpers::test_parser_fail(
         "for (0..4) { a; } else return b;",
         ParserDiagnostic{
             "Expected token BW_OR, found LBRACE", ParserError::UNEXPECTED_TOKEN, 1, 12},
@@ -105,27 +105,27 @@ TEST_CASE("Missing captures") {
 }
 
 TEST_CASE("Illegal capture") {
-    helpers::test_fail("for (0..4) |2| { a; } else return b;",
-                       ParserDiagnostic{ParserError::ILLEGAL_IDENTIFIER, 1, 13},
-                       ParserDiagnostic{"No prefix parse function for RBRACE(}) found",
-                                        ParserError::MISSING_PREFIX_PARSER,
-                                        1,
-                                        21});
+    helpers::test_parser_fail("for (0..4) |2| { a; } else return b;",
+                              ParserDiagnostic{ParserError::ILLEGAL_IDENTIFIER, 1, 13},
+                              ParserDiagnostic{"No prefix parse function for RBRACE(}) found",
+                                               ParserError::MISSING_PREFIX_PARSER,
+                                               1,
+                                               21});
 }
 
 TEST_CASE("Iterable-capture mismatch") {
-    helpers::test_fail("for (0..4) |i, j| { a; } else return b;",
-                       ParserDiagnostic{ParserError::FOR_ITERABLE_CAPTURE_MISMATCH, 1, 1});
+    helpers::test_parser_fail("for (0..4) |i, j| { a; } else return b;",
+                              ParserDiagnostic{ParserError::FOR_ITERABLE_CAPTURE_MISMATCH, 1, 1});
 }
 
 TEST_CASE("Empty for block") {
-    helpers::test_fail("for (0..4) |i| {} else return b;",
-                       ParserDiagnostic{ParserError::EMPTY_FOR_LOOP, 1, 16});
+    helpers::test_parser_fail("for (0..4) |i| {} else return b;",
+                              ParserDiagnostic{ParserError::EMPTY_FOR_LOOP, 1, 16});
 }
 
 TEST_CASE("Illegal for-else clause") {
-    helpers::test_fail("for (0..4) |i| { a; } else import std;",
-                       ParserDiagnostic{ParserError::ILLEGAL_LOOP_NON_BREAK, 1, 28});
+    helpers::test_parser_fail("for (0..4) |i| { a; } else import std;",
+                              ParserDiagnostic{ParserError::ILLEGAL_LOOP_NON_BREAK, 1, 28});
 }
 
 } // namespace porpoise::tests

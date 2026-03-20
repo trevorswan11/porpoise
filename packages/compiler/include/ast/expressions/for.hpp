@@ -27,7 +27,7 @@ class ForLoopCapture {
         MAKE_GETTER(modifier, const TypeModifier&)
         MAKE_GETTER(ident, const IdentifierExpression&, *)
 
-        MAKE_AST_DEPENDENT_EQ(Valued)
+        MAKE_EQ_DELEGATION(Valued)
 
       private:
         TypeModifier              modifier_;
@@ -46,7 +46,7 @@ class ForLoopCapture {
         return std::holds_alternative<std::monostate>(underlying_);
     }
 
-    MAKE_AST_DEPENDENT_EQ(ForLoopCapture)
+    MAKE_EQ_DELEGATION(ForLoopCapture)
 
   private:
     std::variant<Valued, std::monostate> underlying_;

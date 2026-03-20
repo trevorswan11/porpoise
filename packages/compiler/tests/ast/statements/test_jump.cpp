@@ -1,6 +1,6 @@
 #include <catch2/catch_test_macros.hpp>
 
-#include "ast/helpers.hpp"
+#include "helpers/ast.hpp"
 
 #include "ast/expressions/enum.hpp"
 #include "ast/expressions/primitive.hpp"
@@ -32,27 +32,27 @@ TEST_CASE("Expression returns") {
 TEST_CASE("Incorrectly terminated jumps") {
     const auto inputs = std::to_array<std::string_view>({"return", "continue", "break"});
     for (const auto& input : inputs) {
-        helpers::test_fail(input,
-                           ParserDiagnostic{"Expected token SEMICOLON, found END",
-                                            ParserError::UNEXPECTED_TOKEN,
-                                            1,
-                                            input.size() + 1});
+        helpers::test_parser_fail(input,
+                                  ParserDiagnostic{"Expected token SEMICOLON, found END",
+                                                   ParserError::UNEXPECTED_TOKEN,
+                                                   1,
+                                                   input.size() + 1});
     }
 
-    helpers::test_fail("return return",
-                       ParserDiagnostic{"No prefix parse function for RETURN(return) found",
-                                        ParserError::MISSING_PREFIX_PARSER,
-                                        1,
-                                        8});
+    helpers::test_parser_fail("return return",
+                              ParserDiagnostic{"No prefix parse function for RETURN(return) found",
+                                               ParserError::MISSING_PREFIX_PARSER,
+                                               1,
+                                               8});
 }
 
 TEST_CASE("Illegal control flow") {
-    helpers::test_fail(
+    helpers::test_parser_fail(
         "continue 4;",
         ParserDiagnostic{
             "Expected token SEMICOLON, found INT_10", ParserError::UNEXPECTED_TOKEN, 1, 10});
 
-    helpers::test_fail(
+    helpers::test_parser_fail(
         "break 4;",
         ParserDiagnostic{
             "Expected token SEMICOLON, found INT_10", ParserError::UNEXPECTED_TOKEN, 1, 7});

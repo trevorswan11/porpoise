@@ -23,7 +23,7 @@ class CallArgument {
     MAKE_VARIANT_UNPACKER(expression, Expression, Box<Expression>, argument_, *std::get)
     MAKE_VARIANT_UNPACKER(type, ExplicitType, ExplicitType, argument_, std::get)
 
-    MAKE_AST_DEPENDENT_EQ(CallArgument)
+    MAKE_EQ_DELEGATION(CallArgument)
 
   private:
     std::variant<Box<Expression>, ExplicitType> argument_;

@@ -27,7 +27,7 @@ namespace sema {
 
 // No other nodes can ever be at the top level
 using SymbolicNode = std::
-    variant<const ast::UsingStatement*, const ast::DeclStatement*, const ast::ImportStatement*>;
+    variant<const ast::DeclStatement*, const ast::ImportStatement*, const ast::UsingStatement*>;
 
 class Type;
 
@@ -49,8 +49,7 @@ class Symbol {
     MAKE_VARIANT_UNPACKER(
         import_stmt, ast::ImportStatement, const ast::ImportStatement*, node_, *std::get)
 
-    // Provides std::visit-like access to the internal node
-    template <typename Matcher> auto match(Matcher&& matcher) { return std::visit(matcher, node_); }
+    MAKE_VARIANT_MATCHER(node_)
 
     // Fills the internal type. Should only be called once per Symbol.
     auto resolve(Type* type) noexcept -> void {
@@ -61,6 +60,8 @@ class Symbol {
     // Provides mutable access to the symbol's potentially invalid type.
     auto access_type() noexcept -> Type* { return resolved_type_; }
 
+    MAKE_EQ_DELEGATION(Symbol)
+
   private:
     std::string_view name_;
     SymbolicNode     node_;
@@ -69,17 +70,44 @@ class Symbol {
 
 class SymbolTable {
   public:
+    using Table = ankerl::unordered_dense::map<std::string_view, Symbol>;
+    using KV    = Table::iterator::value_type;
+
+  public:
     SymbolTable() noexcept = default;
 
     auto insert(std::string_view name, SymbolicNode node)
         -> Expected<std::monostate, SemaDiagnostic>;
 
-    [[nodiscard]] auto has(std::string_view name) noexcept -> bool;
-    [[nodiscard]] auto get(std::string_view name) noexcept -> Symbol&;
-    [[nodiscard]] auto get_opt(std::string_view name) noexcept -> Optional<Symbol&>;
+    [[nodiscard]] auto empty() const noexcept -> bool { return symbols_.empty(); }
+    [[nodiscard]] auto size() const noexcept -> usize { return symbols_.size(); }
+    [[nodiscard]] auto has(std::string_view name) const noexcept -> bool;
+
+    // cppcheck-suppress-begin functionStatic
+
+    // Differs from `get_opt` by asserting that the name is present.
+    template <typename Self>
+    [[nodiscard]] auto get(this Self&& self, std::string_view name) noexcept -> auto& {
+        auto it = self.symbols_.find(name);
+        assert(it != self.symbols_.end() && "Illegal get on missing key");
+        return it->second;
+    }
+
+    // Returns an optional containing a mutable or const reference to a symbol depending on context.
+    template <typename Self>
+    [[nodiscard]] auto get_opt(this Self&& self, std::string_view name) noexcept
+        -> Optional<std::conditional_t<std::is_const_v<std::remove_reference_t<Self>>,
+                                       const Symbol&,
+                                       Symbol&>> {
+        auto it = self.symbols_.find(name);
+        if (it == self.symbols_.end()) { return nullopt; }
+        return it->second;
+    }
+
+    // cppcheck-suppress-end functionStatic
 
   private:
-    ankerl::unordered_dense::map<std::string_view, Symbol> symbols_;
+    Table symbols_;
 };
 
 } // namespace sema

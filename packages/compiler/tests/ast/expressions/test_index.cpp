@@ -1,6 +1,6 @@
 #include <catch2/catch_test_macros.hpp>
 
-#include "ast/helpers.hpp"
+#include "helpers/ast.hpp"
 
 #include "ast/expressions/index.hpp"
 #include "ast/expressions/primitive.hpp"
@@ -30,7 +30,8 @@ TEST_CASE("Index on an index") {
 }
 
 TEST_CASE("No index") {
-    helpers::test_fail("arr[]", ParserDiagnostic{ParserError::INDEX_MISSING_EXPRESSION, 1, 1});
+    helpers::test_parser_fail("arr[]",
+                              ParserDiagnostic{ParserError::INDEX_MISSING_EXPRESSION, 1, 1});
 }
 
 } // namespace porpoise::tests

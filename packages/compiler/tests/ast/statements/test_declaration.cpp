@@ -6,7 +6,7 @@
 
 #include "array.hpp"
 
-#include "ast/helpers.hpp"
+#include "helpers/ast.hpp"
 
 #include "ast/expressions/function.hpp"
 #include "ast/expressions/primitive.hpp"
@@ -122,7 +122,7 @@ static auto test_decl_fail(std::initializer_list<Keyword> modifiers,
     std::stringstream ss;
     for (const auto& keyword : modifiers) { ss << keyword.first << " "; }
     ss << init;
-    helpers::test_fail(ss.view(), std::move(expected_error));
+    helpers::test_parser_fail(ss.view(), std::move(expected_error));
 }
 
 TEST_CASE("Mutability restrictions") {
@@ -172,7 +172,7 @@ TEST_CASE("Constant requirements") {
 }
 
 TEST_CASE("Non-terminated decls") {
-    helpers::test_fail(
+    helpers::test_parser_fail(
         "var a: int = 2",
         ParserDiagnostic{
             "Expected token SEMICOLON, found END", ParserError::UNEXPECTED_TOKEN, 1, 15});

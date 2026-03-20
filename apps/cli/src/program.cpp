@@ -9,6 +9,8 @@
 #include "ast/dumper.hpp"
 #include "ast/node.hpp"
 
+#include "sema/collector.hpp"
+
 #include "string.hpp"
 
 namespace porpoise::cli {
@@ -23,13 +25,24 @@ auto Program::interactive() -> void {
         const auto trimmed = string::trim(line);
         if (trimmed == "exit") { break; }
 
+        // Parsing
         parser_.reset(trimmed);
-        auto [ast, errors] = parser_.consume();
-        if (!errors.empty()) {
-            fmt::println("{}", errors);
+        auto [ast, parser_errors] = parser_.consume();
+        if (!parser_errors.empty()) {
+            fmt::println("{}", parser_errors);
+            continue;
         } else {
             ast::ASTDumper dumper{std::cout};
             for (const auto& node : ast) { node->accept(dumper); }
+        }
+
+        // Sema
+        auto [table, sema_errors] = sema::SymbolCollector::collect(ast);
+        if (!sema_errors.empty()) {
+            fmt::println("{}", sema_errors);
+            continue;
+        } else {
+            fmt::println("{} symbols collected", table.size());
         }
     }
 }

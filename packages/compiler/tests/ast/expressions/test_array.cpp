@@ -1,6 +1,6 @@
 #include <catch2/catch_test_macros.hpp>
 
-#include "ast/helpers.hpp"
+#include "helpers/ast.hpp"
 
 #include "ast/expressions/array.hpp"
 #include "ast/expressions/function.hpp"
@@ -55,16 +55,17 @@ TEST_CASE("Implicitly sized array") {
 }
 
 TEST_CASE("Size mismatch") {
-    helpers::test_fail("[1uz]int{2, 3};",
-                       ParserDiagnostic{ParserError::EXPLICIT_ARRAY_SIZE_MISMATCH, 1, 2});
+    helpers::test_parser_fail("[1uz]int{2, 3};",
+                              ParserDiagnostic{ParserError::EXPLICIT_ARRAY_SIZE_MISMATCH, 1, 2});
 }
 
 TEST_CASE("Array size token requirement") {
-    helpers::test_fail("[]int{2};", ParserDiagnostic{ParserError::MISSING_ARRAY_SIZE_TOKEN, 1, 1});
-    helpers::test_fail("[3]int{1,2,3};",
-                       ParserDiagnostic{ParserError::ILLEGAL_ARRAY_SIZE_TYPE, 1, 2});
-    helpers::test_fail(R"(["e"]int{1};)",
-                       ParserDiagnostic{ParserError::ILLEGAL_ARRAY_SIZE_TYPE, 1, 2});
+    helpers::test_parser_fail("[]int{2};",
+                              ParserDiagnostic{ParserError::MISSING_ARRAY_SIZE_TOKEN, 1, 1});
+    helpers::test_parser_fail("[3]int{1,2,3};",
+                              ParserDiagnostic{ParserError::ILLEGAL_ARRAY_SIZE_TYPE, 1, 2});
+    helpers::test_parser_fail(R"(["e"]int{1};)",
+                              ParserDiagnostic{ParserError::ILLEGAL_ARRAY_SIZE_TYPE, 1, 2});
 }
 
 } // namespace porpoise::tests

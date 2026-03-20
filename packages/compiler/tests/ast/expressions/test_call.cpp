@@ -1,7 +1,7 @@
 #include <catch2/catch_test_macros.hpp>
 
 #include "ast/expressions/prefix.hpp"
-#include "ast/helpers.hpp"
+#include "helpers/ast.hpp"
 
 #include "ast/expressions/call.hpp"
 #include "ast/expressions/primitive.hpp"
@@ -63,12 +63,12 @@ TEST_CASE("Type arguments in call") {
 }
 
 TEST_CASE("No arguments with comma") {
-    helpers::test_fail("func(,)",
-                       ParserDiagnostic{ParserError::COMMA_WITH_MISSING_CALL_ARGUMENT, 1, 6});
+    helpers::test_parser_fail(
+        "func(,)", ParserDiagnostic{ParserError::COMMA_WITH_MISSING_CALL_ARGUMENT, 1, 6});
 }
 
 TEST_CASE("Non-comma separated arguments") {
-    helpers::test_fail(
+    helpers::test_parser_fail(
         "func(1 2)",
         ParserDiagnostic{
             "Expected token COMMA, found INT_10", ParserError::UNEXPECTED_TOKEN, 1, 8});

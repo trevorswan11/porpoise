@@ -1,14 +1,14 @@
 #pragma once
 
 #include <algorithm>
-#include <span>
+#include <utility>
 #include <vector>
 
 #include <catch2/catch_test_macros.hpp>
 #include <fmt/format.h>
 #include <fmt/ranges.h>
 
-#include "string.hpp"
+#include "helpers/common.hpp"
 
 #include "ast/expressions/function.hpp"
 #include "ast/expressions/identifier.hpp"
@@ -30,16 +30,10 @@ auto into_expression_statement(const N& node) -> const ast::ExpressionStatement&
     return try_into<ast::ExpressionStatement>(node);
 }
 
-// Checks if the error list is empty, dumping the list's contents otherwise.
-template <typename E> auto check_errors(std::span<const E> errors) {
-    if (!errors.empty()) { fmt::println("{}", errors); }
-    REQUIRE(errors.empty());
-}
-
-// Tests a failing input against the expected generated errors
+// Tests a syntactically failing input against the expected generated errors
 template <typename... Ds>
     requires(std::same_as<Ds, ParserDiagnostic> && ...)
-auto test_fail(std::string_view failing, Ds&&... expected_diagnostics) -> void {
+auto test_parser_fail(std::string_view failing, Ds&&... expected_diagnostics) -> void {
     Parser p{failing};
     auto [ast, errors] = p.consume();
     REQUIRE(ast.empty());
@@ -54,15 +48,11 @@ auto test_fail(std::string_view failing, Ds&&... expected_diagnostics) -> void {
     REQUIRE(std::ranges::equal(errors, expected_arr));
 }
 
-constexpr auto trim_semicolons(std::string_view str) -> std::string_view {
-    return string::trim_right(str, [](byte b) { return b == ';'; });
-}
-
 template <ast::LeafNode N> auto test_stmt(std::string_view input, const N& expected) -> void {
     Parser p{input};
     auto [ast, errors] = p.consume();
 
-    helpers::check_errors<ParserDiagnostic>(errors);
+    check_errors<ParserDiagnostic>(errors);
     REQUIRE(ast.size() == 1);
 
     const auto  actual{std::move(ast[0])};

@@ -1,6 +1,6 @@
 #include <catch2/catch_test_macros.hpp>
 
-#include "ast/helpers.hpp"
+#include "helpers/ast.hpp"
 
 #include "ast/expressions/scope_resolve.hpp"
 
@@ -24,21 +24,22 @@ TEST_CASE("Nested scope") {
 }
 
 TEST_CASE("Missing inner scope") {
-    helpers::test_fail(
+    helpers::test_parser_fail(
         "A:: ;",
         ParserDiagnostic{
             "Expected token IDENT, found SEMICOLON", ParserError::UNEXPECTED_TOKEN, 1, 5});
 }
 
 TEST_CASE("Illegal inner scope") {
-    helpers::test_fail(
+    helpers::test_parser_fail(
         "A::2;",
         ParserDiagnostic{
             "Expected token IDENT, found INT_10", ParserError::UNEXPECTED_TOKEN, 1, 4});
 }
 
 TEST_CASE("Illegal outer scope") {
-    helpers::test_fail("2::A;", ParserDiagnostic{ParserError::ILLEGAL_OUTER_SCOPE_TYPE, 1, 1});
+    helpers::test_parser_fail("2::A;",
+                              ParserDiagnostic{ParserError::ILLEGAL_OUTER_SCOPE_TYPE, 1, 1});
 }
 
 } // namespace porpoise::tests
