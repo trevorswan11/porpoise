@@ -35,7 +35,7 @@ class TypeModifier {
 
     static constexpr auto from_token(const Token& tok) noexcept -> TypeModifier {
         const auto it = std::ranges::find(LEGAL_MODIFIERS, tok.type, &ModifierMapping::first);
-        return it == LEGAL_MODIFIERS.end() ? TypeModifier{nullopt} : TypeModifier{it->second};
+        return it == LEGAL_MODIFIERS.end() ? TypeModifier{std::nullopt} : TypeModifier{it->second};
     }
 
     // Whether or not the type is a 'value' type (no modifier), mutually exclusive result.

@@ -51,7 +51,7 @@ TEST_CASE("Struct flavors") {
                     ast::DeclStatement{
                         Token{keywords::CONST},
                         helpers::make_ident("b"),
-                        make_box<ast::TypeExpression>(Token{operators::WALRUS}, nullopt),
+                        make_box<ast::TypeExpression>(Token{operators::WALRUS}, std::nullopt),
                         make_box<ast::FunctionExpression>(
                             Token{keywords::FN},
                             ast::SelfParameter{mods::MUT_PTR, helpers::make_ident("this")},

@@ -100,7 +100,7 @@ class SymbolTable {
                                        const Symbol&,
                                        Symbol&>> {
         auto it = self.symbols_.find(name);
-        if (it == self.symbols_.end()) { return nullopt; }
+        if (it == self.symbols_.end()) { return std::nullopt; }
         return it->second;
     }
 

@@ -45,7 +45,7 @@ TEST_CASE("Implicitly sized array") {
     helpers::test_expr_stmt(
         "[_]*N{a, b, c, d, e, };",
         ast::ArrayExpression{rbracket,
-                             nullopt,
+                             std::nullopt,
                              ast::ExplicitType{mods::PTR, helpers::make_ident("N")},
                              helpers::make_items(helpers::ident_from("a"),
                                                  helpers::ident_from("b"),

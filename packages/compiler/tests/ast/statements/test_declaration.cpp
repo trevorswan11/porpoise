@@ -55,7 +55,7 @@ TEST_CASE("Implicit comptime declaration") {
         ast::DeclStatement{
             Token{keywords::COMPTIME},
             helpers::make_ident("SIZE"),
-            make_box<ast::TypeExpression>(Token{operators::WALRUS}, nullopt),
+            make_box<ast::TypeExpression>(Token{operators::WALRUS}, std::nullopt),
             make_box<ast::USizeIntegerExpression>(Token{TokenType::UZINT_10, "2uz"}, 2uz),
             ast::DeclModifiers::COMPTIME,
         });
@@ -74,7 +74,7 @@ TEST_CASE("Correct declaration modifiers") {
                 ast::DeclStatement{
                     Token{*modifiers.begin()},
                     helpers::make_ident("a"),
-                    make_box<ast::TypeExpression>(Token{operators::WALRUS}, nullopt),
+                    make_box<ast::TypeExpression>(Token{operators::WALRUS}, std::nullopt),
                     make_box<ast::SignedIntegerExpression>(Token{TokenType::INT_10, "2"}, 2),
                     flags,
                 });
@@ -89,7 +89,7 @@ TEST_CASE("Correct declaration modifiers") {
                                                                      mods::BASE,
                                                                      helpers::make_ident("int"),
                                                                  }),
-                                   nullopt,
+                                   std::nullopt,
                                    flags,
                                });
         }

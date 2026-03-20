@@ -108,7 +108,7 @@ class DeclStatement : public StmtBase<DeclStatement> {
 
     static constexpr auto token_to_modifier(const Token& tok) -> Optional<DeclModifiers> {
         const auto it = std::ranges::find(LEGAL_MODIFIERS, tok.type, &ModifierMapping::first);
-        return it == LEGAL_MODIFIERS.end() ? nullopt : Optional<DeclModifiers>{it->second};
+        return it == LEGAL_MODIFIERS.end() ? std::nullopt : Optional<DeclModifiers>{it->second};
     }
 
   private:

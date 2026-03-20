@@ -118,7 +118,7 @@ constexpr auto ALL_KEYWORDS = []() {
 
 constexpr auto get_keyword(std::string_view sv) noexcept -> Optional<Keyword> {
     const auto it = std::ranges::lower_bound(ALL_KEYWORDS, sv, {}, &Keyword::first);
-    if (it == ALL_KEYWORDS.end() || it->first != sv) { return nullopt; }
+    if (it == ALL_KEYWORDS.end() || it->first != sv) { return std::nullopt; }
     return Optional<Keyword>{*it};
 }
 
@@ -178,7 +178,7 @@ constexpr auto ALL_BUILTINS = []() {
 
 constexpr auto get_builtin(std::string_view sv) noexcept -> Optional<Keyword> {
     const auto it = std::ranges::lower_bound(ALL_BUILTINS, sv, {}, &Keyword::first);
-    if (it == ALL_BUILTINS.end() || it->first != sv) { return nullopt; }
+    if (it == ALL_BUILTINS.end() || it->first != sv) { return std::nullopt; }
     return Optional<Keyword>{*it};
 }
 

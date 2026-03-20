@@ -20,7 +20,7 @@ auto test_type_expr(std::string_view type_str, ast::ExplicitType&& expected) -> 
                                           helpers::make_ident("a"),
                                           make_box<ast::TypeExpression>(
                                               Token{TokenType::COLON, ":"}, std::move(expected)),
-                                          nullopt,
+                                          std::nullopt,
                                           ast::DeclModifiers::VARIABLE});
 }
 
@@ -41,10 +41,10 @@ TEST_CASE("Function types") {
         ast::ExplicitType{mods::BASE,
                           make_box<ast::FunctionExpression>(
                               Token{keywords::FN},
-                              nullopt,
+                              std::nullopt,
                               Parameters{},
                               ast::ExplicitType{mods::BASE, helpers::make_ident("noreturn")},
-                              nullopt)});
+                              std::nullopt)});
 
     helpers::test_type_expr(
         "fn(&self): *mut E",
@@ -54,7 +54,7 @@ TEST_CASE("Function types") {
                               ast::SelfParameter{mods::REF, helpers::make_ident("self")},
                               Parameters{},
                               ast::ExplicitType{mods::MUT_PTR, helpers::make_ident("E")},
-                              nullopt)});
+                              std::nullopt)});
 }
 
 TEST_CASE("Array type") {
@@ -113,7 +113,7 @@ TEST_CASE("Complex function type (holistic)") {
                                                    true,
                                                    make_box<ast::ExplicitType>(
                                                        mods::PTR, helpers::make_ident("E"))})}},
-                nullopt)});
+                std::nullopt)});
 }
 
 TEST_CASE("Volatile restricted to declarations") {

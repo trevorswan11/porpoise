@@ -111,8 +111,11 @@ auto FunctionExpression::parse(Parser& parser) -> Expected<Box<Expression>, Pars
 
     // If there is opening brace then just return without a body
     if (!parser.peek_token_is(TokenType::LBRACE)) {
-        return make_box<FunctionExpression>(
-            start_token, std::move(self), std::move(parameters), std::move(return_type), nullopt);
+        return make_box<FunctionExpression>(start_token,
+                                            std::move(self),
+                                            std::move(parameters),
+                                            std::move(return_type),
+                                            std::nullopt);
     }
 
     // Otherwise there must be a well-formed block

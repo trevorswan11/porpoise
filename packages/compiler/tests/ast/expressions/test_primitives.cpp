@@ -70,8 +70,9 @@ TEST_CASE("Signed integer parsing") {
     helpers::test_primitive<N>("0o1234567;", TokenType::INT_8, 342'391);
     helpers::test_primitive<N>("0xFF8a91d;", TokenType::INT_16, 0xFF8a91d);
 
-    helpers::test_primitive<N>(
-        "0xFFFFFFFFFFFFFFFFFFF;", nullopt, ParserDiagnostic{ParserError::INTEGER_OVERFLOW, 1, 1});
+    helpers::test_primitive<N>("0xFFFFFFFFFFFFFFFFFFF;",
+                               std::nullopt,
+                               ParserDiagnostic{ParserError::INTEGER_OVERFLOW, 1, 1});
 }
 
 TEST_CASE("Signed long integer parsing") {
@@ -81,8 +82,9 @@ TEST_CASE("Signed long integer parsing") {
     helpers::test_primitive<N>("0o1234567l;", TokenType::LINT_8, 342'391LL);
     helpers::test_primitive<N>("0xFF8a91dl;", TokenType::LINT_16, 0xFF8a91dLL);
 
-    helpers::test_primitive<N>(
-        "0xFFFFFFFFFFFFFFFFFFFl;", nullopt, ParserDiagnostic{ParserError::INTEGER_OVERFLOW, 1, 1});
+    helpers::test_primitive<N>("0xFFFFFFFFFFFFFFFFFFFl;",
+                               std::nullopt,
+                               ParserDiagnostic{ParserError::INTEGER_OVERFLOW, 1, 1});
 }
 
 TEST_CASE("Signed size integer parsing") {
@@ -92,8 +94,9 @@ TEST_CASE("Signed size integer parsing") {
     helpers::test_primitive<N>("0o1234567z;", TokenType::ZINT_8, 342'391Z);
     helpers::test_primitive<N>("0xFF8a91dz;", TokenType::ZINT_16, 0xFF8a91dZ);
 
-    helpers::test_primitive<N>(
-        "0xFFFFFFFFFFFFFFFFz;", nullopt, ParserDiagnostic{ParserError::INTEGER_OVERFLOW, 1, 1});
+    helpers::test_primitive<N>("0xFFFFFFFFFFFFFFFFz;",
+                               std::nullopt,
+                               ParserDiagnostic{ParserError::INTEGER_OVERFLOW, 1, 1});
 }
 
 TEST_CASE("Unsigned integer parsing") {
@@ -103,8 +106,9 @@ TEST_CASE("Unsigned integer parsing") {
     helpers::test_primitive<N>("0o1234567u;", TokenType::UINT_8, 342'391U);
     helpers::test_primitive<N>("0xFF8a91du;", TokenType::UINT_16, 0xFF8a91dU);
 
-    helpers::test_primitive<N>(
-        "0xFFFFFFFFFFFFFFFFu;", nullopt, ParserDiagnostic{ParserError::INTEGER_OVERFLOW, 1, 1});
+    helpers::test_primitive<N>("0xFFFFFFFFFFFFFFFFu;",
+                               std::nullopt,
+                               ParserDiagnostic{ParserError::INTEGER_OVERFLOW, 1, 1});
 }
 
 TEST_CASE("Unsigned long integer parsing") {
@@ -114,8 +118,9 @@ TEST_CASE("Unsigned long integer parsing") {
     helpers::test_primitive<N>("0o1234567ul;", TokenType::ULINT_8, 342'391ULL);
     helpers::test_primitive<N>("0xFF8a91dul;", TokenType::ULINT_16, 0xFF8a91dULL);
 
-    helpers::test_primitive<N>(
-        "0xFFFFFFFFFFFFFFFFFul;", nullopt, ParserDiagnostic{ParserError::INTEGER_OVERFLOW, 1, 1});
+    helpers::test_primitive<N>("0xFFFFFFFFFFFFFFFFFul;",
+                               std::nullopt,
+                               ParserDiagnostic{ParserError::INTEGER_OVERFLOW, 1, 1});
 }
 
 TEST_CASE("Unsigned size integer parsing") {
@@ -125,8 +130,9 @@ TEST_CASE("Unsigned size integer parsing") {
     helpers::test_primitive<N>("0o1234567uz;", TokenType::UZINT_8, 342'391UZ);
     helpers::test_primitive<N>("0xFF8a91duz;", TokenType::UZINT_16, 0xFF8a91dUZ);
 
-    helpers::test_primitive<N>(
-        "0xFFFFFFFFFFFFFFFFFuz;", nullopt, ParserDiagnostic{ParserError::INTEGER_OVERFLOW, 1, 1});
+    helpers::test_primitive<N>("0xFFFFFFFFFFFFFFFFFuz;",
+                               std::nullopt,
+                               ParserDiagnostic{ParserError::INTEGER_OVERFLOW, 1, 1});
 }
 
 TEST_CASE("Byte parsing") {
@@ -150,7 +156,7 @@ TEST_CASE("Floating point parsing") {
     helpers::test_primitive<N>("1023.234612f;", TokenType::FLOAT, 1023.234612f);
 
     helpers::test_primitive<N>(
-        "1023.234612e234000f;", nullopt, ParserDiagnostic{ParserError::FLOAT_OVERFLOW, 1, 1});
+        "1023.234612e234000f;", std::nullopt, ParserDiagnostic{ParserError::FLOAT_OVERFLOW, 1, 1});
 }
 
 TEST_CASE("Double parsing") {
@@ -160,7 +166,7 @@ TEST_CASE("Double parsing") {
     helpers::test_primitive<N>("1023.234612e234;", TokenType::DOUBLE, 1023.234612e234);
 
     helpers::test_primitive<N>(
-        "1023.234612e234000;", nullopt, ParserDiagnostic{ParserError::DOUBLE_OVERFLOW, 1, 1});
+        "1023.234612e234000;", std::nullopt, ParserDiagnostic{ParserError::DOUBLE_OVERFLOW, 1, 1});
 }
 
 TEST_CASE("Bool parsing") {

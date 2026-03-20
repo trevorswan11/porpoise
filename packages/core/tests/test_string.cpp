@@ -1,8 +1,12 @@
+#include <string>
+
 #include <catch2/catch_test_macros.hpp>
 
 #include "string.hpp"
 
 namespace porpoise::tests {
+
+static_assert(std::is_same_v<std::string::value_type, byte>);
 
 TEST_CASE("Is space") {
     REQUIRE(string::is_space(' '));

@@ -151,7 +151,7 @@ auto TypeExpression::parse(Parser& parser)
     auto [type, initialized] =
         TRY(([&]() -> Expected<std::pair<Box<TypeExpression>, bool>, ParserDiagnostic> {
             if (parser.peek_token_is(TokenType::WALRUS)) {
-                auto type = make_box<TypeExpression>(start_token, nullopt);
+                auto type = make_box<TypeExpression>(start_token, std::nullopt);
                 parser.advance();
                 return std::pair{std::move(type), true};
             } else if (parser.peek_token_is(TokenType::COLON)) {

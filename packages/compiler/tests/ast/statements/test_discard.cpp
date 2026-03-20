@@ -16,12 +16,12 @@ TEST_CASE("Discard statements") {
             start_token, make_box<ast::SignedIntegerExpression>(Token{TokenType::INT_10, "4"}, 4)});
 
     std::vector<ast::Enumeration> enumerations;
-    enumerations.emplace_back(ast::Enumeration{helpers::make_ident("RED"), nullopt});
+    enumerations.emplace_back(ast::Enumeration{helpers::make_ident("RED"), std::nullopt});
     helpers::test_stmt(
         "_ = enum { RED };",
         ast::DiscardStatement{start_token,
                               make_box<ast::EnumExpression>(
-                                  Token{keywords::ENUM}, nullopt, std::move(enumerations))});
+                                  Token{keywords::ENUM}, std::nullopt, std::move(enumerations))});
 }
 
 TEST_CASE("Malformed discardees") {

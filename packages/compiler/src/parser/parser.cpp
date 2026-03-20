@@ -158,7 +158,7 @@ auto Parser::parse_expression(Precedence precedence)
         advance(2);
         return TRY(parse_restricted_statement(error));
     }
-    return nullopt;
+    return std::nullopt;
 }
 
 using PrefixPair          = std::pair<TokenType, Parser::PrefixFn>;
@@ -250,7 +250,7 @@ constexpr auto PREFIX_FNS = []() {
 
 constexpr auto Parser::poll_prefix_fn(TokenType tt) noexcept -> Optional<const PrefixFn&> {
     const auto it = std::ranges::lower_bound(PREFIX_FNS, tt, {}, &PrefixPair::first);
-    if (it == PREFIX_FNS.end() || it->first != tt) { return nullopt; }
+    if (it == PREFIX_FNS.end() || it->first != tt) { return std::nullopt; }
     return Optional<const PrefixFn&>{it->second};
 }
 
@@ -301,7 +301,7 @@ constexpr auto INFIX_FNS = []() {
 
 constexpr auto Parser::poll_infix_fn(TokenType tt) noexcept -> Optional<const InfixFn&> {
     const auto it = std::ranges::lower_bound(INFIX_FNS, tt, {}, &InfixPair::first);
-    if (it == INFIX_FNS.end() || it->first != tt) { return nullopt; }
+    if (it == INFIX_FNS.end() || it->first != tt) { return std::nullopt; }
     return Optional<const InfixFn&>{it->second};
 }
 

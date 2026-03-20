@@ -15,7 +15,7 @@ namespace helpers {
 auto function_expr_from(Optional<ast::SelfParameter>&&     self,
                         Parameters&&                       parameters,
                         ast::ExplicitType&&                return_type,
-                        Optional<Box<ast::BlockStatement>> block = nullopt)
+                        Optional<Box<ast::BlockStatement>> block = std::nullopt)
     -> ast::FunctionExpression {
     return ast::FunctionExpression{Token{keywords::FN},
                                    std::move(self),
@@ -26,23 +26,23 @@ auto function_expr_from(Optional<ast::SelfParameter>&&     self,
 
 auto function_expr_from(Optional<ast::SelfParameter>&&     self,
                         ast::ExplicitType&&                return_type,
-                        Optional<Box<ast::BlockStatement>> block = nullopt)
+                        Optional<Box<ast::BlockStatement>> block = std::nullopt)
     -> ast::FunctionExpression {
     return function_expr_from(std::move(self), {}, std::move(return_type), std::move(block));
 }
 
 auto function_expr_from(Parameters&&                       parameters,
                         ast::ExplicitType&&                return_type,
-                        Optional<Box<ast::BlockStatement>> block = nullopt)
+                        Optional<Box<ast::BlockStatement>> block = std::nullopt)
     -> ast::FunctionExpression {
     return function_expr_from(
-        nullopt, std::move(parameters), std::move(return_type), std::move(block));
+        std::nullopt, std::move(parameters), std::move(return_type), std::move(block));
 }
 
 auto function_expr_from(ast::ExplicitType&&                return_type,
-                        Optional<Box<ast::BlockStatement>> block = nullopt)
+                        Optional<Box<ast::BlockStatement>> block = std::nullopt)
     -> ast::FunctionExpression {
-    return function_expr_from(nullopt, {}, std::move(return_type), std::move(block));
+    return function_expr_from(std::nullopt, {}, std::move(return_type), std::move(block));
 }
 
 } // namespace helpers

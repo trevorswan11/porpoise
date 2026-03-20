@@ -1,12 +1,9 @@
 #include <cctype>
 #include <ranges>
-#include <string>
 
 #include "string.hpp"
 
 namespace porpoise::string {
-
-static_assert(std::is_same_v<std::string::value_type, byte>);
 
 auto is_space(byte b) noexcept -> bool { return std::isspace(b); }
 

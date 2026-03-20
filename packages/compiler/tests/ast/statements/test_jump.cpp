@@ -21,11 +21,11 @@ TEST_CASE("Expression returns") {
                                               Token{TokenType::INT_10, "4"}, 4)});
 
     std::vector<ast::Enumeration> enumerations;
-    enumerations.emplace_back(ast::Enumeration{helpers::make_ident("RED"), nullopt});
+    enumerations.emplace_back(ast::Enumeration{helpers::make_ident("RED"), std::nullopt});
     helpers::test_stmt("return enum { RED };",
                        ast::JumpStatement{Token{keywords::RETURN},
                                           make_box<ast::EnumExpression>(Token{keywords::ENUM},
-                                                                        nullopt,
+                                                                        std::nullopt,
                                                                         std::move(enumerations))});
 }
 

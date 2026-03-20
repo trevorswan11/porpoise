@@ -121,7 +121,7 @@ constexpr auto MAX_OPERATOR_LEN = std::ranges::max_element(ALL_OPERATORS, [](aut
 
 constexpr auto get_operator(std::string_view sv) noexcept -> Optional<Operator> {
     const auto it = std::ranges::lower_bound(ALL_OPERATORS, sv, {}, &Operator::first);
-    if (it == ALL_OPERATORS.end() || it->first != sv) { return nullopt; }
+    if (it == ALL_OPERATORS.end() || it->first != sv) { return std::nullopt; }
     return Optional<Operator>{*it};
 }
 

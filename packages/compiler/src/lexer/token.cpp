@@ -54,7 +54,7 @@ auto to_base(TokenType tt) noexcept -> Optional<Base> {
     case TokenType::UINT_16:
     case TokenType::ULINT_16:
     case TokenType::UZINT_16: return Base::HEXADECIMAL;
-    default:                  return nullopt;
+    default:                  return std::nullopt;
     }
 }
 
@@ -70,7 +70,7 @@ auto misc_from_char(byte c) noexcept -> Optional<TokenType> {
     case '[': return TokenType::LBRACKET;
     case ']': return TokenType::RBRACKET;
     case '_': return TokenType::UNDERSCORE;
-    default:  return nullopt;
+    default:  return std::nullopt;
     }
 }
 

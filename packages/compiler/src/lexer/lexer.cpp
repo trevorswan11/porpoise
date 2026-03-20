@@ -125,7 +125,7 @@ auto Lexer::read_operator() const noexcept -> Optional<Token> {
     }
 
     // We cannot greedily consume the lexer here since the next token instruction handles that
-    if (max_len == 0) { return nullopt; }
+    if (max_len == 0) { return std::nullopt; }
     return Token{matched_type, input_.substr(pos_, max_len), start_line, start_col};
 }
 
