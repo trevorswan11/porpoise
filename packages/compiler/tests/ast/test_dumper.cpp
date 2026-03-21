@@ -3,7 +3,7 @@
 
 #include <catch2/catch_test_macros.hpp>
 
-#include "helpers/ast.hpp"
+#include "helpers/common.hpp"
 
 #include "ast/ast.hpp"
 #include "ast/dumper.hpp"
@@ -60,7 +60,7 @@ TEST_CASE("Comprehensive dump") {
     std::ostringstream oss;
     ast::ASTDumper     dumper{oss};
     for (const auto& node : ast) { node->accept(dumper); }
-    REQUIRE(expected == oss.view());
+    CHECK(expected == oss.view());
 }
 
 } // namespace porpoise::tests

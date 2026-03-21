@@ -90,8 +90,7 @@ TEST_CASE("Packed keyword out of order") {
         syntax::ParserDiagnostic{syntax::ParserError::PACKED_AFTER_STRUCT_KEYWORD, 1, 1},
         syntax::ParserDiagnostic{"No prefix parse function for RBRACE(}) found",
                                  syntax::ParserError::MISSING_PREFIX_PARSER,
-                                 1,
-                                 35});
+                                 std::pair{1uz, 35uz}});
 }
 
 } // namespace porpoise::tests

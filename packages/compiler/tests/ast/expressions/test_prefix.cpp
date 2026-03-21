@@ -46,8 +46,7 @@ TEST_CASE("Prefix without operand") {
         "!;",
         syntax::ParserDiagnostic{"No prefix parse function for SEMICOLON(;) found",
                                  syntax::ParserError::MISSING_PREFIX_PARSER,
-                                 1,
-                                 2});
+                                 std::pair{1uz, 2uz}});
 }
 
 } // namespace porpoise::tests

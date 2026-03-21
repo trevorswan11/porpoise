@@ -21,7 +21,7 @@ namespace porpoise::tests::helpers {
 
 // Thin wrapper around Node is/as pattern with test assertion.
 template <ast::LeafNode To, typename From> auto try_into(const From& node) -> const To& {
-    REQUIRE(node.template is<To>());
+    CHECK(node.template is<To>());
     return ast::Node::as<To>(node);
 }
 
@@ -36,16 +36,16 @@ template <typename... Ds>
 auto test_parser_fail(std::string_view failing, Ds&&... expected_diagnostics) -> void {
     syntax::Parser p{failing};
     auto [ast, errors] = p.consume();
-    REQUIRE(ast.empty());
+    CHECK(ast.empty());
 
     std::array expected_arr{std::forward<Ds>(expected_diagnostics)...};
     const auto expected_count = sizeof...(Ds);
 
     if (errors.size() != expected_count) {
         for (const auto& e : errors) { fmt::println("{}", e); }
-        REQUIRE(errors.size() == expected_count);
+        CHECK(errors.size() == expected_count);
     }
-    REQUIRE(std::ranges::equal(errors, expected_arr));
+    CHECK(std::ranges::equal(errors, expected_arr));
 }
 
 template <ast::LeafNode N> auto test_stmt(std::string_view input, const N& expected) -> void {
@@ -53,11 +53,11 @@ template <ast::LeafNode N> auto test_stmt(std::string_view input, const N& expec
     auto [ast, errors] = p.consume();
 
     check_errors<syntax::ParserDiagnostic>(errors);
-    REQUIRE(ast.size() == 1);
+    CHECK(ast.size() == 1);
 
     const auto  actual{std::move(ast[0])};
     const auto& actual_stmt = helpers::try_into<N>(*actual);
-    REQUIRE(expected == actual_stmt);
+    CHECK(expected == actual_stmt);
 }
 
 template <ast::LeafNode N>

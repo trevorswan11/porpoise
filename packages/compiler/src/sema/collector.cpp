@@ -13,15 +13,20 @@ auto SymbolCollector::collect(ast::ASTView ast) -> std::pair<SymbolTable, Diagno
     SymbolCollector collector{table, diagnostics};
 
     for (const auto& [node, i] : std::views::zip(ast, std::views::iota(0))) {
+        // Module statements aren't consumed and are just used for indication in future passes
         if (node->is<ast::ModuleStatement>()) {
-            // Tell the symbol table that its a module now to prevent confusion in pass 2
             if (i == 0) {
                 table.indicate_module();
+            } else if (table.is_module()) {
+                diagnostics.emplace_back("Only one module statement is allowed per file",
+                                         SemaError::DUPLICATE_MODULE_STATEMENT,
+                                         node->get_token());
             } else {
                 diagnostics.emplace_back("Module indicator must be first statement of file",
                                          SemaError::ILLEGAL_MODULE_STATEMENT_LOCATION,
                                          node->get_token());
             }
+
             continue;
         }
         node->accept(collector);

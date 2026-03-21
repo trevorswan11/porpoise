@@ -11,6 +11,7 @@ enum class SemaError {
     IDENTIFIER_REDECLARATION,
     ILLEGAL_TOP_LEVEL_STATEMENT,
     ILLEGAL_MODULE_STATEMENT_LOCATION,
+    DUPLICATE_MODULE_STATEMENT,
 };
 
 using SemaDiagnostic = Diagnostic<SemaError>;

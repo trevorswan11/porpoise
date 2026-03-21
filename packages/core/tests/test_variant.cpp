@@ -20,11 +20,11 @@ TEST_CASE("Variant visitor") {
     };
 
     one_of_many = expected_string;
-    REQUIRE(std::visit(visitor, one_of_many));
+    CHECK(std::visit(visitor, one_of_many));
     one_of_many = expected_int;
-    REQUIRE(std::visit(visitor, one_of_many));
+    CHECK(std::visit(visitor, one_of_many));
     one_of_many = expected_double;
-    REQUIRE(std::visit(visitor, one_of_many));
+    CHECK(std::visit(visitor, one_of_many));
 }
 
 } // namespace porpoise::tests

@@ -123,8 +123,7 @@ TEST_CASE("Function missing return type") {
         "fn(*mut this, a: A, b: *B, ): ;",
         syntax::ParserDiagnostic{"No prefix parse function for SEMICOLON(;) found",
                                  syntax::ParserError::MISSING_PREFIX_PARSER,
-                                 1,
-                                 31});
+                                 std::pair{1uz, 31uz}});
 }
 
 TEST_CASE("Function parameter missing type") {

@@ -1,8 +1,8 @@
 #include <catch2/catch_test_macros.hpp>
 
-#include "ast/expressions/primitive.hpp"
 #include "helpers/ast.hpp"
 
+#include "ast/expressions/primitive.hpp"
 #include "ast/statements/defer.hpp"
 
 namespace porpoise::tests {

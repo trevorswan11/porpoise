@@ -15,8 +15,8 @@ TEST_CASE("Promotion of invalid tokens") {
     const Token tok{TokenType::INT_10, input, 0, 0};
 
     const auto promoted = tok.promote();
-    REQUIRE_FALSE(promoted);
-    REQUIRE(promoted.error() == Diagnostic{TokenError::NON_STRING_TOKEN, 0, 0});
+    CHECK_FALSE(promoted);
+    CHECK(promoted.error() == Diagnostic{TokenError::NON_STRING_TOKEN, 0, 0});
 }
 
 TEST_CASE("Promotion of standard string literals") {
@@ -25,9 +25,9 @@ TEST_CASE("Promotion of standard string literals") {
         const Token tok = {TokenType::STRING, input, 0, 0};
 
         const auto promoted = tok.promote();
-        REQUIRE(promoted);
+        CHECK(promoted);
         const auto expected{"Hello, World!"};
-        REQUIRE(expected == *promoted);
+        CHECK(expected == *promoted);
     }
 
     SECTION("Escaped case") {
@@ -35,9 +35,9 @@ TEST_CASE("Promotion of standard string literals") {
         const Token tok{TokenType::STRING, input, 0, 0};
 
         const auto promoted = tok.promote();
-        REQUIRE(promoted);
+        CHECK(promoted);
         const auto expected{R"("Hello, World!")"};
-        REQUIRE(expected == *promoted);
+        CHECK(expected == *promoted);
     }
 
     SECTION("Empty case") {
@@ -45,9 +45,9 @@ TEST_CASE("Promotion of standard string literals") {
         const Token tok{TokenType::STRING, input, 0, 0};
 
         const auto promoted = tok.promote();
-        REQUIRE(promoted);
+        CHECK(promoted);
         const std::string expected;
-        REQUIRE(expected == *promoted);
+        CHECK(expected == *promoted);
     }
 
     SECTION("Malformed case") {
@@ -55,8 +55,8 @@ TEST_CASE("Promotion of standard string literals") {
         const Token tok{TokenType::STRING, input, 0, 0};
 
         const auto promoted = tok.promote();
-        REQUIRE_FALSE(promoted);
-        REQUIRE(promoted.error() == Diagnostic{TokenError::UNEXPECTED_CHAR, 0, 0});
+        CHECK_FALSE(promoted);
+        CHECK(promoted.error() == Diagnostic{TokenError::UNEXPECTED_CHAR, 0, 0});
     }
 }
 
@@ -66,9 +66,9 @@ TEST_CASE("Promotion of multiline literals") {
         const Token tok{TokenType::MULTILINE_STRING, input, 0, 0};
 
         const auto promoted = tok.promote();
-        REQUIRE(promoted);
+        CHECK(promoted);
         const auto expected = R"(Hello,"World!")";
-        REQUIRE(expected == *promoted);
+        CHECK(expected == *promoted);
     }
 
     SECTION("Normal case newline") {
@@ -76,9 +76,9 @@ TEST_CASE("Promotion of multiline literals") {
         const Token tok{TokenType::MULTILINE_STRING, input, 0, 0};
 
         const auto promoted = tok.promote();
-        REQUIRE(promoted);
+        CHECK(promoted);
         const auto expected = "Hello,\nWorld!\n";
-        REQUIRE(expected == *promoted);
+        CHECK(expected == *promoted);
     }
 
     SECTION("Empty case") {
@@ -86,9 +86,9 @@ TEST_CASE("Promotion of multiline literals") {
         const Token tok{TokenType::MULTILINE_STRING, input, 0, 0};
 
         const auto promoted = tok.promote();
-        REQUIRE(promoted);
+        CHECK(promoted);
         const std::string expected;
-        REQUIRE(expected == *promoted);
+        CHECK(expected == *promoted);
     }
 }
 
@@ -97,7 +97,7 @@ TEST_CASE("Token formatting") {
 
     const auto expected{R"(STRING("Hello, World!") [1, 24])"};
     const auto actual = fmt::format("{}", tok);
-    REQUIRE(expected == actual);
+    CHECK(expected == actual);
 }
 
 } // namespace porpoise::tests

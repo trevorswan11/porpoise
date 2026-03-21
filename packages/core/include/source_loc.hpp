@@ -27,6 +27,12 @@ concept Locateable = requires(T t) {
     { SourceInfo<T>::get(t) } -> std::same_as<SourceLocation>;
 };
 
+template <> struct SourceInfo<std::pair<usize, usize>> {
+    static auto get(const std::pair<usize, usize>& p) noexcept -> SourceLocation {
+        return {p.first, p.second};
+    }
+};
+
 } // namespace porpoise
 
 template <> struct fmt::formatter<porpoise::SourceLocation> {

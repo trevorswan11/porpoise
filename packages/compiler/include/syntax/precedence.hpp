@@ -4,10 +4,10 @@
 #include <array>
 #include <utility>
 
+#include "syntax/token.hpp"
+
 #include "optional.hpp"
 #include "types.hpp"
-
-#include "syntax/token.hpp"
 
 namespace porpoise::syntax {
 

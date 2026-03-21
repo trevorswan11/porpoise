@@ -89,8 +89,7 @@ TEST_CASE("Missing while condition") {
         syntax::ParserDiagnostic{syntax::ParserError::WHILE_MISSING_CONDITION, 1, 1},
         syntax::ParserDiagnostic{"No prefix parse function for RBRACE(}) found",
                                  syntax::ParserError::MISSING_PREFIX_PARSER,
-                                 1,
-                                 13});
+                                 std::pair{1uz, 13uz}});
 }
 
 TEST_CASE("Unclosed while body") {
@@ -98,8 +97,7 @@ TEST_CASE("Unclosed while body") {
         "while (true) {;",
         syntax::ParserDiagnostic{"No prefix parse function for SEMICOLON(;) found",
                                  syntax::ParserError::MISSING_PREFIX_PARSER,
-                                 1,
-                                 15});
+                                 std::pair{1uz, 15uz}});
 }
 
 TEST_CASE("Unclosed while condition") {
@@ -129,8 +127,7 @@ TEST_CASE("Illegal while-else clause") {
         "while (true) : (i += 1) {} else;",
         syntax::ParserDiagnostic{"No prefix parse function for SEMICOLON(;) found",
                                  syntax::ParserError::MISSING_PREFIX_PARSER,
-                                 1,
-                                 32});
+                                 std::pair{1uz, 32uz}});
 }
 
 } // namespace porpoise::tests

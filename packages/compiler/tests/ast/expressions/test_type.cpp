@@ -125,8 +125,7 @@ TEST_CASE("Volatile restricted to declarations") {
         "var a: volatile int;",
         syntax::ParserDiagnostic{"No prefix parse function for VOLATILE(volatile) found",
                                  syntax::ParserError::MISSING_PREFIX_PARSER,
-                                 1,
-                                 8});
+                                 std::pair{1uz, 8uz}});
 }
 
 TEST_CASE("Array type requirement") {

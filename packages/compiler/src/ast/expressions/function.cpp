@@ -7,7 +7,6 @@
 #include "ast/expressions/type.hpp"
 #include "ast/statements/block.hpp"
 #include "ast/visitor.hpp"
-#include "optional.hpp"
 
 namespace porpoise::ast {
 

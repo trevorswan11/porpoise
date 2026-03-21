@@ -34,8 +34,7 @@ TEST_CASE("Malformed discardees") {
             "_ = import std;",
             syntax::ParserDiagnostic{"No prefix parse function for IMPORT(import) found",
                                      syntax::ParserError::MISSING_PREFIX_PARSER,
-                                     1,
-                                     5});
+                                     std::pair{1uz, 5uz}});
     }
 
     SECTION("Misplaced incorrect statement") {
@@ -43,8 +42,7 @@ TEST_CASE("Malformed discardees") {
             "_ = import 3;",
             syntax::ParserDiagnostic{"No prefix parse function for IMPORT(import) found",
                                      syntax::ParserError::MISSING_PREFIX_PARSER,
-                                     1,
-                                     5});
+                                     std::pair{1uz, 5uz}});
     }
 }
 

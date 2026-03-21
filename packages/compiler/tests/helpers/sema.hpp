@@ -12,28 +12,40 @@
 #include "sema/error.hpp"
 #include "sema/symbol.hpp"
 
+#include "ast/statements/declaration.hpp"
+#include "ast/statements/import.hpp"
+#include "ast/statements/using.hpp"
+
 #include "syntax/parser.hpp"
 
 namespace porpoise::tests::helpers {
 
 // Verifies that the collectors output matches the provided pairs
 template <typename... KVs>
-    requires(std::same_as<KVs, sema::SymbolTable::KV> && ...)
-auto test_collector(std::string_view input, KVs&&... kvs) -> void {
+auto test_collector(std::string_view input, bool is_module, KVs&&... kvs) -> void {
     syntax::Parser p{input};
     auto [ast, parser_errors] = p.consume();
-    REQUIRE_FALSE(ast.empty());
+    CHECK_FALSE(ast.empty());
     check_errors<syntax::ParserDiagnostic>(parser_errors);
 
     auto [actual, errors] = sema::SymbolCollector::collect(ast);
     check_errors<sema::SemaDiagnostic>(errors);
-    REQUIRE(actual.size() == sizeof...(KVs));
+    CHECK(actual.size() == sizeof...(KVs));
+    CHECK(actual.is_module() == is_module);
 
-    sema::SymbolTable expected;
-    ([&expected](auto&& kv) { REQUIRE(expected.insert(kv.first, kv.second).has_value()); }(
-         std::forward<KVs>(kvs)),
-     ...);
-    REQUIRE(expected == actual);
+    (
+        [&](auto&& kv) mutable {
+            CHECK(
+                kv.second
+                    .template any<ast::DeclStatement, ast::ImportStatement, ast::UsingStatement>());
+
+            CHECK(actual.has(kv.first));
+            const auto opt = actual.get_opt(kv.first);
+            CHECK(opt.has_value());
+            const sema::Symbol expected{kv.first, &kv.second};
+            CHECK(*opt == expected);
+        }(std::forward<KVs>(kvs)),
+        ...);
 }
 
 // Tests a semantically failing input against the expected generated errors
@@ -42,8 +54,8 @@ template <typename... Ds>
 auto test_collector_fail(std::string_view failing, Ds&&... expected_diagnostics) -> void {
     syntax::Parser p{failing};
     auto [ast, parser_errors] = p.consume();
-    REQUIRE_FALSE(ast.empty());
-    REQUIRE(parser_errors.empty());
+    CHECK_FALSE(ast.empty());
+    CHECK(parser_errors.empty());
 
     std::array expected_arr{std::forward<Ds>(expected_diagnostics)...};
     const auto expected_count = sizeof...(Ds);
@@ -51,9 +63,9 @@ auto test_collector_fail(std::string_view failing, Ds&&... expected_diagnostics)
     auto [_, errors] = sema::SymbolCollector::collect(ast);
     if (errors.size() != expected_count) {
         for (const auto& e : errors) { fmt::println("{}", e); }
-        REQUIRE(errors.size() == expected_count);
+        CHECK(errors.size() == expected_count);
     }
-    REQUIRE(std::ranges::equal(errors, expected_arr));
+    CHECK(std::ranges::equal(errors, expected_arr));
 }
 
 } // namespace porpoise::tests::helpers

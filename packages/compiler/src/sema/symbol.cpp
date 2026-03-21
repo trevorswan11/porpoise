@@ -49,15 +49,4 @@ auto SymbolTable::has(std::string_view name) const noexcept -> bool {
     return symbols_.contains(name);
 }
 
-auto SymbolTable::is_equal(const SymbolTable& other) const noexcept -> bool {
-    if (size() != other.size()) { return false; }
-    if (is_module_ != other.is_module_) { return false; }
-
-    for (const auto& [name, lhs_symbol] : *this) {
-        auto rhs_symbol = other.get_opt(name);
-        if (!rhs_symbol || !(lhs_symbol == *rhs_symbol)) { return false; }
-    }
-    return true;
-}
-
 } // namespace porpoise::sema

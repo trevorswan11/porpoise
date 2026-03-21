@@ -68,8 +68,7 @@ TEST_CASE("Match without condition") {
         syntax::ParserDiagnostic{syntax::ParserError::MATCH_EXPR_MISSING_CONDITION, 1, 1},
         syntax::ParserDiagnostic{"No prefix parse function for RBRACE(}) found",
                                  syntax::ParserError::MISSING_PREFIX_PARSER,
-                                 1,
-                                 20});
+                                 std::pair{1uz, 20uz}});
 
     helpers::test_parser_fail(
         "match { b => c; };",
@@ -77,8 +76,7 @@ TEST_CASE("Match without condition") {
             "Expected token LPAREN, found LBRACE", syntax::ParserError::UNEXPECTED_TOKEN, 1, 7},
         syntax::ParserDiagnostic{"No prefix parse function for RBRACE(}) found",
                                  syntax::ParserError::MISSING_PREFIX_PARSER,
-                                 1,
-                                 17});
+                                 std::pair{1uz, 17uz}});
 }
 
 TEST_CASE("Armless match expression") {
@@ -93,8 +91,7 @@ TEST_CASE("Malformed arm LHS") {
             "Expected token LPAREN, found LBRACE", syntax::ParserError::UNEXPECTED_TOKEN, 1, 7},
         syntax::ParserDiagnostic{"No prefix parse function for RBRACE(}) found",
                                  syntax::ParserError::MISSING_PREFIX_PARSER,
-                                 1,
-                                 16});
+                                 std::pair{1uz, 16uz}});
 }
 
 TEST_CASE("Illegal match arm rhs") {
@@ -110,8 +107,7 @@ TEST_CASE("Arm missing fat arrow") {
             "Expected token FAT_ARROW, found IDENT", syntax::ParserError::UNEXPECTED_TOKEN, 1, 15},
         syntax::ParserDiagnostic{"No prefix parse function for RBRACE(}) found",
                                  syntax::ParserError::MISSING_PREFIX_PARSER,
-                                 1,
-                                 18});
+                                 std::pair{1uz, 18uz}});
 }
 
 TEST_CASE("Illegal match alternate") {

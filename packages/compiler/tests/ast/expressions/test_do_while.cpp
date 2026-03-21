@@ -1,8 +1,9 @@
 #include <catch2/catch_test_macros.hpp>
 
+#include "helpers/ast.hpp"
+
 #include "ast/expressions/do_while.hpp"
 #include "ast/expressions/primitive.hpp"
-#include "helpers/ast.hpp"
 
 namespace porpoise::tests {
 
@@ -32,16 +33,14 @@ TEST_CASE("Unclosed do-while body") {
     helpers::test_parser_fail("do { while (true);",
                               syntax::ParserDiagnostic{"Expected token LBRACE, found SEMICOLON",
                                                        syntax::ParserError::UNEXPECTED_TOKEN,
-                                                       1,
-                                                       18});
+                                                       std::pair{1uz, 18uz}});
 }
 
 TEST_CASE("Unclosed do-while condition") {
     helpers::test_parser_fail("do {a; } while (true;",
                               syntax::ParserDiagnostic{"Expected token RPAREN, found SEMICOLON",
                                                        syntax::ParserError::UNEXPECTED_TOKEN,
-                                                       1,
-                                                       21});
+                                                       std::pair{1uz, 21uz}});
 }
 
 } // namespace porpoise::tests

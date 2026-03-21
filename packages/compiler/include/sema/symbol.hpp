@@ -115,8 +115,7 @@ class SymbolTable {
 
     // Treat this symbol table as an importable module in future passes
     auto indicate_module() noexcept -> void { is_module_ = true; }
-
-    MAKE_EQ_DELEGATION(SymbolTable)
+    auto is_module() const noexcept -> bool { return is_module_; }
 
   private:
     Table symbols_;

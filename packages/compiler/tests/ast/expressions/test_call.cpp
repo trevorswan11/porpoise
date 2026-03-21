@@ -1,9 +1,9 @@
 #include <catch2/catch_test_macros.hpp>
 
-#include "ast/expressions/prefix.hpp"
 #include "helpers/ast.hpp"
 
 #include "ast/expressions/call.hpp"
+#include "ast/expressions/prefix.hpp"
 #include "ast/expressions/primitive.hpp"
 
 #include "syntax/operators.hpp"

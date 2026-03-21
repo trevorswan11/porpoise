@@ -38,24 +38,21 @@ TEST_CASE("Incorrectly terminated jumps") {
         helpers::test_parser_fail(input,
                                   syntax::ParserDiagnostic{"Expected token SEMICOLON, found END",
                                                            syntax::ParserError::UNEXPECTED_TOKEN,
-                                                           1,
-                                                           input.size() + 1});
+                                                           std::pair{1uz, input.size() + 1}});
     }
 
     helpers::test_parser_fail(
         "return return",
         syntax::ParserDiagnostic{"No prefix parse function for RETURN(return) found",
                                  syntax::ParserError::MISSING_PREFIX_PARSER,
-                                 1,
-                                 8});
+                                 std::pair{1uz, 8uz}});
 }
 
 TEST_CASE("Illegal control flow") {
     helpers::test_parser_fail("continue 4;",
                               syntax::ParserDiagnostic{"Expected token SEMICOLON, found INT_10",
                                                        syntax::ParserError::UNEXPECTED_TOKEN,
-                                                       1,
-                                                       10});
+                                                       std::pair{1uz, 10uz}});
 
     helpers::test_parser_fail(
         "break 4;",
