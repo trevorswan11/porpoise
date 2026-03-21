@@ -7,7 +7,6 @@
 #include "ast/expressions/type.hpp"
 #include "ast/statements/block.hpp"
 #include "ast/visitor.hpp"
-#include "optional.hpp"
 
 namespace porpoise::ast {
 
@@ -27,7 +26,7 @@ auto SelfParameter::is_equal(const SelfParameter& other) const noexcept -> bool 
     return optional::safe_eq<TypeModifier>(modifier_, other.modifier_) && *ident_ == *other.ident_;
 }
 
-FunctionExpression::FunctionExpression(const Token&                   start_token,
+FunctionExpression::FunctionExpression(const syntax::Token&           start_token,
                                        Optional<SelfParameter>        self,
                                        std::vector<FunctionParameter> parameters,
                                        ExplicitType&&                 return_type,
@@ -38,29 +37,30 @@ FunctionExpression::~FunctionExpression() = default;
 
 auto FunctionExpression::accept(Visitor& v) const -> void { v.visit(*this); }
 
-auto FunctionExpression::parse(Parser& parser) -> Expected<Box<Expression>, ParserDiagnostic> {
+auto FunctionExpression::parse(syntax::Parser& parser)
+    -> Expected<Box<Expression>, syntax::ParserDiagnostic> {
     const auto start_token = parser.current_token();
-    TRY(parser.expect_peek(TokenType::LPAREN));
+    TRY(parser.expect_peek(syntax::TokenType::LPAREN));
 
     // Parse the definition now that we're at the fn token
     Optional<SelfParameter>        self;
     std::vector<FunctionParameter> parameters;
-    if (parser.peek_token_is(TokenType::RPAREN)) {
+    if (parser.peek_token_is(syntax::TokenType::RPAREN)) {
         parser.advance();
     } else {
         // The 'self' parameter can be a value type, ref, or mutable ref
         parser.advance();
         auto self_modifier = TypeModifier::from_token(parser.current_token());
-        if (self_modifier.is_value() &&
-            (parser.peek_token_is(TokenType::COMMA) || parser.peek_token_is(TokenType::RPAREN))) {
+        if (self_modifier.is_value() && (parser.peek_token_is(syntax::TokenType::COMMA) ||
+                                         parser.peek_token_is(syntax::TokenType::RPAREN))) {
             self.emplace(SelfParameter{
                 {}, downcast<IdentifierExpression>(TRY(IdentifierExpression::parse(parser)))});
 
             // Still end on a comma
-            if (!parser.peek_token_is(TokenType::RPAREN)) {
-                TRY(parser.expect_peek(TokenType::COMMA));
+            if (!parser.peek_token_is(syntax::TokenType::RPAREN)) {
+                TRY(parser.expect_peek(syntax::TokenType::COMMA));
             }
-        } else if (!self_modifier.is_value() && parser.peek_token_is(TokenType::IDENT)) {
+        } else if (!self_modifier.is_value() && parser.peek_token_is(syntax::TokenType::IDENT)) {
             // Move up to the ident before parsing it
             parser.advance();
             self.emplace(SelfParameter{
@@ -68,14 +68,15 @@ auto FunctionExpression::parse(Parser& parser) -> Expected<Box<Expression>, Pars
                 downcast<IdentifierExpression>(TRY(IdentifierExpression::parse(parser)))});
 
             // Move to the comma if present
-            if (!parser.peek_token_is(TokenType::RPAREN)) {
-                TRY(parser.expect_peek(TokenType::COMMA));
+            if (!parser.peek_token_is(syntax::TokenType::RPAREN)) {
+                TRY(parser.expect_peek(syntax::TokenType::COMMA));
             }
         }
 
         // The loop starts either on an LPAREN or COMMA
         bool first = true;
-        while (!parser.peek_token_is(TokenType::RPAREN) && !parser.peek_token_is(TokenType::END)) {
+        while (!parser.peek_token_is(syntax::TokenType::RPAREN) &&
+               !parser.peek_token_is(syntax::TokenType::END)) {
             // If there was no self parameter then we can't advance on the first pass
             if (!first || self.has_value()) { parser.advance(); }
             auto name = downcast<IdentifierExpression>(TRY(IdentifierExpression::parse(parser)));
@@ -84,39 +85,43 @@ auto FunctionExpression::parse(Parser& parser) -> Expected<Box<Expression>, Pars
 
             // There are no default values for parameters, and they must be explicitly typed
             if (initialized || !type->has_explicit_type()) {
-                return make_parser_unexpected(ParserError::FUNCTION_PARAMETER_HAS_DEFAULT_VALUE,
-                                              type->get_token());
+                return make_parser_unexpected(
+                    syntax::ParserError::FUNCTION_PARAMETER_HAS_DEFAULT_VALUE, type->get_token());
             }
 
             const auto& explicit_type = type->get_explicit_type();
             if (explicit_type.is_ident_type()) {
                 // noreturn is not allowed for parameters
-                if (explicit_type.get_ident_type().get_token().type == TokenType::NORETURN) {
-                    return make_parser_unexpected(ParserError::FUNCTION_PARAMETER_IS_NORETURN,
-                                                  type->get_token());
+                if (explicit_type.get_ident_type().get_token().type ==
+                    syntax::TokenType::NORETURN) {
+                    return make_parser_unexpected(
+                        syntax::ParserError::FUNCTION_PARAMETER_IS_NORETURN, type->get_token());
                 }
             }
 
             parameters.emplace_back(std::move(name), std::move(*(type->explicit_)));
-            if (!parser.peek_token_is(TokenType::RPAREN)) {
-                TRY(parser.expect_peek(TokenType::COMMA));
+            if (!parser.peek_token_is(syntax::TokenType::RPAREN)) {
+                TRY(parser.expect_peek(syntax::TokenType::COMMA));
             }
             first = false;
         }
-        TRY(parser.expect_peek(TokenType::RPAREN));
+        TRY(parser.expect_peek(syntax::TokenType::RPAREN));
     }
 
-    TRY(parser.expect_peek(TokenType::COLON));
+    TRY(parser.expect_peek(syntax::TokenType::COLON));
     auto return_type = TRY(ExplicitType::parse(parser));
 
     // If there is opening brace then just return without a body
-    if (!parser.peek_token_is(TokenType::LBRACE)) {
-        return make_box<FunctionExpression>(
-            start_token, std::move(self), std::move(parameters), std::move(return_type), nullopt);
+    if (!parser.peek_token_is(syntax::TokenType::LBRACE)) {
+        return make_box<FunctionExpression>(start_token,
+                                            std::move(self),
+                                            std::move(parameters),
+                                            std::move(return_type),
+                                            std::nullopt);
     }
 
     // Otherwise there must be a well-formed block
-    TRY(parser.expect_peek(TokenType::LBRACE));
+    TRY(parser.expect_peek(syntax::TokenType::LBRACE));
     auto body = downcast<BlockStatement>(TRY(BlockStatement::parse(parser)));
     return make_box<FunctionExpression>(start_token,
                                         std::move(self),

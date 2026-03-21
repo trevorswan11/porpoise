@@ -25,7 +25,7 @@ auto CallArgument::is_equal(const CallArgument& other) const noexcept -> bool {
                       argument_);
 }
 
-CallExpression::CallExpression(const Token&              start_token,
+CallExpression::CallExpression(const syntax::Token&      start_token,
                                Box<Expression>           function,
                                std::vector<CallArgument> arguments) noexcept
     : ExprBase{start_token}, function_{std::move(function)}, arguments_{std::move(arguments)} {}
@@ -33,13 +33,13 @@ CallExpression::~CallExpression() = default;
 
 auto CallExpression::accept(Visitor& v) const -> void { v.visit(*this); }
 
-auto CallExpression::parse(Parser& parser, Box<Expression> function)
-    -> Expected<Box<Expression>, ParserDiagnostic> {
+auto CallExpression::parse(syntax::Parser& parser, Box<Expression> function)
+    -> Expected<Box<Expression>, syntax::ParserDiagnostic> {
     std::vector<CallArgument> arguments;
     // Guaranteed to roll back if there is an error
     const auto parse_expr_unsuccessful = [&]() {
         // Try an expression first to prevent ambiguity between reference operators
-        Parser::Transaction transaction{parser};
+        syntax::Parser::Transaction transaction{parser};
         parser.advance();
         if (auto expr = parser.parse_expression()) {
             transaction.commit();
@@ -49,17 +49,20 @@ auto CallExpression::parse(Parser& parser, Box<Expression> function)
         return true;
     };
 
-    while (!parser.peek_token_is(TokenType::RPAREN) && !parser.peek_token_is(TokenType::END)) {
-        if (parser.peek_token_is(TokenType::COMMA)) {
-            return make_parser_unexpected(ParserError::COMMA_WITH_MISSING_CALL_ARGUMENT,
+    while (!parser.peek_token_is(syntax::TokenType::RPAREN) &&
+           !parser.peek_token_is(syntax::TokenType::END)) {
+        if (parser.peek_token_is(syntax::TokenType::COMMA)) {
+            return make_parser_unexpected(syntax::ParserError::COMMA_WITH_MISSING_CALL_ARGUMENT,
                                           parser.peek_token());
         }
 
         // Advance cannot be called here since explicit type relies on peek, not current
         if (parse_expr_unsuccessful()) { arguments.emplace_back(TRY(ExplicitType::parse(parser))); }
-        if (!parser.peek_token_is(TokenType::RPAREN)) { TRY(parser.expect_peek(TokenType::COMMA)); }
+        if (!parser.peek_token_is(syntax::TokenType::RPAREN)) {
+            TRY(parser.expect_peek(syntax::TokenType::COMMA));
+        }
     }
-    TRY(parser.expect_peek(TokenType::RPAREN));
+    TRY(parser.expect_peek(syntax::TokenType::RPAREN));
 
     return make_box<CallExpression>(
         function->get_token(), std::move(function), std::move(arguments));

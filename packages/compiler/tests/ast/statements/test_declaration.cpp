@@ -6,65 +6,71 @@
 
 #include "array.hpp"
 
-#include "ast/helpers.hpp"
+#include "helpers/ast.hpp"
 
 #include "ast/expressions/function.hpp"
 #include "ast/expressions/primitive.hpp"
 #include "ast/expressions/type.hpp"
 #include "ast/statements/declaration.hpp"
 
-#include "lexer/operators.hpp"
+#include "syntax/operators.hpp"
 
 namespace porpoise::tests {
 
-namespace mods = helpers::type_modifiers;
+namespace keywords  = syntax::keywords;
+namespace operators = syntax::operators;
+namespace mods      = helpers::type_modifiers;
 
 TEST_CASE("Explicit primitive declaration") {
-    helpers::test_stmt("var a: int = 2;",
-                       ast::DeclStatement{
-                           Token{keywords::VAR},
-                           helpers::make_ident("a"),
-                           make_box<ast::TypeExpression>(Token{TokenType::COLON, ":"},
-                                                         ast::ExplicitType{
-                                                             mods::BASE,
-                                                             helpers::make_ident("int"),
-                                                         }),
-                           make_box<ast::SignedIntegerExpression>(Token{TokenType::INT_10, "2"}, 2),
-                           ast::DeclModifiers::VARIABLE,
-                       });
+    helpers::test_stmt(
+        "var a: int = 2;",
+        ast::DeclStatement{
+            syntax::Token{keywords::VAR},
+            helpers::make_ident("a"),
+            make_box<ast::TypeExpression>(syntax::Token{syntax::TokenType::COLON, ":"},
+                                          ast::ExplicitType{
+                                              mods::BASE,
+                                              helpers::make_ident("int"),
+                                          }),
+            make_box<ast::SignedIntegerExpression>(syntax::Token{syntax::TokenType::INT_10, "2"},
+                                                   2),
+            ast::DeclModifiers::VARIABLE,
+        });
 }
 
 TEST_CASE("Explicit non-primitive declaration") {
-    helpers::test_stmt("var a: Foo = bar;",
-                       ast::DeclStatement{
-                           Token{keywords::VAR},
-                           helpers::make_ident("a"),
-                           make_box<ast::TypeExpression>(Token{TokenType::COLON, ":"},
-                                                         ast::ExplicitType{
-                                                             mods::BASE,
-                                                             helpers::make_ident("Foo"),
-                                                         }),
-                           helpers::make_ident("bar"),
-                           ast::DeclModifiers::VARIABLE,
-                       });
+    helpers::test_stmt(
+        "var a: Foo = bar;",
+        ast::DeclStatement{
+            syntax::Token{keywords::VAR},
+            helpers::make_ident("a"),
+            make_box<ast::TypeExpression>(syntax::Token{syntax::TokenType::COLON, ":"},
+                                          ast::ExplicitType{
+                                              mods::BASE,
+                                              helpers::make_ident("Foo"),
+                                          }),
+            helpers::make_ident("bar"),
+            ast::DeclModifiers::VARIABLE,
+        });
 }
 
 TEST_CASE("Implicit comptime declaration") {
     helpers::test_stmt(
         "comptime SIZE := 2uz;",
         ast::DeclStatement{
-            Token{keywords::COMPTIME},
+            syntax::Token{keywords::COMPTIME},
             helpers::make_ident("SIZE"),
-            make_box<ast::TypeExpression>(Token{operators::WALRUS}, nullopt),
-            make_box<ast::USizeIntegerExpression>(Token{TokenType::UZINT_10, "2uz"}, 2uz),
+            make_box<ast::TypeExpression>(syntax::Token{operators::WALRUS}, std::nullopt),
+            make_box<ast::USizeIntegerExpression>(syntax::Token{syntax::TokenType::UZINT_10, "2uz"},
+                                                  2uz),
             ast::DeclModifiers::COMPTIME,
         });
 }
 
 TEST_CASE("Correct declaration modifiers") {
-    const auto test = [](std::initializer_list<Keyword> modifiers,
-                         ast::DeclModifiers             flags,
-                         bool                           initialized = true) {
+    const auto test = [](std::initializer_list<syntax::Keyword> modifiers,
+                         ast::DeclModifiers                     flags,
+                         bool                                   initialized = true) {
         std::stringstream ss;
         for (const auto& keyword : modifiers) { ss << keyword.first << " "; }
         if (initialized) {
@@ -72,26 +78,28 @@ TEST_CASE("Correct declaration modifiers") {
             helpers::test_stmt(
                 ss.view(),
                 ast::DeclStatement{
-                    Token{*modifiers.begin()},
+                    syntax::Token{*modifiers.begin()},
                     helpers::make_ident("a"),
-                    make_box<ast::TypeExpression>(Token{operators::WALRUS}, nullopt),
-                    make_box<ast::SignedIntegerExpression>(Token{TokenType::INT_10, "2"}, 2),
+                    make_box<ast::TypeExpression>(syntax::Token{operators::WALRUS}, std::nullopt),
+                    make_box<ast::SignedIntegerExpression>(
+                        syntax::Token{syntax::TokenType::INT_10, "2"}, 2),
                     flags,
                 });
         } else {
             ss << " a: int;";
-            helpers::test_stmt(ss.view(),
-                               ast::DeclStatement{
-                                   Token{*modifiers.begin()},
-                                   helpers::make_ident("a"),
-                                   make_box<ast::TypeExpression>(Token{TokenType::COLON, ":"},
-                                                                 ast::ExplicitType{
-                                                                     mods::BASE,
-                                                                     helpers::make_ident("int"),
-                                                                 }),
-                                   nullopt,
-                                   flags,
-                               });
+            helpers::test_stmt(
+                ss.view(),
+                ast::DeclStatement{
+                    syntax::Token{*modifiers.begin()},
+                    helpers::make_ident("a"),
+                    make_box<ast::TypeExpression>(syntax::Token{syntax::TokenType::COLON, ":"},
+                                                  ast::ExplicitType{
+                                                      mods::BASE,
+                                                      helpers::make_ident("int"),
+                                                  }),
+                    std::nullopt,
+                    flags,
+                });
         }
     };
 
@@ -116,66 +124,66 @@ TEST_CASE("Correct declaration modifiers") {
          false);
 }
 
-static auto test_decl_fail(std::initializer_list<Keyword> modifiers,
-                           ParserDiagnostic&&             expected_error,
-                           std::string_view               init = "a := 2;") -> void {
+static auto test_decl_fail(std::initializer_list<syntax::Keyword> modifiers,
+                           syntax::ParserDiagnostic&&             expected_error,
+                           std::string_view                       init = "a := 2;") -> void {
     std::stringstream ss;
     for (const auto& keyword : modifiers) { ss << keyword.first << " "; }
     ss << init;
-    helpers::test_fail(ss.view(), std::move(expected_error));
+    helpers::test_parser_fail(ss.view(), std::move(expected_error));
 }
 
 TEST_CASE("Mutability restrictions") {
     const auto contending_mut = std::array{keywords::COMPTIME, keywords::VAR, keywords::CONST};
     for (const auto& mut : array::combinations(contending_mut)) {
         test_decl_fail({mut.first, mut.second},
-                       ParserDiagnostic{ParserError::ILLEGAL_DECL_MODIFIERS, 1, 1});
+                       syntax::ParserDiagnostic{syntax::ParserError::ILLEGAL_DECL_MODIFIERS, 1, 1});
     }
     test_decl_fail({keywords::COMPTIME, keywords::VAR, keywords::CONST},
-                   ParserDiagnostic{ParserError::ILLEGAL_DECL_MODIFIERS, 1, 1});
+                   syntax::ParserDiagnostic{syntax::ParserError::ILLEGAL_DECL_MODIFIERS, 1, 1});
 }
 
 TEST_CASE("Comptime restrictions") {
     const auto contending_mut = std::array{keywords::EXTERN, keywords::COMPTIME};
     for (const auto& mut : array::combinations(contending_mut)) {
         test_decl_fail({mut.first, mut.second},
-                       ParserDiagnostic{ParserError::ILLEGAL_DECL_MODIFIERS, 1, 1});
+                       syntax::ParserDiagnostic{syntax::ParserError::ILLEGAL_DECL_MODIFIERS, 1, 1});
     }
     test_decl_fail({keywords::EXTERN, keywords::COMPTIME},
-                   ParserDiagnostic{ParserError::ILLEGAL_DECL_MODIFIERS, 1, 1});
+                   syntax::ParserDiagnostic{syntax::ParserError::ILLEGAL_DECL_MODIFIERS, 1, 1});
 }
 
 TEST_CASE("ABI/Linkage restrictions") {
     const auto contending_mut = std::array{keywords::EXTERN, keywords::EXPORT};
     for (const auto& mut : array::combinations(contending_mut)) {
         test_decl_fail({mut.first, mut.second},
-                       ParserDiagnostic{ParserError::ILLEGAL_DECL_MODIFIERS, 1, 1});
+                       syntax::ParserDiagnostic{syntax::ParserError::ILLEGAL_DECL_MODIFIERS, 1, 1});
     }
     test_decl_fail({keywords::EXTERN, keywords::EXPORT},
-                   ParserDiagnostic{ParserError::ILLEGAL_DECL_MODIFIERS, 1, 1});
+                   syntax::ParserDiagnostic{syntax::ParserError::ILLEGAL_DECL_MODIFIERS, 1, 1});
 }
 
 TEST_CASE("Extern requirements") {
     test_decl_fail({keywords::EXTERN, keywords::CONST},
-                   ParserDiagnostic{ParserError::EXTERN_VALUE_INITIALIZED, 1, 1});
+                   syntax::ParserDiagnostic{syntax::ParserError::EXTERN_VALUE_INITIALIZED, 1, 1});
     test_decl_fail({keywords::EXTERN, keywords::VAR},
-                   ParserDiagnostic{ParserError::EXTERN_VALUE_INITIALIZED, 1, 1});
+                   syntax::ParserDiagnostic{syntax::ParserError::EXTERN_VALUE_INITIALIZED, 1, 1});
 }
 
 TEST_CASE("Constant requirements") {
     test_decl_fail({keywords::CONST},
-                   ParserDiagnostic{ParserError::CONST_DECL_MISSING_VALUE, 1, 1},
+                   syntax::ParserDiagnostic{syntax::ParserError::CONST_DECL_MISSING_VALUE, 1, 1},
                    "a: int;");
     test_decl_fail({keywords::COMPTIME},
-                   ParserDiagnostic{ParserError::CONST_DECL_MISSING_VALUE, 1, 1},
+                   syntax::ParserDiagnostic{syntax::ParserError::CONST_DECL_MISSING_VALUE, 1, 1},
                    "a: int;");
 }
 
 TEST_CASE("Non-terminated decls") {
-    helpers::test_fail(
+    helpers::test_parser_fail(
         "var a: int = 2",
-        ParserDiagnostic{
-            "Expected token SEMICOLON, found END", ParserError::UNEXPECTED_TOKEN, 1, 15});
+        syntax::ParserDiagnostic{
+            "Expected token SEMICOLON, found END", syntax::ParserError::UNEXPECTED_TOKEN, 1, 15});
 }
 
 } // namespace porpoise::tests

@@ -25,15 +25,14 @@ template <typename E>
     requires std::is_scoped_enum_v<E>
 class Diagnostic {
   public:
-    Diagnostic() = delete;
-    explicit Diagnostic(E err) : error_{err} {}
-    explicit Diagnostic(E err, usize line, usize column)
-        : error_{err}, loc_{SourceLocation{line, column}} {}
-    explicit Diagnostic(std::string msg, E err, usize line, usize column)
-        : message_{std::move(msg)}, error_{err}, loc_{SourceLocation{line, column}} {}
+    explicit Diagnostic(E err) noexcept : error_{err} {}
+    explicit Diagnostic(E err, usize line, usize column) noexcept
+        : error_{err}, loc_{{line, column}} {}
+    explicit Diagnostic(std::string msg, E err, usize line, usize column) noexcept
+        : message_{std::move(msg)}, error_{err}, loc_{{line, column}} {}
 
     template <Locateable T>
-    explicit Diagnostic(std::string msg, E err, const T& t)
+    explicit Diagnostic(std::string msg, E err, const T& t) noexcept
         : message_{std::move(msg)}, error_{err}, loc_{SourceInfo<T>::get(t)} {}
 
     template <Locateable T>

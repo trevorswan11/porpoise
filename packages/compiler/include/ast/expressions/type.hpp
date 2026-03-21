@@ -5,7 +5,7 @@
 #include "ast/expressions/type_modifiers.hpp"
 #include "ast/node.hpp"
 
-#include "parser/parser.hpp"
+#include "syntax/parser.hpp"
 
 #include "variant.hpp"
 
@@ -29,9 +29,9 @@ class ExplicitArrayType {
 
     MAKE_OPTIONAL_UNPACKER(dimension, Expression, dimension_, **)
     [[nodiscard]] auto is_null_terminated() const noexcept -> bool { return null_terminated_; }
-    MAKE_AST_GETTER(inner_type, const ExplicitType&, *)
+    MAKE_GETTER(inner_type, const ExplicitType&, *)
 
-    MAKE_AST_DEPENDENT_EQ(ExplicitArrayType)
+    MAKE_EQ_DELEGATION(ExplicitArrayType)
 
   private:
     Optional<Box<Expression>> dimension_;
@@ -54,17 +54,18 @@ class ExplicitType {
 
     MAKE_AST_COPY_MOVE(ExplicitType)
 
-    [[nodiscard]] static auto parse(Parser& parser) -> Expected<ExplicitType, ParserDiagnostic>;
+    [[nodiscard]] static auto parse(syntax::Parser& parser)
+        -> Expected<ExplicitType, syntax::ParserDiagnostic>;
 
-    MAKE_AST_GETTER(modifier, const TypeModifier&, )
-    MAKE_AST_GETTER(type, const ExplicitTypeVariant&, )
+    MAKE_GETTER(modifier, const TypeModifier&)
+    MAKE_GETTER(type, const ExplicitTypeVariant&)
     MAKE_VARIANT_UNPACKER(ident_type, IdentifierExpression, ExplicitIdentType, type_, *std::get)
     MAKE_VARIANT_UNPACKER(function_type, FunctionExpression, ExplicitFunctionType, type_, *std::get)
     MAKE_VARIANT_UNPACKER(array_type, ExplicitArrayType, ExplicitArrayType, type_, std::get)
     MAKE_VARIANT_UNPACKER(
         recursive_type, ExplicitRecursiveType, ExplicitRecursiveType, type_, std::get)
 
-    MAKE_AST_DEPENDENT_EQ(ExplicitType)
+    MAKE_EQ_DELEGATION(ExplicitType)
 
   private:
     TypeModifier        modifier_;
@@ -76,14 +77,14 @@ class TypeExpression : public ExprBase<TypeExpression> {
     static constexpr auto KIND = NodeKind::TYPE_EXPRESSION;
 
   public:
-    explicit TypeExpression(const Token& start_token, Optional<ExplicitType> exp) noexcept;
+    explicit TypeExpression(const syntax::Token& start_token, Optional<ExplicitType> exp) noexcept;
     ~TypeExpression() override;
 
     MAKE_AST_COPY_MOVE(TypeExpression)
 
     auto                      accept(Visitor& v) const -> void override;
-    [[nodiscard]] static auto parse(Parser& parser)
-        -> Expected<std::pair<Box<Expression>, bool>, ParserDiagnostic>;
+    [[nodiscard]] static auto parse(syntax::Parser& parser)
+        -> Expected<std::pair<Box<Expression>, bool>, syntax::ParserDiagnostic>;
 
     MAKE_OPTIONAL_UNPACKER(explicit_type, ExplicitType, explicit_, *)
 

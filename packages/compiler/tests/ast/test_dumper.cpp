@@ -3,7 +3,7 @@
 
 #include <catch2/catch_test_macros.hpp>
 
-#include "ast/helpers.hpp"
+#include "helpers/common.hpp"
 
 #include "ast/ast.hpp"
 #include "ast/dumper.hpp"
@@ -53,14 +53,14 @@ constexpr std::string_view expected{
 };
 
 TEST_CASE("Comprehensive dump") {
-    Parser p{input};
+    syntax::Parser p{input};
     auto [ast, errors] = p.consume();
-    helpers::check_errors<ParserDiagnostic>(errors);
+    helpers::check_errors<syntax::ParserDiagnostic>(errors);
 
     std::ostringstream oss;
     ast::ASTDumper     dumper{oss};
     for (const auto& node : ast) { node->accept(dumper); }
-    REQUIRE(expected == oss.view());
+    CHECK(expected == oss.view());
 }
 
 } // namespace porpoise::tests

@@ -2,6 +2,6 @@
 
 namespace porpoise::tests {
 
-TEST_CASE("Trivial") { REQUIRE(1 == 1); }
+TEST_CASE("Trivial") { CHECK(1 == 1); }
 
 } // namespace porpoise::tests

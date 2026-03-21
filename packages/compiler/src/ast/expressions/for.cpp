@@ -25,7 +25,7 @@ auto ForLoopCapture::is_equal(const ForLoopCapture& other) const noexcept -> boo
     return underlying_ == other.underlying_;
 }
 
-ForLoopExpression::ForLoopExpression(const Token&                 start_token,
+ForLoopExpression::ForLoopExpression(const syntax::Token&         start_token,
                                      std::vector<Box<Expression>> iterables,
                                      std::vector<ForLoopCapture>  captures,
                                      Box<BlockStatement>          block,
@@ -37,33 +37,38 @@ ForLoopExpression::~ForLoopExpression() = default;
 
 auto ForLoopExpression::accept(Visitor& v) const -> void { v.visit(*this); }
 
-auto ForLoopExpression::parse(Parser& parser) -> Expected<Box<Expression>, ParserDiagnostic> {
+auto ForLoopExpression::parse(syntax::Parser& parser)
+    -> Expected<Box<Expression>, syntax::ParserDiagnostic> {
     const auto start_token = parser.current_token();
 
     // Iterables have to be surrounded by parentheses
-    TRY(parser.expect_peek(TokenType::LPAREN));
-    if (parser.peek_token_is(TokenType::RPAREN)) {
-        return make_parser_unexpected(ParserError::FOR_MISSING_ITERABLES, start_token);
+    TRY(parser.expect_peek(syntax::TokenType::LPAREN));
+    if (parser.peek_token_is(syntax::TokenType::RPAREN)) {
+        return make_parser_unexpected(syntax::ParserError::FOR_MISSING_ITERABLES, start_token);
     }
 
     std::vector<Box<Expression>> iterables;
-    while (!parser.peek_token_is(TokenType::RPAREN) && !parser.peek_token_is(TokenType::END)) {
+    while (!parser.peek_token_is(syntax::TokenType::RPAREN) &&
+           !parser.peek_token_is(syntax::TokenType::END)) {
         parser.advance();
 
         auto iterable = TRY(parser.parse_expression());
         iterables.emplace_back(std::move(iterable));
 
-        if (!parser.peek_token_is(TokenType::RPAREN)) { TRY(parser.expect_peek(TokenType::COMMA)); }
+        if (!parser.peek_token_is(syntax::TokenType::RPAREN)) {
+            TRY(parser.expect_peek(syntax::TokenType::COMMA));
+        }
     }
 
-    TRY(parser.expect_peek(TokenType::RPAREN));
+    TRY(parser.expect_peek(syntax::TokenType::RPAREN));
 
     // Captures take on something similar to zig's capture syntax
     std::vector<ForLoopCapture> captures;
-    TRY(parser.expect_peek(TokenType::BW_OR));
-    while (!parser.peek_token_is(TokenType::BW_OR) && !parser.peek_token_is(TokenType::END)) {
+    TRY(parser.expect_peek(syntax::TokenType::BW_OR));
+    while (!parser.peek_token_is(syntax::TokenType::BW_OR) &&
+           !parser.peek_token_is(syntax::TokenType::END)) {
         parser.advance();
-        if (parser.current_token_is(TokenType::UNDERSCORE)) {
+        if (parser.current_token_is(syntax::TokenType::UNDERSCORE)) {
             captures.emplace_back();
         } else {
             // Always check for a modifier and advance past it if present
@@ -74,23 +79,26 @@ auto ForLoopExpression::parse(Parser& parser) -> Expected<Box<Expression>, Parse
             captures.emplace_back(ForLoopCapture::Valued{std::move(modifier), std::move(capture)});
         }
 
-        if (!parser.peek_token_is(TokenType::BW_OR)) { TRY(parser.expect_peek(TokenType::COMMA)); }
+        if (!parser.peek_token_is(syntax::TokenType::BW_OR)) {
+            TRY(parser.expect_peek(syntax::TokenType::COMMA));
+        }
     }
-    TRY(parser.expect_peek(TokenType::BW_OR));
+    TRY(parser.expect_peek(syntax::TokenType::BW_OR));
 
     // Loops must have a well formed block and may have an alternate in non-break cases
-    TRY(parser.expect_peek(TokenType::LBRACE));
+    TRY(parser.expect_peek(syntax::TokenType::LBRACE));
     auto block = downcast<BlockStatement>(TRY(BlockStatement::parse(parser)));
     auto non_break =
-        TRY(parser.try_parse_restricted_alternate(ParserError::ILLEGAL_LOOP_NON_BREAK));
+        TRY(parser.try_parse_restricted_alternate(syntax::ParserError::ILLEGAL_LOOP_NON_BREAK));
 
     // The number of captures must align with the number of iterables
     if (captures.size() != iterables.size()) {
-        return make_parser_unexpected(ParserError::FOR_ITERABLE_CAPTURE_MISMATCH, start_token);
+        return make_parser_unexpected(syntax::ParserError::FOR_ITERABLE_CAPTURE_MISMATCH,
+                                      start_token);
     }
 
     if (block->empty()) {
-        return make_parser_unexpected(ParserError::EMPTY_FOR_LOOP, block->get_token());
+        return make_parser_unexpected(syntax::ParserError::EMPTY_FOR_LOOP, block->get_token());
     }
 
     return make_box<ForLoopExpression>(start_token,

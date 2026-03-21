@@ -9,7 +9,7 @@
 
 #include "ast/node.hpp"
 
-#include "parser/parser.hpp"
+#include "syntax/parser.hpp"
 
 namespace porpoise::ast {
 
@@ -26,17 +26,19 @@ template <typename Derived, typename T> class PrimitiveExpression : public ExprB
     using value_type = T;
 
   public:
-    explicit PrimitiveExpression(const Token& start_token, value_type value) noexcept
+    explicit PrimitiveExpression(const syntax::Token& start_token, value_type value) noexcept
         : ExprBase<Derived>{start_token}, value_{std::move(value)} {}
 
-    static auto parse(Parser& parser) -> Expected<Box<Expression>, ParserDiagnostic>
+    static auto parse(syntax::Parser& parser) -> Expected<Box<Expression>, syntax::ParserDiagnostic>
         requires(!disable_default_parse<Derived>::value)
     {
         const auto start_token = parser.current_token();
-        const auto base        = token_type::to_base(start_token.type);
+        const auto base        = syntax::token_type::to_base(start_token.type);
 
-        const auto* first = start_token.slice.cbegin() + (!base || *base == Base::DECIMAL ? 0 : 2);
-        const auto* last  = start_token.slice.cend() - token_type::suffix_length(start_token.type);
+        const auto* first =
+            start_token.slice.cbegin() + (!base || *base == syntax::Base::DECIMAL ? 0 : 2);
+        const auto* last =
+            start_token.slice.cend() - syntax::token_type::suffix_length(start_token.type);
 
         value_type             v;
         std::from_chars_result result;
@@ -51,14 +53,14 @@ template <typename Derived, typename T> class PrimitiveExpression : public ExprB
 
         assert(result.ec == std::errc::result_out_of_range);
         return make_parser_unexpected(std::is_same_v<value_type, f64>
-                                          ? ParserError::DOUBLE_OVERFLOW
+                                          ? syntax::ParserError::DOUBLE_OVERFLOW
                                           : (std::is_same_v<value_type, f32>
-                                                 ? ParserError::FLOAT_OVERFLOW
-                                                 : ParserError::INTEGER_OVERFLOW),
+                                                 ? syntax::ParserError::FLOAT_OVERFLOW
+                                                 : syntax::ParserError::INTEGER_OVERFLOW),
                                       start_token);
     }
 
-    MAKE_AST_GETTER(value, const value_type&, )
+    MAKE_GETTER(value, const value_type&)
 
   protected:
     auto is_equal(const Node& other) const noexcept -> bool override {
@@ -79,7 +81,8 @@ class StringExpression : public PrimitiveExpression<StringExpression, std::strin
     MAKE_AST_COPY_MOVE(StringExpression)
 
     auto                      accept(Visitor& v) const -> void override;
-    [[nodiscard]] static auto parse(Parser& parser) -> Expected<Box<Expression>, ParserDiagnostic>;
+    [[nodiscard]] static auto parse(syntax::Parser& parser)
+        -> Expected<Box<Expression>, syntax::ParserDiagnostic>;
 };
 template <> struct disable_default_parse<StringExpression> : std::true_type {};
 
@@ -159,7 +162,8 @@ class ByteExpression : public PrimitiveExpression<ByteExpression, byte> {
     MAKE_AST_COPY_MOVE(ByteExpression)
 
     auto                      accept(Visitor& v) const -> void override;
-    [[nodiscard]] static auto parse(Parser& parser) -> Expected<Box<Expression>, ParserDiagnostic>;
+    [[nodiscard]] static auto parse(syntax::Parser& parser)
+        -> Expected<Box<Expression>, syntax::ParserDiagnostic>;
 };
 template <> struct disable_default_parse<ByteExpression> : std::true_type {};
 
@@ -198,7 +202,8 @@ class BoolExpression : public PrimitiveExpression<BoolExpression, bool> {
     MAKE_AST_COPY_MOVE(BoolExpression)
 
     auto                      accept(Visitor& v) const -> void override;
-    [[nodiscard]] static auto parse(Parser& parser) -> Expected<Box<Expression>, ParserDiagnostic>;
+    [[nodiscard]] static auto parse(syntax::Parser& parser)
+        -> Expected<Box<Expression>, syntax::ParserDiagnostic>;
 
     operator bool() const noexcept { return value_; }
 };

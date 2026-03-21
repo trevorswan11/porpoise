@@ -4,12 +4,12 @@
 #include <string_view>
 #include <vector>
 
-#include "lexer/token.hpp"
+#include "syntax/token.hpp"
 
 #include "optional.hpp"
 #include "types.hpp"
 
-namespace porpoise {
+namespace porpoise::syntax {
 
 class Lexer {
   public:
@@ -106,4 +106,4 @@ class Lexer {
     friend class Parser;
 };
 
-} // namespace porpoise
+} // namespace porpoise::syntax

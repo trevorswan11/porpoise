@@ -4,7 +4,7 @@
 
 #include "ast/node.hpp"
 
-#include "parser/parser.hpp"
+#include "syntax/parser.hpp"
 
 namespace porpoise::ast {
 
@@ -16,18 +16,19 @@ class StructExpression : public ExprBase<StructExpression> {
     static constexpr auto KIND = NodeKind::STRUCT_EXPRESSION;
 
   public:
-    explicit StructExpression(const Token&                    start_token,
+    explicit StructExpression(const syntax::Token&            start_token,
                               std::vector<Box<DeclStatement>> members) noexcept;
     ~StructExpression() override;
 
     MAKE_AST_COPY_MOVE(StructExpression)
 
     auto                      accept(Visitor& v) const -> void override;
-    [[nodiscard]] static auto parse(Parser& parser) -> Expected<Box<Expression>, ParserDiagnostic>;
+    [[nodiscard]] static auto parse(syntax::Parser& parser)
+        -> Expected<Box<Expression>, syntax::ParserDiagnostic>;
 
-    MAKE_AST_GETTER(members, std::span<const Box<DeclStatement>>, )
+    MAKE_GETTER(members, std::span<const Box<DeclStatement>>)
     [[nodiscard]] auto is_packed() const noexcept -> bool {
-        return start_token_.type == TokenType::PACKED;
+        return start_token_.type == syntax::TokenType::PACKED;
     }
 
   protected:

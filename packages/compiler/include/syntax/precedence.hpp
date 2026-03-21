@@ -4,12 +4,12 @@
 #include <array>
 #include <utility>
 
+#include "syntax/token.hpp"
+
 #include "optional.hpp"
 #include "types.hpp"
 
-#include "lexer/token.hpp"
-
-namespace porpoise {
+namespace porpoise::syntax {
 
 enum class Precedence : u8 {
     LOWEST,
@@ -74,8 +74,8 @@ constexpr auto ALL_BINDINGS = []() {
 
 constexpr auto get_binding(TokenType tt) noexcept -> Optional<Binding> {
     const auto it = std::ranges::lower_bound(ALL_BINDINGS, tt, {}, &Binding::first);
-    if (it == ALL_BINDINGS.end() || it->first != tt) { return nullopt; }
+    if (it == ALL_BINDINGS.end() || it->first != tt) { return std::nullopt; }
     return Optional<Binding>{*it};
 }
 
-} // namespace porpoise
+} // namespace porpoise::syntax

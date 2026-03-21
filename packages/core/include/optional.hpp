@@ -1,5 +1,6 @@
 #pragma once
 
+#include <cassert>
 #include <memory>
 #include <optional>
 #include <type_traits>
@@ -8,13 +9,15 @@ namespace porpoise {
 
 template <typename T> class OptionalRef {
   public:
+    // cppcheck-suppress-begin noExplicitConstructor
     OptionalRef() noexcept : ptr_{nullptr} {}
-    OptionalRef(std::nullopt_t) noexcept // cppcheck-suppress noExplicitConstructor
-        : ptr_{nullptr} {}
-    OptionalRef(T& ref) noexcept : ptr_{&ref} {} // cppcheck-suppress noExplicitConstructor
+    OptionalRef(std::nullopt_t) noexcept : ptr_{nullptr} {}
+    OptionalRef(T& ref) noexcept : ptr_{&ref} {}
+    OptionalRef(T&&) = delete;
 
-    OptionalRef(T&&)                                            = delete;
-    auto operator=(const OptionalRef&) noexcept -> OptionalRef& = default;
+    template <typename U, std::enable_if_t<std::is_convertible_v<U*, T*>, bool> = false>
+    OptionalRef(const OptionalRef<U>& other) noexcept : ptr_{other.operator->()} {}
+    // cppcheck-suppress-end noExplicitConstructor
 
     [[nodiscard]] auto     has_value() const noexcept -> bool { return ptr_ != nullptr; }
     [[nodiscard]] explicit operator bool() const noexcept { return ptr_ != nullptr; }
@@ -36,18 +39,45 @@ using Optional = std::conditional_t<std::is_reference_v<T>,
                                     OptionalRef<std::remove_reference_t<T>>,
                                     std::optional<T>>;
 
-using std::nullopt;
-
 #define MAKE_OPTIONAL_UNPACKER(name, ReturnType, member, deref)                                  \
     [[nodiscard]] auto get_##name() const noexcept -> const ReturnType& { return deref member; } \
     [[nodiscard]] auto has_##name() const noexcept -> bool { return member.has_value(); }
 
+// A non-null pointer for use when a reference is inappropriate.
+template <typename T>
+    requires(!std::is_reference_v<T>)
+class NonNull {
+  public:
+    // cppcheck-suppress-begin noExplicitConstructor
+    NonNull(T* ptr) noexcept : ptr_{ptr} {
+        assert(ptr_ && "Attempt to create NonNull from nullptr");
+    }
+    NonNull(OptionalRef<T> opt) : ptr_{&opt.value()} {}
+    NonNull(std::nullopt_t) = delete;
+    NonNull(T&&)            = delete;
+
+    template <typename U, std::enable_if_t<std::is_convertible_v<U*, T*>, bool> = false>
+    NonNull(const NonNull<U>& other) noexcept : ptr_{other.get()} {}
+    // cppcheck-suppress-end noExplicitConstructor
+
+    auto operator->() const noexcept -> T* { return ptr_; }
+    auto operator*() const noexcept -> T& { return *ptr_; }
+    auto get() const noexcept -> T* { return ptr_; }
+
+    explicit operator T() const noexcept { return *ptr_; }
+
+  private:
+    T* ptr_;
+};
+
 namespace optional {
+
+template <typename T>
+using Comparator = bool (*)(const std::remove_reference_t<T>&, const std::remove_reference_t<T>&);
 
 // Compares two values, forwarding safety concerns to the comparator.
 template <typename T>
-auto safe_eq(const Optional<T>& a, const Optional<T>& b, bool (*cmp)(const T&, const T&)) noexcept
-    -> bool {
+auto safe_eq(const Optional<T>& a, const Optional<T>& b, Comparator<T> cmp) noexcept -> bool {
     if (a.has_value() != b.has_value()) { return false; }
     if (!a.has_value()) { return true; }
     return cmp(*a, *b);
@@ -64,7 +94,7 @@ template <typename T> auto safe_eq(const Optional<T>& a, const Optional<T>& b) n
 template <typename T>
 auto unsafe_eq(const Optional<std::unique_ptr<T>>& a,
                const Optional<std::unique_ptr<T>>& b,
-               bool (*cmp)(const T&, const T&)) noexcept -> bool {
+               Comparator<T>                       cmp) noexcept -> bool {
     if (a.has_value() != b.has_value()) { return false; }
     if (!a.has_value()) { return true; }
     return cmp(**a, **b);

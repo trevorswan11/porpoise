@@ -4,7 +4,7 @@
 
 #include "ast/node.hpp"
 
-#include "parser/parser.hpp"
+#include "syntax/parser.hpp"
 
 namespace porpoise::ast {
 
@@ -13,15 +13,17 @@ class ExpressionStatement : public StmtBase<ExpressionStatement> {
     static constexpr auto KIND = NodeKind::EXPRESSION_STATEMENT;
 
   public:
-    explicit ExpressionStatement(const Token& start_token, Box<Expression> expression) noexcept
+    explicit ExpressionStatement(const syntax::Token& start_token,
+                                 Box<Expression>      expression) noexcept
         : StmtBase{start_token}, expression_{std::move(expression)} {}
 
     MAKE_AST_COPY_MOVE(ExpressionStatement)
 
     auto                      accept(Visitor& v) const -> void override;
-    [[nodiscard]] static auto parse(Parser& parser) -> Expected<Box<Statement>, ParserDiagnostic>;
+    [[nodiscard]] static auto parse(syntax::Parser& parser)
+        -> Expected<Box<Statement>, syntax::ParserDiagnostic>;
 
-    MAKE_AST_GETTER(expression, const Expression&, *)
+    MAKE_GETTER(expression, const Expression&, *)
 
   protected:
     auto is_equal(const Node& other) const noexcept -> bool override {

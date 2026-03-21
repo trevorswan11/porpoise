@@ -1,6 +1,6 @@
 #include <catch2/catch_test_macros.hpp>
 
-#include "ast/helpers.hpp"
+#include "helpers/ast.hpp"
 
 namespace porpoise::tests {
 
@@ -24,14 +24,16 @@ TEST_CASE("Normal identifiers") {
 }
 
 TEST_CASE("Non-terminated identifier") {
-    helpers::test_fail(
+    helpers::test_parser_fail(
         "foobar",
-        ParserDiagnostic{
-            "Expected token SEMICOLON, found END", ParserError::UNEXPECTED_TOKEN, 1, 7});
+        syntax::ParserDiagnostic{
+            "Expected token SEMICOLON, found END", syntax::ParserError::UNEXPECTED_TOKEN, 1, 7});
 }
 
 TEST_CASE("Builtin identifiers") {
-    for (const auto& [str, tok] : ALL_BUILTINS) { helpers::test_ident(fmt::format("{};", str)); }
+    for (const auto& [str, tok] : syntax::ALL_BUILTINS) {
+        helpers::test_ident(fmt::format("{};", str));
+    }
 }
 
 } // namespace porpoise::tests

@@ -4,11 +4,13 @@
 
 #include <catch2/catch_test_macros.hpp>
 
-#include "lexer/keywords.hpp"
-#include "lexer/lexer.hpp"
-#include "lexer/token.hpp"
+#include "syntax/keywords.hpp"
+#include "syntax/lexer.hpp"
+#include "syntax/token.hpp"
 
 namespace porpoise::tests {
+
+using namespace syntax;
 
 using ExpectedLexeme = std::pair<TokenType, std::string_view>;
 
@@ -19,20 +21,20 @@ TEST_CASE("Illegal characters") {
     for (size_t i = 0; i < tokens.size(); ++i) {
         const auto& token = tokens[i];
         if (i == tokens.size() - 1) {
-            REQUIRE(token.type == TokenType::END);
+            CHECK(token.type == TokenType::END);
             break;
         }
-        REQUIRE(token.type == TokenType::ILLEGAL);
+        CHECK(token.type == TokenType::ILLEGAL);
     }
 }
 
 TEST_CASE("Lexer over-consumption") {
-    Lexer l{"lexer"};
+    Lexer l{"Lexer"};
     l.consume();
-    for (size_t i = 0; i < 100; ++i) { REQUIRE(l.advance().type == TokenType::END); }
+    for (size_t i = 0; i < 100; ++i) { CHECK(l.advance().type == TokenType::END); }
 }
 
-TEST_CASE("Basic next token and lexer consuming") {
+TEST_CASE("Basic next token and Lexer consuming") {
     SECTION("Symbols Only") {
         Lexer l{"=+(){}[],;: !-/*<>_"};
 
@@ -48,8 +50,8 @@ TEST_CASE("Basic next token and lexer consuming") {
 
         for (const auto& [expected_tok, expected_slice] : expecteds) {
             const auto token = l.advance();
-            REQUIRE(expected_tok == token.type);
-            REQUIRE(expected_slice == token.slice);
+            CHECK(expected_tok == token.type);
+            CHECK(expected_slice == token.slice);
         }
     }
 
@@ -98,11 +100,11 @@ TEST_CASE("Basic next token and lexer consuming") {
             const auto accumulated_token               = accumulated_tokens[i];
             const auto reset                           = reset_acc[i];
 
-            REQUIRE(expected_tok == token.type);
-            REQUIRE(expected_tok == accumulated_token.type);
-            REQUIRE(expected_slice == token.slice);
-            REQUIRE(expected_slice == accumulated_token.slice);
-            REQUIRE(accumulated_token == reset);
+            CHECK(expected_tok == token.type);
+            CHECK(expected_tok == accumulated_token.type);
+            CHECK(expected_slice == token.slice);
+            CHECK(expected_slice == accumulated_token.slice);
+            CHECK(accumulated_token == reset);
         }
     }
 }
@@ -127,8 +129,8 @@ TEST_CASE("Base-10 ints and floats") {
 
         for (const auto& [expected_tt, expected_slice] : expecteds) {
             const auto token = l.advance();
-            REQUIRE(expected_tt == token.type);
-            REQUIRE(expected_slice == token.slice);
+            CHECK(expected_tt == token.type);
+            CHECK(expected_slice == token.slice);
         }
     }
 
@@ -152,8 +154,8 @@ TEST_CASE("Base-10 ints and floats") {
 
         for (const auto& [expected_tt, expected_slice] : expecteds) {
             const auto token = l.advance();
-            REQUIRE(expected_tt == token.type);
-            REQUIRE(expected_slice == token.slice);
+            CHECK(expected_tt == token.type);
+            CHECK(expected_slice == token.slice);
         }
     }
 }
@@ -177,8 +179,8 @@ TEST_CASE("Integer base variants") {
 
         for (const auto& [expected_tt, expected_slice] : expecteds) {
             const auto token = l.advance();
-            REQUIRE(expected_tt == token.type);
-            REQUIRE(expected_slice == token.slice);
+            CHECK(expected_tt == token.type);
+            CHECK(expected_slice == token.slice);
         }
     }
 
@@ -208,8 +210,8 @@ TEST_CASE("Integer base variants") {
 
         for (const auto& [expected_tt, expected_slice] : expecteds) {
             const auto token = l.advance();
-            REQUIRE(expected_tt == token.type);
-            REQUIRE(expected_slice == token.slice);
+            CHECK(expected_tt == token.type);
+            CHECK(expected_slice == token.slice);
         }
     }
 
@@ -227,8 +229,8 @@ TEST_CASE("Integer base variants") {
 
         for (const auto& [expected_tt, expected_slice] : expecteds) {
             const auto token = l.advance();
-            REQUIRE(expected_tt == token.type);
-            REQUIRE(expected_slice == token.slice);
+            CHECK(expected_tt == token.type);
+            CHECK(expected_slice == token.slice);
         }
     }
 }
@@ -252,8 +254,8 @@ TEST_CASE("Iterator with other keywords") {
 
     size_t i = 0;
     for (const auto& token : l) {
-        REQUIRE(expecteds[i].first == token.type);
-        REQUIRE(expecteds[i].second == token.slice);
+        CHECK(expecteds[i].first == token.type);
+        CHECK(expecteds[i].second == token.slice);
         i += 1;
     }
 }
@@ -295,8 +297,8 @@ TEST_CASE("Comments") {
 
     for (const auto& [expected_tt, expected_slice] : expecteds) {
         const auto token = l.advance();
-        REQUIRE(expected_tt == token.type);
-        REQUIRE(expected_slice == token.slice);
+        CHECK(expected_tt == token.type);
+        CHECK(expected_slice == token.slice);
     }
 }
 
@@ -330,8 +332,8 @@ TEST_CASE("Character literals") {
 
     for (const auto& [expected_tt, expected_slice] : expecteds) {
         const auto token = l.advance();
-        REQUIRE(expected_tt == token.type);
-        REQUIRE(expected_slice == token.slice);
+        CHECK(expected_tt == token.type);
+        CHECK(expected_slice == token.slice);
     }
 }
 
@@ -366,8 +368,8 @@ TEST_CASE("String literals") {
 
     for (const auto& [expected_tt, expected_slice] : expecteds) {
         const auto token = l.advance();
-        REQUIRE(expected_tt == token.type);
-        REQUIRE(expected_slice == token.slice);
+        CHECK(expected_tt == token.type);
+        CHECK(expected_slice == token.slice);
     }
 }
 
@@ -402,8 +404,8 @@ TEST_CASE("Multiline string literals") {
 
     for (const auto& [expected_tt, expected_slice] : expecteds) {
         const auto token = l.advance();
-        REQUIRE(expected_tt == token.type);
-        REQUIRE(expected_slice == token.slice);
+        CHECK(expected_tt == token.type);
+        CHECK(expected_slice == token.slice);
     }
 }
 
@@ -422,9 +424,9 @@ TEST_CASE("Compiler builtins") {
 
     for (const auto& [expected_tt, expected_slice] : expecteds) {
         const auto token = l.advance();
-        REQUIRE(expected_tt == token.type);
-        REQUIRE(expected_slice == token.slice);
-        REQUIRE(is_builtin(token.type));
+        CHECK(expected_tt == token.type);
+        CHECK(expected_slice == token.slice);
+        CHECK(is_builtin(token.type));
     }
 }
 
@@ -441,8 +443,8 @@ TEST_CASE("Pointers and references") {
 
     size_t i = 0;
     for (const auto& token : l) {
-        REQUIRE(expecteds[i].first == token.type);
-        REQUIRE(expecteds[i].second == token.slice);
+        CHECK(expecteds[i].first == token.type);
+        CHECK(expecteds[i].second == token.slice);
         i += 1;
     }
 }
@@ -451,8 +453,8 @@ TEST_CASE("Illegal builtins") {
     const std::string_view input{"@run"};
     Lexer                  l{input};
     const auto             illegal = l.advance();
-    REQUIRE(TokenType::ILLEGAL == illegal.type);
-    REQUIRE(input == illegal.slice);
+    CHECK(TokenType::ILLEGAL == illegal.type);
+    CHECK(input == illegal.slice);
 }
 
 } // namespace porpoise::tests

@@ -4,7 +4,7 @@
 
 #include "ast/node.hpp"
 
-#include "parser/parser.hpp"
+#include "syntax/parser.hpp"
 
 namespace porpoise::ast {
 
@@ -13,15 +13,16 @@ class DeferStatement : public StmtBase<DeferStatement> {
     static constexpr auto KIND = NodeKind::DEFER_STATEMENT;
 
   public:
-    explicit DeferStatement(const Token& start_token, Box<Statement> deferred) noexcept
+    explicit DeferStatement(const syntax::Token& start_token, Box<Statement> deferred) noexcept
         : StmtBase{start_token}, deferred_{std::move(deferred)} {}
 
     MAKE_AST_COPY_MOVE(DeferStatement)
 
     auto                      accept(Visitor& v) const -> void override;
-    [[nodiscard]] static auto parse(Parser& parser) -> Expected<Box<Statement>, ParserDiagnostic>;
+    [[nodiscard]] static auto parse(syntax::Parser& parser)
+        -> Expected<Box<Statement>, syntax::ParserDiagnostic>;
 
-    MAKE_AST_GETTER(deferred, const Statement&, *)
+    MAKE_GETTER(deferred, const Statement&, *)
 
   protected:
     auto is_equal(const Node& other) const noexcept -> bool override {

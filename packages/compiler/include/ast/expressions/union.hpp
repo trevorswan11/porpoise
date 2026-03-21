@@ -6,7 +6,7 @@
 #include "ast/expressions/type.hpp"
 #include "ast/node.hpp"
 
-#include "parser/parser.hpp"
+#include "syntax/parser.hpp"
 
 namespace porpoise::ast {
 
@@ -19,10 +19,10 @@ class UnionField {
 
     MAKE_AST_COPY_MOVE(UnionField)
 
-    MAKE_AST_GETTER(ident, const IdentifierExpression&, *)
-    MAKE_AST_GETTER(type, const ExplicitType&, )
+    MAKE_GETTER(ident, const IdentifierExpression&, *)
+    MAKE_GETTER(type, const ExplicitType&)
 
-    MAKE_AST_DEPENDENT_EQ(UnionField)
+    MAKE_EQ_DELEGATION(UnionField)
 
   private:
     Box<IdentifierExpression> ident_;
@@ -34,15 +34,17 @@ class UnionExpression : public ExprBase<UnionExpression> {
     static constexpr auto KIND = NodeKind::UNION_EXPRESSION;
 
   public:
-    explicit UnionExpression(const Token& start_token, std::vector<UnionField> fields) noexcept;
+    explicit UnionExpression(const syntax::Token&    start_token,
+                             std::vector<UnionField> fields) noexcept;
     ~UnionExpression() override;
 
     MAKE_AST_COPY_MOVE(UnionExpression)
 
     auto                      accept(Visitor& v) const -> void override;
-    [[nodiscard]] static auto parse(Parser& parser) -> Expected<Box<Expression>, ParserDiagnostic>;
+    [[nodiscard]] static auto parse(syntax::Parser& parser)
+        -> Expected<Box<Expression>, syntax::ParserDiagnostic>;
 
-    MAKE_AST_GETTER(fields, std::span<const UnionField>, )
+    MAKE_GETTER(fields, std::span<const UnionField>)
 
   protected:
     auto is_equal(const Node& other) const noexcept -> bool override;

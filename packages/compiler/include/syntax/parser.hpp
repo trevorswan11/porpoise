@@ -5,24 +5,13 @@
 #include <variant>
 #include <vector>
 
-#include "memory.hpp"
+#include "ast/node.hpp"
 
-#include "parser/precedence.hpp"
+#include "syntax/lexer.hpp"
+#include "syntax/precedence.hpp"
+#include "syntax/token.hpp"
 
-#include "lexer/lexer.hpp"
-#include "lexer/token.hpp"
-
-namespace porpoise::ast {
-
-class Node;
-class Statement;
-class Expression;
-
-using AST = std::vector<Box<Node>>;
-
-} // namespace porpoise::ast
-
-namespace porpoise {
+namespace porpoise::syntax {
 
 enum class ParserError : u8 {
     UNEXPECTED_TOKEN,
@@ -91,7 +80,7 @@ using ParserDiagnostic = Diagnostic<ParserError>;
 
 template <typename... Args>
 auto make_parser_unexpected(Args&&... args) -> Unexpected<ParserDiagnostic> {
-    return Unexpected<ParserDiagnostic>{ParserDiagnostic{std::forward<Args>(args)...}};
+    return make_unexpected<ParserDiagnostic>(std::forward<Args>(args)...);
 }
 
 class Parser {
@@ -116,13 +105,13 @@ class Parser {
     // An RAII checkpoint-rollback transaction
     class Transaction {
       public:
-        explicit Transaction(Parser& parser) : p_{parser}, checkpoint_{parser} {}
-        ~Transaction() {
+        explicit Transaction(Parser& parser) noexcept : p_{parser}, checkpoint_{parser} {}
+        ~Transaction() noexcept {
             if (!committed_) { p_.rollback(checkpoint_); }
         }
 
         // Prevent a rollback from happening at the end of the transaction
-        void commit() { committed_ = true; }
+        void commit() noexcept { committed_ = true; }
 
       private:
         Parser&            p_;
@@ -192,4 +181,4 @@ class Parser {
     Token            peek_token_{};
 };
 
-} // namespace porpoise
+} // namespace porpoise::syntax

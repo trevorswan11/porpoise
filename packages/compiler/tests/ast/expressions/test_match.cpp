@@ -1,16 +1,18 @@
 #include <catch2/catch_test_macros.hpp>
 
-#include "ast/helpers.hpp"
+#include "helpers/ast.hpp"
 
 #include "ast/expressions/match.hpp"
 
 namespace porpoise::tests {
 
+namespace keywords = syntax::keywords;
+
 TEST_CASE("Match without alternate") {
     helpers::test_expr_stmt(
         "match (a) { b => c; };",
         ast::MatchExpression{
-            Token{keywords::MATCH},
+            syntax::Token{keywords::MATCH},
             helpers::make_ident("a"),
             helpers::make_vector<ast::MatchArm>(ast::MatchArm{
                 helpers::make_ident("b"), {}, helpers::make_expr_stmt(helpers::ident_from("c"))}),
@@ -18,7 +20,7 @@ TEST_CASE("Match without alternate") {
 
     helpers::test_expr_stmt(
         "match (a) { b => c; d => e; };",
-        ast::MatchExpression{Token{keywords::MATCH},
+        ast::MatchExpression{syntax::Token{keywords::MATCH},
                              helpers::make_ident("a"),
                              helpers::make_vector<ast::MatchArm>(
                                  ast::MatchArm{helpers::make_ident("b"),
@@ -33,7 +35,7 @@ TEST_CASE("Match without alternate") {
 TEST_CASE("Match with arm capture") {
     helpers::test_expr_stmt(
         "match (a) { b => |c| d; e => |_| f; g => h; };",
-        ast::MatchExpression{Token{keywords::MATCH},
+        ast::MatchExpression{syntax::Token{keywords::MATCH},
                              helpers::make_ident("a"),
                              helpers::make_vector<ast::MatchArm>(
                                  ast::MatchArm{helpers::make_ident("b"),
@@ -51,7 +53,7 @@ TEST_CASE("Match with arm capture") {
 TEST_CASE("Match with alternate") {
     helpers::test_expr_stmt(
         "match (a) { b => { c; } } else d;",
-        ast::MatchExpression{Token{keywords::MATCH},
+        ast::MatchExpression{syntax::Token{keywords::MATCH},
                              helpers::make_ident("a"),
                              helpers::make_vector<ast::MatchArm>(ast::MatchArm{
                                  helpers::make_ident("b"),
@@ -61,57 +63,57 @@ TEST_CASE("Match with alternate") {
 }
 
 TEST_CASE("Match without condition") {
-    helpers::test_fail("match () { b => c; };",
-                       ParserDiagnostic{ParserError::MATCH_EXPR_MISSING_CONDITION, 1, 1},
-                       ParserDiagnostic{"No prefix parse function for RBRACE(}) found",
-                                        ParserError::MISSING_PREFIX_PARSER,
-                                        1,
-                                        20});
+    helpers::test_parser_fail(
+        "match () { b => c; };",
+        syntax::ParserDiagnostic{syntax::ParserError::MATCH_EXPR_MISSING_CONDITION, 1, 1},
+        syntax::ParserDiagnostic{"No prefix parse function for RBRACE(}) found",
+                                 syntax::ParserError::MISSING_PREFIX_PARSER,
+                                 std::pair{1uz, 20uz}});
 
-    helpers::test_fail(
+    helpers::test_parser_fail(
         "match { b => c; };",
-        ParserDiagnostic{
-            "Expected token LPAREN, found LBRACE", ParserError::UNEXPECTED_TOKEN, 1, 7},
-        ParserDiagnostic{"No prefix parse function for RBRACE(}) found",
-                         ParserError::MISSING_PREFIX_PARSER,
-                         1,
-                         17});
+        syntax::ParserDiagnostic{
+            "Expected token LPAREN, found LBRACE", syntax::ParserError::UNEXPECTED_TOKEN, 1, 7},
+        syntax::ParserDiagnostic{"No prefix parse function for RBRACE(}) found",
+                                 syntax::ParserError::MISSING_PREFIX_PARSER,
+                                 std::pair{1uz, 17uz}});
 }
 
 TEST_CASE("Armless match expression") {
-    helpers::test_fail("match (a) {};", ParserDiagnostic{ParserError::ARMLESS_MATCH_EXPR, 1, 1});
+    helpers::test_parser_fail(
+        "match (a) {};", syntax::ParserDiagnostic{syntax::ParserError::ARMLESS_MATCH_EXPR, 1, 1});
 }
 
 TEST_CASE("Malformed arm LHS") {
-    helpers::test_fail(
+    helpers::test_parser_fail(
         "match {  => c; };",
-        ParserDiagnostic{
-            "Expected token LPAREN, found LBRACE", ParserError::UNEXPECTED_TOKEN, 1, 7},
-        ParserDiagnostic{"No prefix parse function for RBRACE(}) found",
-                         ParserError::MISSING_PREFIX_PARSER,
-                         1,
-                         16});
+        syntax::ParserDiagnostic{
+            "Expected token LPAREN, found LBRACE", syntax::ParserError::UNEXPECTED_TOKEN, 1, 7},
+        syntax::ParserDiagnostic{"No prefix parse function for RBRACE(}) found",
+                                 syntax::ParserError::MISSING_PREFIX_PARSER,
+                                 std::pair{1uz, 16uz}});
 }
 
 TEST_CASE("Illegal match arm rhs") {
-    helpers::test_fail("match (a) { b => import std; };",
-                       ParserDiagnostic{ParserError::ILLEGAL_MATCH_ARM, 1, 18});
+    helpers::test_parser_fail(
+        "match (a) { b => import std; };",
+        syntax::ParserDiagnostic{syntax::ParserError::ILLEGAL_MATCH_ARM, 1, 18});
 }
 
 TEST_CASE("Arm missing fat arrow") {
-    helpers::test_fail(
+    helpers::test_parser_fail(
         "match (a) { b c; };",
-        ParserDiagnostic{
-            "Expected token FAT_ARROW, found IDENT", ParserError::UNEXPECTED_TOKEN, 1, 15},
-        ParserDiagnostic{"No prefix parse function for RBRACE(}) found",
-                         ParserError::MISSING_PREFIX_PARSER,
-                         1,
-                         18});
+        syntax::ParserDiagnostic{
+            "Expected token FAT_ARROW, found IDENT", syntax::ParserError::UNEXPECTED_TOKEN, 1, 15},
+        syntax::ParserDiagnostic{"No prefix parse function for RBRACE(}) found",
+                                 syntax::ParserError::MISSING_PREFIX_PARSER,
+                                 std::pair{1uz, 18uz}});
 }
 
 TEST_CASE("Illegal match alternate") {
-    helpers::test_fail("match (a) { b => c; } else import std;",
-                       ParserDiagnostic{ParserError::ILLEGAL_MATCH_CATCH_ALL, 1, 28});
+    helpers::test_parser_fail(
+        "match (a) { b => c; } else import std;",
+        syntax::ParserDiagnostic{syntax::ParserError::ILLEGAL_MATCH_CATCH_ALL, 1, 28});
 }
 
 } // namespace porpoise::tests

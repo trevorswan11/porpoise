@@ -7,51 +7,13 @@
 
 namespace porpoise::ast {
 
-#define MAKE_INFIX_DUMP(NodeType, LeftLabel, RightLabel)                             \
-    auto ASTDumper::visit(const NodeType& node) -> void {                            \
-        fmt::println(out_, #NodeType " ({})", magic_enum::enum_name(node.get_op())); \
-        {                                                                            \
-            const Indent::Guard g{indent_, false};                                   \
-            fmt::print(out_, "{}" #LeftLabel ": ", indent_.current_branch());        \
-            node.get_lhs().accept(*this);                                            \
-        }                                                                            \
-        {                                                                            \
-            const Indent::Guard g{indent_, true};                                    \
-            fmt::print(out_, "{}" #RightLabel ": ", indent_.current_branch());       \
-            node.get_rhs().accept(*this);                                            \
-        }                                                                            \
-    }
-
-#define MAKE_PREFIX_DUMP(NodeType)                                                   \
-    auto ASTDumper::visit(const NodeType& node) -> void {                            \
-        fmt::println(out_, #NodeType " ({})", magic_enum::enum_name(node.get_op())); \
-        const Indent::Guard g{indent_, true};                                        \
-        fmt::print(out_, "{}Operand: ", indent_.current_branch());                   \
-        node.get_rhs().accept(*this);                                                \
-    }
-
-#define MAKE_LEAF_DUMP(NodeType)                          \
-    auto ASTDumper::visit(const NodeType& node) -> void { \
-        fmt::println(out_, #NodeType ": {}", node);       \
-    }
-
-#define MAKE_BASIC_STMT_DUMP(NodeType, FieldName, getter)                     \
-    auto ASTDumper::visit(const NodeType& node) -> void {                     \
-        fmt::println(out_, #NodeType);                                        \
-        {                                                                     \
-            const Indent::Guard g{indent_, true};                             \
-            fmt::print(out_, "{}" #FieldName ": ", indent_.current_branch()); \
-            node.getter.accept(*this);                                        \
-        }                                                                     \
-    }
-
-auto ASTDumper::visit(const ArrayExpression& node) -> void {
+auto ASTDumper::visit(const ArrayExpression& array) -> void {
     fmt::println(out_, "ArrayExpression");
     {
         const Indent::Guard g{indent_, false};
-        if (node.has_explicit_size()) {
+        if (array.has_explicit_size()) {
             fmt::print(out_, "{}Size: ", indent_.current_branch());
-            node.get_explicit_size().accept(*this);
+            array.get_explicit_size().accept(*this);
         } else {
             fmt::println(out_, "{}Size: (inferred)", indent_.current_branch());
         }
@@ -60,28 +22,28 @@ auto ASTDumper::visit(const ArrayExpression& node) -> void {
     {
         const Indent::Guard g{indent_, false};
         fmt::print(out_, "{}Type: ", indent_.current_branch());
-        dump_explicit_type(node.get_item_type(), false);
+        dump_explicit_type(array.get_item_type(), false);
     }
 
     {
         const Indent::Guard g{indent_, true};
-        fmt::println(out_, "{}Items: ", indent_.current_branch());
-        dump_node_list(node.get_items());
+        fmt::println(out_, "{}Items:", indent_.current_branch());
+        dump_node_list(array.get_items());
     }
 }
 
-auto ASTDumper::visit(const CallExpression& node) -> void {
+auto ASTDumper::visit(const CallExpression& call) -> void {
     fmt::println(out_, "CallExpression");
     {
         const Indent::Guard g{indent_, false};
         fmt::print(out_, "{}Callee: ", indent_.current_branch());
-        node.get_function().accept(*this);
+        call.get_function().accept(*this);
     }
 
     {
         const Indent::Guard g{indent_, true};
-        fmt::println(out_, "{}Arguments: ", indent_.current_branch());
-        dump_container(node.get_arguments(), [this](const CallArgument& arg) {
+        fmt::println(out_, "{}Arguments:", indent_.current_branch());
+        dump_container(call.get_arguments(), [this](const CallArgument& arg) {
             fmt::print(out_, "{}", indent_.current_branch());
             if (arg.is_expression()) {
                 arg.get_expression().accept(*this);
@@ -92,33 +54,33 @@ auto ASTDumper::visit(const CallExpression& node) -> void {
     }
 }
 
-auto ASTDumper::visit(const DoWhileLoopExpression& node) -> void {
+auto ASTDumper::visit(const DoWhileLoopExpression& do_while) -> void {
     fmt::println(out_, "DoWhileLoopExpression");
     {
         const Indent::Guard g{indent_, false};
         fmt::print(out_, "{}Body: ", indent_.current_branch());
-        node.get_block().accept(*this);
+        do_while.get_block().accept(*this);
     }
     {
         const Indent::Guard g{indent_, true};
         fmt::print(out_, "{}Condition: ", indent_.current_branch());
-        node.get_condition().accept(*this);
+        do_while.get_condition().accept(*this);
     }
 }
 
-auto ASTDumper::visit(const EnumExpression& node) -> void {
+auto ASTDumper::visit(const EnumExpression& enum_expr) -> void {
     fmt::println(out_, "EnumExpression");
 
-    if (node.has_underlying()) {
+    if (enum_expr.has_underlying()) {
         const Indent::Guard g{indent_, false};
         fmt::print(out_, "{}Underlying: ", indent_.current_branch());
-        node.get_underlying().accept(*this);
+        enum_expr.get_underlying().accept(*this);
     }
 
     {
         const Indent::Guard g{indent_, true};
         fmt::println(out_, "{}Enumerations:", indent_.current_branch());
-        dump_container(node.get_enumerations(), [this](const Enumeration& enumeration) {
+        dump_container(enum_expr.get_enumerations(), [this](const Enumeration& enumeration) {
             {
                 fmt::print(out_, "{}Name: ", indent_.current_branch());
                 const Indent::Guard g_name{indent_, !enumeration.has_default_value()};
@@ -134,18 +96,18 @@ auto ASTDumper::visit(const EnumExpression& node) -> void {
     }
 }
 
-auto ASTDumper::visit(const ForLoopExpression& node) -> void {
+auto ASTDumper::visit(const ForLoopExpression& for_loop) -> void {
     fmt::println(out_, "ForLoopExpression");
     {
         const Indent::Guard g{indent_, false};
         fmt::println(out_, "{}Iterables:", indent_.current_branch());
-        dump_node_list(node.get_iterables());
+        dump_node_list(for_loop.get_iterables());
     }
 
     {
         const Indent::Guard g{indent_, false};
         fmt::println(out_, "{}Captures:", indent_.current_branch());
-        dump_container(node.get_captures(), [this](const auto& capture) {
+        dump_container(for_loop.get_captures(), [this](const auto& capture) {
             if (capture.is_discarded()) {
                 fmt::println(out_, "{}<discarded>", indent_.current_branch());
             } else {
@@ -160,23 +122,23 @@ auto ASTDumper::visit(const ForLoopExpression& node) -> void {
     }
 
     {
-        const Indent::Guard g{indent_, !node.has_non_break()};
+        const Indent::Guard g{indent_, !for_loop.has_non_break()};
         fmt::print(out_, "{}Body: ", indent_.current_branch());
-        node.get_block().accept(*this);
+        for_loop.get_block().accept(*this);
     }
 
-    if (node.has_non_break()) {
+    if (for_loop.has_non_break()) {
         const Indent::Guard g{indent_, true};
         fmt::print(out_, "{}Non-Break: ", indent_.current_branch());
-        node.get_non_break().accept(*this);
+        for_loop.get_non_break().accept(*this);
     }
 }
 
-auto ASTDumper::visit(const FunctionExpression& node) -> void {
+auto ASTDumper::visit(const FunctionExpression& function) -> void {
     fmt::println(out_, "FunctionExpression");
-    if (node.has_self()) {
+    if (function.has_self()) {
         const Indent::Guard g{indent_, false};
-        const auto&         self = node.get_self();
+        const auto&         self = function.get_self();
         fmt::println(out_,
                      "{}Self: {} (modifier: {})",
                      indent_.current_branch(),
@@ -187,8 +149,8 @@ auto ASTDumper::visit(const FunctionExpression& node) -> void {
     {
         const Indent::Guard g{indent_, false};
         fmt::println(out_, "{}Parameters:", indent_.current_branch());
-        dump_container(node.get_parameters(), [this](const FunctionParameter& param) {
-            fmt::println(out_, "{}Param: ", indent_.current_branch());
+        dump_container(function.get_parameters(), [this](const FunctionParameter& param) {
+            fmt::println(out_, "{}Param:", indent_.current_branch());
             {
                 const Indent::Guard g_name{indent_, false};
                 fmt::print(out_, "{}Name: ", indent_.current_branch());
@@ -203,85 +165,100 @@ auto ASTDumper::visit(const FunctionExpression& node) -> void {
     }
 
     {
-        const Indent::Guard g{indent_, !node.has_body()};
+        const Indent::Guard g{indent_, !function.has_body()};
         fmt::print(out_, "{}Returns: ", indent_.current_branch());
-        dump_explicit_type(node.get_return_type(), false);
+        dump_explicit_type(function.get_return_type(), false);
     }
 
-    if (node.has_body()) {
+    if (function.has_body()) {
         const Indent::Guard g{indent_, true};
         fmt::print(out_, "{}Body: ", indent_.current_branch());
-        node.get_body().accept(*this);
+        function.get_body().accept(*this);
     }
 }
 
-auto ASTDumper::visit(const IdentifierExpression& node) -> void {
-    fmt::print(out_, "IdentifierExpression: {}", node);
-    if (node.get_token().is_builtin()) {
+auto ASTDumper::visit(const IdentifierExpression& ident) -> void {
+    fmt::print(out_, "IdentifierExpression: {}", ident);
+    if (ident.get_token().is_builtin()) {
         fmt::print(out_, " (builtin)");
-    } else if (node.get_token().is_primitive()) {
+    } else if (ident.get_token().is_primitive()) {
         fmt::print(out_, " (primitive)");
     }
     fmt::println(out_, "");
 }
 
-auto ASTDumper::visit(const IfExpression& node) -> void {
+auto ASTDumper::visit(const IfExpression& if_expr) -> void {
     fmt::println(out_, "IfExpression");
     {
         const Indent::Guard g{indent_, false};
         fmt::print(out_, "{}Condition: ", indent_.current_branch());
-        node.get_condition().accept(*this);
+        if_expr.get_condition().accept(*this);
     }
 
     {
-        Indent::Guard g{indent_, !node.has_alternate()};
+        Indent::Guard g{indent_, !if_expr.has_alternate()};
         fmt::print(out_, "{}Then:", indent_.current_branch());
-        node.get_consequence().accept(*this);
+        if_expr.get_consequence().accept(*this);
     }
 
-    if (node.has_alternate()) {
+    if (if_expr.has_alternate()) {
         Indent::Guard g{indent_, true};
         fmt::print(out_, "{}Else:", indent_.current_branch());
-        node.get_alternate().accept(*this);
+        if_expr.get_alternate().accept(*this);
     }
 }
 
-auto ASTDumper::visit(const IndexExpression& node) -> void {
+auto ASTDumper::visit(const IndexExpression& index) -> void {
     fmt::println(out_, "IndexExpression");
     {
         const Indent::Guard g{indent_, false};
         fmt::print(out_, "{}Object: ", indent_.current_branch());
-        node.get_array().accept(*this);
+        index.get_array().accept(*this);
     }
     {
         const Indent::Guard g{indent_, true};
         fmt::print(out_, "{}Index: ", indent_.current_branch());
-        node.get_index().accept(*this);
+        index.get_index().accept(*this);
     }
 }
 
-auto ASTDumper::visit(const InfiniteLoopExpression& node) -> void {
+auto ASTDumper::visit(const InfiniteLoopExpression& loop) -> void {
     fmt::println(out_, "InfiniteLoopExpression");
-    dump_node_list(node.get_block());
+    dump_node_list(loop.get_block());
 }
+
+#define MAKE_INFIX_DUMP(NodeType, LeftLabel, RightLabel)                             \
+    auto ASTDumper::visit(const NodeType& node) -> void {                            \
+        fmt::println(out_, #NodeType " ({})", magic_enum::enum_name(node.get_op())); \
+        {                                                                            \
+            const Indent::Guard g{indent_, false};                                   \
+            fmt::print(out_, "{}" #LeftLabel ": ", indent_.current_branch());        \
+            node.get_lhs().accept(*this);                                            \
+        }                                                                            \
+        {                                                                            \
+            const Indent::Guard g{indent_, true};                                    \
+            fmt::print(out_, "{}" #RightLabel ": ", indent_.current_branch());       \
+            node.get_rhs().accept(*this);                                            \
+        }                                                                            \
+    }
 
 MAKE_INFIX_DUMP(AssignmentExpression, Assignee, Value)
 MAKE_INFIX_DUMP(BinaryExpression, LHS, RHS)
 MAKE_INFIX_DUMP(DotExpression, Object, Member)
 MAKE_INFIX_DUMP(RangeExpression, Lower, Upper)
 
-auto ASTDumper::visit(const MatchExpression& node) -> void {
+auto ASTDumper::visit(const MatchExpression& match) -> void {
     fmt::println(out_, "MatchExpression");
     {
         const Indent::Guard g{indent_, false};
         fmt::print(out_, "{}Matcher: ", indent_.current_branch());
-        node.get_matcher().accept(*this);
+        match.get_matcher().accept(*this);
     }
 
     {
-        const Indent::Guard g{indent_, !node.has_catch_all()};
+        const Indent::Guard g{indent_, !match.has_catch_all()};
         fmt::println(out_, "{}Arms:", indent_.current_branch());
-        dump_container(node.get_arms(), [this](const MatchArm& arm) {
+        dump_container(match.get_arms(), [this](const MatchArm& arm) {
             fmt::println(out_, "{}Arm:", indent_.current_branch());
             {
                 const Indent::Guard g_pattern{indent_, false};
@@ -307,17 +284,30 @@ auto ASTDumper::visit(const MatchExpression& node) -> void {
         });
     }
 
-    if (node.has_catch_all()) {
+    if (match.has_catch_all()) {
         const Indent::Guard g{indent_, true};
         fmt::print(out_, "{}Catch All: ", indent_.current_branch());
-        node.get_catch_all().accept(*this);
+        match.get_catch_all().accept(*this);
     }
 }
+
+#define MAKE_PREFIX_DUMP(NodeType)                                                   \
+    auto ASTDumper::visit(const NodeType& node) -> void {                            \
+        fmt::println(out_, #NodeType " ({})", magic_enum::enum_name(node.get_op())); \
+        const Indent::Guard g{indent_, true};                                        \
+        fmt::print(out_, "{}Operand: ", indent_.current_branch());                   \
+        node.get_rhs().accept(*this);                                                \
+    }
 
 MAKE_PREFIX_DUMP(ReferenceExpression)
 MAKE_PREFIX_DUMP(DereferenceExpression)
 MAKE_PREFIX_DUMP(UnaryExpression)
 MAKE_PREFIX_DUMP(ImplicitAccessExpression)
+
+#define MAKE_LEAF_DUMP(NodeType)                          \
+    auto ASTDumper::visit(const NodeType& node) -> void { \
+        fmt::println(out_, #NodeType ": {}", node);       \
+    }
 
 MAKE_LEAF_DUMP(StringExpression)
 MAKE_LEAF_DUMP(SignedIntegerExpression)
@@ -331,23 +321,23 @@ MAKE_LEAF_DUMP(FloatExpression)
 MAKE_LEAF_DUMP(DoubleExpression)
 MAKE_LEAF_DUMP(BoolExpression)
 
-auto ASTDumper::visit(const ScopeResolutionExpression& node) -> void {
+auto ASTDumper::visit(const ScopeResolutionExpression& scope_resolve) -> void {
     fmt::println(out_, "ScopeResolutionExpression");
     {
         const Indent::Guard g{indent_, false};
         fmt::print(out_, "{}Outer: ", indent_.current_branch());
-        node.get_outer().accept(*this);
+        scope_resolve.get_outer().accept(*this);
     }
     {
         const Indent::Guard g{indent_, true};
         fmt::print(out_, "{}Inner: ", indent_.current_branch());
-        node.get_inner().accept(*this);
+        scope_resolve.get_inner().accept(*this);
     }
 }
 
-auto ASTDumper::visit(const StructExpression& node) -> void {
-    fmt::println(out_, "StructExpression{}", node.is_packed() ? " (packed)" : "");
-    dump_node_list(node.get_members());
+auto ASTDumper::visit(const StructExpression& struct_expr) -> void {
+    fmt::println(out_, "StructExpression{}", struct_expr.is_packed() ? " (packed)" : "");
+    dump_node_list(struct_expr.get_members());
 }
 
 auto ASTDumper::visit(const TypeExpression& node) -> void {
@@ -358,9 +348,9 @@ auto ASTDumper::visit(const TypeExpression& node) -> void {
     }
 }
 
-auto ASTDumper::visit(const UnionExpression& node) -> void {
+auto ASTDumper::visit(const UnionExpression& union_expr) -> void {
     fmt::println(out_, "UnionExpression");
-    dump_container(node.get_fields(), [this](const UnionField& field) {
+    dump_container(union_expr.get_fields(), [this](const UnionField& field) {
         fmt::println(out_, "{}Field:", indent_.current_branch());
         {
             const Indent::Guard g_pattern{indent_, false};
@@ -376,110 +366,125 @@ auto ASTDumper::visit(const UnionExpression& node) -> void {
     });
 }
 
-auto ASTDumper::visit(const WhileLoopExpression& node) -> void {
+auto ASTDumper::visit(const WhileLoopExpression& while_expr) -> void {
     fmt::println(out_, "WhileLoopExpression");
     {
         const Indent::Guard g{indent_, false};
         fmt::print(out_, "{}Condition: ", indent_.current_branch());
-        node.get_condition().accept(*this);
+        while_expr.get_condition().accept(*this);
     }
 
-    if (node.has_continuation()) {
+    if (while_expr.has_continuation()) {
         const Indent::Guard g{indent_, false};
         fmt::print(out_, "{}Continuation: ", indent_.current_branch());
-        node.get_continuation().accept(*this);
+        while_expr.get_continuation().accept(*this);
     }
 
     {
-        const Indent::Guard g{indent_, !node.has_non_break()};
+        const Indent::Guard g{indent_, !while_expr.has_non_break()};
         fmt::print(out_, "{}Body: ", indent_.current_branch());
-        node.get_block().accept(*this);
+        while_expr.get_block().accept(*this);
     }
 
-    if (node.has_non_break()) {
+    if (while_expr.has_non_break()) {
         const Indent::Guard g{indent_, true};
         fmt::print(out_, "{}Non-Break Clause: ", indent_.current_branch());
-        node.get_non_break().accept(*this);
+        while_expr.get_non_break().accept(*this);
     }
 }
 
-auto ASTDumper::visit(const BlockStatement& node) -> void {
+auto ASTDumper::visit(const BlockStatement& block) -> void {
     fmt::println(out_, "BlockStatement");
-    if (node.empty()) {
+    if (block.empty()) {
         const Indent::Guard g{indent_, true};
         fmt::println(out_, "{}<empty>", indent_.current_branch());
     } else {
-        dump_node_list(node);
+        dump_node_list(block);
     }
 }
 
-auto ASTDumper::visit(const DeclStatement& node) -> void {
-    fmt::println(out_, "DeclStatement ({})", node.get_ident());
-
+auto ASTDumper::visit(const DeclStatement& decl) -> void {
+    fmt::println(out_, "DeclStatement ({})", decl.get_ident());
     {
         const Indent::Guard g{indent_, false};
-        const auto          flags = magic_enum::enum_flags_name(node.get_modifiers());
+        const auto          flags = magic_enum::enum_flags_name(decl.get_modifiers());
         fmt::println(out_, "{}Modifiers: {}", indent_.current_branch(), flags);
     }
 
     {
-        const Indent::Guard g{indent_, !node.has_value()};
+        const Indent::Guard g{indent_, !decl.has_value()};
         fmt::print(out_, "{}Type: ", indent_.current_branch());
-        node.get_type().accept(*this);
+        decl.get_type().accept(*this);
     }
 
-    if (node.has_value()) {
+    if (decl.has_value()) {
         const Indent::Guard g{indent_, true};
         fmt::print(out_, "{}Value: ", indent_.current_branch());
-        node.get_value().accept(*this);
+        decl.get_value().accept(*this);
     }
 }
+
+#define MAKE_BASIC_STMT_DUMP(NodeType, FieldName, getter)                     \
+    auto ASTDumper::visit(const NodeType& node) -> void {                     \
+        fmt::println(out_, #NodeType);                                        \
+        {                                                                     \
+            const Indent::Guard g{indent_, true};                             \
+            fmt::print(out_, "{}" #FieldName ": ", indent_.current_branch()); \
+            node.getter.accept(*this);                                        \
+        }                                                                     \
+    }
 
 MAKE_BASIC_STMT_DUMP(DeferStatement, Deferred, get_deferred())
 MAKE_BASIC_STMT_DUMP(DiscardStatement, Discarded, get_discarded())
 MAKE_BASIC_STMT_DUMP(ExpressionStatement, Expr, get_expression())
 
-auto ASTDumper::visit(const ImportStatement& node) -> void {
+auto ASTDumper::visit(const ImportStatement& import_stmt) -> void {
     fmt::println(out_, "ImportStatement");
     {
-        const Indent::Guard g{indent_, !node.has_alias()};
-        if (node.is_module_import()) {
+        const Indent::Guard g{indent_, !import_stmt.has_alias()};
+        if (import_stmt.is_module_import()) {
             fmt::print(out_, "{}Module: ", indent_.current_branch());
-            node.get_module_import().accept(*this);
+            import_stmt.get_module_import().get_name().accept(*this);
         } else {
             fmt::print(out_, "{}User: ", indent_.current_branch());
-            node.get_user_import().accept(*this);
+            import_stmt.get_user_import().get_file().accept(*this);
         }
     }
 
-    if (node.has_alias()) {
+    if (import_stmt.has_alias()) {
         const Indent::Guard g{indent_, true};
         fmt::print(out_, "{}Alias: ", indent_.current_branch());
-        node.get_alias().accept(*this);
+        if (import_stmt.is_module_import()) {
+            import_stmt.get_module_import().get_alias().accept(*this);
+        } else {
+            import_stmt.get_user_import().get_alias().accept(*this);
+        }
     }
 }
 
-auto ASTDumper::visit(const JumpStatement& node) -> void {
-    fmt::println(out_, "JumpStatement ({})", magic_enum::enum_name(node.get_token().type));
-    if (node.has_expression()) {
+auto ASTDumper::visit(const JumpStatement& jump) -> void {
+    fmt::println(out_, "JumpStatement ({})", magic_enum::enum_name(jump.get_token().type));
+    if (jump.has_expression()) {
         const Indent::Guard g{indent_, true};
         fmt::print(out_, "{}Value: ", indent_.current_branch());
-        node.get_expression().accept(*this);
+        jump.get_expression().accept(*this);
     }
 }
 
-auto ASTDumper::visit(const UsingStatement& node) -> void {
+auto ASTDumper::visit(const ModuleStatement&) -> void { fmt::println(out_, "ModuleStatement"); }
+
+auto ASTDumper::visit(const UsingStatement& using_stmt) -> void {
     fmt::println(out_, "UsingStatement");
     {
         const Indent::Guard g{indent_, false};
         fmt::print(out_, "{}Alias: ", indent_.current_branch());
-        node.get_alias().accept(*this);
+        using_stmt.get_alias().accept(*this);
     }
 
     {
         const Indent::Guard g{indent_, true};
         fmt::print(out_, "{}Type: ", indent_.current_branch());
-        dump_explicit_type(node.get_type(), false);
+        dump_explicit_type(using_stmt.get_type(), false);
     }
 }
 

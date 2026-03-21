@@ -5,11 +5,11 @@
 #include <string_view>
 #include <utility>
 
+#include "syntax/token.hpp"
+
 #include "optional.hpp"
 
-#include "lexer/token.hpp"
-
-namespace porpoise {
+namespace porpoise::syntax {
 
 using Keyword = std::pair<std::string_view, TokenType>;
 
@@ -58,6 +58,7 @@ constexpr Keyword STATIC{"static", TokenType::STATIC};
 constexpr Keyword NORETURN{"noreturn", TokenType::NORETURN};
 constexpr Keyword NULLPTR{"nullptr", TokenType::NULLPTR};
 constexpr Keyword USING{"using", TokenType::USING};
+constexpr Keyword MODULE{"module", TokenType::MODULE};
 
 namespace builtins {
 
@@ -108,7 +109,7 @@ constexpr auto ALL_KEYWORDS = []() {
         keywords::DOUBLE,   keywords::BYTE,    keywords::BOOL,     keywords::VOID,
         keywords::TYPE,     keywords::AS,      keywords::PUBLIC,   keywords::EXTERN,
         keywords::EXPORT,   keywords::PACKED,  keywords::VOLATILE, keywords::STATIC,
-        keywords::NORETURN, keywords::NULLPTR, keywords::USING,
+        keywords::NORETURN, keywords::NULLPTR, keywords::USING,    keywords::MODULE,
     };
 
     std::ranges::sort(all_keywords, {}, &Keyword::first);
@@ -117,7 +118,7 @@ constexpr auto ALL_KEYWORDS = []() {
 
 constexpr auto get_keyword(std::string_view sv) noexcept -> Optional<Keyword> {
     const auto it = std::ranges::lower_bound(ALL_KEYWORDS, sv, {}, &Keyword::first);
-    if (it == ALL_KEYWORDS.end() || it->first != sv) { return nullopt; }
+    if (it == ALL_KEYWORDS.end() || it->first != sv) { return std::nullopt; }
     return Optional<Keyword>{*it};
 }
 
@@ -133,6 +134,7 @@ constexpr auto ALL_PRIMITIVES = std::array{
     keywords::BYTE.second,
     keywords::BOOL.second,
     keywords::VOID.second,
+    keywords::TYPE.second,
 };
 
 constexpr auto ALL_BUILTINS = []() {
@@ -176,7 +178,7 @@ constexpr auto ALL_BUILTINS = []() {
 
 constexpr auto get_builtin(std::string_view sv) noexcept -> Optional<Keyword> {
     const auto it = std::ranges::lower_bound(ALL_BUILTINS, sv, {}, &Keyword::first);
-    if (it == ALL_BUILTINS.end() || it->first != sv) { return nullopt; }
+    if (it == ALL_BUILTINS.end() || it->first != sv) { return std::nullopt; }
     return Optional<Keyword>{*it};
 }
 
@@ -191,4 +193,4 @@ constexpr auto is_builtin(TokenType tt) noexcept -> bool {
     return it != ALL_BUILTINS_BY_TT.end() && it->second == tt;
 }
 
-} // namespace porpoise
+} // namespace porpoise::syntax

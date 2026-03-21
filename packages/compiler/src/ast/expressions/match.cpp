@@ -31,7 +31,7 @@ auto MatchArm::is_equal(const MatchArm& other) const noexcept -> bool {
            *dispatch_ == *other.dispatch_;
 }
 
-MatchExpression::MatchExpression(const Token&             start_token,
+MatchExpression::MatchExpression(const syntax::Token&     start_token,
                                  Box<Expression>          matcher,
                                  std::vector<MatchArm>    arms,
                                  Optional<Box<Statement>> catch_all) noexcept
@@ -41,58 +41,62 @@ MatchExpression::~MatchExpression() = default;
 
 auto MatchExpression::accept(Visitor& v) const -> void { v.visit(*this); }
 
-auto MatchExpression::parse(Parser& parser) -> Expected<Box<Expression>, ParserDiagnostic> {
+auto MatchExpression::parse(syntax::Parser& parser)
+    -> Expected<Box<Expression>, syntax::ParserDiagnostic> {
     const auto start_token = parser.current_token();
 
     // Conditions have to be surrounded by parentheses
-    TRY(parser.expect_peek(TokenType::LPAREN));
+    TRY(parser.expect_peek(syntax::TokenType::LPAREN));
     parser.advance();
-    if (parser.current_token_is(TokenType::RPAREN)) {
-        return make_parser_unexpected(ParserError::MATCH_EXPR_MISSING_CONDITION, start_token);
+    if (parser.current_token_is(syntax::TokenType::RPAREN)) {
+        return make_parser_unexpected(syntax::ParserError::MATCH_EXPR_MISSING_CONDITION,
+                                      start_token);
     }
 
     auto condition = TRY(parser.parse_expression());
-    TRY(parser.expect_peek(TokenType::RPAREN));
+    TRY(parser.expect_peek(syntax::TokenType::RPAREN));
 
-    TRY(parser.expect_peek(TokenType::LBRACE));
-    if (parser.peek_token_is(TokenType::RBRACE)) {
+    TRY(parser.expect_peek(syntax::TokenType::LBRACE));
+    if (parser.peek_token_is(syntax::TokenType::RBRACE)) {
         parser.advance();
-        return make_parser_unexpected(ParserError::ARMLESS_MATCH_EXPR, start_token);
+        return make_parser_unexpected(syntax::ParserError::ARMLESS_MATCH_EXPR, start_token);
     }
 
     std::vector<MatchArm> arms;
     // Current token is either the LBRACE at the start or a comma before parsing
-    while (!parser.peek_token_is(TokenType::RBRACE) && !parser.peek_token_is(TokenType::END)) {
+    while (!parser.peek_token_is(syntax::TokenType::RBRACE) &&
+           !parser.peek_token_is(syntax::TokenType::END)) {
         parser.advance();
 
         auto pattern = TRY(parser.parse_expression());
-        TRY(parser.expect_peek(TokenType::FAT_ARROW));
+        TRY(parser.expect_peek(syntax::TokenType::FAT_ARROW));
 
         // There is an optional capture for every arm
         Optional<MatchArm::Capture> capture;
-        if (parser.peek_token_is(TokenType::BW_OR)) {
+        if (parser.peek_token_is(syntax::TokenType::BW_OR)) {
             parser.advance();
 
             // An underscore is equivalent to a lack of capture
-            if (parser.peek_token_is(TokenType::UNDERSCORE)) {
+            if (parser.peek_token_is(syntax::TokenType::UNDERSCORE)) {
                 parser.advance();
                 capture.emplace(std::monostate{});
             } else {
-                TRY(parser.expect_peek(TokenType::IDENT));
+                TRY(parser.expect_peek(syntax::TokenType::IDENT));
                 capture.emplace(
                     downcast<IdentifierExpression>(TRY(IdentifierExpression::parse(parser))));
             }
-            TRY(parser.expect_peek(TokenType::BW_OR));
+            TRY(parser.expect_peek(syntax::TokenType::BW_OR));
         }
 
         // The resulting statement must be restricted like an if branch
         parser.advance();
-        auto consequence = TRY(parser.parse_restricted_statement(ParserError::ILLEGAL_MATCH_ARM));
+        auto consequence =
+            TRY(parser.parse_restricted_statement(syntax::ParserError::ILLEGAL_MATCH_ARM));
         arms.emplace_back(std::move(pattern), std::move(capture), std::move(consequence));
     }
-    TRY(parser.expect_peek(TokenType::RBRACE));
+    TRY(parser.expect_peek(syntax::TokenType::RBRACE));
     auto catch_all =
-        TRY(parser.try_parse_restricted_alternate(ParserError::ILLEGAL_MATCH_CATCH_ALL));
+        TRY(parser.try_parse_restricted_alternate(syntax::ParserError::ILLEGAL_MATCH_CATCH_ALL));
 
     return make_box<MatchExpression>(
         start_token, std::move(condition), std::move(arms), std::move(catch_all));

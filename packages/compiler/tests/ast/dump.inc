@@ -3,7 +3,7 @@ R"(ExpressionStatement
     ├─ Size: (inferred)
     ├─ Type: ExplicitType (modifier: PTR)
     │   └─ IdentifierExpression: N
-    └─ Items: 
+    └─ Items:
         ├─ IdentifierExpression: a
         ├─ IdentifierExpression: b
         ├─ IdentifierExpression: c
@@ -74,7 +74,7 @@ DeclStatement (f_ptr)
     └─ FunctionExpression
         ├─ Self: a (modifier: REF)
         ├─ Parameters:
-        │   └─ Param: 
+        │   └─ Param:
         │       ├─ Name: IdentifierExpression: b
         │       └─ Type: ExplicitType (modifier: MUT_PTR)
         │           └─ IdentifierExpression: B
@@ -107,11 +107,11 @@ ExpressionStatement
         └─ Value: FunctionExpression
             ├─ Self: this (modifier: MUT_PTR)
             ├─ Parameters:
-            │   ├─ Param: 
+            │   ├─ Param:
             │   │   ├─ Name: IdentifierExpression: a
             │   │   └─ Type: ExplicitType (modifier: BASE)
             │   │       └─ IdentifierExpression: A
-            │   └─ Param: 
+            │   └─ Param:
             │       ├─ Name: IdentifierExpression: b
             │       └─ Type: ExplicitType (modifier: PTR)
             │           └─ IdentifierExpression: B
@@ -175,11 +175,11 @@ ExpressionStatement
 └─ Expr: FunctionExpression
     ├─ Self: this (modifier: MUT_PTR)
     ├─ Parameters:
-    │   ├─ Param: 
+    │   ├─ Param:
     │   │   ├─ Name: IdentifierExpression: a
     │   │   └─ Type: ExplicitType (modifier: BASE)
     │   │       └─ IdentifierExpression: A
-    │   └─ Param: 
+    │   └─ Param:
     │       ├─ Name: IdentifierExpression: b
     │       └─ Type: ExplicitType (modifier: PTR)
     │           └─ IdentifierExpression: B
@@ -215,7 +215,7 @@ ExpressionStatement
 ExpressionStatement
 └─ Expr: CallExpression
     ├─ Callee: IdentifierExpression: @ptrAdd (builtin)
-    └─ Arguments: 
+    └─ Arguments:
         ├─ IdentifierExpression: a
         └─ USizeIntegerExpression: 4
 UsingStatement
@@ -225,7 +225,7 @@ UsingStatement
 ExpressionStatement
 └─ Expr: CallExpression
     ├─ Callee: IdentifierExpression: a
-    └─ Arguments: 
+    └─ Arguments:
         ├─ ReferenceExpression (AND_MUT)
         │   └─ Operand: IdentifierExpression: r
         ├─ IdentifierExpression: t
@@ -271,7 +271,7 @@ ExpressionStatement
     ├─ Size: USizeIntegerExpression: 1
     ├─ Type: ExplicitType (modifier: BASE)
     │   └─ IdentifierExpression: A
-    └─ Items: 
+    └─ Items:
         └─ IdentifierExpression: a
 ExpressionStatement
 └─ Expr: DotExpression (DOT)

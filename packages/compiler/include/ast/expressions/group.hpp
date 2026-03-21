@@ -2,16 +2,17 @@
 
 #include "ast/node.hpp"
 
-#include "parser/parser.hpp"
+#include "syntax/parser.hpp"
 
 namespace porpoise::ast {
 
 class GroupedExpression {
   public:
-    [[nodiscard]] static auto parse(Parser& parser) -> Expected<Box<Expression>, ParserDiagnostic> {
+    [[nodiscard]] static auto parse(syntax::Parser& parser)
+        -> Expected<Box<Expression>, syntax::ParserDiagnostic> {
         parser.advance();
         auto inner = TRY(parser.parse_expression());
-        TRY(parser.expect_peek(TokenType::RPAREN));
+        TRY(parser.expect_peek(syntax::TokenType::RPAREN));
         return inner;
     }
 };

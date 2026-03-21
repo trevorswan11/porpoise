@@ -7,7 +7,7 @@
 
 #include "ast/node.hpp"
 
-#include "parser/parser.hpp"
+#include "syntax/parser.hpp"
 
 namespace porpoise::ast {
 
@@ -16,12 +16,14 @@ class IdentifierExpression : public ExprBase<IdentifierExpression> {
     static constexpr auto KIND = NodeKind::IDENTIFIER_EXPRESSION;
 
   public:
-    explicit IdentifierExpression(const Token& start_token) noexcept : ExprBase{start_token} {}
+    explicit IdentifierExpression(const syntax::Token& start_token) noexcept
+        : ExprBase{start_token} {}
 
     MAKE_AST_COPY_MOVE(IdentifierExpression)
 
     auto                      accept(Visitor& v) const -> void override;
-    [[nodiscard]] static auto parse(Parser& parser) -> Expected<Box<Expression>, ParserDiagnostic>;
+    [[nodiscard]] static auto parse(syntax::Parser& parser)
+        -> Expected<Box<Expression>, syntax::ParserDiagnostic>;
 
     [[nodiscard]] auto get_name() const noexcept -> std::string_view { return get_token().slice; }
     [[nodiscard]] auto materialize() const -> std::string { return std::string{get_name()}; }

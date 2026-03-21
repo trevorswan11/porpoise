@@ -6,7 +6,7 @@
 #include "ast/expressions/type_modifiers.hpp"
 #include "ast/node.hpp"
 
-#include "parser/parser.hpp"
+#include "syntax/parser.hpp"
 
 #include "variant.hpp"
 
@@ -24,10 +24,10 @@ class ForLoopCapture {
 
         MAKE_AST_COPY_MOVE(Valued)
 
-        MAKE_AST_GETTER(modifier, const TypeModifier&, )
-        MAKE_AST_GETTER(ident, const IdentifierExpression&, *)
+        MAKE_GETTER(modifier, const TypeModifier&)
+        MAKE_GETTER(ident, const IdentifierExpression&, *)
 
-        MAKE_AST_DEPENDENT_EQ(Valued)
+        MAKE_EQ_DELEGATION(Valued)
 
       private:
         TypeModifier              modifier_;
@@ -46,7 +46,7 @@ class ForLoopCapture {
         return std::holds_alternative<std::monostate>(underlying_);
     }
 
-    MAKE_AST_DEPENDENT_EQ(ForLoopCapture)
+    MAKE_EQ_DELEGATION(ForLoopCapture)
 
   private:
     std::variant<Valued, std::monostate> underlying_;
@@ -57,7 +57,7 @@ class ForLoopExpression : public ExprBase<ForLoopExpression> {
     static constexpr auto KIND = NodeKind::FOR_LOOP_EXPRESSION;
 
   public:
-    explicit ForLoopExpression(const Token&                 start_token,
+    explicit ForLoopExpression(const syntax::Token&         start_token,
                                std::vector<Box<Expression>> iterables,
                                std::vector<ForLoopCapture>  captures,
                                Box<BlockStatement>          block,
@@ -67,11 +67,12 @@ class ForLoopExpression : public ExprBase<ForLoopExpression> {
     MAKE_AST_COPY_MOVE(ForLoopExpression)
 
     auto                      accept(Visitor& v) const -> void override;
-    [[nodiscard]] static auto parse(Parser& parser) -> Expected<Box<Expression>, ParserDiagnostic>;
+    [[nodiscard]] static auto parse(syntax::Parser& parser)
+        -> Expected<Box<Expression>, syntax::ParserDiagnostic>;
 
-    MAKE_AST_GETTER(iterables, std::span<const Box<Expression>>, )
-    MAKE_AST_GETTER(captures, std::span<const ForLoopCapture>, )
-    MAKE_AST_GETTER(block, const BlockStatement&, *)
+    MAKE_GETTER(iterables, std::span<const Box<Expression>>)
+    MAKE_GETTER(captures, std::span<const ForLoopCapture>)
+    MAKE_GETTER(block, const BlockStatement&, *)
     MAKE_OPTIONAL_UNPACKER(non_break, Statement, non_break_, **)
 
   protected:

@@ -1,15 +1,18 @@
 #include <catch2/catch_test_macros.hpp>
 
-#include "ast/helpers.hpp"
+#include "helpers/ast.hpp"
 
 #include "ast/expressions/function.hpp"
 #include "ast/expressions/struct.hpp"
 #include "ast/expressions/type.hpp"
 #include "ast/statements/declaration.hpp"
 
-#include "lexer/operators.hpp"
+#include "syntax/operators.hpp"
 
 namespace porpoise::tests {
+
+namespace keywords  = syntax::keywords;
+namespace operators = syntax::operators;
 
 namespace helpers {
 
@@ -26,7 +29,7 @@ namespace mods = helpers::type_modifiers;
 TEST_CASE("Struct flavors") {
     const std::string_view input{
         "{ var a: Foo = bar; const b := fn(*mut this, a: A, b: *B): C { c; }; };"};
-    const auto cases = std::to_array<std::pair<std::string, Keyword>>({
+    const auto cases = std::to_array<std::pair<std::string, syntax::Keyword>>({
         {fmt::format("struct {}", input), keywords::STRUCT},
         {fmt::format("packed struct {}", input), keywords::PACKED},
     });
@@ -35,12 +38,12 @@ TEST_CASE("Struct flavors") {
         helpers::test_expr_stmt(
             input_case.first,
             ast::StructExpression{
-                Token{input_case.second},
+                syntax::Token{input_case.second},
                 helpers::make_decls(
                     ast::DeclStatement{
-                        Token{keywords::VAR},
+                        syntax::Token{keywords::VAR},
                         helpers::make_ident("a"),
-                        make_box<ast::TypeExpression>(Token{TokenType::COLON, ":"},
+                        make_box<ast::TypeExpression>(syntax::Token{syntax::TokenType::COLON, ":"},
                                                       ast::ExplicitType{
                                                           mods::BASE,
                                                           helpers::make_ident("Foo"),
@@ -49,11 +52,12 @@ TEST_CASE("Struct flavors") {
                         ast::DeclModifiers::VARIABLE,
                     },
                     ast::DeclStatement{
-                        Token{keywords::CONST},
+                        syntax::Token{keywords::CONST},
                         helpers::make_ident("b"),
-                        make_box<ast::TypeExpression>(Token{operators::WALRUS}, nullopt),
+                        make_box<ast::TypeExpression>(syntax::Token{operators::WALRUS},
+                                                      std::nullopt),
                         make_box<ast::FunctionExpression>(
-                            Token{keywords::FN},
+                            syntax::Token{keywords::FN},
                             ast::SelfParameter{mods::MUT_PTR, helpers::make_ident("this")},
                             helpers::make_parameters(
                                 ast::FunctionParameter{
@@ -70,21 +74,23 @@ TEST_CASE("Struct flavors") {
 }
 
 TEST_CASE("Illegal struct member") {
-    helpers::test_fail("struct { import std; };",
-                       ParserDiagnostic{ParserError::INVALID_STRUCT_MEMBER, 1, 10});
+    helpers::test_parser_fail(
+        "struct { import std; };",
+        syntax::ParserDiagnostic{syntax::ParserError::INVALID_STRUCT_MEMBER, 1, 10});
 }
 
 TEST_CASE("Empty struct body") {
-    helpers::test_fail("struct {};", ParserDiagnostic{ParserError::EMPTY_STRUCT, 1, 1});
+    helpers::test_parser_fail("struct {};",
+                              syntax::ParserDiagnostic{syntax::ParserError::EMPTY_STRUCT, 1, 1});
 }
 
 TEST_CASE("Packed keyword out of order") {
-    helpers::test_fail("struct packed { var a: Foo = bar; };",
-                       ParserDiagnostic{ParserError::PACKED_AFTER_STRUCT_KEYWORD, 1, 1},
-                       ParserDiagnostic{"No prefix parse function for RBRACE(}) found",
-                                        ParserError::MISSING_PREFIX_PARSER,
-                                        1,
-                                        35});
+    helpers::test_parser_fail(
+        "struct packed { var a: Foo = bar; };",
+        syntax::ParserDiagnostic{syntax::ParserError::PACKED_AFTER_STRUCT_KEYWORD, 1, 1},
+        syntax::ParserDiagnostic{"No prefix parse function for RBRACE(}) found",
+                                 syntax::ParserError::MISSING_PREFIX_PARSER,
+                                 std::pair{1uz, 35uz}});
 }
 
 } // namespace porpoise::tests

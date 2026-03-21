@@ -8,7 +8,7 @@
 
 namespace porpoise::ast {
 
-UsingStatement::UsingStatement(const Token&              start_token,
+UsingStatement::UsingStatement(const syntax::Token&      start_token,
                                Box<IdentifierExpression> alias,
                                ExplicitType&&            type) noexcept
     : StmtBase{start_token}, alias_{std::move(alias)}, type_{std::move(type)} {}
@@ -16,15 +16,16 @@ UsingStatement::~UsingStatement() = default;
 
 auto UsingStatement::accept(Visitor& v) const -> void { v.visit(*this); }
 
-auto UsingStatement::parse(Parser& parser) -> Expected<Box<Statement>, ParserDiagnostic> {
+auto UsingStatement::parse(syntax::Parser& parser)
+    -> Expected<Box<Statement>, syntax::ParserDiagnostic> {
     const auto start_token = parser.current_token();
-    TRY(parser.expect_peek(TokenType::IDENT));
+    TRY(parser.expect_peek(syntax::TokenType::IDENT));
     auto alias = downcast<IdentifierExpression>(TRY(IdentifierExpression::parse(parser)));
 
-    TRY(parser.expect_peek(TokenType::ASSIGN));
+    TRY(parser.expect_peek(syntax::TokenType::ASSIGN));
     auto type = TRY(ExplicitType::parse(parser));
 
-    TRY(parser.expect_peek(TokenType::SEMICOLON));
+    TRY(parser.expect_peek(syntax::TokenType::SEMICOLON));
     return make_box<UsingStatement>(start_token, std::move(alias), std::move(type));
 }
 

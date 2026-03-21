@@ -6,7 +6,7 @@
 #include <fmt/format.h>
 #include <magic_enum/magic_enum.hpp>
 
-#include "lexer/token.hpp"
+#include "syntax/token.hpp"
 
 #include "optional.hpp"
 #include "types.hpp"
@@ -33,9 +33,9 @@ class TypeModifier {
     explicit TypeModifier(Optional<Modifier> underlying) noexcept
         : underlying_{std::move(underlying)} {}
 
-    static constexpr auto from_token(const Token& tok) noexcept -> TypeModifier {
+    static constexpr auto from_token(const syntax::Token& tok) noexcept -> TypeModifier {
         const auto it = std::ranges::find(LEGAL_MODIFIERS, tok.type, &ModifierMapping::first);
-        return it == LEGAL_MODIFIERS.end() ? TypeModifier{nullopt} : TypeModifier{it->second};
+        return it == LEGAL_MODIFIERS.end() ? TypeModifier{std::nullopt} : TypeModifier{it->second};
     }
 
     // Whether or not the type is a 'value' type (no modifier), mutually exclusive result.
@@ -58,12 +58,12 @@ class TypeModifier {
     }
 
   private:
-    using ModifierMapping                 = std::pair<TokenType, Modifier>;
+    using ModifierMapping                 = std::pair<syntax::TokenType, Modifier>;
     static constexpr auto LEGAL_MODIFIERS = std::to_array<ModifierMapping>({
-        {TokenType::BW_AND, Modifier::REF},
-        {TokenType::AND_MUT, Modifier::MUT_REF},
-        {TokenType::STAR, Modifier::PTR},
-        {TokenType::STAR_MUT, Modifier::MUT_PTR},
+        {syntax::TokenType::BW_AND, Modifier::REF},
+        {syntax::TokenType::AND_MUT, Modifier::MUT_REF},
+        {syntax::TokenType::STAR, Modifier::PTR},
+        {syntax::TokenType::STAR_MUT, Modifier::MUT_PTR},
     });
 
   private:

@@ -4,7 +4,7 @@
 
 #include "ast/node.hpp"
 
-#include "parser/parser.hpp"
+#include "syntax/parser.hpp"
 
 namespace porpoise::ast {
 
@@ -13,7 +13,7 @@ class IfExpression : public ExprBase<IfExpression> {
     static constexpr auto KIND = NodeKind::IF_EXPRESSION;
 
   public:
-    explicit IfExpression(const Token&             start_token,
+    explicit IfExpression(const syntax::Token&     start_token,
                           Box<Expression>          condition,
                           Box<Statement>           consequence,
                           Optional<Box<Statement>> alternate) noexcept
@@ -23,10 +23,11 @@ class IfExpression : public ExprBase<IfExpression> {
     MAKE_AST_COPY_MOVE(IfExpression)
 
     auto                      accept(Visitor& v) const -> void override;
-    [[nodiscard]] static auto parse(Parser& parser) -> Expected<Box<Expression>, ParserDiagnostic>;
+    [[nodiscard]] static auto parse(syntax::Parser& parser)
+        -> Expected<Box<Expression>, syntax::ParserDiagnostic>;
 
-    MAKE_AST_GETTER(condition, const Expression&, *)
-    MAKE_AST_GETTER(consequence, const Statement&, *)
+    MAKE_GETTER(condition, const Expression&, *)
+    MAKE_GETTER(consequence, const Statement&, *)
     MAKE_OPTIONAL_UNPACKER(alternate, Statement, alternate_, **)
 
   protected:

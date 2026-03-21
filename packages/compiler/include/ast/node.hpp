@@ -3,16 +3,24 @@
 #include <algorithm>
 #include <cassert>
 #include <concepts>
+#include <span>
 #include <utility>
+#include <vector>
 
 #include <magic_enum/magic_enum.hpp>
 
-#include "lexer/token.hpp"
+#include "syntax/token.hpp"
 
+#include "common.hpp"
 #include "memory.hpp"
+#include "optional.hpp"
 #include "types.hpp"
 
-namespace porpoise::ast {
+namespace porpoise {
+
+namespace sema { class Type; } // namespace sema
+
+namespace ast {
 
 class Visitor;
 
@@ -60,6 +68,7 @@ enum class NodeKind : u8 {
     EXPRESSION_STATEMENT,
     IMPORT_STATEMENT,
     JUMP_STATEMENT,
+    MODULE_STATEMENT,
     USING_STATEMENT,
 };
 
@@ -90,9 +99,17 @@ class Node {
 
     virtual auto accept(Visitor& v) const -> void = 0;
 
-    auto get_token() const noexcept -> const Token& { return start_token_; }
+    auto get_token() const noexcept -> const syntax::Token& { return start_token_; }
     auto get_kind() const noexcept -> NodeKind { return kind_; }
 
+    [[nodiscard]] auto has_sema_type() const noexcept -> bool { return sema_type_.has_value(); }
+    [[nodiscard]] auto get_sema_type() const noexcept -> sema::Type& { return *sema_type_; }
+    auto set_sema_type(sema::Type& type) const noexcept // cppcheck-suppress constParameterReference
+        -> void {
+        sema_type_ = type;
+    }
+
+    // Compares two nodes at the AST level, ignoring semantic differences.
     friend auto operator==(const Node& lhs, const Node& rhs) noexcept -> bool {
         if (lhs.kind_ != rhs.kind_) { return false; }
         if (lhs.start_token_.type != rhs.start_token_.type) { return false; }
@@ -112,7 +129,8 @@ class Node {
     }
 
   protected:
-    explicit Node(const Token& tok, NodeKind kind) noexcept : start_token_{tok}, kind_{kind} {}
+    explicit Node(const syntax::Token& tok, NodeKind kind) noexcept
+        : start_token_{tok}, kind_{kind} {}
 
     virtual auto is_equal(const Node& other) const noexcept -> bool = 0;
 
@@ -123,15 +141,18 @@ class Node {
     }
 
   protected:
-    const Token    start_token_;
-    const NodeKind kind_;
-
+    const syntax::Token           start_token_;
+    const NodeKind                kind_;
+    mutable Optional<sema::Type&> sema_type_;
     friend class ExplicitType;
 };
 
+using AST     = std::vector<Box<Node>>;
+using ASTView = std::span<const Box<Node>>;
+
 template <typename Derived, typename Base> class NodeBase : public Base {
   protected:
-    explicit NodeBase(const Token& tok) noexcept : Base{tok, Derived::KIND} {}
+    explicit NodeBase(const syntax::Token& tok) noexcept : Base{tok, Derived::KIND} {}
 };
 
 class Expression : public Node {
@@ -160,16 +181,6 @@ template <typename Derived> class StmtBase : public NodeBase<Derived, Statement>
     using NodeBase<Derived, Statement>::NodeBase;
 };
 
-#define MAKE_AST_GETTER(name, ReturnType, getter) \
-    [[nodiscard]] auto get_##name() const noexcept -> ReturnType { return getter name##_; }
+} // namespace ast
 
-#define MAKE_AST_DEPENDENT_EQ(NodeType)                                                     \
-    [[nodiscard]] friend auto operator==(const NodeType& lhs, const NodeType& rhs) noexcept \
-        -> bool {                                                                           \
-        return lhs.is_equal(rhs);                                                           \
-    }                                                                                       \
-                                                                                            \
-  private:                                                                                  \
-    auto is_equal(const NodeType& other) const noexcept -> bool;
-
-} // namespace porpoise::ast
+} // namespace porpoise

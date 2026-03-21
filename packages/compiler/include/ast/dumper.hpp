@@ -16,7 +16,7 @@ class ASTDumper : public Visitor {
   public:
     explicit ASTDumper(std::ostream& out) : out_{out} {}
 
-    AST_VISITOR_OVERRIDES()
+    MAKE_AST_VISITOR_OVERRIDES()
 
   private:
     auto dump_explicit_type(const ExplicitType& type, bool print_branch) -> void;

@@ -5,7 +5,7 @@
 #include "ast/expressions/type.hpp"
 #include "ast/node.hpp"
 
-#include "parser/parser.hpp"
+#include "syntax/parser.hpp"
 
 namespace porpoise::ast {
 
@@ -20,10 +20,10 @@ class FunctionParameter {
 
     MAKE_AST_COPY_MOVE(FunctionParameter)
 
-    MAKE_AST_GETTER(ident, const IdentifierExpression&, *)
-    MAKE_AST_GETTER(type, const ExplicitType&, )
+    MAKE_GETTER(ident, const IdentifierExpression&, *)
+    MAKE_GETTER(type, const ExplicitType&)
 
-    MAKE_AST_DEPENDENT_EQ(FunctionParameter)
+    MAKE_EQ_DELEGATION(FunctionParameter)
 
   private:
     Box<IdentifierExpression> ident_;
@@ -37,10 +37,10 @@ class SelfParameter {
 
     MAKE_AST_COPY_MOVE(SelfParameter)
 
-    MAKE_AST_GETTER(modifier, const TypeModifier&, )
-    MAKE_AST_GETTER(ident, const IdentifierExpression&, *)
+    MAKE_GETTER(modifier, const TypeModifier&)
+    MAKE_GETTER(ident, const IdentifierExpression&, *)
 
-    MAKE_AST_DEPENDENT_EQ(SelfParameter)
+    MAKE_EQ_DELEGATION(SelfParameter)
 
   private:
     TypeModifier              modifier_;
@@ -52,7 +52,7 @@ class FunctionExpression : public ExprBase<FunctionExpression> {
     static constexpr auto KIND = NodeKind::FUNCTION_EXPRESSION;
 
   public:
-    explicit FunctionExpression(const Token&                   start_token,
+    explicit FunctionExpression(const syntax::Token&           start_token,
                                 Optional<SelfParameter>        self,
                                 std::vector<FunctionParameter> parameters,
                                 ExplicitType&&                 return_type,
@@ -62,11 +62,12 @@ class FunctionExpression : public ExprBase<FunctionExpression> {
     MAKE_AST_COPY_MOVE(FunctionExpression)
 
     auto                      accept(Visitor& v) const -> void override;
-    [[nodiscard]] static auto parse(Parser& parser) -> Expected<Box<Expression>, ParserDiagnostic>;
+    [[nodiscard]] static auto parse(syntax::Parser& parser)
+        -> Expected<Box<Expression>, syntax::ParserDiagnostic>;
 
     MAKE_OPTIONAL_UNPACKER(self, SelfParameter, self_, *)
-    MAKE_AST_GETTER(parameters, std::span<const FunctionParameter>, )
-    MAKE_AST_GETTER(return_type, const ExplicitType&, )
+    MAKE_GETTER(parameters, std::span<const FunctionParameter>)
+    MAKE_GETTER(return_type, const ExplicitType&)
     MAKE_OPTIONAL_UNPACKER(body, BlockStatement, body_, **)
 
   protected:

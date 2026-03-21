@@ -5,7 +5,7 @@
 
 namespace porpoise::ast {
 
-WhileLoopExpression::WhileLoopExpression(const Token&              start_token,
+WhileLoopExpression::WhileLoopExpression(const syntax::Token&      start_token,
                                          Box<Expression>           condition,
                                          Optional<Box<Expression>> continuation,
                                          Box<BlockStatement>       block,
@@ -17,46 +17,47 @@ WhileLoopExpression::~WhileLoopExpression() = default;
 
 auto WhileLoopExpression::accept(Visitor& v) const -> void { v.visit(*this); }
 
-auto WhileLoopExpression::parse(Parser& parser) -> Expected<Box<Expression>, ParserDiagnostic> {
+auto WhileLoopExpression::parse(syntax::Parser& parser)
+    -> Expected<Box<Expression>, syntax::ParserDiagnostic> {
     const auto start_token = parser.current_token();
 
     // Conditions have to be surrounded by parentheses
-    TRY(parser.expect_peek(TokenType::LPAREN));
+    TRY(parser.expect_peek(syntax::TokenType::LPAREN));
     parser.advance();
-    if (parser.current_token_is(TokenType::RPAREN)) {
-        return make_parser_unexpected(ParserError::WHILE_MISSING_CONDITION, start_token);
+    if (parser.current_token_is(syntax::TokenType::RPAREN)) {
+        return make_parser_unexpected(syntax::ParserError::WHILE_MISSING_CONDITION, start_token);
     }
 
     auto condition = TRY(parser.parse_expression());
-    TRY(parser.expect_peek(TokenType::RPAREN));
+    TRY(parser.expect_peek(syntax::TokenType::RPAREN));
 
     // Continuation expression is optional and is handled as in zig
     Optional<Box<Expression>> continuation;
-    if (parser.peek_token_is(TokenType::COLON)) {
+    if (parser.peek_token_is(syntax::TokenType::COLON)) {
         const auto continuation_start = parser.current_token();
         parser.advance();
-        TRY(parser.expect_peek(TokenType::LPAREN));
+        TRY(parser.expect_peek(syntax::TokenType::LPAREN));
 
         // Consume again to look at the actual expr start
         parser.advance();
-        if (parser.current_token_is(TokenType::RPAREN)) {
-            return make_parser_unexpected(ParserError::EMPTY_WHILE_CONTINUATION,
+        if (parser.current_token_is(syntax::TokenType::RPAREN)) {
+            return make_parser_unexpected(syntax::ParserError::EMPTY_WHILE_CONTINUATION,
                                           continuation_start);
         }
 
         continuation.emplace(TRY(parser.parse_expression()));
-        TRY(parser.expect_peek(TokenType::RPAREN));
+        TRY(parser.expect_peek(syntax::TokenType::RPAREN));
     }
 
     // Loops must have a well formed block and may have an alternate in non-break cases
-    TRY(parser.expect_peek(TokenType::LBRACE));
+    TRY(parser.expect_peek(syntax::TokenType::LBRACE));
     auto block = downcast<BlockStatement>(TRY(BlockStatement::parse(parser)));
     auto non_break =
-        TRY(parser.try_parse_restricted_alternate(ParserError::ILLEGAL_LOOP_NON_BREAK));
+        TRY(parser.try_parse_restricted_alternate(syntax::ParserError::ILLEGAL_LOOP_NON_BREAK));
 
     // There needs to be at least a continuation or block
     if (!continuation && block->empty()) {
-        return make_parser_unexpected(ParserError::EMPTY_WHILE_LOOP, block->get_token());
+        return make_parser_unexpected(syntax::ParserError::EMPTY_WHILE_LOOP, block->get_token());
     }
 
     return make_box<WhileLoopExpression>(start_token,

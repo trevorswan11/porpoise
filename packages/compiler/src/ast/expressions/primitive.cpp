@@ -10,10 +10,13 @@ namespace porpoise::ast {
 
 auto StringExpression::accept(Visitor& v) const -> void { v.visit(*this); }
 
-auto StringExpression::parse(Parser& parser) -> Expected<Box<Expression>, ParserDiagnostic> {
+auto StringExpression::parse(syntax::Parser& parser)
+    -> Expected<Box<Expression>, syntax::ParserDiagnostic> {
     const auto start_token = parser.current_token();
     const auto promoted    = start_token.promote();
-    if (!promoted) { return make_parser_unexpected(ParserError::MALFORMED_STRING, start_token); }
+    if (!promoted) {
+        return make_parser_unexpected(syntax::ParserError::MALFORMED_STRING, start_token);
+    }
 
     return make_box<StringExpression>(start_token, *promoted);
 }
@@ -27,7 +30,8 @@ auto USizeIntegerExpression::accept(Visitor& v) const -> void { v.visit(*this); 
 
 auto ByteExpression::accept(Visitor& v) const -> void { v.visit(*this); }
 
-auto ByteExpression::parse(Parser& parser) -> Expected<Box<Expression>, ParserDiagnostic> {
+auto ByteExpression::parse(syntax::Parser& parser)
+    -> Expected<Box<Expression>, syntax::ParserDiagnostic> {
     const auto start_token = parser.current_token();
     const auto slice       = start_token.slice;
     if (slice[1] != '\\') { return make_box<ByteExpression>(start_token, slice[1]); }
@@ -42,7 +46,8 @@ auto ByteExpression::parse(Parser& parser) -> Expected<Box<Expression>, ParserDi
     case '\'': value = '\''; break;
     case '"':  value = '"'; break;
     case '0':  value = '\0'; break;
-    default:   return make_parser_unexpected(ParserError::UNKNOWN_CHARACTER_ESCAPE, start_token);
+    default:
+        return make_parser_unexpected(syntax::ParserError::UNKNOWN_CHARACTER_ESCAPE, start_token);
     }
 
     return make_box<ByteExpression>(start_token, value);
@@ -70,9 +75,10 @@ auto DoubleExpression::is_equal(const Node& other) const noexcept -> bool {
 
 auto BoolExpression::accept(Visitor& v) const -> void { v.visit(*this); }
 
-auto BoolExpression::parse(Parser& parser) -> Expected<Box<Expression>, ParserDiagnostic> {
+auto BoolExpression::parse(syntax::Parser& parser)
+    -> Expected<Box<Expression>, syntax::ParserDiagnostic> {
     const auto& start_token = parser.current_token();
-    return make_box<BoolExpression>(start_token, start_token.type == TokenType::TRUE);
+    return make_box<BoolExpression>(start_token, start_token.type == syntax::TokenType::TRUE);
 }
 
 // cppcheck-suppress-end [constParameterReference, duplInheritedMember]

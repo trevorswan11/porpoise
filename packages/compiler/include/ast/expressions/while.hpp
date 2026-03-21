@@ -2,7 +2,7 @@
 
 #include "ast/node.hpp"
 
-#include "parser/parser.hpp"
+#include "syntax/parser.hpp"
 
 namespace porpoise::ast {
 
@@ -13,7 +13,7 @@ class WhileLoopExpression : public ExprBase<WhileLoopExpression> {
     static constexpr auto KIND = NodeKind::WHILE_LOOP_EXPRESSION;
 
   public:
-    explicit WhileLoopExpression(const Token&              start_token,
+    explicit WhileLoopExpression(const syntax::Token&      start_token,
                                  Box<Expression>           condition,
                                  Optional<Box<Expression>> continuation,
                                  Box<BlockStatement>       block,
@@ -23,11 +23,12 @@ class WhileLoopExpression : public ExprBase<WhileLoopExpression> {
     MAKE_AST_COPY_MOVE(WhileLoopExpression)
 
     auto                      accept(Visitor& v) const -> void override;
-    [[nodiscard]] static auto parse(Parser& parser) -> Expected<Box<Expression>, ParserDiagnostic>;
+    [[nodiscard]] static auto parse(syntax::Parser& parser)
+        -> Expected<Box<Expression>, syntax::ParserDiagnostic>;
 
-    MAKE_AST_GETTER(condition, const Expression&, *)
+    MAKE_GETTER(condition, const Expression&, *)
     MAKE_OPTIONAL_UNPACKER(continuation, Expression, continuation_, **)
-    MAKE_AST_GETTER(block, const BlockStatement&, *)
+    MAKE_GETTER(block, const BlockStatement&, *)
     MAKE_OPTIONAL_UNPACKER(non_break, Statement, non_break_, **)
 
   protected:

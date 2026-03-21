@@ -2,7 +2,7 @@
 
 #include "ast/node.hpp"
 
-#include "parser/parser.hpp"
+#include "syntax/parser.hpp"
 
 namespace porpoise::ast {
 
@@ -13,15 +13,17 @@ class InfiniteLoopExpression : public ExprBase<InfiniteLoopExpression> {
     static constexpr auto KIND = NodeKind::INFINITE_LOOP_EXPRESSION;
 
   public:
-    explicit InfiniteLoopExpression(const Token& start_token, Box<BlockStatement> block) noexcept;
+    explicit InfiniteLoopExpression(const syntax::Token& start_token,
+                                    Box<BlockStatement>  block) noexcept;
     ~InfiniteLoopExpression() override;
 
     MAKE_AST_COPY_MOVE(InfiniteLoopExpression)
 
     auto                      accept(Visitor& v) const -> void override;
-    [[nodiscard]] static auto parse(Parser& parser) -> Expected<Box<Expression>, ParserDiagnostic>;
+    [[nodiscard]] static auto parse(syntax::Parser& parser)
+        -> Expected<Box<Expression>, syntax::ParserDiagnostic>;
 
-    MAKE_AST_GETTER(block, const BlockStatement&, *)
+    MAKE_GETTER(block, const BlockStatement&, *)
 
   protected:
     auto is_equal(const Node& other) const noexcept -> bool override;

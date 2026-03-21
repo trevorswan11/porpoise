@@ -17,30 +17,36 @@ auto UnionField::is_equal(const UnionField& other) const noexcept -> bool {
     return *ident_ == *other.ident_ && type_ == other.type_;
 }
 
-UnionExpression::UnionExpression(const Token& start_token, std::vector<UnionField> fields) noexcept
+UnionExpression::UnionExpression(const syntax::Token&    start_token,
+                                 std::vector<UnionField> fields) noexcept
     : ExprBase{start_token}, fields_{std::move(fields)} {}
 UnionExpression::~UnionExpression() = default;
 
 auto UnionExpression::accept(Visitor& v) const -> void { v.visit(*this); }
 
-auto UnionExpression::parse(Parser& parser) -> Expected<Box<Expression>, ParserDiagnostic> {
+auto UnionExpression::parse(syntax::Parser& parser)
+    -> Expected<Box<Expression>, syntax::ParserDiagnostic> {
     const auto start_token = parser.current_token();
-    TRY(parser.expect_peek(TokenType::LBRACE));
+    TRY(parser.expect_peek(syntax::TokenType::LBRACE));
 
     std::vector<UnionField> fields;
-    while (!parser.peek_token_is(TokenType::RBRACE)) {
-        TRY(parser.expect_peek(TokenType::IDENT));
+    while (!parser.peek_token_is(syntax::TokenType::RBRACE)) {
+        TRY(parser.expect_peek(syntax::TokenType::IDENT));
         auto ident = downcast<IdentifierExpression>(TRY(IdentifierExpression::parse(parser)));
 
-        TRY(parser.expect_peek(TokenType::COLON));
+        TRY(parser.expect_peek(syntax::TokenType::COLON));
         auto type = TRY(ExplicitType::parse(parser));
 
         fields.emplace_back(std::move(ident), std::move(type));
-        if (!parser.peek_token_is(TokenType::RBRACE)) { TRY(parser.expect_peek(TokenType::COMMA)); }
+        if (!parser.peek_token_is(syntax::TokenType::RBRACE)) {
+            TRY(parser.expect_peek(syntax::TokenType::COMMA));
+        }
     }
-    TRY(parser.expect_peek(TokenType::RBRACE));
+    TRY(parser.expect_peek(syntax::TokenType::RBRACE));
 
-    if (fields.empty()) { return make_parser_unexpected(ParserError::EMPTY_UNION, start_token); }
+    if (fields.empty()) {
+        return make_parser_unexpected(syntax::ParserError::EMPTY_UNION, start_token);
+    }
     return make_box<UnionExpression>(start_token, std::move(fields));
 }
 

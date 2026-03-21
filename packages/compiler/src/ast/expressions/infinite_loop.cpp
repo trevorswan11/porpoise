@@ -5,20 +5,21 @@
 
 namespace porpoise::ast {
 
-InfiniteLoopExpression::InfiniteLoopExpression(const Token&        start_token,
-                                               Box<BlockStatement> block) noexcept
+InfiniteLoopExpression::InfiniteLoopExpression(const syntax::Token& start_token,
+                                               Box<BlockStatement>  block) noexcept
     : ExprBase{start_token}, block_{std::move(block)} {}
 InfiniteLoopExpression::~InfiniteLoopExpression() = default;
 
 auto InfiniteLoopExpression::accept(Visitor& v) const -> void { v.visit(*this); }
 
-auto InfiniteLoopExpression::parse(Parser& parser) -> Expected<Box<Expression>, ParserDiagnostic> {
+auto InfiniteLoopExpression::parse(syntax::Parser& parser)
+    -> Expected<Box<Expression>, syntax::ParserDiagnostic> {
     const auto start_token = parser.current_token();
-    TRY(parser.expect_peek(TokenType::LBRACE));
+    TRY(parser.expect_peek(syntax::TokenType::LBRACE));
 
     auto block = downcast<BlockStatement>(TRY(BlockStatement::parse(parser)));
     if (block->empty()) {
-        return make_parser_unexpected(ParserError::EMPTY_LOOP, block->get_token());
+        return make_parser_unexpected(syntax::ParserError::EMPTY_LOOP, block->get_token());
     }
     return make_box<InfiniteLoopExpression>(start_token, std::move(block));
 }

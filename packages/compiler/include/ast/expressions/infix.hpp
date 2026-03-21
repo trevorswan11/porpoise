@@ -5,30 +5,30 @@
 #include "ast/node.hpp"
 #include "ast/visitor.hpp"
 
-#include "parser/parser.hpp"
+#include "syntax/parser.hpp"
 
 namespace porpoise::ast {
 
 template <typename Derived> class InfixExpression : public ExprBase<Derived> {
   public:
-    explicit InfixExpression(const Token&    start_token,
-                             Box<Expression> lhs,
-                             TokenType       op,
-                             Box<Expression> rhs) noexcept
+    explicit InfixExpression(const syntax::Token& start_token,
+                             Box<Expression>      lhs,
+                             syntax::TokenType    op,
+                             Box<Expression>      rhs) noexcept
         : ExprBase<Derived>{start_token}, lhs_{std::move(lhs)}, op_{op}, rhs_{std::move(rhs)} {}
 
-    MAKE_AST_GETTER(lhs, const Expression&, *)
-    MAKE_AST_GETTER(op, TokenType, )
-    MAKE_AST_GETTER(rhs, const Expression&, *)
+    MAKE_GETTER(lhs, const Expression&, *)
+    MAKE_GETTER(op, syntax::TokenType)
+    MAKE_GETTER(rhs, const Expression&, *)
 
     auto accept(Visitor& v) const noexcept -> void override { v.visit(Node::as<Derived>(*this)); }
 
-    [[nodiscard]] static auto parse(Parser& parser, Box<Expression> lhs)
-        -> Expected<Box<Expression>, ParserDiagnostic> {
+    [[nodiscard]] static auto parse(syntax::Parser& parser, Box<Expression> lhs)
+        -> Expected<Box<Expression>, syntax::ParserDiagnostic> {
         const auto op_token           = parser.current_token();
         const auto current_precedence = parser.poll_current_precedence();
-        if (parser.peek_token_is(TokenType::END)) {
-            return make_parser_unexpected(ParserError::INFIX_MISSING_RHS, op_token);
+        if (parser.peek_token_is(syntax::TokenType::END)) {
+            return make_parser_unexpected(syntax::ParserError::INFIX_MISSING_RHS, op_token);
         }
 
         parser.advance();
@@ -43,9 +43,9 @@ template <typename Derived> class InfixExpression : public ExprBase<Derived> {
     }
 
   protected:
-    Box<Expression> lhs_;
-    TokenType       op_;
-    Box<Expression> rhs_;
+    Box<Expression>   lhs_;
+    syntax::TokenType op_;
+    Box<Expression>   rhs_;
 };
 
 #define DECLARE_INFIX_EXPRESSION(Type, Kind)    \
