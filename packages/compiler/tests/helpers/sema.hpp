@@ -39,9 +39,8 @@ auto test_collector(std::string_view input, bool is_module, KVs&&... kvs) -> voi
                 kv.second
                     .template any<ast::DeclStatement, ast::ImportStatement, ast::UsingStatement>());
 
-            CHECK(actual.has(kv.first));
             const auto opt = actual.get_opt(kv.first);
-            CHECK(opt.has_value());
+            CHECK(opt);
             const sema::Symbol expected{kv.first, &kv.second};
             CHECK(*opt == expected);
         }(std::forward<KVs>(kvs)),

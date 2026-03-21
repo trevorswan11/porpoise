@@ -25,6 +25,7 @@ class SymbolCollector : public ast::Visitor {
   private:
     SymbolTable& table_;
     Diagnostics& diagnostics_;
+    bool         first_node_{true};
 };
 
 } // namespace porpoise::sema

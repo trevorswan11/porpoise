@@ -4,13 +4,15 @@
 #include "helpers/sema.hpp"
 
 #include "syntax/keywords.hpp"
+#include "syntax/operators.hpp"
 
 #include "ast/ast.hpp"
 
 namespace porpoise::tests {
 
-namespace keywords = syntax::keywords;
-namespace mods     = helpers::type_modifiers;
+namespace keywords  = syntax::keywords;
+namespace operators = syntax::operators;
+namespace mods      = helpers::type_modifiers;
 
 namespace helpers {
 
@@ -24,7 +26,7 @@ auto test_illegal_top_level_stmt(std::string_view input, std::string_view string
 
 } // namespace helpers
 
-TEST_CASE("Holistic language example") {
+TEST_CASE("Holistic language examples") {
     const auto test = [](bool is_module) {
         const auto input = fmt::format(R"({}module;
                                         import std;
@@ -64,6 +66,25 @@ TEST_CASE("Holistic language example") {
     test(false);
 }
 
+TEST_CASE("Import aliases correctly used") {
+    helpers::test_collector(
+        "import a as A; const a := 22;",
+        false,
+        std::pair{"A",
+                  ast::ImportStatement{
+                      syntax::Token{keywords::IMPORT},
+                      ast::ModuleImport{helpers::make_ident("a"), helpers::make_ident("A")}}},
+        std::pair{"a",
+                  ast::DeclStatement{
+                      syntax::Token{keywords::CONST},
+                      helpers::make_ident("a"),
+                      make_box<ast::TypeExpression>(syntax::Token{operators::WALRUS}, std::nullopt),
+                      make_box<ast::SignedIntegerExpression>(
+                          syntax::Token{syntax::TokenType::INT_10, "22"}, 22),
+                      ast::DeclModifiers::CONSTANT,
+                  }});
+}
+
 TEST_CASE("Duplicate module declaration") {
     helpers::test_collector_fail(
         "module; module;",
@@ -77,6 +98,14 @@ TEST_CASE("Illegal module location") {
         "const a := 2; module;",
         sema::SemaDiagnostic{"Module indicator must be first statement of file",
                              sema::SemaError::ILLEGAL_MODULE_STATEMENT_LOCATION,
+                             std::pair{1uz, 15uz}});
+}
+
+TEST_CASE("Duplicate identifiers") {
+    helpers::test_collector_fail(
+        "const a := 2; import a;",
+        sema::SemaDiagnostic{"Redeclaration of symbol 'a'. Previous declaration here: [1, 1]",
+                             sema::SemaError::IDENTIFIER_REDECLARATION,
                              std::pair{1uz, 15uz}});
 }
 

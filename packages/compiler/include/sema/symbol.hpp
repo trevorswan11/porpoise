@@ -42,8 +42,8 @@ class Symbol {
     MAKE_GETTER(node, const SymbolicNode&)
 
     MAKE_VARIANT_UNPACKER(decl_stmt, ast::DeclStatement, SymbolicDecl, node_, *std::get)
-    MAKE_VARIANT_UNPACKER(using_stmt, ast::ImportStatement, SymbolicImport, node_, *std::get)
-    MAKE_VARIANT_UNPACKER(import_stmt, ast::UsingStatement, SymbolicUsing, node_, *std::get)
+    MAKE_VARIANT_UNPACKER(import_stmt, ast::ImportStatement, SymbolicImport, node_, *std::get)
+    MAKE_VARIANT_UNPACKER(using_stmt, ast::UsingStatement, SymbolicUsing, node_, *std::get)
 
     MAKE_VARIANT_MATCHER(node_)
 
@@ -90,28 +90,19 @@ class SymbolTable {
     [[nodiscard]] auto size() const noexcept -> usize { return symbols_.size(); }
     [[nodiscard]] auto has(std::string_view name) const noexcept -> bool;
 
-    // cppcheck-suppress-begin functionStatic
-
     // Differs from `get_opt` by asserting that the name is present.
-    template <typename Self>
-    [[nodiscard]] auto get(this Self&& self, std::string_view name) noexcept -> auto& {
-        auto it = self.symbols_.find(name);
-        assert(it != self.symbols_.end() && "Illegal get on missing key");
+    [[nodiscard]] auto get(std::string_view name) const noexcept -> const Symbol& {
+        auto it = symbols_.find(name);
+        assert(it != symbols_.end() && "Illegal get on missing key");
         return it->second;
     }
 
     // Returns an optional containing a mutable or const reference to a symbol depending on context.
-    template <typename Self>
-    [[nodiscard]] auto get_opt(this Self&& self, std::string_view name) noexcept
-        -> Optional<std::conditional_t<std::is_const_v<std::remove_reference_t<Self>>,
-                                       const Symbol&,
-                                       Symbol&>> {
-        auto it = self.symbols_.find(name);
-        if (it == self.symbols_.end()) { return std::nullopt; }
+    [[nodiscard]] auto get_opt(std::string_view name) const noexcept -> Optional<const Symbol&> {
+        auto it = symbols_.find(name);
+        if (it == symbols_.end()) { return std::nullopt; }
         return it->second;
     }
-
-    // cppcheck-suppress-end functionStatic
 
     // Treat this symbol table as an importable module in future passes
     auto indicate_module() noexcept -> void { is_module_ = true; }

@@ -1,5 +1,3 @@
-#include <ranges>
-
 #include "sema/collector.hpp"
 
 #include "ast/ast.hpp"
@@ -12,24 +10,9 @@ auto SymbolCollector::collect(ast::ASTView ast) -> std::pair<SymbolTable, Diagno
     Diagnostics     diagnostics;
     SymbolCollector collector{table, diagnostics};
 
-    for (const auto& [node, i] : std::views::zip(ast, std::views::iota(0))) {
-        // Module statements aren't consumed and are just used for indication in future passes
-        if (node->is<ast::ModuleStatement>()) {
-            if (i == 0) {
-                table.indicate_module();
-            } else if (table.is_module()) {
-                diagnostics.emplace_back("Only one module statement is allowed per file",
-                                         SemaError::DUPLICATE_MODULE_STATEMENT,
-                                         node->get_token());
-            } else {
-                diagnostics.emplace_back("Module indicator must be first statement of file",
-                                         SemaError::ILLEGAL_MODULE_STATEMENT_LOCATION,
-                                         node->get_token());
-            }
-
-            continue;
-        }
+    for (const auto& node : ast) {
         node->accept(collector);
+        collector.first_node_ = false;
     }
     return {std::move(table), std::move(diagnostics)};
 }
@@ -70,7 +53,20 @@ auto SymbolCollector::visit(const ast::ImportStatement& import_stmt) -> void {
 }
 
 ILLEGAL_COLLECTOR_TOP_LEVEL(ast::JumpStatement, "jump")
-COLLECTOR_NOOP(ModuleStatement)
+
+auto SymbolCollector::visit(const ast::ModuleStatement& module_stmt) -> void {
+    if (first_node_) {
+        table_.indicate_module();
+    } else if (table_.is_module()) {
+        diagnostics_.emplace_back("Only one module statement is allowed per file",
+                                  SemaError::DUPLICATE_MODULE_STATEMENT,
+                                  module_stmt.get_token());
+    } else {
+        diagnostics_.emplace_back("Module indicator must be first statement of file",
+                                  SemaError::ILLEGAL_MODULE_STATEMENT_LOCATION,
+                                  module_stmt.get_token());
+    }
+}
 
 auto SymbolCollector::visit(const ast::UsingStatement& using_stmt) -> void {
     auto result = table_.insert(using_stmt.get_alias().get_name(), &using_stmt);
