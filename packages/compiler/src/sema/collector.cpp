@@ -43,11 +43,11 @@ ILLEGAL_COLLECTOR_TOP_LEVEL(ast::ExpressionStatement, "expression")
 auto SymbolCollector::visit(const ast::ImportStatement& import_stmt) -> void {
     if (table_.is_module()) { import_stmt.mark_public(); }
     const auto name   = import_stmt.match(Overloaded{
-        [](const ast::ModuleImport& module) {
+        [](const ast::LibraryImport& module) {
             return module.has_alias() ? module.get_alias().get_name()
                                         : module.get_name().get_name();
         },
-        [](const ast::UserImport& user) { return user.get_alias().get_name(); },
+        [](const ast::FileImport& user) { return user.get_alias().get_name(); },
     });
     auto       result = table_.insert(name, &import_stmt);
     if (!result) { diagnostics_.emplace_back(result.error()); }

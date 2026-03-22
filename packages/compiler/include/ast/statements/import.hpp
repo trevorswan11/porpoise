@@ -11,35 +11,35 @@ namespace porpoise::ast {
 class IdentifierExpression;
 class StringExpression;
 
-class ModuleImport {
+class LibraryImport {
   public:
-    explicit ModuleImport(Box<IdentifierExpression>           name,
-                          Optional<Box<IdentifierExpression>> alias) noexcept;
-    ~ModuleImport();
+    explicit LibraryImport(Box<IdentifierExpression>           name,
+                           Optional<Box<IdentifierExpression>> alias) noexcept;
+    ~LibraryImport();
 
-    MAKE_AST_COPY_MOVE(ModuleImport)
+    MAKE_AST_COPY_MOVE(LibraryImport)
 
     MAKE_GETTER(name, const IdentifierExpression&, *)
     MAKE_OPTIONAL_UNPACKER(alias, IdentifierExpression, alias_, **)
 
-    MAKE_EQ_DELEGATION(ModuleImport)
+    MAKE_EQ_DELEGATION(LibraryImport)
 
   private:
     Box<IdentifierExpression>           name_;
     Optional<Box<IdentifierExpression>> alias_;
 };
 
-class UserImport {
+class FileImport {
   public:
-    explicit UserImport(Box<StringExpression> file, Box<IdentifierExpression> alias) noexcept;
-    ~UserImport();
+    explicit FileImport(Box<StringExpression> file, Box<IdentifierExpression> alias) noexcept;
+    ~FileImport();
 
-    MAKE_AST_COPY_MOVE(UserImport)
+    MAKE_AST_COPY_MOVE(FileImport)
 
     MAKE_GETTER(file, const StringExpression&, *)
     MAKE_GETTER(alias, const IdentifierExpression&, *)
 
-    MAKE_EQ_DELEGATION(UserImport)
+    MAKE_EQ_DELEGATION(FileImport)
 
   private:
     Box<StringExpression>     file_;
@@ -50,7 +50,7 @@ class ImportStatement : public StmtBase<ImportStatement> {
   public:
     static constexpr auto KIND = NodeKind::IMPORT_STATEMENT;
 
-    using ImportVariant = std::variant<ModuleImport, UserImport>;
+    using ImportVariant = std::variant<LibraryImport, FileImport>;
 
   public:
     explicit ImportStatement(const syntax::Token& start_token, ImportVariant imported) noexcept;
@@ -62,8 +62,8 @@ class ImportStatement : public StmtBase<ImportStatement> {
     [[nodiscard]] static auto parse(syntax::Parser& parser)
         -> Expected<Box<Statement>, syntax::ParserDiagnostic>;
 
-    MAKE_VARIANT_UNPACKER(module_import, ModuleImport, ModuleImport, imported_, std::get)
-    MAKE_VARIANT_UNPACKER(user_import, UserImport, UserImport, imported_, std::get)
+    MAKE_VARIANT_UNPACKER(library_import, LibraryImport, LibraryImport, imported_, std::get)
+    MAKE_VARIANT_UNPACKER(file_import, FileImport, FileImport, imported_, std::get)
 
     // Prefer using the matcher (`match`) over this convenience check
     [[nodiscard]] auto has_alias() const noexcept -> bool;

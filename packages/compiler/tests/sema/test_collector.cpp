@@ -41,7 +41,7 @@ TEST_CASE("Holistic language examples") {
                       [is_module]() {
                           ast::ImportStatement import_stmt{
                               syntax::Token{keywords::IMPORT},
-                              ast::ModuleImport{helpers::make_ident("std"), {}}};
+                              ast::LibraryImport{helpers::make_ident("std"), {}}};
                           if (is_module) { import_stmt.mark_public(); }
                           return import_stmt;
                       }()},
@@ -83,7 +83,7 @@ TEST_CASE("Import aliases correctly used") {
         std::pair{"A",
                   ast::ImportStatement{
                       syntax::Token{keywords::IMPORT},
-                      ast::ModuleImport{helpers::make_ident("a"), helpers::make_ident("A")}}},
+                      ast::LibraryImport{helpers::make_ident("a"), helpers::make_ident("A")}}},
         std::pair{"a",
                   ast::DeclStatement{
                       syntax::Token{keywords::CONST},

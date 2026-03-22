@@ -1,14 +1,14 @@
 # Imports
 - There are two kinds of imports in porpoise
-    - Module imports: These are imports denoted by identifiers and are declared in dedicated `.p` 'module' files
-    - User imports: These are imports denoted by a string that is a file path, followed by an identifier alias
-- Both user and module imports allow an identifier alias using the `as` keyword, with this being required for user imports
-- An imports publicly available symbols are namespaced behind the alias, and can be accessed using the `::` operator
+    - Library imports: These are imports denoted by identifiers and are declared in dedicated `.p` 'module' files
+    - File imports: These are imports denoted by a string that is a file path, followed by an identifier alias
+- Both file and library imports allow an identifier alias using the `as` keyword, with this being required for user imports
+- An imports publicly available symbols are namespaced behind its name or alias (if applicable), and can be accessed using the `::` operator
 ```porpoise
-import std; // Module import
-import std as stud; // Module import with alias
-import "node.p"; // Illegal, user imports always require alias
-import "node.p" as node; // User import with alias
+import std; // Library import
+import std as stud; // Library import with alias
+import "node.p"; // Illegal, file imports always require alias
+import "node.p" as node; // File import with alias
 ```
 - The filepath given to the import should be relative to the asking file, _not_ to a local project 'root'
 - Imports are evaluated lazily
@@ -16,16 +16,28 @@ import "node.p" as node; // User import with alias
     - Unreferenced symbols from an import will not be evaluated
     - This prevents the issue of circular imports without needing to implement a macro system or `pragma`
 
-## Module Import Declaration
-- Modules are declared by indicating that a file is a root of an import tree
-- Modules are required to have their root file declared with the first statement being `module;`
-    - The presence of this keyword prevents the import of the file through its path
-- Visibility
+## The Module Keyword
+- The module (`module`) keyword adjusts the visibility of all `using` and `import` statements in the file
     - Imports in non-module files are local to that file
     - Using statements in non-module files are local to that file
     - Imports in module files are automatically exported 
     - Using statements in module files are automatically exported
     - All other declarations require a public modifier for external access
+- This keyword must be the first statement of a file if it is used, and there can not be more than one occurrence of it
+- This keyword is valid in any file
+
+## Library Import Declaration
+- Libraries are declared by indicating that a file is a root of an import tree
+- A library's root file path must be provided to the compiler through the command line
+    - The root file should have the `module;` keyword to ensure forwarded imports and type aliases
+    - Without this, you would have to use a file import for the root file's relative path
+    - TODO
+- These imports can be aliased to avoid name collisions, though this is not required
+
+## File Import Declaration
+- A file in conch is importable through its relative path to the importing file
+- These imports must be aliased to an identifier as the string path cannot be used implicitly as a namespace
+- The file may have the `module;` keyword to forward imports and type aliases
 
 ### Example
 - `std.p` declares

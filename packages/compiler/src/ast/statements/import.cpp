@@ -6,20 +6,20 @@
 
 namespace porpoise::ast {
 
-ModuleImport::ModuleImport(Box<IdentifierExpression>           name,
-                           Optional<Box<IdentifierExpression>> alias) noexcept
+LibraryImport::LibraryImport(Box<IdentifierExpression>           name,
+                             Optional<Box<IdentifierExpression>> alias) noexcept
     : name_{std::move(name)}, alias_{std::move(alias)} {}
-ModuleImport::~ModuleImport() = default;
+LibraryImport::~LibraryImport() = default;
 
-auto ModuleImport::is_equal(const ModuleImport& rhs) const noexcept -> bool {
+auto LibraryImport::is_equal(const LibraryImport& rhs) const noexcept -> bool {
     return *name_ == *rhs.name_ && optional::unsafe_eq<IdentifierExpression>(alias_, rhs.alias_);
 }
 
-UserImport::UserImport(Box<StringExpression> file, Box<IdentifierExpression> alias) noexcept
+FileImport::FileImport(Box<StringExpression> file, Box<IdentifierExpression> alias) noexcept
     : file_{std::move(file)}, alias_{std::move(alias)} {}
-UserImport::~UserImport() = default;
+FileImport::~FileImport() = default;
 
-auto UserImport::is_equal(const UserImport& rhs) const noexcept -> bool {
+auto FileImport::is_equal(const FileImport& rhs) const noexcept -> bool {
     return *file_ == *rhs.file_ && *alias_ == *rhs.alias_;
 }
 
@@ -68,18 +68,18 @@ auto ImportStatement::parse(syntax::Parser& parser)
     return make_box<ImportStatement>(
         start_token,
         std::visit(Overloaded{[&](Box<IdentifierExpression>& ident) -> ImportVariant {
-                                  return ModuleImport{std::move(ident), std::move(imported_alias)};
+                                  return LibraryImport{std::move(ident), std::move(imported_alias)};
                               },
                               [&](Box<StringExpression>& string) -> ImportVariant {
-                                  return UserImport{std::move(string), std::move(*imported_alias)};
+                                  return FileImport{std::move(string), std::move(*imported_alias)};
                               }},
                    imported_core));
 }
 
 auto ImportStatement::has_alias() const noexcept -> bool {
     return std::visit(Overloaded{
-                          [](const ModuleImport& v) { return v.has_alias(); },
-                          [](const UserImport&) { return true; },
+                          [](const LibraryImport& v) { return v.has_alias(); },
+                          [](const FileImport&) { return true; },
                       },
                       imported_);
 }
@@ -88,11 +88,11 @@ auto ImportStatement::is_equal(const Node& other) const noexcept -> bool {
     const auto& casted         = as<ImportStatement>(other);
     const auto& other_imported = casted.imported_;
     return std::visit(Overloaded{
-                          [&other_imported](const ModuleImport& v) {
-                              return v == std::get<ModuleImport>(other_imported);
+                          [&other_imported](const LibraryImport& v) {
+                              return v == std::get<LibraryImport>(other_imported);
                           },
-                          [&other_imported](const UserImport& v) {
-                              return v == std::get<UserImport>(other_imported);
+                          [&other_imported](const FileImport& v) {
+                              return v == std::get<FileImport>(other_imported);
                           },
                       },
                       imported_) &&

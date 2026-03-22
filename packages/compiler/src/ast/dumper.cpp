@@ -442,22 +442,22 @@ auto ASTDumper::visit(const ImportStatement& import_stmt) -> void {
     fmt::println(out_, "ImportStatement");
     {
         const Indent::Guard g{indent_, !import_stmt.has_alias()};
-        if (import_stmt.is_module_import()) {
-            fmt::print(out_, "{}Module: ", indent_.current_branch());
-            import_stmt.get_module_import().get_name().accept(*this);
+        if (import_stmt.is_library_import()) {
+            fmt::print(out_, "{}Library: ", indent_.current_branch());
+            import_stmt.get_library_import().get_name().accept(*this);
         } else {
-            fmt::print(out_, "{}User: ", indent_.current_branch());
-            import_stmt.get_user_import().get_file().accept(*this);
+            fmt::print(out_, "{}File: ", indent_.current_branch());
+            import_stmt.get_file_import().get_file().accept(*this);
         }
     }
 
     if (import_stmt.has_alias()) {
         const Indent::Guard g{indent_, true};
         fmt::print(out_, "{}Alias: ", indent_.current_branch());
-        if (import_stmt.is_module_import()) {
-            import_stmt.get_module_import().get_alias().accept(*this);
+        if (import_stmt.is_library_import()) {
+            import_stmt.get_library_import().get_alias().accept(*this);
         } else {
-            import_stmt.get_user_import().get_alias().accept(*this);
+            import_stmt.get_file_import().get_alias().accept(*this);
         }
     }
 }
