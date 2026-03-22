@@ -4,24 +4,48 @@
   inputs = {
     nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable";
     flake-utils.url = "github:numtide/flake-utils";
+    zig-flake.url = "github:mitchellh/zig-overlay";
+    zls-flake = {
+      url = "github:zigtools/zls?ref=0.15.1";
+      inputs.nixpkgs.follows = "nixpkgs";
+      inputs.zig-overlay.follows = "zig-flake";
+    };
   };
 
   outputs =
-    { nixpkgs, flake-utils, ... }:
+    {
+      nixpkgs,
+      flake-utils,
+      zig-flake,
+      zls-flake,
+      ...
+    }:
     flake-utils.lib.eachDefaultSystem (
       system:
       let
-        pkgs = import nixpkgs { inherit system; };
+        pkgs = import nixpkgs {
+          inherit system;
+          overlays = [
+            (final: prev: {
+              zig = zig-flake.packages.${system}."0.15.2";
+              zls = zls-flake.packages.${system}.default.overrideAttrs (old: {
+                nativeBuildInputs = (old.nativeBuildInputs or [ ]) ++ [ final.zig ];
+              });
+            })
+          ];
+        };
       in
       with pkgs;
       {
         devShells.default = mkShell {
           buildInputs = [
-            zig_0_15
-            zls_0_15
-            llvmPackages_21.clang-tools
-            llvmPackages_21.lldb
-          ];
+            zig
+            zls
+          ]
+          ++ (with llvmPackages_21; [
+            clang-tools
+            lldb
+          ]);
 
           shellHook = ''
             # Without this, Zig freaks out over unknown flags

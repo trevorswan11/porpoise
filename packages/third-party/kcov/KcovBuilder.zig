@@ -295,7 +295,7 @@ fn buildKcov(self: *const Self) Artifact {
     }
 
     mod.linkLibrary(self.curl.libcurl);
-    CurlBuilder.addFrameworkSearchPaths(mod, target);
+    Dependency.addFrameworkSearchPaths(mod, target);
     const zlib_dep = zlib.build(b, self.metadata.config);
     mod.linkLibrary(zlib_dep.artifact);
 

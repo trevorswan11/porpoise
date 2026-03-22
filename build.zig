@@ -951,6 +951,7 @@ fn addPackageStep(b: *std.Build, config: struct {
         .name = "compressor",
         .behavior = .standalone,
     });
+    Dependency.addFrameworkSearchPaths(compressor.root_module, b.graph.host);
 
     // Always clean up the compressed dir before packaging
     const package_parent_dirname = "package";
