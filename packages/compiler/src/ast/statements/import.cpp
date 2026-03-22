@@ -95,7 +95,8 @@ auto ImportStatement::is_equal(const Node& other) const noexcept -> bool {
                               return v == std::get<UserImport>(other_imported);
                           },
                       },
-                      imported_);
+                      imported_) &&
+           public_ == casted.public_;
 }
 
 } // namespace porpoise::ast

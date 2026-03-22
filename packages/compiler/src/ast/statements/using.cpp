@@ -31,7 +31,7 @@ auto UsingStatement::parse(syntax::Parser& parser)
 
 auto UsingStatement::is_equal(const Node& other) const noexcept -> bool {
     const auto& casted = as<UsingStatement>(other);
-    return *alias_ == *casted.alias_ && type_ == casted.type_;
+    return *alias_ == *casted.alias_ && type_ == casted.type_ && public_ == casted.public_;
 }
 
 } // namespace porpoise::ast

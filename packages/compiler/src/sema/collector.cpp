@@ -41,6 +41,7 @@ ILLEGAL_COLLECTOR_TOP_LEVEL(ast::DiscardStatement, "discard")
 ILLEGAL_COLLECTOR_TOP_LEVEL(ast::ExpressionStatement, "expression")
 
 auto SymbolCollector::visit(const ast::ImportStatement& import_stmt) -> void {
+    if (table_.is_module()) { import_stmt.mark_public(); }
     const auto name   = import_stmt.match(Overloaded{
         [](const ast::ModuleImport& module) {
             return module.has_alias() ? module.get_alias().get_name()
@@ -69,6 +70,7 @@ auto SymbolCollector::visit(const ast::ModuleStatement& module_stmt) -> void {
 }
 
 auto SymbolCollector::visit(const ast::UsingStatement& using_stmt) -> void {
+    if (table_.is_module()) { using_stmt.mark_public(); }
     auto result = table_.insert(using_stmt.get_alias().get_name(), &using_stmt);
     if (!result) { diagnostics_.emplace_back(result.error()); }
 }

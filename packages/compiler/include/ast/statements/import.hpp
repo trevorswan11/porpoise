@@ -69,11 +69,15 @@ class ImportStatement : public StmtBase<ImportStatement> {
     [[nodiscard]] auto has_alias() const noexcept -> bool;
     MAKE_VARIANT_MATCHER(imported_)
 
+    auto               mark_public() const noexcept -> void { public_ = true; }
+    [[nodiscard]] auto is_public() const noexcept -> bool { return public_; }
+
   protected:
     auto is_equal(const Node& other) const noexcept -> bool override;
 
   private:
     ImportVariant imported_;
+    mutable bool  public_{false}; // Updated in sema
 };
 
 } // namespace porpoise::ast

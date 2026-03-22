@@ -33,19 +33,29 @@ TEST_CASE("Holistic language examples") {
                                         using Integer = int;
                                         const a: Integer = 1;)",
                                        is_module ? "" : "//");
+
         helpers::test_collector(
             input,
             is_module,
             std::pair{"std",
-                      ast::ImportStatement{syntax::Token{keywords::IMPORT},
-                                           ast::ModuleImport{helpers::make_ident("std"), {}}}},
+                      [is_module]() {
+                          ast::ImportStatement import_stmt{
+                              syntax::Token{keywords::IMPORT},
+                              ast::ModuleImport{helpers::make_ident("std"), {}}};
+                          if (is_module) { import_stmt.mark_public(); }
+                          return import_stmt;
+                      }()},
             std::pair{"Integer",
-                      ast::UsingStatement{syntax::Token{keywords::USING},
-                                          helpers::make_ident("Integer"),
-                                          ast::ExplicitType{
-                                              mods::BASE,
-                                              helpers::make_ident("int"),
-                                          }}},
+                      [is_module]() {
+                          ast::UsingStatement using_stmt{syntax::Token{keywords::USING},
+                                                         helpers::make_ident("Integer"),
+                                                         ast::ExplicitType{
+                                                             mods::BASE,
+                                                             helpers::make_ident("int"),
+                                                         }};
+                          if (is_module) { using_stmt.mark_public(); }
+                          return using_stmt;
+                      }()},
             std::pair{
                 "a",
                 ast::DeclStatement{
