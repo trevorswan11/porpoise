@@ -1,26 +1,55 @@
+#include <cassert>
+
 #include "arena.hpp"
 
 namespace porpoise::mem {
 
 // https://github.com/trevorswan11/porpoise/blob/772707146faa9315c24fb079fd759f3715442db1/old/src/util/arena.c
 auto Arena::alloc(usize size, usize align) -> void* {
-    if (blocks_.empty()) { blocks_.emplace_back(); }
-    while (true) {
-        auto&       current_block = blocks_[current_block_idx_];
-        auto        raw_addr = reinterpret_cast<uintptr_t>(current_block.data() + current_offset_);
-        uintptr_t   aligned_addr = (raw_addr + (align - 1)) & ~(align - 1);
-        const usize padding      = aligned_addr - raw_addr;
+    if (current_) {
+        auto        raw_addr    = reinterpret_cast<uintptr_t>(current_ + 1);
+        uintptr_t   current_ptr = raw_addr + offset_;
+        uintptr_t   aligned_ptr = (current_ptr + (align - 1)) & ~(align - 1);
+        const usize total_size  = aligned_ptr - raw_addr + size;
 
-        if (current_offset_ + padding + size <= BLOCK_SIZE) {
-            current_offset_ += padding + size;
-            return reinterpret_cast<void*>(aligned_addr);
+        if (total_size <= BLOCK_SIZE) {
+            offset_ += total_size;
+            return reinterpret_cast<void*>(aligned_ptr);
+        } else if (current_->next) {
+            current_ = current_->next;
+            offset_  = 0;
+            return alloc(size, align);
         }
-
-        // Otherwise a new block needs to be created to house the memory
-        current_block_idx_++;
-        current_offset_ = 0;
-        if (current_block_idx_ >= blocks_.size()) { blocks_.emplace_back(); }
     }
+
+    // Otherwise a new block needs to be created for the memory
+    return Block::alloc(*this, size, align);
+}
+
+auto Arena::clear() noexcept -> void {
+    Block* block = head_;
+    while (block) {
+        Block* next = block->next;
+        ::operator delete(block);
+        block = next;
+    }
+    reset();
+}
+
+auto Arena::Block::alloc(Arena& a, usize size, usize align) -> void* {
+    void*  raw   = ::operator new(sizeof(Block) + BLOCK_SIZE);
+    Block* block = new (raw) Block{};
+
+    if (!a.head_) {
+        a.head_ = block;
+    } else {
+        assert(a.current_);
+        a.current_->next = block;
+    }
+
+    a.current_ = block;
+    a.offset_  = 0;
+    return a.alloc(size, align);
 }
 
 } // namespace porpoise::mem

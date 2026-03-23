@@ -33,7 +33,7 @@ TEST_CASE("Arena alignment") {
 
 TEST_CASE("Arena array construction") {
     mem::Arena arena;
-    const auto array = arena.make_array<i32>(10);
+    const auto array = arena.make_span<i32>(10);
     for (const auto& i : array) { CHECK(i == 0); }
 }
 
