@@ -7,7 +7,7 @@
 
 namespace porpoise::syntax {
 
-auto base_idx(Base base) noexcept -> int {
+auto base_idx(Base base) noexcept -> i32 {
     switch (base) {
     case Base::BINARY:      return 0;
     case Base::OCTAL:       return 1;
