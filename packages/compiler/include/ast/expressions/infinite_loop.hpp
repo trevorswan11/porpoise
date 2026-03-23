@@ -13,15 +13,15 @@ class InfiniteLoopExpression : public ExprBase<InfiniteLoopExpression> {
     static constexpr auto KIND = NodeKind::INFINITE_LOOP_EXPRESSION;
 
   public:
-    explicit InfiniteLoopExpression(const syntax::Token& start_token,
-                                    Box<BlockStatement>  block) noexcept;
+    explicit InfiniteLoopExpression(const syntax::Token&     start_token,
+                                    mem::Box<BlockStatement> block) noexcept;
     ~InfiniteLoopExpression() override;
 
     MAKE_AST_COPY_MOVE(InfiniteLoopExpression)
 
     auto                      accept(Visitor& v) const -> void override;
     [[nodiscard]] static auto parse(syntax::Parser& parser)
-        -> Expected<Box<Expression>, syntax::ParserDiagnostic>;
+        -> Expected<mem::Box<Expression>, syntax::ParserDiagnostic>;
 
     MAKE_GETTER(block, const BlockStatement&, *)
 
@@ -29,7 +29,7 @@ class InfiniteLoopExpression : public ExprBase<InfiniteLoopExpression> {
     auto is_equal(const Node& other) const noexcept -> bool override;
 
   private:
-    Box<BlockStatement> block_;
+    mem::Box<BlockStatement> block_;
 };
 
 } // namespace porpoise::ast

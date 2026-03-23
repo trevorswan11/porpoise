@@ -28,7 +28,7 @@ TEST_CASE("File imports") {
         R"(import "ast/node.p" as node;)",
         ast::ImportStatement{
             syntax::Token{keywords::IMPORT},
-            ast::FileImport{make_box<ast::StringExpression>(
+            ast::FileImport{mem::make_box<ast::StringExpression>(
                                 syntax::Token{syntax::TokenType::STRING, R"("ast/node.p")"},
                                 std::string{"ast/node.p"}),
                             helpers::make_ident("node")}});

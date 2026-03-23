@@ -13,16 +13,16 @@ class DoWhileLoopExpression : public ExprBase<DoWhileLoopExpression> {
     static constexpr auto KIND = NodeKind::DO_WHILE_LOOP_EXPRESSION;
 
   public:
-    explicit DoWhileLoopExpression(const syntax::Token& start_token,
-                                   Box<BlockStatement>  block,
-                                   Box<Expression>      condition) noexcept;
+    explicit DoWhileLoopExpression(const syntax::Token&     start_token,
+                                   mem::Box<BlockStatement> block,
+                                   mem::Box<Expression>     condition) noexcept;
     ~DoWhileLoopExpression() override;
 
     MAKE_AST_COPY_MOVE(DoWhileLoopExpression)
 
     auto                      accept(Visitor& v) const -> void override;
     [[nodiscard]] static auto parse(syntax::Parser& parser)
-        -> Expected<Box<Expression>, syntax::ParserDiagnostic>;
+        -> Expected<mem::Box<Expression>, syntax::ParserDiagnostic>;
 
     MAKE_GETTER(block, const BlockStatement&, *)
     MAKE_GETTER(condition, const Expression&, *)
@@ -31,8 +31,8 @@ class DoWhileLoopExpression : public ExprBase<DoWhileLoopExpression> {
     auto is_equal(const Node& other) const noexcept -> bool override;
 
   private:
-    Box<BlockStatement> block_;
-    Box<Expression>     condition_;
+    mem::Box<BlockStatement> block_;
+    mem::Box<Expression>     condition_;
 };
 
 } // namespace porpoise::ast

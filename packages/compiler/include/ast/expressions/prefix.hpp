@@ -11,13 +11,13 @@ namespace porpoise::ast {
 
 template <typename Derived> class PrefixExpression : public ExprBase<Derived> {
   public:
-    explicit PrefixExpression(const syntax::Token& start_token, Box<Expression> rhs) noexcept
+    explicit PrefixExpression(const syntax::Token& start_token, mem::Box<Expression> rhs) noexcept
         : ExprBase<Derived>{start_token}, rhs_{std::move(rhs)} {}
 
     auto accept(Visitor& v) const noexcept -> void override { v.visit(Node::as<Derived>(*this)); }
 
     [[nodiscard]] static auto parse(syntax::Parser& parser)
-        -> Expected<Box<Expression>, syntax::ParserDiagnostic> {
+        -> Expected<mem::Box<Expression>, syntax::ParserDiagnostic> {
         const auto prefix_token = parser.current_token();
         if (parser.peek_token_is(syntax::TokenType::END)) {
             return make_parser_unexpected(syntax::ParserError::PREFIX_MISSING_OPERAND,
@@ -26,7 +26,7 @@ template <typename Derived> class PrefixExpression : public ExprBase<Derived> {
         parser.advance();
 
         auto operand = TRY(parser.parse_expression(syntax::Precedence::PREFIX));
-        return make_box<Derived>(prefix_token, std::move(operand));
+        return mem::make_box<Derived>(prefix_token, std::move(operand));
     }
 
     [[nodiscard]] auto get_op() const noexcept -> syntax::TokenType {
@@ -41,7 +41,7 @@ template <typename Derived> class PrefixExpression : public ExprBase<Derived> {
     }
 
   private:
-    Box<Expression> rhs_;
+    mem::Box<Expression> rhs_;
 };
 
 #define DECLARE_PREFIX_EXPRESSION(Type, Kind)     \

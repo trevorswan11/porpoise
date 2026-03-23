@@ -7,7 +7,7 @@ namespace porpoise::ast {
 auto IfExpression::accept(Visitor& v) const -> void { v.visit(*this); }
 
 auto IfExpression::parse(syntax::Parser& parser)
-    -> Expected<Box<Expression>, syntax::ParserDiagnostic> {
+    -> Expected<mem::Box<Expression>, syntax::ParserDiagnostic> {
     const auto start_token = parser.current_token();
 
     // Conditions have to be surrounded by parentheses
@@ -27,7 +27,7 @@ auto IfExpression::parse(syntax::Parser& parser)
     auto alternate =
         TRY(parser.try_parse_restricted_alternate(syntax::ParserError::ILLEGAL_IF_BRANCH));
 
-    return make_box<IfExpression>(
+    return mem::make_box<IfExpression>(
         start_token, std::move(condition), std::move(consequence), std::move(alternate));
 }
 

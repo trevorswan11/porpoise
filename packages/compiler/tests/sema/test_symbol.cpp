@@ -44,7 +44,7 @@ TEST_CASE("Multiple table import") {
     const std::string          user_file{"node.p"};
     const ast::ImportStatement user_import{
         syntax::Token{syntax::keywords::IMPORT},
-        ast::FileImport{make_box<ast::StringExpression>(
+        ast::FileImport{mem::make_box<ast::StringExpression>(
                             syntax::Token{syntax::TokenType::STRING, user_file}, user_file),
                         helpers::make_ident(user_name)}};
     CHECK(table.insert(user_name, &user_import));

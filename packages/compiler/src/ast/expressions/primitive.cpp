@@ -11,14 +11,14 @@ namespace porpoise::ast {
 auto StringExpression::accept(Visitor& v) const -> void { v.visit(*this); }
 
 auto StringExpression::parse(syntax::Parser& parser)
-    -> Expected<Box<Expression>, syntax::ParserDiagnostic> {
+    -> Expected<mem::Box<Expression>, syntax::ParserDiagnostic> {
     const auto start_token = parser.current_token();
     const auto promoted    = start_token.promote();
     if (!promoted) {
         return make_parser_unexpected(syntax::ParserError::MALFORMED_STRING, start_token);
     }
 
-    return make_box<StringExpression>(start_token, *promoted);
+    return mem::make_box<StringExpression>(start_token, *promoted);
 }
 
 auto SignedIntegerExpression::accept(Visitor& v) const -> void { v.visit(*this); }
@@ -31,10 +31,10 @@ auto USizeIntegerExpression::accept(Visitor& v) const -> void { v.visit(*this); 
 auto ByteExpression::accept(Visitor& v) const -> void { v.visit(*this); }
 
 auto ByteExpression::parse(syntax::Parser& parser)
-    -> Expected<Box<Expression>, syntax::ParserDiagnostic> {
+    -> Expected<mem::Box<Expression>, syntax::ParserDiagnostic> {
     const auto start_token = parser.current_token();
     const auto slice       = start_token.slice;
-    if (slice[1] != '\\') { return make_box<ByteExpression>(start_token, slice[1]); }
+    if (slice[1] != '\\') { return mem::make_box<ByteExpression>(start_token, slice[1]); }
 
     const auto escaped = slice[2];
     byte       value;
@@ -50,7 +50,7 @@ auto ByteExpression::parse(syntax::Parser& parser)
         return make_parser_unexpected(syntax::ParserError::UNKNOWN_CHARACTER_ESCAPE, start_token);
     }
 
-    return make_box<ByteExpression>(start_token, value);
+    return mem::make_box<ByteExpression>(start_token, value);
 }
 
 template <typename T> auto approx_eq(T a, T b) -> bool {
@@ -76,9 +76,9 @@ auto DoubleExpression::is_equal(const Node& other) const noexcept -> bool {
 auto BoolExpression::accept(Visitor& v) const -> void { v.visit(*this); }
 
 auto BoolExpression::parse(syntax::Parser& parser)
-    -> Expected<Box<Expression>, syntax::ParserDiagnostic> {
+    -> Expected<mem::Box<Expression>, syntax::ParserDiagnostic> {
     const auto& start_token = parser.current_token();
-    return make_box<BoolExpression>(start_token, start_token.type == syntax::TokenType::TRUE);
+    return mem::make_box<BoolExpression>(start_token, start_token.type == syntax::TokenType::TRUE);
 }
 
 // cppcheck-suppress-end [constParameterReference, duplInheritedMember]

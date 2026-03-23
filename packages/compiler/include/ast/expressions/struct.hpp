@@ -16,17 +16,17 @@ class StructExpression : public ExprBase<StructExpression> {
     static constexpr auto KIND = NodeKind::STRUCT_EXPRESSION;
 
   public:
-    explicit StructExpression(const syntax::Token&            start_token,
-                              std::vector<Box<DeclStatement>> members) noexcept;
+    explicit StructExpression(const syntax::Token&                 start_token,
+                              std::vector<mem::Box<DeclStatement>> members) noexcept;
     ~StructExpression() override;
 
     MAKE_AST_COPY_MOVE(StructExpression)
 
     auto                      accept(Visitor& v) const -> void override;
     [[nodiscard]] static auto parse(syntax::Parser& parser)
-        -> Expected<Box<Expression>, syntax::ParserDiagnostic>;
+        -> Expected<mem::Box<Expression>, syntax::ParserDiagnostic>;
 
-    MAKE_GETTER(members, std::span<const Box<DeclStatement>>)
+    MAKE_GETTER(members, std::span<const mem::Box<DeclStatement>>)
     [[nodiscard]] auto is_packed() const noexcept -> bool {
         return start_token_.type == syntax::TokenType::PACKED;
     }
@@ -35,7 +35,7 @@ class StructExpression : public ExprBase<StructExpression> {
     auto is_equal(const Node& other) const noexcept -> bool override;
 
   private:
-    std::vector<Box<DeclStatement>> members_;
+    std::vector<mem::Box<DeclStatement>> members_;
 };
 
 } // namespace porpoise::ast

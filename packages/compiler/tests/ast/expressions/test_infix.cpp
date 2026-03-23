@@ -23,8 +23,9 @@ template <ast::LeafNode N, ast::LeafNode L, ast::LeafNode R>
 auto test_infix_expr(std::string_view input, L&& lhs, syntax::TokenType op, R&& rhs) -> void {
     syntax::Lexer l{input};
     const auto&   start_token = l.advance();
-    test_expr_stmt(input,
-                   N{start_token, make_box<L>(std::move(lhs)), op, make_box<R>(std::move(rhs))});
+    test_expr_stmt(
+        input,
+        N{start_token, mem::make_box<L>(std::move(lhs)), op, mem::make_box<R>(std::move(rhs))});
 }
 
 template <ast::LeafNode N> auto test_infix_op_list(std::span<const syntax::Operator> ops) -> void {
@@ -146,7 +147,7 @@ TEST_CASE("Numerical precedence") {
             syntax::Token{syntax::TokenType::LPAREN, "("},
             ast::BinaryExpression{
                 a,
-                make_box<ast::BinaryExpression>(
+                mem::make_box<ast::BinaryExpression>(
                     a, helpers::make_ident(a), syntax::TokenType::PLUS, helpers::make_ident(b)),
                 syntax::TokenType::STAR,
                 helpers::make_ident(c)});
@@ -182,7 +183,7 @@ TEST_CASE("Bitwise operations") {
         syntax::Token{syntax::TokenType::LPAREN, "("},
         ast::BinaryExpression{
             a,
-            make_box<ast::BinaryExpression>(
+            mem::make_box<ast::BinaryExpression>(
                 a, helpers::make_ident(a), syntax::TokenType::BW_OR, helpers::make_ident(b)),
             syntax::TokenType::BW_AND,
             helpers::make_ident(c)});
@@ -211,10 +212,10 @@ TEST_CASE("Boolean operations") {
         "a <= b or c == d and e;",
         ast::BinaryExpression{
             a,
-            make_box<ast::BinaryExpression>(
+            mem::make_box<ast::BinaryExpression>(
                 a, helpers::make_ident(a), syntax::TokenType::LT_EQ, helpers::make_ident(b)),
             syntax::TokenType::BOOLEAN_OR,
-            make_box<ast::BinaryExpression>(
+            mem::make_box<ast::BinaryExpression>(
                 c, helpers::make_ident(c), syntax::TokenType::EQ, helpers::make_ident(d))},
         syntax::TokenType::BOOLEAN_AND,
         helpers::ident_from(e));
@@ -227,7 +228,7 @@ TEST_CASE("Prefix precedence") {
         helpers::ident_from(a),
         syntax::TokenType::PLUS,
         ast::BinaryExpression{minus,
-                              make_box<ast::UnaryExpression>(minus, helpers::make_ident(b)),
+                              mem::make_box<ast::UnaryExpression>(minus, helpers::make_ident(b)),
                               syntax::TokenType::STAR,
                               helpers::make_ident(c)});
 
@@ -235,11 +236,11 @@ TEST_CASE("Prefix precedence") {
         "a | b & ~c;",
         helpers::ident_from(a),
         syntax::TokenType::BW_OR,
-        ast::BinaryExpression{
-            b,
-            helpers::make_ident(b),
-            syntax::TokenType::BW_AND,
-            make_box<ast::UnaryExpression>(syntax::Token{operators::NOT}, helpers::make_ident(c))});
+        ast::BinaryExpression{b,
+                              helpers::make_ident(b),
+                              syntax::TokenType::BW_AND,
+                              mem::make_box<ast::UnaryExpression>(syntax::Token{operators::NOT},
+                                                                  helpers::make_ident(c))});
 
     helpers::test_binary_expr(
         "a and !b;",
@@ -254,7 +255,7 @@ TEST_CASE("Call precedence") {
         helpers::ident_from(a),
         syntax::TokenType::BOOLEAN_AND,
         ast::BinaryExpression{b,
-                              make_box<ast::CallExpression>(
+                              mem::make_box<ast::CallExpression>(
                                   b, helpers::make_ident(b), std::vector<ast::CallArgument>{}),
                               syntax::TokenType::NEQ,
                               helpers::make_ident(c)});
@@ -266,14 +267,14 @@ TEST_CASE("Index precedence") {
         helpers::ident_from(a),
         syntax::TokenType::BOOLEAN_OR,
         ast::BinaryExpression{b,
-                              make_box<ast::IndexExpression>(
+                              mem::make_box<ast::IndexExpression>(
                                   b,
                                   helpers::make_ident(b),
-                                  make_box<ast::USizeIntegerExpression>(
+                                  mem::make_box<ast::USizeIntegerExpression>(
                                       syntax::Token{syntax::TokenType::UZINT_10, "3uz"}, 3uz)),
                               syntax::TokenType::EQ,
-                              make_box<ast::UnaryExpression>(syntax::Token{operators::BANG},
-                                                             helpers::make_ident(c))});
+                              mem::make_box<ast::UnaryExpression>(syntax::Token{operators::BANG},
+                                                                  helpers::make_ident(c))});
 }
 
 TEST_CASE("Scope resolution precedence") {
@@ -283,7 +284,7 @@ TEST_CASE("Scope resolution precedence") {
         syntax::TokenType::BOOLEAN_OR,
         ast::BinaryExpression{
             b,
-            make_box<ast::DotExpression>(
+            mem::make_box<ast::DotExpression>(
                 b, helpers::make_ident(b), syntax::TokenType::DOT, helpers::make_ident(c)),
             syntax::TokenType::GT_EQ,
             helpers::make_ident(d)});
@@ -293,7 +294,7 @@ TEST_CASE("Scope resolution precedence") {
         helpers::ident_from(a),
         syntax::TokenType::BOOLEAN_OR,
         ast::BinaryExpression{b,
-                              make_box<ast::ScopeResolutionExpression>(
+                              mem::make_box<ast::ScopeResolutionExpression>(
                                   b, helpers::make_ident(b), helpers::make_ident(c)),
                               syntax::TokenType::LT,
                               helpers::make_ident(d)});
@@ -304,7 +305,7 @@ TEST_CASE("Scope resolution precedence") {
         syntax::TokenType::BOOLEAN_OR,
         ast::BinaryExpression{
             b,
-            make_box<ast::DotExpression>(
+            mem::make_box<ast::DotExpression>(
                 b, helpers::make_ident(b), syntax::TokenType::DOT, helpers::make_ident(c)),
             syntax::TokenType::GT_EQ,
             helpers::make_ident(d)});

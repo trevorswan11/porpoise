@@ -13,8 +13,8 @@ class StringExpression;
 
 class LibraryImport {
   public:
-    explicit LibraryImport(Box<IdentifierExpression>           name,
-                           Optional<Box<IdentifierExpression>> alias) noexcept;
+    explicit LibraryImport(mem::Box<IdentifierExpression>           name,
+                           Optional<mem::Box<IdentifierExpression>> alias) noexcept;
     ~LibraryImport();
 
     MAKE_AST_COPY_MOVE(LibraryImport)
@@ -25,13 +25,14 @@ class LibraryImport {
     MAKE_EQ_DELEGATION(LibraryImport)
 
   private:
-    Box<IdentifierExpression>           name_;
-    Optional<Box<IdentifierExpression>> alias_;
+    mem::Box<IdentifierExpression>           name_;
+    Optional<mem::Box<IdentifierExpression>> alias_;
 };
 
 class FileImport {
   public:
-    explicit FileImport(Box<StringExpression> file, Box<IdentifierExpression> alias) noexcept;
+    explicit FileImport(mem::Box<StringExpression>     file,
+                        mem::Box<IdentifierExpression> alias) noexcept;
     ~FileImport();
 
     MAKE_AST_COPY_MOVE(FileImport)
@@ -42,8 +43,8 @@ class FileImport {
     MAKE_EQ_DELEGATION(FileImport)
 
   private:
-    Box<StringExpression>     file_;
-    Box<IdentifierExpression> alias_;
+    mem::Box<StringExpression>     file_;
+    mem::Box<IdentifierExpression> alias_;
 };
 
 class ImportStatement : public StmtBase<ImportStatement> {
@@ -60,7 +61,7 @@ class ImportStatement : public StmtBase<ImportStatement> {
 
     auto                      accept(Visitor& v) const -> void override;
     [[nodiscard]] static auto parse(syntax::Parser& parser)
-        -> Expected<Box<Statement>, syntax::ParserDiagnostic>;
+        -> Expected<mem::Box<Statement>, syntax::ParserDiagnostic>;
 
     MAKE_VARIANT_UNPACKER(library_import, LibraryImport, LibraryImport, imported_, std::get)
     MAKE_VARIANT_UNPACKER(file_import, FileImport, FileImport, imported_, std::get)

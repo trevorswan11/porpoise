@@ -65,6 +65,7 @@ class NonNull {
     auto get() const noexcept -> T* { return ptr_; }
 
     explicit operator T() const noexcept { return *ptr_; }
+    bool     operator==(const NonNull<T>&) const noexcept = default;
 
   private:
     T* ptr_;

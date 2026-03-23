@@ -7,9 +7,9 @@
 
 namespace porpoise::ast {
 
-ExplicitArrayType::ExplicitArrayType(Optional<Box<Expression>> dimension,
-                                     bool                      null_terminated,
-                                     Box<ExplicitType>         inner_type) noexcept
+ExplicitArrayType::ExplicitArrayType(Optional<mem::Box<Expression>> dimension,
+                                     bool                           null_terminated,
+                                     mem::Box<ExplicitType>         inner_type) noexcept
     : dimension_{std::move(dimension)}, null_terminated_{null_terminated},
       inner_type_{std::move(inner_type)} {}
 ExplicitArrayType::~ExplicitArrayType() = default;
@@ -37,7 +37,7 @@ auto ExplicitType::is_equal(const ExplicitType& other) const noexcept -> bool {
                           [&other_type](const ExplicitArrayType& v1) {
                               return v1 == std::get<ExplicitArrayType>(other_type);
                           },
-                          [&other_type](const Box<ExplicitType>& v1) {
+                          [&other_type](const mem::Box<ExplicitType>& v1) {
                               return *v1 == *std::get<ExplicitRecursiveType>(other_type);
                           },
                       },
@@ -55,8 +55,8 @@ auto ExplicitType::is_equal(const ExplicitType& other) const noexcept -> bool {
     if (parser.peek_token_is(syntax::TokenType::LBRACKET)) {
         parser.advance();
 
-        auto                      null_terminated = false;
-        Optional<Box<Expression>> dimension;
+        auto                           null_terminated = false;
+        Optional<mem::Box<Expression>> dimension;
         if (parser.peek_token_is(syntax::TokenType::NULL_TERMINATED)) {
             parser.advance();
             null_terminated = true;
@@ -81,11 +81,11 @@ auto ExplicitType::is_equal(const ExplicitType& other) const noexcept -> bool {
         return ExplicitType{std::move(modifier),
                             ExplicitArrayType{std::move(dimension),
                                               null_terminated,
-                                              make_box<ExplicitType>(std::move(inner))}};
+                                              mem::make_box<ExplicitType>(std::move(inner))}};
     } else if (!TypeModifier::from_token(parser.peek_token()).is_value()) {
         // Don't advance since the parser does it implicitly here (costs two from_token calls)
         auto inner = TRY(ExplicitType::parse(parser));
-        return ExplicitType{std::move(modifier), make_box<ExplicitType>(std::move(inner))};
+        return ExplicitType{std::move(modifier), mem::make_box<ExplicitType>(std::move(inner))};
     }
 
     // Otherwise the type has to be a 'simple' function or ident
@@ -147,20 +147,20 @@ TypeExpression::~TypeExpression() = default;
 auto TypeExpression::accept(Visitor& v) const -> void { v.visit(*this); }
 
 auto TypeExpression::parse(syntax::Parser& parser)
-    -> Expected<std::pair<Box<Expression>, bool>, syntax::ParserDiagnostic> {
+    -> Expected<std::pair<mem::Box<Expression>, bool>, syntax::ParserDiagnostic> {
     // The start start token is always offset as this is called irregularly
     const auto start_token = parser.peek_token();
 
-    auto [type, initialized] =
-        TRY(([&]() -> Expected<std::pair<Box<TypeExpression>, bool>, syntax::ParserDiagnostic> {
+    auto [type, initialized] = TRY(
+        ([&]() -> Expected<std::pair<mem::Box<TypeExpression>, bool>, syntax::ParserDiagnostic> {
             if (parser.peek_token_is(syntax::TokenType::WALRUS)) {
-                auto type = make_box<TypeExpression>(start_token, std::nullopt);
+                auto type = mem::make_box<TypeExpression>(start_token, std::nullopt);
                 parser.advance();
                 return std::pair{std::move(type), true};
             } else if (parser.peek_token_is(syntax::TokenType::COLON)) {
                 parser.advance();
                 auto explicit_type = TRY(ExplicitType::parse(parser));
-                auto type = make_box<TypeExpression>(start_token, std::move(explicit_type));
+                auto type = mem::make_box<TypeExpression>(start_token, std::move(explicit_type));
                 if (parser.peek_token_is(syntax::TokenType::ASSIGN)) {
                     parser.advance();
                     return std::pair{std::move(type), true};
@@ -173,7 +173,7 @@ auto TypeExpression::parse(syntax::Parser& parser)
 
     // Advance again to prepare for rhs
     if (initialized) { parser.advance(); }
-    return std::pair{box_into<Expression>(std::move(type)), initialized};
+    return std::pair{mem::box_into<Expression>(std::move(type)), initialized};
 }
 
 auto TypeExpression::is_equal(const Node& other) const noexcept -> bool {

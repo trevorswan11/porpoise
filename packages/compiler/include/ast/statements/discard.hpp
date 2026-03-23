@@ -13,14 +13,15 @@ class DiscardStatement : public StmtBase<DiscardStatement> {
     static constexpr auto KIND = NodeKind::DISCARD_STATEMENT;
 
   public:
-    explicit DiscardStatement(const syntax::Token& start_token, Box<Expression> discarded) noexcept
+    explicit DiscardStatement(const syntax::Token& start_token,
+                              mem::Box<Expression> discarded) noexcept
         : StmtBase{start_token}, discarded_{std::move(discarded)} {}
 
     MAKE_AST_COPY_MOVE(DiscardStatement)
 
     auto                      accept(Visitor& v) const -> void override;
     [[nodiscard]] static auto parse(syntax::Parser& parser)
-        -> Expected<Box<Statement>, syntax::ParserDiagnostic>;
+        -> Expected<mem::Box<Statement>, syntax::ParserDiagnostic>;
 
     MAKE_GETTER(discarded, const Expression&, *)
 
@@ -31,7 +32,7 @@ class DiscardStatement : public StmtBase<DiscardStatement> {
     }
 
   private:
-    Box<Expression> discarded_;
+    mem::Box<Expression> discarded_;
 };
 
 } // namespace porpoise::ast

@@ -21,7 +21,7 @@ auto test_type_expr(std::string_view type_str, ast::ExplicitType&& expected) -> 
         input,
         ast::DeclStatement{syntax::Token{keywords::VAR},
                            helpers::make_ident("a"),
-                           make_box<ast::TypeExpression>(
+                           mem::make_box<ast::TypeExpression>(
                                syntax::Token{syntax::TokenType::COLON, ":"}, std::move(expected)),
                            std::nullopt,
                            ast::DeclModifiers::VARIABLE});
@@ -42,7 +42,7 @@ TEST_CASE("Function types") {
     helpers::test_type_expr(
         "fn(): noreturn",
         ast::ExplicitType{mods::BASE,
-                          make_box<ast::FunctionExpression>(
+                          mem::make_box<ast::FunctionExpression>(
                               syntax::Token{keywords::FN},
                               std::nullopt,
                               Parameters{},
@@ -52,7 +52,7 @@ TEST_CASE("Function types") {
     helpers::test_type_expr(
         "fn(&self): *mut E",
         ast::ExplicitType{mods::BASE,
-                          make_box<ast::FunctionExpression>(
+                          mem::make_box<ast::FunctionExpression>(
                               syntax::Token{keywords::FN},
                               ast::SelfParameter{mods::REF, helpers::make_ident("self")},
                               Parameters{},
@@ -66,19 +66,20 @@ TEST_CASE("Array type") {
         ast::ExplicitType{
             mods::BASE,
             ast::ExplicitArrayType{
-                make_box<ast::USizeIntegerExpression>(
+                mem::make_box<ast::USizeIntegerExpression>(
                     syntax::Token{syntax::TokenType::UZINT_10, "5uz"}, 5uz),
                 false,
-                make_box<ast::ExplicitType>(mods::PTR, helpers::make_ident("ulong"))}});
+                mem::make_box<ast::ExplicitType>(mods::PTR, helpers::make_ident("ulong"))}});
 }
 
 TEST_CASE("Slice type") {
     helpers::test_type_expr(
         "[]*ulong",
-        ast::ExplicitType{
-            mods::BASE,
-            ast::ExplicitArrayType{
-                {}, false, make_box<ast::ExplicitType>(mods::PTR, helpers::make_ident("ulong"))}});
+        ast::ExplicitType{mods::BASE,
+                          ast::ExplicitArrayType{{},
+                                                 false,
+                                                 mem::make_box<ast::ExplicitType>(
+                                                     mods::PTR, helpers::make_ident("ulong"))}});
 }
 
 TEST_CASE("Recursive types") {
@@ -89,9 +90,9 @@ TEST_CASE("Recursive types") {
             ast::ExplicitArrayType{
                 helpers::make_ident("S"),
                 false,
-                make_box<ast::ExplicitType>(
+                mem::make_box<ast::ExplicitType>(
                     mods::REF,
-                    make_box<ast::ExplicitType>(mods::MUT_PTR, helpers::make_ident("T")))}});
+                    mem::make_box<ast::ExplicitType>(mods::MUT_PTR, helpers::make_ident("T")))}});
 }
 
 TEST_CASE("Complex function type (holistic)") {
@@ -99,7 +100,7 @@ TEST_CASE("Complex function type (holistic)") {
         "*fn(&a, b: *mut B): &[0x2uz][N:0]*E",
         ast::ExplicitType{
             mods::PTR,
-            make_box<ast::FunctionExpression>(
+            mem::make_box<ast::FunctionExpression>(
                 syntax::Token{keywords::FN},
                 ast::SelfParameter{mods::REF, helpers::make_ident("a")},
                 helpers::make_parameters(ast::FunctionParameter{
@@ -108,14 +109,14 @@ TEST_CASE("Complex function type (holistic)") {
                 ast::ExplicitType{
                     mods::REF,
                     ast::ExplicitArrayType{
-                        make_box<ast::USizeIntegerExpression>(
+                        mem::make_box<ast::USizeIntegerExpression>(
                             syntax::Token{syntax::TokenType::UZINT_16, "0x2uz"}, 0x2uz),
                         false,
-                        make_box<ast::ExplicitType>(
+                        mem::make_box<ast::ExplicitType>(
                             mods::BASE,
                             ast::ExplicitArrayType{helpers::make_ident("N"),
                                                    true,
-                                                   make_box<ast::ExplicitType>(
+                                                   mem::make_box<ast::ExplicitType>(
                                                        mods::PTR, helpers::make_ident("E"))})}},
                 std::nullopt)});
 }

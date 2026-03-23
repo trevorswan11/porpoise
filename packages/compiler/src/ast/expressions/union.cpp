@@ -9,7 +9,7 @@
 
 namespace porpoise::ast {
 
-UnionField::UnionField(Box<IdentifierExpression> ident, ExplicitType&& type) noexcept
+UnionField::UnionField(mem::Box<IdentifierExpression> ident, ExplicitType&& type) noexcept
     : ident_{std::move(ident)}, type_{std::move(type)} {}
 UnionField::~UnionField() = default;
 
@@ -25,7 +25,7 @@ UnionExpression::~UnionExpression() = default;
 auto UnionExpression::accept(Visitor& v) const -> void { v.visit(*this); }
 
 auto UnionExpression::parse(syntax::Parser& parser)
-    -> Expected<Box<Expression>, syntax::ParserDiagnostic> {
+    -> Expected<mem::Box<Expression>, syntax::ParserDiagnostic> {
     const auto start_token = parser.current_token();
     TRY(parser.expect_peek(syntax::TokenType::LBRACE));
 
@@ -47,7 +47,7 @@ auto UnionExpression::parse(syntax::Parser& parser)
     if (fields.empty()) {
         return make_parser_unexpected(syntax::ParserError::EMPTY_UNION, start_token);
     }
-    return make_box<UnionExpression>(start_token, std::move(fields));
+    return mem::make_box<UnionExpression>(start_token, std::move(fields));
 }
 
 auto UnionExpression::is_equal(const Node& other) const noexcept -> bool {

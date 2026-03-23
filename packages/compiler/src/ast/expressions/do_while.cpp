@@ -5,16 +5,16 @@
 
 namespace porpoise::ast {
 
-DoWhileLoopExpression::DoWhileLoopExpression(const syntax::Token& start_token,
-                                             Box<BlockStatement>  block,
-                                             Box<Expression>      condition) noexcept
+DoWhileLoopExpression::DoWhileLoopExpression(const syntax::Token&     start_token,
+                                             mem::Box<BlockStatement> block,
+                                             mem::Box<Expression>     condition) noexcept
     : ExprBase{start_token}, block_{std::move(block)}, condition_{std::move(condition)} {}
 DoWhileLoopExpression::~DoWhileLoopExpression() = default;
 
 auto DoWhileLoopExpression::accept(Visitor& v) const -> void { v.visit(*this); }
 
 auto DoWhileLoopExpression::parse(syntax::Parser& parser)
-    -> Expected<Box<Expression>, syntax::ParserDiagnostic> {
+    -> Expected<mem::Box<Expression>, syntax::ParserDiagnostic> {
     const auto start_token = parser.current_token();
     TRY(parser.expect_peek(syntax::TokenType::LBRACE));
 
@@ -34,7 +34,8 @@ auto DoWhileLoopExpression::parse(syntax::Parser& parser)
     if (block->empty()) {
         return make_parser_unexpected(syntax::ParserError::EMPTY_LOOP, block->get_token());
     }
-    return make_box<DoWhileLoopExpression>(start_token, std::move(block), std::move(condition));
+    return mem::make_box<DoWhileLoopExpression>(
+        start_token, std::move(block), std::move(condition));
 }
 
 auto DoWhileLoopExpression::is_equal(const Node& other) const noexcept -> bool {

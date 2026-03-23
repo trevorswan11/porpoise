@@ -14,16 +14,16 @@ class UsingStatement : public StmtBase<UsingStatement> {
     static constexpr auto KIND = NodeKind::USING_STATEMENT;
 
   public:
-    explicit UsingStatement(const syntax::Token&      start_token,
-                            Box<IdentifierExpression> alias,
-                            ExplicitType&&            type) noexcept;
+    explicit UsingStatement(const syntax::Token&           start_token,
+                            mem::Box<IdentifierExpression> alias,
+                            ExplicitType&&                 type) noexcept;
     ~UsingStatement() override;
 
     MAKE_AST_COPY_MOVE(UsingStatement)
 
     auto                      accept(Visitor& v) const -> void override;
     [[nodiscard]] static auto parse(syntax::Parser& parser)
-        -> Expected<Box<Statement>, syntax::ParserDiagnostic>;
+        -> Expected<mem::Box<Statement>, syntax::ParserDiagnostic>;
 
     MAKE_GETTER(alias, const IdentifierExpression&, *)
     MAKE_GETTER(type, const ExplicitType&)
@@ -35,9 +35,9 @@ class UsingStatement : public StmtBase<UsingStatement> {
     auto is_equal(const Node& other) const noexcept -> bool override;
 
   private:
-    Box<IdentifierExpression> alias_;
-    ExplicitType              type_;
-    mutable bool              public_{false}; // Updated in sema
+    mem::Box<IdentifierExpression> alias_;
+    ExplicitType                   type_;
+    mutable bool                   public_{false}; // Updated in sema
 };
 
 } // namespace porpoise::ast

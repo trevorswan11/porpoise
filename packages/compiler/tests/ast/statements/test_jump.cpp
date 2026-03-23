@@ -19,7 +19,7 @@ TEST_CASE("Expressionless jumps") {
 TEST_CASE("Expression returns") {
     helpers::test_stmt("return 4;",
                        ast::JumpStatement{syntax::Token{keywords::RETURN},
-                                          make_box<ast::SignedIntegerExpression>(
+                                          mem::make_box<ast::SignedIntegerExpression>(
                                               syntax::Token{syntax::TokenType::INT_10, "4"}, 4)});
 
     std::vector<ast::Enumeration> enumerations;
@@ -27,9 +27,9 @@ TEST_CASE("Expression returns") {
     helpers::test_stmt(
         "return enum { RED };",
         ast::JumpStatement{syntax::Token{keywords::RETURN},
-                           make_box<ast::EnumExpression>(syntax::Token{keywords::ENUM},
-                                                         std::nullopt,
-                                                         std::move(enumerations))});
+                           mem::make_box<ast::EnumExpression>(syntax::Token{keywords::ENUM},
+                                                              std::nullopt,
+                                                              std::move(enumerations))});
 }
 
 TEST_CASE("Incorrectly terminated jumps") {

@@ -124,10 +124,10 @@ TEST_CASE("Safe optional custom equality") {
 }
 
 TEST_CASE("Unsafe optional default equality") {
-    const Optional<Box<int>> opt_a{make_box<int>(100)};
-    const Optional<Box<int>> opt_b{make_box<int>(100)};
-    const Optional<Box<int>> opt_c{make_box<int>(200)};
-    const Optional<Box<int>> opt_null;
+    const Optional<mem::Box<int>> opt_a{mem::make_box<int>(100)};
+    const Optional<mem::Box<int>> opt_b{mem::make_box<int>(100)};
+    const Optional<mem::Box<int>> opt_c{mem::make_box<int>(200)};
+    const Optional<mem::Box<int>> opt_null;
 
     CHECK(optional::unsafe_eq<int>(opt_a, opt_b));
     CHECK_FALSE(optional::unsafe_eq<int>(opt_a, opt_c));
@@ -141,8 +141,8 @@ TEST_CASE("Unsafe optional custom equality") {
         std::string_view name;
     };
 
-    const Optional<Box<Node>> a = make_box<Node>(1, "foo");
-    const Optional<Box<Node>> b = make_box<Node>(1, "bar");
+    const Optional<mem::Box<Node>> a = mem::make_box<Node>(1, "foo");
+    const Optional<mem::Box<Node>> b = mem::make_box<Node>(1, "bar");
     CHECK(optional::unsafe_eq<Node>(
         a, b, [](const Node& an, const Node& bn) { return an.type_id == bn.type_id; }));
 }

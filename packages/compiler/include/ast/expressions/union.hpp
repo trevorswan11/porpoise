@@ -14,7 +14,7 @@ class IdentifierExpression;
 
 class UnionField {
   public:
-    explicit UnionField(Box<IdentifierExpression> ident, ExplicitType&& type) noexcept;
+    explicit UnionField(mem::Box<IdentifierExpression> ident, ExplicitType&& type) noexcept;
     ~UnionField();
 
     MAKE_AST_COPY_MOVE(UnionField)
@@ -25,8 +25,8 @@ class UnionField {
     MAKE_EQ_DELEGATION(UnionField)
 
   private:
-    Box<IdentifierExpression> ident_;
-    ExplicitType              type_;
+    mem::Box<IdentifierExpression> ident_;
+    ExplicitType                   type_;
 };
 
 class UnionExpression : public ExprBase<UnionExpression> {
@@ -42,7 +42,7 @@ class UnionExpression : public ExprBase<UnionExpression> {
 
     auto                      accept(Visitor& v) const -> void override;
     [[nodiscard]] static auto parse(syntax::Parser& parser)
-        -> Expected<Box<Expression>, syntax::ParserDiagnostic>;
+        -> Expected<mem::Box<Expression>, syntax::ParserDiagnostic>;
 
     MAKE_GETTER(fields, std::span<const UnionField>)
 

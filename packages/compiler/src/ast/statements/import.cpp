@@ -6,8 +6,8 @@
 
 namespace porpoise::ast {
 
-LibraryImport::LibraryImport(Box<IdentifierExpression>           name,
-                             Optional<Box<IdentifierExpression>> alias) noexcept
+LibraryImport::LibraryImport(mem::Box<IdentifierExpression>           name,
+                             Optional<mem::Box<IdentifierExpression>> alias) noexcept
     : name_{std::move(name)}, alias_{std::move(alias)} {}
 LibraryImport::~LibraryImport() = default;
 
@@ -15,7 +15,8 @@ auto LibraryImport::is_equal(const LibraryImport& rhs) const noexcept -> bool {
     return *name_ == *rhs.name_ && optional::unsafe_eq<IdentifierExpression>(alias_, rhs.alias_);
 }
 
-FileImport::FileImport(Box<StringExpression> file, Box<IdentifierExpression> alias) noexcept
+FileImport::FileImport(mem::Box<StringExpression>     file,
+                       mem::Box<IdentifierExpression> alias) noexcept
     : file_{std::move(file)}, alias_{std::move(alias)} {}
 FileImport::~FileImport() = default;
 
@@ -30,10 +31,10 @@ ImportStatement::~ImportStatement() = default;
 auto ImportStatement::accept(Visitor& v) const -> void { v.visit(*this); }
 
 auto ImportStatement::parse(syntax::Parser& parser)
-    -> Expected<Box<Statement>, syntax::ParserDiagnostic> {
+    -> Expected<mem::Box<Statement>, syntax::ParserDiagnostic> {
     const auto start_token = parser.current_token();
 
-    std::variant<Box<IdentifierExpression>, Box<StringExpression>> imported_core;
+    std::variant<mem::Box<IdentifierExpression>, mem::Box<StringExpression>> imported_core;
     if (parser.peek_token_is(syntax::TokenType::IDENT)) {
         TRY(parser.expect_peek(syntax::TokenType::IDENT));
         imported_core = downcast<IdentifierExpression>(TRY(IdentifierExpression::parse(parser)));
@@ -51,13 +52,13 @@ auto ImportStatement::parse(syntax::Parser& parser)
                                       parser.peek_token());
     }
 
-    Optional<Box<IdentifierExpression>> imported_alias;
+    Optional<mem::Box<IdentifierExpression>> imported_alias;
     if (parser.peek_token_is(syntax::TokenType::AS)) {
         parser.advance();
         TRY(parser.expect_peek(syntax::TokenType::IDENT));
 
         imported_alias = downcast<IdentifierExpression>(TRY(IdentifierExpression::parse(parser)));
-    } else if (std::holds_alternative<Box<StringExpression>>(imported_core)) {
+    } else if (std::holds_alternative<mem::Box<StringExpression>>(imported_core)) {
         return make_parser_unexpected(syntax::ParserError::USER_IMPORT_MISSING_ALIAS, start_token);
     }
 
@@ -65,12 +66,12 @@ auto ImportStatement::parse(syntax::Parser& parser)
         TRY(parser.expect_peek(syntax::TokenType::SEMICOLON));
     }
 
-    return make_box<ImportStatement>(
+    return mem::make_box<ImportStatement>(
         start_token,
-        std::visit(Overloaded{[&](Box<IdentifierExpression>& ident) -> ImportVariant {
+        std::visit(Overloaded{[&](mem::Box<IdentifierExpression>& ident) -> ImportVariant {
                                   return LibraryImport{std::move(ident), std::move(imported_alias)};
                               },
-                              [&](Box<StringExpression>& string) -> ImportVariant {
+                              [&](mem::Box<StringExpression>& string) -> ImportVariant {
                                   return FileImport{std::move(string), std::move(*imported_alias)};
                               }},
                    imported_core));

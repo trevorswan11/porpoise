@@ -8,16 +8,16 @@
 
 namespace porpoise::ast {
 
-UsingStatement::UsingStatement(const syntax::Token&      start_token,
-                               Box<IdentifierExpression> alias,
-                               ExplicitType&&            type) noexcept
+UsingStatement::UsingStatement(const syntax::Token&           start_token,
+                               mem::Box<IdentifierExpression> alias,
+                               ExplicitType&&                 type) noexcept
     : StmtBase{start_token}, alias_{std::move(alias)}, type_{std::move(type)} {}
 UsingStatement::~UsingStatement() = default;
 
 auto UsingStatement::accept(Visitor& v) const -> void { v.visit(*this); }
 
 auto UsingStatement::parse(syntax::Parser& parser)
-    -> Expected<Box<Statement>, syntax::ParserDiagnostic> {
+    -> Expected<mem::Box<Statement>, syntax::ParserDiagnostic> {
     const auto start_token = parser.current_token();
     TRY(parser.expect_peek(syntax::TokenType::IDENT));
     auto alias = downcast<IdentifierExpression>(TRY(IdentifierExpression::parse(parser)));
@@ -26,7 +26,7 @@ auto UsingStatement::parse(syntax::Parser& parser)
     auto type = TRY(ExplicitType::parse(parser));
 
     TRY(parser.expect_peek(syntax::TokenType::SEMICOLON));
-    return make_box<UsingStatement>(start_token, std::move(alias), std::move(type));
+    return mem::make_box<UsingStatement>(start_token, std::move(alias), std::move(type));
 }
 
 auto UsingStatement::is_equal(const Node& other) const noexcept -> bool {

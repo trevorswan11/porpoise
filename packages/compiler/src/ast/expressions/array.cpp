@@ -9,10 +9,10 @@
 
 namespace porpoise::ast {
 
-ArrayExpression::ArrayExpression(const syntax::Token&         start_token,
-                                 Optional<Box<Expression>>    size,
-                                 ExplicitType&&               item_type,
-                                 std::vector<Box<Expression>> items) noexcept
+ArrayExpression::ArrayExpression(const syntax::Token&              start_token,
+                                 Optional<mem::Box<Expression>>    size,
+                                 ExplicitType&&                    item_type,
+                                 std::vector<mem::Box<Expression>> items) noexcept
     : ExprBase{start_token}, size_{std::move(size)}, item_type_{std::move(item_type)},
       items_{std::move(items)} {}
 ArrayExpression::~ArrayExpression() = default;
@@ -20,11 +20,11 @@ ArrayExpression::~ArrayExpression() = default;
 auto ArrayExpression::accept(Visitor& v) const -> void { v.visit(*this); }
 
 auto ArrayExpression::parse(syntax::Parser& parser)
-    -> Expected<Box<Expression>, syntax::ParserDiagnostic> {
+    -> Expected<mem::Box<Expression>, syntax::ParserDiagnostic> {
     const auto start_token = parser.current_token();
     parser.advance();
 
-    Optional<Box<Expression>> size;
+    Optional<mem::Box<Expression>> size;
     if (!parser.current_token_is(syntax::TokenType::UNDERSCORE)) {
         if (parser.current_token_is(syntax::TokenType::RBRACKET)) {
             return make_parser_unexpected(syntax::ParserError::MISSING_ARRAY_SIZE_TOKEN,
@@ -39,7 +39,7 @@ auto ArrayExpression::parse(syntax::Parser& parser)
     TRY(parser.expect_peek(syntax::TokenType::LBRACE));
 
     // Current token is either the LBRACE at the start or a comma before parsing
-    std::vector<Box<Expression>> items;
+    std::vector<mem::Box<Expression>> items;
     while (!parser.peek_token_is(syntax::TokenType::RBRACE) &&
            !parser.peek_token_is(syntax::TokenType::END)) {
         parser.advance();
@@ -68,7 +68,7 @@ auto ArrayExpression::parse(syntax::Parser& parser)
         }
     }
 
-    return make_box<ArrayExpression>(
+    return mem::make_box<ArrayExpression>(
         start_token, std::move(size), std::move(item_type), std::move(items));
 }
 

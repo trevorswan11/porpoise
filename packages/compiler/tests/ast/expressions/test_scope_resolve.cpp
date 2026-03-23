@@ -18,7 +18,7 @@ TEST_CASE("Nested scope") {
     helpers::test_expr_stmt(
         "A::B::C;",
         ast::ScopeResolutionExpression{a,
-                                       make_box<ast::ScopeResolutionExpression>(
+                                       mem::make_box<ast::ScopeResolutionExpression>(
                                            a, helpers::make_ident(a), helpers::make_ident("B")),
                                        helpers::make_ident("C")});
 }

@@ -13,15 +13,15 @@ class JumpStatement : public StmtBase<JumpStatement> {
     static constexpr auto KIND = NodeKind::JUMP_STATEMENT;
 
   public:
-    explicit JumpStatement(const syntax::Token&      start_token,
-                           Optional<Box<Expression>> expression) noexcept
+    explicit JumpStatement(const syntax::Token&           start_token,
+                           Optional<mem::Box<Expression>> expression) noexcept
         : StmtBase{start_token}, expression_{std::move(expression)} {}
 
     MAKE_AST_COPY_MOVE(JumpStatement)
 
     auto                      accept(Visitor& v) const -> void override;
     [[nodiscard]] static auto parse(syntax::Parser& parser)
-        -> Expected<Box<Statement>, syntax::ParserDiagnostic>;
+        -> Expected<mem::Box<Statement>, syntax::ParserDiagnostic>;
 
     MAKE_OPTIONAL_UNPACKER(expression, Expression, expression_, **)
 
@@ -32,7 +32,7 @@ class JumpStatement : public StmtBase<JumpStatement> {
     }
 
   private:
-    Optional<Box<Expression>> expression_;
+    Optional<mem::Box<Expression>> expression_;
 };
 
 } // namespace porpoise::ast

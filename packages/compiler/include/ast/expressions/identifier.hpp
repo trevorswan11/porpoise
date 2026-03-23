@@ -23,7 +23,7 @@ class IdentifierExpression : public ExprBase<IdentifierExpression> {
 
     auto                      accept(Visitor& v) const -> void override;
     [[nodiscard]] static auto parse(syntax::Parser& parser)
-        -> Expected<Box<Expression>, syntax::ParserDiagnostic>;
+        -> Expected<mem::Box<Expression>, syntax::ParserDiagnostic>;
 
     [[nodiscard]] auto get_name() const noexcept -> std::string_view { return get_token().slice; }
     [[nodiscard]] auto materialize() const -> std::string { return std::string{get_name()}; }

@@ -19,7 +19,7 @@ class ForLoopCapture {
   public:
     class Valued {
       public:
-        explicit Valued(TypeModifier modifier, Box<IdentifierExpression> ident) noexcept;
+        explicit Valued(TypeModifier modifier, mem::Box<IdentifierExpression> ident) noexcept;
         ~Valued();
 
         MAKE_AST_COPY_MOVE(Valued)
@@ -30,8 +30,8 @@ class ForLoopCapture {
         MAKE_EQ_DELEGATION(Valued)
 
       private:
-        TypeModifier              modifier_;
-        Box<IdentifierExpression> ident_;
+        TypeModifier                   modifier_;
+        mem::Box<IdentifierExpression> ident_;
     };
 
   public:
@@ -57,20 +57,20 @@ class ForLoopExpression : public ExprBase<ForLoopExpression> {
     static constexpr auto KIND = NodeKind::FOR_LOOP_EXPRESSION;
 
   public:
-    explicit ForLoopExpression(const syntax::Token&         start_token,
-                               std::vector<Box<Expression>> iterables,
-                               std::vector<ForLoopCapture>  captures,
-                               Box<BlockStatement>          block,
-                               Optional<Box<Statement>>     non_break) noexcept;
+    explicit ForLoopExpression(const syntax::Token&              start_token,
+                               std::vector<mem::Box<Expression>> iterables,
+                               std::vector<ForLoopCapture>       captures,
+                               mem::Box<BlockStatement>          block,
+                               Optional<mem::Box<Statement>>     non_break) noexcept;
     ~ForLoopExpression() override;
 
     MAKE_AST_COPY_MOVE(ForLoopExpression)
 
     auto                      accept(Visitor& v) const -> void override;
     [[nodiscard]] static auto parse(syntax::Parser& parser)
-        -> Expected<Box<Expression>, syntax::ParserDiagnostic>;
+        -> Expected<mem::Box<Expression>, syntax::ParserDiagnostic>;
 
-    MAKE_GETTER(iterables, std::span<const Box<Expression>>)
+    MAKE_GETTER(iterables, std::span<const mem::Box<Expression>>)
     MAKE_GETTER(captures, std::span<const ForLoopCapture>)
     MAKE_GETTER(block, const BlockStatement&, *)
     MAKE_OPTIONAL_UNPACKER(non_break, Statement, non_break_, **)
@@ -79,10 +79,10 @@ class ForLoopExpression : public ExprBase<ForLoopExpression> {
     auto is_equal(const Node& other) const noexcept -> bool override;
 
   private:
-    std::vector<Box<Expression>> iterables_;
-    std::vector<ForLoopCapture>  captures_;
-    Box<BlockStatement>          block_;
-    Optional<Box<Statement>>     non_break_;
+    std::vector<mem::Box<Expression>> iterables_;
+    std::vector<ForLoopCapture>       captures_;
+    mem::Box<BlockStatement>          block_;
+    Optional<mem::Box<Statement>>     non_break_;
 };
 
 } // namespace porpoise::ast

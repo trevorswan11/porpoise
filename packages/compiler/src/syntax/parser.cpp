@@ -94,7 +94,8 @@ auto syntax::Parser::poll_peek_precedence() const noexcept -> Precedence {
         .value_or(Precedence::LOWEST);
 }
 
-auto syntax::Parser::parse_statement() -> Expected<Box<ast::Statement>, syntax::ParserDiagnostic> {
+auto syntax::Parser::parse_statement()
+    -> Expected<mem::Box<ast::Statement>, syntax::ParserDiagnostic> {
     switch (current_token_.type) {
     case syntax::TokenType::VAR:
     case syntax::TokenType::CONST:
@@ -116,7 +117,7 @@ auto syntax::Parser::parse_statement() -> Expected<Box<ast::Statement>, syntax::
 }
 
 auto syntax::Parser::parse_expression(Precedence precedence)
-    -> Expected<Box<ast::Expression>, syntax::ParserDiagnostic> {
+    -> Expected<mem::Box<ast::Expression>, syntax::ParserDiagnostic> {
     if (current_token_is(syntax::TokenType::END)) {
         return make_parser_unexpected(syntax::ParserError::END_OF_TOKEN_STREAM, current_token_);
     }
@@ -142,7 +143,7 @@ auto syntax::Parser::parse_expression(Precedence precedence)
 }
 
 [[nodiscard]] auto syntax::Parser::parse_restricted_statement(syntax::ParserError error)
-    -> Expected<Box<ast::Statement>, syntax::ParserDiagnostic> {
+    -> Expected<mem::Box<ast::Statement>, syntax::ParserDiagnostic> {
     using namespace ast;
     auto clause = TRY(parse_statement());
 
@@ -154,7 +155,7 @@ auto syntax::Parser::parse_expression(Precedence precedence)
 }
 
 [[nodiscard]] auto syntax::Parser::try_parse_restricted_alternate(syntax::ParserError error)
-    -> Expected<Optional<Box<ast::Statement>>, syntax::ParserDiagnostic> {
+    -> Expected<Optional<mem::Box<ast::Statement>>, syntax::ParserDiagnostic> {
     if (peek_token_is(syntax::TokenType::ELSE)) {
         // Advance twice to actually look at the statement's first token
         advance(2);

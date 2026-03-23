@@ -86,9 +86,9 @@ auto make_parser_unexpected(Args&&... args) -> Unexpected<ParserDiagnostic> {
 class Parser {
   public:
     using Diagnostics = std::vector<ParserDiagnostic>;
-    using PrefixFn    = Expected<Box<ast::Expression>, ParserDiagnostic> (*)(Parser&);
-    using InfixFn     = Expected<Box<ast::Expression>, ParserDiagnostic> (*)(Parser&,
-                                                                         Box<ast::Expression>);
+    using PrefixFn    = Expected<mem::Box<ast::Expression>, ParserDiagnostic> (*)(Parser&);
+    using InfixFn     = Expected<mem::Box<ast::Expression>, ParserDiagnostic> (*)(
+        Parser&, mem::Box<ast::Expression>);
 
     class Checkpoint {
       public:
@@ -148,18 +148,18 @@ class Parser {
     auto poll_current_precedence() const noexcept -> Precedence;
     auto poll_peek_precedence() const noexcept -> Precedence;
 
-    [[nodiscard]] auto parse_statement() -> Expected<Box<ast::Statement>, ParserDiagnostic>;
+    [[nodiscard]] auto parse_statement() -> Expected<mem::Box<ast::Statement>, ParserDiagnostic>;
     [[nodiscard]] auto parse_expression(Precedence precedence = Precedence::LOWEST)
-        -> Expected<Box<ast::Expression>, ParserDiagnostic>;
+        -> Expected<mem::Box<ast::Expression>, ParserDiagnostic>;
 
     // Assumes that the current token is looking at the start of the expression.
     // The resulting statement can only be a jump, block, or expression statement.
     [[nodiscard]] auto parse_restricted_statement(ParserError error)
-        -> Expected<Box<ast::Statement>, ParserDiagnostic>;
+        -> Expected<mem::Box<ast::Statement>, ParserDiagnostic>;
 
     // Parses a restricted statement only if an else token is currently looked at.
     [[nodiscard]] auto try_parse_restricted_alternate(ParserError error)
-        -> Expected<Optional<Box<ast::Statement>>, ParserDiagnostic>;
+        -> Expected<Optional<mem::Box<ast::Statement>>, ParserDiagnostic>;
 
     static constexpr auto poll_prefix_fn(TokenType tt) noexcept -> Optional<const PrefixFn&>;
     static constexpr auto poll_infix_fn(TokenType tt) noexcept -> Optional<const InfixFn&>;

@@ -9,12 +9,12 @@
 
 namespace porpoise::tests {
 
-using Items = std::vector<Box<ast::Expression>>;
+using Items = std::vector<mem::Box<ast::Expression>>;
 
 namespace helpers {
 
 template <ast::LeafNode... Ns> auto make_items(Ns&&... nodes) -> Items {
-    return make_vector<Box<ast::Expression>>(make_box<Ns>(std::forward<Ns>(nodes))...);
+    return make_vector<mem::Box<ast::Expression>>(mem::make_box<Ns>(std::forward<Ns>(nodes))...);
 }
 
 } // namespace helpers
@@ -27,7 +27,7 @@ TEST_CASE("Explicitly sized arrays") {
     helpers::test_expr_stmt(
         "[1uz]int{2};",
         ast::ArrayExpression{rbracket,
-                             make_box<ast::USizeIntegerExpression>(
+                             mem::make_box<ast::USizeIntegerExpression>(
                                  syntax::Token{syntax::TokenType::UZINT_10, "1uz"}, 1),
                              ast::ExplicitType{mods::BASE, helpers::make_ident("int")},
                              helpers::make_items(ast::SignedIntegerExpression{
@@ -37,8 +37,8 @@ TEST_CASE("Explicitly sized arrays") {
         "[2uz]int{A, B, };",
         ast::ArrayExpression{
             rbracket,
-            make_box<ast::USizeIntegerExpression>(syntax::Token{syntax::TokenType::UZINT_10, "2uz"},
-                                                  2),
+            mem::make_box<ast::USizeIntegerExpression>(
+                syntax::Token{syntax::TokenType::UZINT_10, "2uz"}, 2),
             ast::ExplicitType{mods::BASE, helpers::make_ident("int")},
             helpers::make_items(helpers::ident_from("A"), helpers::ident_from("B"))});
 }

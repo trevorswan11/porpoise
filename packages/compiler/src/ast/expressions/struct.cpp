@@ -7,15 +7,15 @@
 
 namespace porpoise::ast {
 
-StructExpression::StructExpression(const syntax::Token&            start_token,
-                                   std::vector<Box<DeclStatement>> members) noexcept
+StructExpression::StructExpression(const syntax::Token&                 start_token,
+                                   std::vector<mem::Box<DeclStatement>> members) noexcept
     : ExprBase{start_token}, members_{std::move(members)} {}
 StructExpression::~StructExpression() = default;
 
 auto StructExpression::accept(Visitor& v) const -> void { v.visit(*this); }
 
 auto StructExpression::parse(syntax::Parser& parser)
-    -> Expected<Box<Expression>, syntax::ParserDiagnostic> {
+    -> Expected<mem::Box<Expression>, syntax::ParserDiagnostic> {
     const auto start_token = parser.current_token();
     if (parser.current_token_is(syntax::TokenType::PACKED)) {
         TRY(parser.expect_peek(syntax::TokenType::STRUCT));
@@ -24,7 +24,7 @@ auto StructExpression::parse(syntax::Parser& parser)
                                       start_token);
     }
 
-    std::vector<Box<DeclStatement>> members;
+    std::vector<mem::Box<DeclStatement>> members;
     TRY(parser.expect_peek(syntax::TokenType::LBRACE));
     while (!parser.peek_token_is(syntax::TokenType::RBRACE)) {
         parser.advance();
@@ -41,7 +41,7 @@ auto StructExpression::parse(syntax::Parser& parser)
     if (members.empty()) {
         return make_parser_unexpected(syntax::ParserError::EMPTY_STRUCT, start_token);
     }
-    return make_box<StructExpression>(start_token, std::move(members));
+    return mem::make_box<StructExpression>(start_token, std::move(members));
 }
 
 auto StructExpression::is_equal(const Node& other) const noexcept -> bool {

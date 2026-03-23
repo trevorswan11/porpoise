@@ -29,7 +29,8 @@ template <typename Derived, typename T> class PrimitiveExpression : public ExprB
     explicit PrimitiveExpression(const syntax::Token& start_token, value_type value) noexcept
         : ExprBase<Derived>{start_token}, value_{std::move(value)} {}
 
-    static auto parse(syntax::Parser& parser) -> Expected<Box<Expression>, syntax::ParserDiagnostic>
+    static auto parse(syntax::Parser& parser)
+        -> Expected<mem::Box<Expression>, syntax::ParserDiagnostic>
         requires(!disable_default_parse<Derived>::value)
     {
         const auto start_token = parser.current_token();
@@ -48,7 +49,7 @@ template <typename Derived, typename T> class PrimitiveExpression : public ExprB
             result = std::from_chars(first, last, v, std::to_underlying(*base));
         }
         if (result.ec == std::errc{} && result.ptr == last) {
-            return make_box<Derived>(start_token, v);
+            return mem::make_box<Derived>(start_token, v);
         }
 
         assert(result.ec == std::errc::result_out_of_range);
@@ -82,7 +83,7 @@ class StringExpression : public PrimitiveExpression<StringExpression, std::strin
 
     auto                      accept(Visitor& v) const -> void override;
     [[nodiscard]] static auto parse(syntax::Parser& parser)
-        -> Expected<Box<Expression>, syntax::ParserDiagnostic>;
+        -> Expected<mem::Box<Expression>, syntax::ParserDiagnostic>;
 };
 template <> struct disable_default_parse<StringExpression> : std::true_type {};
 
@@ -163,7 +164,7 @@ class ByteExpression : public PrimitiveExpression<ByteExpression, byte> {
 
     auto                      accept(Visitor& v) const -> void override;
     [[nodiscard]] static auto parse(syntax::Parser& parser)
-        -> Expected<Box<Expression>, syntax::ParserDiagnostic>;
+        -> Expected<mem::Box<Expression>, syntax::ParserDiagnostic>;
 };
 template <> struct disable_default_parse<ByteExpression> : std::true_type {};
 
@@ -203,7 +204,7 @@ class BoolExpression : public PrimitiveExpression<BoolExpression, bool> {
 
     auto                      accept(Visitor& v) const -> void override;
     [[nodiscard]] static auto parse(syntax::Parser& parser)
-        -> Expected<Box<Expression>, syntax::ParserDiagnostic>;
+        -> Expected<mem::Box<Expression>, syntax::ParserDiagnostic>;
 
     operator bool() const noexcept { return value_; }
 };

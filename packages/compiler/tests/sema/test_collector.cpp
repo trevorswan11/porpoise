@@ -61,12 +61,12 @@ TEST_CASE("Holistic language examples") {
                 ast::DeclStatement{
                     syntax::Token{keywords::CONST},
                     helpers::make_ident("a"),
-                    make_box<ast::TypeExpression>(syntax::Token{syntax::TokenType::COLON, ":"},
-                                                  ast::ExplicitType{
-                                                      mods::BASE,
-                                                      helpers::make_ident("Integer"),
-                                                  }),
-                    make_box<ast::SignedIntegerExpression>(
+                    mem::make_box<ast::TypeExpression>(syntax::Token{syntax::TokenType::COLON, ":"},
+                                                       ast::ExplicitType{
+                                                           mods::BASE,
+                                                           helpers::make_ident("Integer"),
+                                                       }),
+                    mem::make_box<ast::SignedIntegerExpression>(
                         syntax::Token{syntax::TokenType::INT_10, "1"}, 1),
                     ast::DeclModifiers::CONSTANT,
                 }});
@@ -84,15 +84,16 @@ TEST_CASE("Import aliases correctly used") {
                   ast::ImportStatement{
                       syntax::Token{keywords::IMPORT},
                       ast::LibraryImport{helpers::make_ident("a"), helpers::make_ident("A")}}},
-        std::pair{"a",
-                  ast::DeclStatement{
-                      syntax::Token{keywords::CONST},
-                      helpers::make_ident("a"),
-                      make_box<ast::TypeExpression>(syntax::Token{operators::WALRUS}, std::nullopt),
-                      make_box<ast::SignedIntegerExpression>(
-                          syntax::Token{syntax::TokenType::INT_10, "22"}, 22),
-                      ast::DeclModifiers::CONSTANT,
-                  }});
+        std::pair{
+            "a",
+            ast::DeclStatement{
+                syntax::Token{keywords::CONST},
+                helpers::make_ident("a"),
+                mem::make_box<ast::TypeExpression>(syntax::Token{operators::WALRUS}, std::nullopt),
+                mem::make_box<ast::SignedIntegerExpression>(
+                    syntax::Token{syntax::TokenType::INT_10, "22"}, 22),
+                ast::DeclModifiers::CONSTANT,
+            }});
 }
 
 TEST_CASE("Duplicate module declaration") {

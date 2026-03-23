@@ -7,7 +7,7 @@ namespace porpoise::ast {
 auto DiscardStatement::accept(Visitor& v) const -> void { v.visit(*this); }
 
 auto DiscardStatement::parse(syntax::Parser& parser)
-    -> Expected<Box<Statement>, syntax::ParserDiagnostic> {
+    -> Expected<mem::Box<Statement>, syntax::ParserDiagnostic> {
     const auto start_token = parser.current_token();
 
     TRY(parser.expect_peek(syntax::TokenType::ASSIGN));
@@ -23,7 +23,7 @@ auto DiscardStatement::parse(syntax::Parser& parser)
     if (!parser.current_token_is(syntax::TokenType::SEMICOLON)) {
         TRY(parser.expect_peek(syntax::TokenType::SEMICOLON));
     }
-    return make_box<DiscardStatement>(start_token, std::move(expr));
+    return mem::make_box<DiscardStatement>(start_token, std::move(expr));
 }
 
 } // namespace porpoise::ast

@@ -18,8 +18,8 @@ namespace helpers {
 
 template <typename... Ds>
     requires(std::same_as<Ds, ast::DeclStatement> && ...)
-auto make_decls(Ds&&... decls) -> std::vector<Box<ast::DeclStatement>> {
-    return make_vector<Box<ast::DeclStatement>>(make_box<Ds>(std::forward<Ds>(decls))...);
+auto make_decls(Ds&&... decls) -> std::vector<mem::Box<ast::DeclStatement>> {
+    return make_vector<mem::Box<ast::DeclStatement>>(mem::make_box<Ds>(std::forward<Ds>(decls))...);
 }
 
 } // namespace helpers
@@ -43,20 +43,21 @@ TEST_CASE("Struct flavors") {
                     ast::DeclStatement{
                         syntax::Token{keywords::VAR},
                         helpers::make_ident("a"),
-                        make_box<ast::TypeExpression>(syntax::Token{syntax::TokenType::COLON, ":"},
-                                                      ast::ExplicitType{
-                                                          mods::BASE,
-                                                          helpers::make_ident("Foo"),
-                                                      }),
+                        mem::make_box<ast::TypeExpression>(
+                            syntax::Token{syntax::TokenType::COLON, ":"},
+                            ast::ExplicitType{
+                                mods::BASE,
+                                helpers::make_ident("Foo"),
+                            }),
                         helpers::make_ident("bar"),
                         ast::DeclModifiers::VARIABLE,
                     },
                     ast::DeclStatement{
                         syntax::Token{keywords::CONST},
                         helpers::make_ident("b"),
-                        make_box<ast::TypeExpression>(syntax::Token{operators::WALRUS},
-                                                      std::nullopt),
-                        make_box<ast::FunctionExpression>(
+                        mem::make_box<ast::TypeExpression>(syntax::Token{operators::WALRUS},
+                                                           std::nullopt),
+                        mem::make_box<ast::FunctionExpression>(
                             syntax::Token{keywords::FN},
                             ast::SelfParameter{mods::MUT_PTR, helpers::make_ident("this")},
                             helpers::make_parameters(

@@ -5,11 +5,11 @@
 
 namespace porpoise::ast {
 
-WhileLoopExpression::WhileLoopExpression(const syntax::Token&      start_token,
-                                         Box<Expression>           condition,
-                                         Optional<Box<Expression>> continuation,
-                                         Box<BlockStatement>       block,
-                                         Optional<Box<Statement>>  non_break) noexcept
+WhileLoopExpression::WhileLoopExpression(const syntax::Token&           start_token,
+                                         mem::Box<Expression>           condition,
+                                         Optional<mem::Box<Expression>> continuation,
+                                         mem::Box<BlockStatement>       block,
+                                         Optional<mem::Box<Statement>>  non_break) noexcept
     : ExprBase{start_token}, condition_{std::move(condition)},
       continuation_{std::move(continuation)}, block_{std::move(block)},
       non_break_{std::move(non_break)} {}
@@ -18,7 +18,7 @@ WhileLoopExpression::~WhileLoopExpression() = default;
 auto WhileLoopExpression::accept(Visitor& v) const -> void { v.visit(*this); }
 
 auto WhileLoopExpression::parse(syntax::Parser& parser)
-    -> Expected<Box<Expression>, syntax::ParserDiagnostic> {
+    -> Expected<mem::Box<Expression>, syntax::ParserDiagnostic> {
     const auto start_token = parser.current_token();
 
     // Conditions have to be surrounded by parentheses
@@ -32,7 +32,7 @@ auto WhileLoopExpression::parse(syntax::Parser& parser)
     TRY(parser.expect_peek(syntax::TokenType::RPAREN));
 
     // Continuation expression is optional and is handled as in zig
-    Optional<Box<Expression>> continuation;
+    Optional<mem::Box<Expression>> continuation;
     if (parser.peek_token_is(syntax::TokenType::COLON)) {
         const auto continuation_start = parser.current_token();
         parser.advance();
@@ -60,11 +60,11 @@ auto WhileLoopExpression::parse(syntax::Parser& parser)
         return make_parser_unexpected(syntax::ParserError::EMPTY_WHILE_LOOP, block->get_token());
     }
 
-    return make_box<WhileLoopExpression>(start_token,
-                                         std::move(condition),
-                                         std::move(continuation),
-                                         std::move(block),
-                                         std::move(non_break));
+    return mem::make_box<WhileLoopExpression>(start_token,
+                                              std::move(condition),
+                                              std::move(continuation),
+                                              std::move(block),
+                                              std::move(non_break));
 }
 
 auto WhileLoopExpression::is_equal(const Node& other) const noexcept -> bool {

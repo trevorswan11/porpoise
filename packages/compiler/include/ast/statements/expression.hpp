@@ -14,14 +14,14 @@ class ExpressionStatement : public StmtBase<ExpressionStatement> {
 
   public:
     explicit ExpressionStatement(const syntax::Token& start_token,
-                                 Box<Expression>      expression) noexcept
+                                 mem::Box<Expression> expression) noexcept
         : StmtBase{start_token}, expression_{std::move(expression)} {}
 
     MAKE_AST_COPY_MOVE(ExpressionStatement)
 
     auto                      accept(Visitor& v) const -> void override;
     [[nodiscard]] static auto parse(syntax::Parser& parser)
-        -> Expected<Box<Statement>, syntax::ParserDiagnostic>;
+        -> Expected<mem::Box<Statement>, syntax::ParserDiagnostic>;
 
     MAKE_GETTER(expression, const Expression&, *)
 
@@ -32,7 +32,7 @@ class ExpressionStatement : public StmtBase<ExpressionStatement> {
     }
 
   private:
-    Box<Expression> expression_;
+    mem::Box<Expression> expression_;
 };
 
 } // namespace porpoise::ast

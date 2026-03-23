@@ -19,15 +19,15 @@ TEST_CASE("Well formed using statement") {
             ast::ExplicitType{
                 mods::REF,
                 ast::ExplicitArrayType{
-                    make_box<ast::USizeIntegerExpression>(
+                    mem::make_box<ast::USizeIntegerExpression>(
                         syntax::Token{syntax::TokenType::UZINT_16, "0x2uz"}, 0x2uz),
                     false,
-                    make_box<ast::ExplicitType>(
+                    mem::make_box<ast::ExplicitType>(
                         mods::BASE,
-                        ast::ExplicitArrayType{
-                            helpers::make_ident("N"),
-                            false,
-                            make_box<ast::ExplicitType>(mods::PTR, helpers::make_ident("E"))})}}});
+                        ast::ExplicitArrayType{helpers::make_ident("N"),
+                                               false,
+                                               mem::make_box<ast::ExplicitType>(
+                                                   mods::PTR, helpers::make_ident("E"))})}}});
 }
 
 TEST_CASE("Missing alias") {

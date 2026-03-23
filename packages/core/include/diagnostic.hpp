@@ -1,6 +1,5 @@
 #pragma once
 
-#include <optional>
 #include <type_traits>
 #include <utility>
 
@@ -8,6 +7,7 @@
 
 #include <fmt/format.h>
 
+#include "optional.hpp"
 #include "source_loc.hpp"
 #include "types.hpp"
 
@@ -15,9 +15,9 @@ namespace porpoise {
 
 namespace detail {
 
-[[nodiscard]] auto format_diagnostic(const std::optional<std::string>&    message,
-                                     std::string_view                     error_name,
-                                     const std::optional<SourceLocation>& location) -> std::string;
+[[nodiscard]] auto format_diagnostic(const Optional<std::string>&    message,
+                                     std::string_view                error_name,
+                                     const Optional<SourceLocation>& location) -> std::string;
 
 } // namespace detail
 
@@ -54,9 +54,9 @@ class Diagnostic {
     }
 
   private:
-    std::optional<std::string>    message_{};
-    E                             error_;
-    std::optional<SourceLocation> loc_{};
+    Optional<std::string>    message_{};
+    E                        error_;
+    Optional<SourceLocation> loc_{};
 
     friend struct fmt::formatter<Diagnostic>;
 };

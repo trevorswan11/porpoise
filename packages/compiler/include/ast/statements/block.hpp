@@ -15,19 +15,19 @@ class BlockStatement : public StmtBase<BlockStatement> {
     static constexpr auto KIND = NodeKind::BLOCK_STATEMENT;
 
   public:
-    using iterator       = typename std::vector<Box<Statement>>::iterator;
-    using const_iterator = typename std::vector<Box<Statement>>::const_iterator;
+    using iterator       = typename std::vector<mem::Box<Statement>>::iterator;
+    using const_iterator = typename std::vector<mem::Box<Statement>>::const_iterator;
 
   public:
-    explicit BlockStatement(const syntax::Token&        start_token,
-                            std::vector<Box<Statement>> statements) noexcept
+    explicit BlockStatement(const syntax::Token&             start_token,
+                            std::vector<mem::Box<Statement>> statements) noexcept
         : StmtBase{start_token}, statements_{std::move(statements)} {}
 
     MAKE_AST_COPY_MOVE(BlockStatement)
 
     auto                      accept(Visitor& v) const -> void override;
     [[nodiscard]] static auto parse(syntax::Parser& parser)
-        -> Expected<Box<Statement>, syntax::ParserDiagnostic>;
+        -> Expected<mem::Box<Statement>, syntax::ParserDiagnostic>;
 
     [[nodiscard]] auto begin() noexcept -> iterator { return statements_.begin(); }
     [[nodiscard]] auto end() noexcept -> iterator { return statements_.end(); }
@@ -46,7 +46,7 @@ class BlockStatement : public StmtBase<BlockStatement> {
     }
 
   private:
-    std::vector<Box<Statement>> statements_;
+    std::vector<mem::Box<Statement>> statements_;
 };
 
 } // namespace porpoise::ast

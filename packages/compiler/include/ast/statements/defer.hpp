@@ -13,14 +13,14 @@ class DeferStatement : public StmtBase<DeferStatement> {
     static constexpr auto KIND = NodeKind::DEFER_STATEMENT;
 
   public:
-    explicit DeferStatement(const syntax::Token& start_token, Box<Statement> deferred) noexcept
+    explicit DeferStatement(const syntax::Token& start_token, mem::Box<Statement> deferred) noexcept
         : StmtBase{start_token}, deferred_{std::move(deferred)} {}
 
     MAKE_AST_COPY_MOVE(DeferStatement)
 
     auto                      accept(Visitor& v) const -> void override;
     [[nodiscard]] static auto parse(syntax::Parser& parser)
-        -> Expected<Box<Statement>, syntax::ParserDiagnostic>;
+        -> Expected<mem::Box<Statement>, syntax::ParserDiagnostic>;
 
     MAKE_GETTER(deferred, const Statement&, *)
 
@@ -31,7 +31,7 @@ class DeferStatement : public StmtBase<DeferStatement> {
     }
 
   private:
-    Box<Statement> deferred_;
+    mem::Box<Statement> deferred_;
 };
 
 } // namespace porpoise::ast

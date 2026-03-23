@@ -14,15 +14,15 @@ class IndexExpression : public ExprBase<IndexExpression> {
 
   public:
     explicit IndexExpression(const syntax::Token& start_token,
-                             Box<Expression>      array,
-                             Box<Expression>      idx) noexcept
+                             mem::Box<Expression> array,
+                             mem::Box<Expression> idx) noexcept
         : ExprBase{start_token}, array_{std::move(array)}, index_{std::move(idx)} {}
 
     MAKE_AST_COPY_MOVE(IndexExpression)
 
     auto                      accept(Visitor& v) const -> void override;
-    [[nodiscard]] static auto parse(syntax::Parser& parser, Box<Expression> array)
-        -> Expected<Box<Expression>, syntax::ParserDiagnostic>;
+    [[nodiscard]] static auto parse(syntax::Parser& parser, mem::Box<Expression> array)
+        -> Expected<mem::Box<Expression>, syntax::ParserDiagnostic>;
 
     MAKE_GETTER(array, const Expression&, *)
     MAKE_GETTER(index, const Expression&, *)
@@ -34,8 +34,8 @@ class IndexExpression : public ExprBase<IndexExpression> {
     }
 
   private:
-    Box<Expression> array_;
-    Box<Expression> index_;
+    mem::Box<Expression> array_;
+    mem::Box<Expression> index_;
 };
 
 } // namespace porpoise::ast
