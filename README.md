@@ -32,12 +32,12 @@ The following are "standalone" dependencies, required and manually fetched by po
 4. [fmt](https://github.com/fmtlib/fmt) is used as a formatting utility in place of std::format, which is not as performant or feature-full. Is is licensed under the permissible MIT license.
 5. [unordered_dense](https://github.com/martinus/unordered_dense) provides a vastly improved hash map/set implementation that is used over the inefficient C++ standard implementation. Is is licensed under the permissible MIT license.
 6. [LLVM 21.1.8](https://releases.llvm.org/21.1.0/docs/ReleaseNotes.html) is used as porpoise's compilation backend. It is manually compiled and statically linked against porpoise through the build system. It is licensed under the permissible Apache License 2.0, and has the following dependencies:
-    - [libxml2](https://gitlab.gnome.org/GNOME/libxml2)
-    - [zlib](https://github.com/madler/zlib)
-    - [zstd](https://github.com/facebook/zstd)
+    - [libxml2](https://gitlab.gnome.org/GNOME/libxml2), licensed under the MIT License
+    - [zlib](https://github.com/madler/zlib), licensed under the MIT License
+    - [zstd](https://github.com/facebook/zstd), licensed under the BSD License
 7. [libarchive](https://github.com/libarchive/libarchive) is used for packaging releases, making use of zlib and zstd to create `zip` and `zst` archives. It is license under the BSD 2-Clause License, but the associated compiled artifacts are neither linked with output artifacts nor shipped with releases.
-8. [kcov](https://github.com/SimonKagstrom/kcov) is used for test coverage reporting. It has multiple dependencies, but they are all fetched lazily as kcov is only supported on Linux, MacOS, and FreeBSD:
-    - [curl](https://github.com/curl/curl) is required by all builds of kcov and is used for pulling the resulting badge. it has a single extra dependency which is chosen for cross-platform support:
+8. [kcov](https://github.com/SimonKagstrom/kcov) is used for test coverage reporting. The licensing of this tool and its dependencies are not explicitly listed here as they are not shipped with releases of Porpoise. It has multiple dependencies, but they are all fetched lazily as kcov is only supported on Linux, MacOS, and FreeBSD:
+    - [curl](https://github.com/curl/curl) is required by all builds of kcov and is used for pulling the resulting badge. It has a single extra dependency which is chosen for cross-platform support:
         - [mbedtls](https://github.com/Mbed-TLS/mbedtls)
     - [binutils](https://sourceware.org/pub/binutils) is required for all kcov builds
     - [elfutils](https://github.com/Techatrix/elfutils) is required on linux only. It has a single extra dependency:
