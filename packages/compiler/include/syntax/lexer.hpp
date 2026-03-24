@@ -17,7 +17,7 @@ class Lexer {
       public:
         using iterator_category = std::input_iterator_tag;
         using value_type        = Token;
-        using difference_type   = std::ptrdiff_t;
+        using difference_type   = idiff;
         using pointer           = const Token*;
         using reference         = const Token&;
 

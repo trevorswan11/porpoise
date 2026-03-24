@@ -32,7 +32,7 @@ TEST_CASE("Arena alignment") {
     mem::Arena arena;
     CHECK(*arena.make<bool>(true));
     const auto p = arena.make<void*>(nullptr);
-    CHECK(reinterpret_cast<uintptr_t>(p.get()) % alignof(void*) == 0);
+    CHECK(reinterpret_cast<uptr>(p.get()) % alignof(void*) == 0);
 }
 
 TEST_CASE("Arena array construction") {

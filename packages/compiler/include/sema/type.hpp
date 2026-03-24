@@ -4,6 +4,7 @@
 #include <type_traits>
 
 #include <ankerl/unordered_dense.h>
+#include <utility>
 
 #include "sema/symbol.hpp"
 
@@ -84,29 +85,29 @@ struct Function {
 
 class Key {
   public:
-    template <typename A = uintptr_t, typename B = uintptr_t>
-        requires(std::is_convertible_v<A, uintptr_t> && std::is_convertible_v<B, uintptr_t>)
+    template <typename A = uptr, typename B = uptr>
+        requires(std::is_convertible_v<A, uptr> && std::is_convertible_v<B, uptr>)
     Key(TypeKind kind, bool mut, A marker_a = 0, B marker_b = 0, bool flag = false) noexcept
-        : kind_{kind}, mut_{mut}, marker_a_{static_cast<uintptr_t>(marker_a)},
-          marker_b_{static_cast<uintptr_t>(marker_b)}, flag_{flag} {}
+        : kind_{kind}, mut_{mut}, marker_a_{static_cast<uptr>(marker_a)},
+          marker_b_{static_cast<uptr>(marker_b)}, flag_{flag} {}
 
     [[nodiscard]] auto hash() const noexcept -> u64 {
-        auto h = porpoise::hash::wyhash::hash(static_cast<u64>(kind_));
-        porpoise::hash::combine(h, mut_);
-        porpoise::hash::combine(h, marker_a_);
-        porpoise::hash::combine(h, marker_b_);
-        porpoise::hash::combine(h, flag_);
-        return h;
+        hash::Hasher h{std::to_underlying(kind_)};
+        h.combine(mut_);
+        h.combine(marker_a_);
+        h.combine(marker_b_);
+        h.combine(flag_);
+        return h.finalize();
     }
 
     bool operator==(const Key&) const noexcept = default;
 
   private:
-    TypeKind  kind_;
-    bool      mut_;
-    uintptr_t marker_a_;
-    uintptr_t marker_b_;
-    bool      flag_;
+    TypeKind kind_;
+    bool     mut_;
+    uptr     marker_a_;
+    uptr     marker_b_;
+    bool     flag_;
 };
 
 } // namespace types

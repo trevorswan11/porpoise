@@ -1,5 +1,7 @@
 #pragma once
 
+#include <cstddef>
+#include <cstdint>
 #include <string_view>
 #include <type_traits>
 
@@ -15,6 +17,9 @@ using u64   = std::uint64_t;
 using i64   = std::int64_t;
 using usize = std::size_t;
 using isize = std::make_signed_t<usize>;
+using uptr  = std::uintptr_t;
+using iptr  = std::intptr_t;
+using idiff = std::ptrdiff_t;
 
 using f32 = float;
 using f64 = double;

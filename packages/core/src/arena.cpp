@@ -7,9 +7,9 @@ namespace porpoise::mem {
 // https://github.com/trevorswan11/porpoise/blob/772707146faa9315c24fb079fd759f3715442db1/old/src/util/arena.c
 auto Arena::alloc(usize size, usize align) -> void* {
     if (current_) {
-        auto        raw_addr    = reinterpret_cast<uintptr_t>(current_ + 1);
-        uintptr_t   current_ptr = raw_addr + offset_;
-        uintptr_t   aligned_ptr = (current_ptr + (align - 1)) & ~(align - 1);
+        auto        raw_addr    = reinterpret_cast<uptr>(current_ + 1);
+        uptr        current_ptr = raw_addr + offset_;
+        uptr        aligned_ptr = (current_ptr + (align - 1)) & ~(align - 1);
         const usize total_size  = aligned_ptr - raw_addr + size;
 
         if (total_size <= BLOCK_SIZE) {
