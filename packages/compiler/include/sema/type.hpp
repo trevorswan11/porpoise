@@ -2,11 +2,9 @@
 
 #include <span>
 #include <type_traits>
-
-#include <ankerl/unordered_dense.h>
 #include <utility>
 
-#include "sema/symbol.hpp"
+#include <ankerl/unordered_dense.h>
 
 #include "common.hpp"
 #include "hash.hpp"
@@ -66,16 +64,16 @@ struct Reference {
 
 struct Enum {
     NonNull<Type> underlying;
-    SymbolTable   variants;
+    usize         variant_table_idx;
 };
 
 struct Struct {
-    SymbolTable body;
-    bool        packed;
+    usize body_table_idx;
+    bool  packed;
 };
 
 struct Union {
-    SymbolTable fields;
+    usize field_table_idx;
 };
 
 struct Function {
@@ -91,6 +89,8 @@ class Key {
         : kind_{kind}, mut_{mut}, marker_a_{static_cast<uptr>(marker_a)},
           marker_b_{static_cast<uptr>(marker_b)}, flag_{flag} {}
 
+    MAKE_GETTER(kind, TypeKind)
+
     [[nodiscard]] auto hash() const noexcept -> u64 {
         hash::Hasher h{std::to_underlying(kind_)};
         h.combine(mut_);
@@ -105,6 +105,7 @@ class Key {
   private:
     TypeKind kind_;
     bool     mut_;
+    usize    context_idx_;
     uptr     marker_a_;
     uptr     marker_b_;
     bool     flag_;
@@ -130,8 +131,13 @@ class Type {
     MAKE_GETTER(kind, TypeKind)
     MAKE_OPTIONAL_UNPACKER(resolved, Resolved, resolved_, *)
 
-    template <typename T> [[nodiscard]] auto as() const noexcept -> Optional<const T&> {
+    template <typename T> [[nodiscard]] auto as() const -> const T& {
+        return std::get<T>(resolved_.value());
+    }
+
+    template <typename T> [[nodiscard]] auto as_opt() const noexcept -> Optional<const T&> {
         if (!resolved_) { return std::nullopt; }
+        if (!std::holds_alternative<T>(*resolved_)) { return std::nullopt; }
         return std::get<T>(*resolved_);
     }
 
@@ -141,6 +147,8 @@ class Type {
     TypeKind           kind_;
     Optional<Resolved> resolved_;
 };
+
+static_assert(std::is_trivially_destructible_v<Type>);
 
 } // namespace porpoise::sema
 

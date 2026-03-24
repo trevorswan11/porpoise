@@ -55,12 +55,7 @@ class Symbol {
 
     MAKE_VARIANT_MATCHER(node_)
 
-    // Fills the internal type. Should only be called once per Symbol.
-    auto resolve(Type& type) const noexcept -> void { // cppcheck-suppress constParameterReference
-        assert(!type_);
-        type_ = type;
-    }
-
+    auto               emplace_type(Type& type) const noexcept -> void { type_.emplace(type); }
     [[nodiscard]] auto has_type() const noexcept -> bool { return type_.has_value(); }
     [[nodiscard]] auto get_type() const noexcept -> Type& { return *type_; }
 
@@ -81,8 +76,6 @@ class SymbolTable {
     using const_iterator = typename Table::const_iterator;
 
   public:
-    SymbolTable() noexcept = default;
-
     [[nodiscard]] auto begin() noexcept -> iterator { return symbols_.begin(); }
     [[nodiscard]] auto end() noexcept -> iterator { return symbols_.end(); }
 
@@ -119,6 +112,16 @@ class SymbolTable {
   private:
     Table symbols_;
     bool  is_module_{false};
+};
+
+class SymbolTableRegistry {
+  public:
+    [[nodiscard]] auto create() -> std::pair<SymbolTable&, usize>;
+    [[nodiscard]] auto get_opt(usize idx) noexcept -> Optional<SymbolTable&>;
+    [[nodiscard]] auto get(usize idx) -> SymbolTable&;
+
+  private:
+    std::vector<SymbolTable> tables_;
 };
 
 } // namespace sema

@@ -14,6 +14,7 @@ template <typename T> class OptionalRef {
     OptionalRef() noexcept : ptr_{nullptr} {}
     OptionalRef(std::nullopt_t) noexcept : ptr_{nullptr} {}
     OptionalRef(T& ref) noexcept : ptr_{&ref} {}
+    OptionalRef(T* ref) noexcept : ptr_{ref} {}
     OptionalRef(T&&) = delete;
 
     template <typename U>
@@ -23,6 +24,10 @@ template <typename T> class OptionalRef {
 
     [[nodiscard]] auto     has_value() const noexcept -> bool { return ptr_ != nullptr; }
     [[nodiscard]] explicit operator bool() const noexcept { return ptr_ != nullptr; }
+
+    auto emplace(T& t) noexcept -> void { ptr_ = &t; }
+    auto emplace(T* t) noexcept -> void { ptr_ = t; }
+    auto reset() noexcept -> void { ptr_ = nullptr; }
 
     auto value() const -> T& {
         if (!ptr_) { throw std::bad_optional_access(); }

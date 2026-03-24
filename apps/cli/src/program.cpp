@@ -9,8 +9,7 @@
 #include "ast/dumper.hpp"
 #include "ast/node.hpp"
 
-#include "sema/collector.hpp"
-#include "sema/pool.hpp"
+#include "sema/analyzer.hpp"
 
 #include "string.hpp"
 
@@ -39,13 +38,13 @@ auto Program::interactive() -> void {
         }
 
         // Sema
-        auto [table, pool, sema_errors] = sema::SymbolCollector::collect(ast);
-        if (!sema_errors.empty()) {
-            fmt::println("{}", sema_errors);
+        sema::Analyzer analyzer;
+        const auto     idx = analyzer.collect_symbols(ast);
+        if (!analyzer.has_diagnostics()) {
+            fmt::println("{}", analyzer.get_diagnostics());
             continue;
         } else {
-            auto _ = std::move(pool);
-            fmt::println("{} symbols collected", table.size());
+            fmt::println("{} symbols collected", analyzer.get_table(idx).size());
         }
     }
 }

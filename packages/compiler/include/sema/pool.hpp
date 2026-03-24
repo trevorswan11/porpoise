@@ -1,5 +1,9 @@
 #pragma once
 
+#include <ankerl/unordered_dense.h>
+
+#include "sema/type.hpp"
+
 #include "arena.hpp"
 
 namespace porpoise::sema {
@@ -14,8 +18,12 @@ class TypePool {
     TypePool(TypePool&& other) noexcept          = default;
     auto operator=(TypePool&&) -> TypePool&      = delete;
 
+    // Gets a type by its key or emplace's it into the internal cache
+    [[nodiscard]] auto get(const types::Key& key) -> Type&;
+
   private:
-    mem::Arena arena_;
+    mem::Arena                                      arena_;
+    ankerl::unordered_dense::map<types::Key, Type*> cache_;
 };
 
 } // namespace porpoise::sema

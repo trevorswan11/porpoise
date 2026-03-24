@@ -1,7 +1,5 @@
 #pragma once
 
-#include <tuple>
-
 #include "ast/node.hpp"
 #include "ast/visitor.hpp"
 
@@ -19,14 +17,12 @@ class TypePool;
 // - Does not verify undeclared identifier use
 class SymbolCollector : public ast::Visitor {
   public:
-    [[nodiscard]] static auto collect(ast::ASTView ast)
-        -> std::tuple<SymbolTable, TypePool, Diagnostics>;
+    explicit SymbolCollector(SymbolTable& table, TypePool& pool, Diagnostics& diagnostics) noexcept
+        : table_{table}, pool_{pool}, diagnostics_{diagnostics} {}
 
     MAKE_AST_VISITOR_OVERRIDES()
 
-  private:
-    explicit SymbolCollector(SymbolTable& table, TypePool& pool, Diagnostics& diagnostics) noexcept
-        : table_{table}, pool_{pool}, diagnostics_{diagnostics} {}
+    auto pass_first() noexcept -> void { first_node_ = false; }
 
   private:
     SymbolTable&               table_;

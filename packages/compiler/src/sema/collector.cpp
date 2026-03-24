@@ -1,22 +1,8 @@
 #include "sema/collector.hpp"
-#include "sema/type.hpp"
 
 #include "ast/ast.hpp"
 
 namespace porpoise::sema {
-
-auto SymbolCollector::collect(ast::ASTView ast) -> std::tuple<SymbolTable, TypePool, Diagnostics> {
-    SymbolTable     table;
-    Diagnostics     diagnostics;
-    TypePool        pool;
-    SymbolCollector collector{table, pool, diagnostics};
-
-    for (const auto& node : ast) {
-        node->accept(collector);
-        collector.first_node_ = false;
-    }
-    return {std::move(table), std::move(pool), std::move(diagnostics)};
-}
 
 // No expressions are evaluated directly on this pass
 #define COLLECTOR_NOOP(NodeType) \

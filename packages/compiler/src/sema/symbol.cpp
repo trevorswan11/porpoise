@@ -48,4 +48,16 @@ auto SymbolTable::has(std::string_view name) const noexcept -> bool {
     return symbols_.contains(name);
 }
 
+auto SymbolTableRegistry::create() -> std::pair<SymbolTable&, usize> {
+    auto& table = tables_.emplace_back();
+    return {table, tables_.size() - 1};
+}
+
+auto SymbolTableRegistry::get_opt(usize idx) noexcept -> Optional<SymbolTable&> {
+    if (idx >= tables_.size()) { return std::nullopt; }
+    return tables_[idx];
+}
+
+auto SymbolTableRegistry::get(usize idx) -> SymbolTable& { return tables_.at(idx); }
+
 } // namespace porpoise::sema
