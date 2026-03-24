@@ -10,6 +10,7 @@
 
 #include "sema/collector.hpp"
 #include "sema/error.hpp"
+#include "sema/pool.hpp"
 #include "sema/symbol.hpp"
 
 #include "ast/statements/declaration.hpp"
@@ -28,7 +29,7 @@ auto test_collector(std::string_view input, bool is_module, KVs&&... kvs) -> voi
     CHECK_FALSE(ast.empty());
     check_errors<syntax::ParserDiagnostic>(parser_errors);
 
-    auto [actual, errors] = sema::SymbolCollector::collect(ast);
+    auto [actual, pool, errors] = sema::SymbolCollector::collect(ast);
     check_errors<sema::SemaDiagnostic>(errors);
     CHECK(actual.size() == sizeof...(KVs));
     CHECK(actual.is_module() == is_module);
@@ -56,10 +57,10 @@ auto test_collector_fail(std::string_view failing, Ds&&... expected_diagnostics)
     CHECK_FALSE(ast.empty());
     CHECK(parser_errors.empty());
 
-    std::array expected_arr{std::forward<Ds>(expected_diagnostics)...};
-    const auto expected_count = sizeof...(Ds);
+    const std::array expected_arr{std::forward<Ds>(expected_diagnostics)...};
+    const auto       expected_count = sizeof...(Ds);
 
-    auto [_, errors] = sema::SymbolCollector::collect(ast);
+    const auto errors = std::get<2>(sema::SymbolCollector::collect(ast));
     if (errors.size() != expected_count) {
         for (const auto& e : errors) { fmt::println("{}", e); }
         CHECK(errors.size() == expected_count);

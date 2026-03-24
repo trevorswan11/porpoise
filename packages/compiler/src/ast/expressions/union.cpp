@@ -13,6 +13,10 @@ UnionField::UnionField(mem::Box<IdentifierExpression> ident, ExplicitType&& type
     : ident_{std::move(ident)}, type_{std::move(type)} {}
 UnionField::~UnionField() = default;
 
+[[nodiscard]] auto UnionField::get_token() const noexcept -> const syntax::Token& {
+    return ident_->get_token();
+}
+
 auto UnionField::is_equal(const UnionField& other) const noexcept -> bool {
     return *ident_ == *other.ident_ && type_ == other.type_;
 }

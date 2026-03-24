@@ -72,11 +72,11 @@ enum class NodeKind : u8 {
     USING_STATEMENT,
 };
 
-#define MAKE_AST_COPY_MOVE(NodeType)                            \
-    NodeType(const NodeType&)                        = delete;  \
-    auto operator=(const NodeType&)->NodeType&       = delete;  \
-    NodeType(NodeType&&) noexcept                    = default; \
-    auto operator=(NodeType&&) noexcept -> NodeType& = delete;
+#define MAKE_AST_COPY_MOVE(NodeType)                      \
+    NodeType(const NodeType&)                  = delete;  \
+    auto operator=(const NodeType&)->NodeType& = delete;  \
+    NodeType(NodeType&&) noexcept              = default; \
+    auto operator=(NodeType&&)->NodeType&      = delete;
 
 class Node;
 

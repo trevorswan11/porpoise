@@ -26,7 +26,7 @@ class Arena {
         other.head_ = nullptr;
         other.reset();
     }
-    auto operator=(Arena&&) noexcept -> Arena& = delete;
+    auto operator=(Arena&&) -> Arena& = delete;
 
     // cppcheck-suppress-begin [unreadVariable, internalAstError]
 

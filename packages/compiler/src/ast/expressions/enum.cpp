@@ -12,6 +12,10 @@ Enumeration::Enumeration(mem::Box<IdentifierExpression> ident,
     : ident_{std::move(ident)}, value_{std::move(value)} {}
 Enumeration::~Enumeration() = default;
 
+[[nodiscard]] auto Enumeration::get_token() const noexcept -> const syntax::Token& {
+    return ident_->get_token();
+}
+
 auto Enumeration::is_equal(const Enumeration& other) const noexcept -> bool {
     return *ident_ == *other.ident_ && optional::unsafe_eq<Expression>(value_, other.value_);
 }

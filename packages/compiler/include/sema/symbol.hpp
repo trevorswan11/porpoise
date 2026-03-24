@@ -21,16 +21,22 @@ class UsingStatement;
 class DeclStatement;
 class ImportStatement;
 
+class UnionField;
+class Enumeration;
+
 } // namespace ast
 
 namespace sema {
 
-using SymbolicDecl   = NonNull<const ast::DeclStatement>;
-using SymbolicImport = NonNull<const ast::ImportStatement>;
-using SymbolicUsing  = NonNull<const ast::UsingStatement>;
+using SymbolicDecl        = NonNull<const ast::DeclStatement>;
+using SymbolicImport      = NonNull<const ast::ImportStatement>;
+using SymbolicUsing       = NonNull<const ast::UsingStatement>;
+using SymbolicUnionField  = NonNull<const ast::UnionField>;
+using SymbolicEnumeration = NonNull<const ast::Enumeration>;
 
 // No other nodes can ever be at the top level
-using SymbolicNode = std::variant<SymbolicDecl, SymbolicImport, SymbolicUsing>;
+using SymbolicNode = std::
+    variant<SymbolicDecl, SymbolicImport, SymbolicUsing, SymbolicUnionField, SymbolicEnumeration>;
 
 class Type;
 
@@ -44,6 +50,8 @@ class Symbol {
     MAKE_VARIANT_UNPACKER(decl_stmt, ast::DeclStatement, SymbolicDecl, node_, *std::get)
     MAKE_VARIANT_UNPACKER(import_stmt, ast::ImportStatement, SymbolicImport, node_, *std::get)
     MAKE_VARIANT_UNPACKER(using_stmt, ast::UsingStatement, SymbolicUsing, node_, *std::get)
+    MAKE_VARIANT_UNPACKER(union_field, ast::UnionField, SymbolicUnionField, node_, *std::get)
+    MAKE_VARIANT_UNPACKER(enumeration, ast::Enumeration, SymbolicEnumeration, node_, *std::get)
 
     MAKE_VARIANT_MATCHER(node_)
 

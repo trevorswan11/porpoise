@@ -10,6 +10,7 @@
 #include "ast/node.hpp"
 
 #include "sema/collector.hpp"
+#include "sema/pool.hpp"
 
 #include "string.hpp"
 
@@ -24,6 +25,7 @@ auto Program::interactive() -> void {
         if (!std::getline(std::cin, line)) { break; }
         const auto trimmed = string::trim(line);
         if (trimmed == "exit") { break; }
+        if (trimmed.empty()) { continue; }
 
         // Parsing
         parser_.reset(trimmed);
@@ -37,11 +39,12 @@ auto Program::interactive() -> void {
         }
 
         // Sema
-        auto [table, sema_errors] = sema::SymbolCollector::collect(ast);
+        auto [table, pool, sema_errors] = sema::SymbolCollector::collect(ast);
         if (!sema_errors.empty()) {
             fmt::println("{}", sema_errors);
             continue;
         } else {
+            auto _ = std::move(pool);
             fmt::println("{} symbols collected", table.size());
         }
     }

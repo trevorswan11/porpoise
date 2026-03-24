@@ -15,12 +15,16 @@ TEST_CASE("Arena pointer stability") {
     mem::Arena        arena;
     std::vector<Foo*> foos;
 
-    for (usize i = 0; i < 100; ++i) { foos.emplace_back(arena.make<Foo>().get()); }
-    for (const auto& foo : foos) { CHECK(foo->marker == MARKER); }
+    SECTION("First use") {
+        for (usize i = 0; i < 100; ++i) { foos.emplace_back(arena.make<Foo>().get()); }
+        for (const auto& foo : foos) { CHECK(foo->marker == MARKER); }
+    }
 
-    SECTION("Sneaky non-UB use after free") {
+    SECTION("Reset and reuse") {
         arena.reset();
-        CHECK(foos[0]->marker == MARKER);
+        foos.clear();
+        for (usize i = 0; i < 100; ++i) { foos.emplace_back(arena.make<Foo>().get()); }
+        for (const auto& foo : foos) { CHECK(foo->marker == MARKER); }
     }
 }
 

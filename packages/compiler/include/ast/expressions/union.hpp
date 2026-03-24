@@ -21,6 +21,7 @@ class UnionField {
 
     MAKE_GETTER(ident, const IdentifierExpression&, *)
     MAKE_GETTER(type, const ExplicitType&)
+    [[nodiscard]] auto get_token() const noexcept -> const syntax::Token&;
 
     MAKE_EQ_DELEGATION(UnionField)
 

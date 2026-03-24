@@ -20,6 +20,7 @@ class Enumeration {
 
     MAKE_GETTER(ident, const IdentifierExpression&, *)
     MAKE_OPTIONAL_UNPACKER(default_value, Expression, value_, **)
+    [[nodiscard]] auto get_token() const noexcept -> const syntax::Token&;
 
     MAKE_EQ_DELEGATION(Enumeration)
 

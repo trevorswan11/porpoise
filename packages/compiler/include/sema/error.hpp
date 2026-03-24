@@ -7,7 +7,7 @@
 
 namespace porpoise::sema {
 
-enum class SemaError {
+enum class SemaError : u8 {
     IDENTIFIER_REDECLARATION,
     ILLEGAL_TOP_LEVEL_STATEMENT,
     ILLEGAL_MODULE_STATEMENT_LOCATION,

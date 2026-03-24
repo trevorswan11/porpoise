@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cassert>
+#include <concepts>
 #include <memory>
 #include <optional>
 #include <type_traits>
@@ -15,7 +16,8 @@ template <typename T> class OptionalRef {
     OptionalRef(T& ref) noexcept : ptr_{&ref} {}
     OptionalRef(T&&) = delete;
 
-    template <typename U, std::enable_if_t<std::is_convertible_v<U*, T*>, bool> = false>
+    template <typename U>
+        requires(std::convertible_to<U*, T*>)
     OptionalRef(const OptionalRef<U>& other) noexcept : ptr_{other.operator->()} {}
     // cppcheck-suppress-end noExplicitConstructor
 
@@ -56,7 +58,8 @@ class NonNull {
     NonNull(std::nullopt_t) = delete;
     NonNull(T&&)            = delete;
 
-    template <typename U, std::enable_if_t<std::is_convertible_v<U*, T*>, bool> = false>
+    template <typename U>
+        requires(std::convertible_to<U*, T*>)
     NonNull(const NonNull<U>& other) noexcept : ptr_{other.get()} {}
     // cppcheck-suppress-end noExplicitConstructor
 
