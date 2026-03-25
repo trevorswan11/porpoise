@@ -85,8 +85,13 @@ class Key {
   public:
     template <typename A = uptr, typename B = uptr>
         requires(std::is_convertible_v<A, uptr> && std::is_convertible_v<B, uptr>)
-    Key(TypeKind kind, bool mut, A marker_a = 0, B marker_b = 0, bool flag = false) noexcept
-        : kind_{kind}, mut_{mut}, marker_a_{static_cast<uptr>(marker_a)},
+    Key(TypeKind kind,
+        bool     mut,
+        usize    idx      = 0,
+        A        marker_a = 0,
+        B        marker_b = 0,
+        bool     flag     = false) noexcept
+        : kind_{kind}, mut_{mut}, idx_{idx}, marker_a_{static_cast<uptr>(marker_a)},
           marker_b_{static_cast<uptr>(marker_b)}, flag_{flag} {}
 
     MAKE_GETTER(kind, TypeKind)
@@ -105,7 +110,7 @@ class Key {
   private:
     TypeKind kind_;
     bool     mut_;
-    usize    context_idx_;
+    usize    idx_;
     uptr     marker_a_;
     uptr     marker_b_;
     bool     flag_;

@@ -154,18 +154,18 @@ auto TypeExpression::parse(syntax::Parser& parser)
     auto [type, initialized] = TRY(
         ([&]() -> Expected<std::pair<mem::Box<TypeExpression>, bool>, syntax::ParserDiagnostic> {
             if (parser.peek_token_is(syntax::TokenType::WALRUS)) {
-                auto type = mem::make_box<TypeExpression>(start_token, std::nullopt);
+                auto type_expr = mem::make_box<TypeExpression>(start_token, std::nullopt);
                 parser.advance();
-                return std::pair{std::move(type), true};
+                return std::pair{std::move(type_expr), true};
             } else if (parser.peek_token_is(syntax::TokenType::COLON)) {
                 parser.advance();
                 auto explicit_type = TRY(ExplicitType::parse(parser));
-                auto type = mem::make_box<TypeExpression>(start_token, std::move(explicit_type));
+                auto type_expr = mem::make_box<TypeExpression>(start_token, std::move(explicit_type));
                 if (parser.peek_token_is(syntax::TokenType::ASSIGN)) {
                     parser.advance();
-                    return std::pair{std::move(type), true};
+                    return std::pair{std::move(type_expr), true};
                 }
-                return std::pair{std::move(type), false};
+                return std::pair{std::move(type_expr), false};
             } else {
                 return Unexpected{parser.peek_error(syntax::TokenType::COLON)};
             }

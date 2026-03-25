@@ -30,6 +30,8 @@ pub fn build(b: *std.Build) !void {
         "-Wextra",
         "-Werror",
         "-Wpedantic",
+        "-Wconversion",
+        "-Wshadow",
         "-Wno-gnu-statement-expression",
         "-Wno-gnu-statement-expression-from-macro-expansion",
         "-DMAGIC_ENUM_RANGE_MAX=255",

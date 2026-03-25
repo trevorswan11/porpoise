@@ -1,13 +1,54 @@
+#include <utility>
+
 #include "sema/collector.hpp"
 
 #include "ast/ast.hpp"
+#include "common.hpp"
 
 namespace porpoise::sema {
 
-// No expressions are evaluated directly on this pass
+// Few expressions are evaluated directly on this pass
 #define COLLECTOR_NOOP(NodeType) \
-    auto SymbolCollector::visit(const ast::NodeType&) -> void {}
-FOREACH_AST_EXPR(COLLECTOR_NOOP)
+    auto SymbolCollector::visit(const ast::NodeType&) -> void { std::unreachable(); }
+
+COLLECTOR_NOOP(ArrayExpression)
+COLLECTOR_NOOP(CallExpression)
+COLLECTOR_NOOP(DoWhileLoopExpression)
+COLLECTOR_NOOP(ForLoopExpression)
+COLLECTOR_NOOP(FunctionExpression)
+COLLECTOR_NOOP(IdentifierExpression)
+COLLECTOR_NOOP(IfExpression)
+COLLECTOR_NOOP(IndexExpression)
+COLLECTOR_NOOP(InfiniteLoopExpression)
+COLLECTOR_NOOP(AssignmentExpression)
+COLLECTOR_NOOP(BinaryExpression)
+COLLECTOR_NOOP(DotExpression)
+COLLECTOR_NOOP(RangeExpression)
+COLLECTOR_NOOP(MatchExpression)
+COLLECTOR_NOOP(ReferenceExpression)
+COLLECTOR_NOOP(DereferenceExpression)
+COLLECTOR_NOOP(ImplicitAccessExpression)
+COLLECTOR_NOOP(UnaryExpression)
+COLLECTOR_NOOP(StringExpression)
+COLLECTOR_NOOP(SignedIntegerExpression)
+COLLECTOR_NOOP(SignedLongIntegerExpression)
+COLLECTOR_NOOP(ISizeIntegerExpression)
+COLLECTOR_NOOP(UnsignedIntegerExpression)
+COLLECTOR_NOOP(UnsignedLongIntegerExpression)
+COLLECTOR_NOOP(USizeIntegerExpression)
+COLLECTOR_NOOP(ByteExpression)
+COLLECTOR_NOOP(FloatExpression)
+COLLECTOR_NOOP(DoubleExpression)
+COLLECTOR_NOOP(BoolExpression)
+COLLECTOR_NOOP(ScopeResolutionExpression)
+COLLECTOR_NOOP(TypeExpression)
+COLLECTOR_NOOP(WhileLoopExpression)
+
+auto SymbolCollector::visit(const ast::EnumExpression& enum_expr) -> void { TODO(enum_expr); }
+
+auto SymbolCollector::visit(const ast::StructExpression& struct_expr) -> void { TODO(struct_expr); }
+
+auto SymbolCollector::visit(const ast::UnionExpression& union_expr) -> void { TODO(union_expr); }
 
 #define ILLEGAL_COLLECTOR_TOP_LEVEL(NodeType, stringified_node)                        \
     auto SymbolCollector::visit(const NodeType& node) -> void {                        \

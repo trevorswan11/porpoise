@@ -9,7 +9,7 @@ namespace porpoise::tests {
 TEST_CASE("View materialization") {
     constexpr auto nums         = std::ranges::views::iota(0, 100);
     constexpr auto materialized = array::materialize_sized_view<100>(nums);
-    for (const auto num : nums) { CHECK(materialized[num] == num); }
+    for (const auto num : nums) { CHECK(materialized[static_cast<usize>(num)] == num); }
 }
 
 TEST_CASE("Array concatenation") {
