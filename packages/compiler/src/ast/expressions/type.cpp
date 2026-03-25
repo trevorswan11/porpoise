@@ -160,7 +160,8 @@ auto TypeExpression::parse(syntax::Parser& parser)
             } else if (parser.peek_token_is(syntax::TokenType::COLON)) {
                 parser.advance();
                 auto explicit_type = TRY(ExplicitType::parse(parser));
-                auto type_expr = mem::make_box<TypeExpression>(start_token, std::move(explicit_type));
+                auto type_expr =
+                    mem::make_box<TypeExpression>(start_token, std::move(explicit_type));
                 if (parser.peek_token_is(syntax::TokenType::ASSIGN)) {
                     parser.advance();
                     return std::pair{std::move(type_expr), true};

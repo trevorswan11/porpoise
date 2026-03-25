@@ -60,7 +60,7 @@ auto SymbolCollector::visit(const ast::UnionExpression& union_expr) -> void { TO
 ILLEGAL_COLLECTOR_TOP_LEVEL(ast::BlockStatement, "block")
 
 auto SymbolCollector::visit(const ast::DeclStatement& decl) -> void {
-    auto result = table_.insert(decl.get_ident().get_name(), &decl);
+    auto result = registry_.insert_into(table_idx_, decl.get_ident().get_name(), &decl);
     if (!result) { diagnostics_.emplace_back(result.error()); }
 }
 
@@ -69,7 +69,7 @@ ILLEGAL_COLLECTOR_TOP_LEVEL(ast::DiscardStatement, "discard")
 ILLEGAL_COLLECTOR_TOP_LEVEL(ast::ExpressionStatement, "expression")
 
 auto SymbolCollector::visit(const ast::ImportStatement& import_stmt) -> void {
-    if (table_.is_module()) { import_stmt.mark_public(); }
+    if (registry_.get(table_idx_).is_module()) { import_stmt.mark_public(); }
     const auto name   = import_stmt.match(Overloaded{
         [](const ast::LibraryImport& module) {
             return module.has_alias() ? module.get_alias().get_name()
@@ -77,16 +77,17 @@ auto SymbolCollector::visit(const ast::ImportStatement& import_stmt) -> void {
         },
         [](const ast::FileImport& user) { return user.get_alias().get_name(); },
     });
-    auto       result = table_.insert(name, &import_stmt);
+    auto       result = registry_.insert_into(table_idx_, name, &import_stmt);
     if (!result) { diagnostics_.emplace_back(result.error()); }
 }
 
 ILLEGAL_COLLECTOR_TOP_LEVEL(ast::JumpStatement, "jump")
 
 auto SymbolCollector::visit(const ast::ModuleStatement& module_stmt) -> void {
+    auto& table = registry_.get(table_idx_);
     if (first_node_) {
-        table_.indicate_module();
-    } else if (table_.is_module()) {
+        table.indicate_module();
+    } else if (table.is_module()) {
         diagnostics_.emplace_back("Only one module statement is allowed per file",
                                   SemaError::DUPLICATE_MODULE_STATEMENT,
                                   module_stmt.get_token());
@@ -98,8 +99,8 @@ auto SymbolCollector::visit(const ast::ModuleStatement& module_stmt) -> void {
 }
 
 auto SymbolCollector::visit(const ast::UsingStatement& using_stmt) -> void {
-    if (table_.is_module()) { using_stmt.mark_public(); }
-    auto result = table_.insert(using_stmt.get_alias().get_name(), &using_stmt);
+    if (registry_.get(table_idx_).is_module()) { using_stmt.mark_public(); }
+    auto result = registry_.insert_into(table_idx_, using_stmt.get_alias().get_name(), &using_stmt);
     if (!result) { diagnostics_.emplace_back(result.error()); }
 }
 

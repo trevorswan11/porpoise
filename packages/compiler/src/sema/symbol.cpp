@@ -48,9 +48,15 @@ auto SymbolTable::has(std::string_view name) const noexcept -> bool {
     return symbols_.contains(name);
 }
 
-auto SymbolTableRegistry::create() -> std::pair<SymbolTable&, usize> {
-    auto& table = tables_.emplace_back();
-    return {table, tables_.size() - 1};
+auto SymbolTableRegistry::create() -> usize {
+    tables_.emplace_back();
+    return tables_.size() - 1;
+}
+
+auto SymbolTableRegistry::insert_into(usize table_idx, std::string_view name, SymbolicNode node)
+    -> Expected<std::monostate, SemaDiagnostic> {
+    if (auto table = get_opt(table_idx)) { return table->insert(name, node); }
+    return make_sema_unexpected(SemaError::INVALID_TABLE_IDX);
 }
 
 auto SymbolTableRegistry::get_opt(usize idx) noexcept -> Optional<SymbolTable&> {

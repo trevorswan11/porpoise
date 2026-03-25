@@ -70,25 +70,15 @@ class Symbol {
 class SymbolTable {
   public:
     using Table = ankerl::unordered_dense::map<std::string_view, Symbol>;
-    using KV    = Table::iterator::value_type;
-
-    using iterator       = typename Table::iterator;
-    using const_iterator = typename Table::const_iterator;
+    MAKE_UNALIASED_ITERATOR(Table, symbols_)
+    using KV = Table::iterator::value_type;
 
   public:
-    [[nodiscard]] auto begin() noexcept -> iterator { return symbols_.begin(); }
-    [[nodiscard]] auto end() noexcept -> iterator { return symbols_.end(); }
-
-    [[nodiscard]] auto begin() const noexcept -> const_iterator { return symbols_.begin(); }
-    [[nodiscard]] auto end() const noexcept -> const_iterator { return symbols_.end(); }
-
     auto insert(std::string_view name, SymbolicNode node)
         -> Expected<std::monostate, SemaDiagnostic>;
 
     auto reserve(usize cap) -> void { symbols_.reserve(cap); }
 
-    [[nodiscard]] auto empty() const noexcept -> bool { return symbols_.empty(); }
-    [[nodiscard]] auto size() const noexcept -> usize { return symbols_.size(); }
     [[nodiscard]] auto has(std::string_view name) const noexcept -> bool;
 
     // Differs from `get_opt` by asserting that the name is present.
@@ -116,7 +106,11 @@ class SymbolTable {
 
 class SymbolTableRegistry {
   public:
-    [[nodiscard]] auto create() -> std::pair<SymbolTable&, usize>;
+    [[nodiscard]] auto create() -> usize;
+
+    [[nodiscard]] auto insert_into(usize table_idx, std::string_view name, SymbolicNode node)
+        -> Expected<std::monostate, SemaDiagnostic>;
+
     [[nodiscard]] auto get_opt(usize idx) noexcept -> Optional<SymbolTable&>;
     [[nodiscard]] auto get(usize idx) -> SymbolTable&;
 

@@ -16,8 +16,10 @@ class StructExpression : public ExprBase<StructExpression> {
     static constexpr auto KIND = NodeKind::STRUCT_EXPRESSION;
 
   public:
-    explicit StructExpression(const syntax::Token&                 start_token,
-                              std::vector<mem::Box<DeclStatement>> members) noexcept;
+    MAKE_ITERATOR(Members, std::vector<mem::Box<DeclStatement>>, members_)
+
+  public:
+    explicit StructExpression(const syntax::Token& start_token, Members members) noexcept;
     ~StructExpression() override;
 
     MAKE_AST_COPY_MOVE(StructExpression)

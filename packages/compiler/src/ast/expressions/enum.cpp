@@ -22,7 +22,7 @@ auto Enumeration::is_equal(const Enumeration& other) const noexcept -> bool {
 
 EnumExpression::EnumExpression(const syntax::Token&                     start_token,
                                Optional<mem::Box<IdentifierExpression>> underlying,
-                               std::vector<Enumeration>                 enumerations) noexcept
+                               Enumerations                             enumerations) noexcept
     : ExprBase{start_token}, underlying_{std::move(underlying)},
       enumerations_{std::move(enumerations)} {}
 EnumExpression::~EnumExpression() = default;
@@ -47,7 +47,7 @@ auto EnumExpression::parse(syntax::Parser& parser)
         return make_parser_unexpected(syntax::ParserError::ENUM_MISSING_VARIANTS, opening);
     }
 
-    std::vector<Enumeration> enumeration;
+    Enumerations enumeration;
     while (!parser.peek_token_is(syntax::TokenType::RBRACE) &&
            !parser.peek_token_is(syntax::TokenType::END)) {
         TRY(parser.expect_peek(syntax::TokenType::IDENT));

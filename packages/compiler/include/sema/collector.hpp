@@ -17,18 +17,22 @@ class TypePool;
 // - Does not verify undeclared identifier use
 class SymbolCollector : public ast::Visitor {
   public:
-    explicit SymbolCollector(SymbolTable& table, TypePool& pool, Diagnostics& diagnostics) noexcept
-        : table_{table}, pool_{pool}, diagnostics_{diagnostics} {}
+    SymbolCollector(usize                table_idx,
+                    SymbolTableRegistry& registry,
+                    TypePool&            pool,
+                    Diagnostics&         diagnostics) noexcept
+        : table_idx_{table_idx}, registry_{registry}, pool_{pool}, diagnostics_{diagnostics} {}
 
     MAKE_AST_VISITOR_OVERRIDES()
 
     auto pass_first() noexcept -> void { first_node_ = false; }
 
   private:
-    SymbolTable&               table_;
-    [[maybe_unused]] TypePool& pool_;
-    Diagnostics&               diagnostics_;
-    bool                       first_node_{true};
+    usize                                 table_idx_;
+    [[maybe_unused]] SymbolTableRegistry& registry_;
+    [[maybe_unused]] TypePool&            pool_;
+    Diagnostics&                          diagnostics_;
+    bool                                  first_node_{true};
 };
 
 } // namespace porpoise::sema

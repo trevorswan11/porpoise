@@ -21,8 +21,7 @@ auto UnionField::is_equal(const UnionField& other) const noexcept -> bool {
     return *ident_ == *other.ident_ && type_ == other.type_;
 }
 
-UnionExpression::UnionExpression(const syntax::Token&    start_token,
-                                 std::vector<UnionField> fields) noexcept
+UnionExpression::UnionExpression(const syntax::Token& start_token, Fields fields) noexcept
     : ExprBase{start_token}, fields_{std::move(fields)} {}
 UnionExpression::~UnionExpression() = default;
 
@@ -33,7 +32,7 @@ auto UnionExpression::parse(syntax::Parser& parser)
     const auto start_token = parser.current_token();
     TRY(parser.expect_peek(syntax::TokenType::LBRACE));
 
-    std::vector<UnionField> fields;
+    Fields fields;
     while (!parser.peek_token_is(syntax::TokenType::RBRACE)) {
         TRY(parser.expect_peek(syntax::TokenType::IDENT));
         auto ident = downcast<IdentifierExpression>(TRY(IdentifierExpression::parse(parser)));

@@ -34,9 +34,12 @@ class EnumExpression : public ExprBase<EnumExpression> {
     static constexpr auto KIND = NodeKind::ENUM_EXPRESSION;
 
   public:
+    MAKE_ITERATOR(Enumerations, std::vector<Enumeration>, enumerations_)
+
+  public:
     explicit EnumExpression(const syntax::Token&                     start_token,
                             Optional<mem::Box<IdentifierExpression>> underlying,
-                            std::vector<Enumeration>                 enumerations) noexcept;
+                            Enumerations                             enumerations) noexcept;
     ~EnumExpression() override;
 
     MAKE_AST_COPY_MOVE(EnumExpression)
@@ -53,7 +56,7 @@ class EnumExpression : public ExprBase<EnumExpression> {
 
   private:
     Optional<mem::Box<IdentifierExpression>> underlying_;
-    std::vector<Enumeration>                 enumerations_;
+    Enumerations                             enumerations_;
 };
 
 } // namespace porpoise::ast

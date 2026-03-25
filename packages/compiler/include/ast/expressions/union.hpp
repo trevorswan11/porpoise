@@ -35,8 +35,10 @@ class UnionExpression : public ExprBase<UnionExpression> {
     static constexpr auto KIND = NodeKind::UNION_EXPRESSION;
 
   public:
-    explicit UnionExpression(const syntax::Token&    start_token,
-                             std::vector<UnionField> fields) noexcept;
+    MAKE_ITERATOR(Fields, std::vector<UnionField>, fields_)
+
+  public:
+    explicit UnionExpression(const syntax::Token& start_token, Fields fields) noexcept;
     ~UnionExpression() override;
 
     MAKE_AST_COPY_MOVE(UnionExpression)
@@ -51,7 +53,7 @@ class UnionExpression : public ExprBase<UnionExpression> {
     auto is_equal(const Node& other) const noexcept -> bool override;
 
   private:
-    std::vector<UnionField> fields_;
+    Fields fields_;
 };
 
 } // namespace porpoise::ast

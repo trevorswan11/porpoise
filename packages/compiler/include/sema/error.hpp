@@ -12,6 +12,7 @@ enum class SemaError : u8 {
     ILLEGAL_TOP_LEVEL_STATEMENT,
     ILLEGAL_MODULE_STATEMENT_LOCATION,
     DUPLICATE_MODULE_STATEMENT,
+    INVALID_TABLE_IDX,
 };
 
 using SemaDiagnostic = Diagnostic<SemaError>;

@@ -11,7 +11,7 @@ auto BlockStatement::parse(syntax::Parser& parser)
     -> Expected<mem::Box<Statement>, syntax::ParserDiagnostic> {
     const auto start_token = parser.current_token();
 
-    std::vector<mem::Box<Statement>> statements;
+    Statements statements;
     while (!parser.peek_token_is(syntax::TokenType::RBRACE) &&
            !parser.peek_token_is(syntax::TokenType::END)) {
         parser.advance();

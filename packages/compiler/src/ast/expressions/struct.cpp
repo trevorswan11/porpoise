@@ -7,8 +7,7 @@
 
 namespace porpoise::ast {
 
-StructExpression::StructExpression(const syntax::Token&                 start_token,
-                                   std::vector<mem::Box<DeclStatement>> members) noexcept
+StructExpression::StructExpression(const syntax::Token& start_token, Members members) noexcept
     : ExprBase{start_token}, members_{std::move(members)} {}
 StructExpression::~StructExpression() = default;
 
@@ -24,7 +23,7 @@ auto StructExpression::parse(syntax::Parser& parser)
                                       start_token);
     }
 
-    std::vector<mem::Box<DeclStatement>> members;
+    Members members;
     TRY(parser.expect_peek(syntax::TokenType::LBRACE));
     while (!parser.peek_token_is(syntax::TokenType::RBRACE)) {
         parser.advance();
