@@ -15,20 +15,23 @@ class IdentifierExpression;
 
 class MatchArm {
   public:
-    using Capture = std::variant<Box<IdentifierExpression>, std::monostate>;
+    using Capture = std::variant<mem::Box<IdentifierExpression>, std::monostate>;
 
   public:
-    explicit MatchArm(Box<Expression>   pattern,
-                      Optional<Capture> capture,
-                      Box<Statement>    dispatch) noexcept;
+    explicit MatchArm(mem::Box<Expression> pattern,
+                      Optional<Capture>    capture,
+                      mem::Box<Statement>  dispatch) noexcept;
     ~MatchArm();
 
-    MAKE_AST_COPY_MOVE(MatchArm)
+    MAKE_MOVE_CONSTRUCTABLE_ONLY(MatchArm)
 
     MAKE_GETTER(pattern, const Expression&, *)
     [[nodiscard]] auto has_capture_clause() const noexcept -> bool { return capture_.has_value(); }
-    MAKE_VARIANT_UNPACKER(
-        explicit_capture, IdentifierExpression, Box<IdentifierExpression>, *capture_, *std::get)
+    MAKE_VARIANT_UNPACKER(explicit_capture,
+                          IdentifierExpression,
+                          mem::Box<IdentifierExpression>,
+                          *capture_,
+                          *std::get)
 
     [[nodiscard]] auto is_discarded_capture() const noexcept -> bool {
         return std::holds_alternative<std::monostate>(*capture_);
@@ -39,9 +42,9 @@ class MatchArm {
     MAKE_EQ_DELEGATION(MatchArm)
 
   private:
-    Box<Expression>   pattern_;
-    Optional<Capture> capture_;
-    Box<Statement>    dispatch_;
+    mem::Box<Expression> pattern_;
+    Optional<Capture>    capture_;
+    mem::Box<Statement>  dispatch_;
 };
 
 class MatchExpression : public ExprBase<MatchExpression> {
@@ -49,17 +52,17 @@ class MatchExpression : public ExprBase<MatchExpression> {
     static constexpr auto KIND = NodeKind::MATCH_EXPRESSION;
 
   public:
-    explicit MatchExpression(const syntax::Token&     start_token,
-                             Box<Expression>          matcher,
-                             std::vector<MatchArm>    arms,
-                             Optional<Box<Statement>> catch_all) noexcept;
+    explicit MatchExpression(const syntax::Token&          start_token,
+                             mem::Box<Expression>          matcher,
+                             std::vector<MatchArm>         arms,
+                             Optional<mem::Box<Statement>> catch_all) noexcept;
     ~MatchExpression() override;
 
-    MAKE_AST_COPY_MOVE(MatchExpression)
+    MAKE_MOVE_CONSTRUCTABLE_ONLY(MatchExpression)
 
     auto                      accept(Visitor& v) const -> void override;
     [[nodiscard]] static auto parse(syntax::Parser& parser)
-        -> Expected<Box<Expression>, syntax::ParserDiagnostic>;
+        -> Expected<mem::Box<Expression>, syntax::ParserDiagnostic>;
 
     MAKE_GETTER(matcher, const Expression&, *)
     MAKE_GETTER(arms, std::span<const MatchArm>)
@@ -69,9 +72,9 @@ class MatchExpression : public ExprBase<MatchExpression> {
     auto is_equal(const Node& other) const noexcept -> bool override;
 
   private:
-    Box<Expression>          matcher_;
-    std::vector<MatchArm>    arms_;
-    Optional<Box<Statement>> catch_all_;
+    mem::Box<Expression>          matcher_;
+    std::vector<MatchArm>         arms_;
+    Optional<mem::Box<Statement>> catch_all_;
 };
 
 } // namespace porpoise::ast

@@ -9,7 +9,7 @@
 #include "ast/dumper.hpp"
 #include "ast/node.hpp"
 
-#include "sema/collector.hpp"
+#include "sema/analyzer.hpp"
 
 #include "string.hpp"
 
@@ -24,6 +24,7 @@ auto Program::interactive() -> void {
         if (!std::getline(std::cin, line)) { break; }
         const auto trimmed = string::trim(line);
         if (trimmed == "exit") { break; }
+        if (trimmed.empty()) { continue; }
 
         // Parsing
         parser_.reset(trimmed);
@@ -37,12 +38,13 @@ auto Program::interactive() -> void {
         }
 
         // Sema
-        auto [table, sema_errors] = sema::SymbolCollector::collect(ast);
-        if (!sema_errors.empty()) {
-            fmt::println("{}", sema_errors);
+        sema::Analyzer analyzer{std::move(ast)};
+        const auto     idx = analyzer.collect_symbols();
+        if (analyzer.has_diagnostics()) {
+            fmt::println("{}", analyzer.get_diagnostics());
             continue;
         } else {
-            fmt::println("{} symbols collected", table.size());
+            fmt::println("{} symbols collected", analyzer.get_table(idx).size());
         }
     }
 }

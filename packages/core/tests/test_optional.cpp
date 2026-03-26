@@ -13,27 +13,27 @@ namespace porpoise::tests {
 
 struct Base {
     virtual ~Base() = default;
-    int x           = 10;
+    i32 x           = 10;
 };
 
 struct Derived : Base {
-    int y = 20;
+    i32 y = 20;
 };
 
 TEST_CASE("OptRef construction checks") {
-    STATIC_CHECK_FALSE(std::is_constructible_v<OptionalRef<int>, int&&>);
-    STATIC_CHECK(std::is_trivially_copyable_v<OptionalRef<int>>);
+    STATIC_CHECK_FALSE(std::is_constructible_v<OptionalRef<i32>, i32&&>);
+    STATIC_CHECK(std::is_trivially_copyable_v<OptionalRef<i32>>);
 }
 
 TEST_CASE("Optional template specialization") {
-    STATIC_CHECK(std::is_same_v<Optional<int&>, OptionalRef<int>>);
-    STATIC_CHECK(std::is_same_v<Optional<const int&>, OptionalRef<const int>>);
-    STATIC_CHECK(std::is_same_v<Optional<int>, std::optional<int>>);
+    STATIC_CHECK(std::is_same_v<Optional<i32&>, OptionalRef<i32>>);
+    STATIC_CHECK(std::is_same_v<Optional<const i32&>, OptionalRef<const i32>>);
+    STATIC_CHECK(std::is_same_v<Optional<i32>, std::optional<i32>>);
 }
 
 TEST_CASE("OptRef basic construction") {
-    int                    val = 42;
-    const OptionalRef<int> opt{val};
+    i32                    val = 42;
+    const OptionalRef<i32> opt{val};
 
     CHECK(opt.has_value());
     CHECK(static_cast<bool>(opt));
@@ -45,13 +45,13 @@ TEST_CASE("OptRef basic construction") {
 
 TEST_CASE("OptRef null use & access") {
     SECTION("Default") {
-        const OptionalRef<int> opt{};
+        const OptionalRef<i32> opt{};
         CHECK_FALSE(opt.has_value());
         CHECK_THROWS(opt.value(), std::bad_optional_access{});
     }
 
     SECTION("Explicit") {
-        const OptionalRef<int> opt{std::nullopt};
+        const OptionalRef<i32> opt{std::nullopt};
         CHECK_FALSE(opt.has_value());
         CHECK_THROWS(opt.value(), std::bad_optional_access{});
     }
@@ -59,9 +59,9 @@ TEST_CASE("OptRef null use & access") {
 
 TEST_CASE("OptRef conversions") {
     SECTION("Non-const -> const") {
-        int                          val = 42;
-        const OptionalRef<int>       mut_opt{val};
-        const OptionalRef<const int> const_opt{mut_opt};
+        i32                          val = 42;
+        const OptionalRef<i32>       mut_opt{val};
+        const OptionalRef<const i32> const_opt{mut_opt};
         CHECK(const_opt.has_value());
         CHECK(*const_opt == 42);
     }
@@ -76,8 +76,8 @@ TEST_CASE("OptRef conversions") {
 }
 
 TEST_CASE("OptRef reassignment") {
-    int              a = 1, b = 2;
-    OptionalRef<int> opt{a};
+    i32              a = 1, b = 2;
+    OptionalRef<i32> opt{a};
     CHECK(*opt == 1);
 
     opt = b;
@@ -88,8 +88,8 @@ TEST_CASE("OptRef reassignment") {
 }
 
 TEST_CASE("OptRef mutability") {
-    int                    val = 42;
-    const OptionalRef<int> opt{val};
+    i32                    val = 42;
+    const OptionalRef<i32> opt{val};
     CHECK(*opt == 42);
 
     *opt = 1;
@@ -99,16 +99,16 @@ TEST_CASE("OptRef mutability") {
 }
 
 TEST_CASE("Safe optional default equality") {
-    int                  x = 10, y = 10, z = 20;
-    const Optional<int&> opt_x{x};
-    const Optional<int&> opt_y{y};
-    const Optional<int&> opt_z{z};
-    const Optional<int&> opt_null;
+    i32                  x = 10, y = 10, z = 20;
+    const Optional<i32&> opt_x{x};
+    const Optional<i32&> opt_y{y};
+    const Optional<i32&> opt_z{z};
+    const Optional<i32&> opt_null;
 
-    CHECK(optional::safe_eq<int&>(opt_x, opt_y));
-    CHECK_FALSE(optional::safe_eq<int&>(opt_x, opt_z));
-    CHECK_FALSE(optional::safe_eq<int&>(opt_x, opt_null));
-    CHECK(optional::safe_eq<int&>(opt_null, opt_null));
+    CHECK(optional::safe_eq<i32&>(opt_x, opt_y));
+    CHECK_FALSE(optional::safe_eq<i32&>(opt_x, opt_z));
+    CHECK_FALSE(optional::safe_eq<i32&>(opt_x, opt_null));
+    CHECK(optional::safe_eq<i32&>(opt_null, opt_null));
 }
 
 TEST_CASE("Safe optional custom equality") {
@@ -124,15 +124,15 @@ TEST_CASE("Safe optional custom equality") {
 }
 
 TEST_CASE("Unsafe optional default equality") {
-    const Optional<Box<int>> opt_a{make_box<int>(100)};
-    const Optional<Box<int>> opt_b{make_box<int>(100)};
-    const Optional<Box<int>> opt_c{make_box<int>(200)};
-    const Optional<Box<int>> opt_null;
+    const Optional<mem::Box<i32>> opt_a{mem::make_box<i32>(100)};
+    const Optional<mem::Box<i32>> opt_b{mem::make_box<i32>(100)};
+    const Optional<mem::Box<i32>> opt_c{mem::make_box<i32>(200)};
+    const Optional<mem::Box<i32>> opt_null;
 
-    CHECK(optional::unsafe_eq<int>(opt_a, opt_b));
-    CHECK_FALSE(optional::unsafe_eq<int>(opt_a, opt_c));
-    CHECK_FALSE(optional::unsafe_eq<int>(opt_a, opt_null));
-    CHECK(optional::unsafe_eq<int>(opt_null, opt_null));
+    CHECK(optional::unsafe_eq<i32>(opt_a, opt_b));
+    CHECK_FALSE(optional::unsafe_eq<i32>(opt_a, opt_c));
+    CHECK_FALSE(optional::unsafe_eq<i32>(opt_a, opt_null));
+    CHECK(optional::unsafe_eq<i32>(opt_null, opt_null));
 }
 
 TEST_CASE("Unsafe optional custom equality") {
@@ -141,36 +141,36 @@ TEST_CASE("Unsafe optional custom equality") {
         std::string_view name;
     };
 
-    const Optional<Box<Node>> a = make_box<Node>(1, "foo");
-    const Optional<Box<Node>> b = make_box<Node>(1, "bar");
+    const Optional<mem::Box<Node>> a = mem::make_box<Node>(1, "foo");
+    const Optional<mem::Box<Node>> b = mem::make_box<Node>(1, "bar");
     CHECK(optional::unsafe_eq<Node>(
         a, b, [](const Node& an, const Node& bn) { return an.type_id == bn.type_id; }));
 }
 
 TEST_CASE("NonNull construction checks") {
-    STATIC_CHECK_FALSE(std::is_constructible_v<NonNull<int>, int&&>);
-    STATIC_CHECK_FALSE(std::is_constructible_v<NonNull<int>, std::nullopt_t>);
-    STATIC_CHECK(std::is_trivially_copyable_v<NonNull<int>>);
+    STATIC_CHECK_FALSE(std::is_constructible_v<NonNull<i32>, i32&&>);
+    STATIC_CHECK_FALSE(std::is_constructible_v<NonNull<i32>, std::nullopt_t>);
+    STATIC_CHECK(std::is_trivially_copyable_v<NonNull<i32>>);
 }
 
 TEST_CASE("NonNull basic usage") {
-    int                val = 42;
-    const NonNull<int> ptr{&val};
+    i32                val = 42;
+    const NonNull<i32> ptr{&val};
 
     CHECK(*ptr == 42);
     CHECK(ptr.get() == &val);
-    CHECK(static_cast<int>(ptr) == 42);
+    CHECK(static_cast<i32>(ptr) == 42);
 }
 
 TEST_CASE("NonNull from OptRef") {
-    int                    val = 10;
-    const OptionalRef<int> opt{val};
+    i32                    val = 10;
+    const OptionalRef<i32> opt{val};
 
-    const NonNull<int> ptr{opt};
+    const NonNull<i32> ptr{opt};
     CHECK(*ptr == 10);
 
-    const OptionalRef<int> empty;
-    CHECK_THROWS(NonNull<int>{empty}, std::bad_optional_access{});
+    const OptionalRef<i32> empty;
+    CHECK_THROWS(NonNull<i32>{empty}, std::bad_optional_access{});
 }
 
 TEST_CASE("NonNull conversions") {

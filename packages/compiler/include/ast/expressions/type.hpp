@@ -20,12 +20,12 @@ class ExplicitType;
 
 class ExplicitArrayType {
   public:
-    explicit ExplicitArrayType(Optional<Box<Expression>> dimension,
-                               bool                      null_terminated,
-                               Box<ExplicitType>         inner_type) noexcept;
+    explicit ExplicitArrayType(Optional<mem::Box<Expression>> dimension,
+                               bool                           null_terminated,
+                               mem::Box<ExplicitType>         inner_type) noexcept;
     ~ExplicitArrayType();
 
-    MAKE_AST_COPY_MOVE(ExplicitArrayType)
+    MAKE_MOVE_CONSTRUCTABLE_ONLY(ExplicitArrayType)
 
     MAKE_OPTIONAL_UNPACKER(dimension, Expression, dimension_, **)
     [[nodiscard]] auto is_null_terminated() const noexcept -> bool { return null_terminated_; }
@@ -34,16 +34,16 @@ class ExplicitArrayType {
     MAKE_EQ_DELEGATION(ExplicitArrayType)
 
   private:
-    Optional<Box<Expression>> dimension_;
-    bool                      null_terminated_;
-    Box<ExplicitType>         inner_type_;
+    Optional<mem::Box<Expression>> dimension_;
+    bool                           null_terminated_;
+    mem::Box<ExplicitType>         inner_type_;
 };
 
 class ExplicitType {
   public:
-    using ExplicitIdentType     = Box<IdentifierExpression>;
-    using ExplicitFunctionType  = Box<FunctionExpression>;
-    using ExplicitRecursiveType = Box<ExplicitType>;
+    using ExplicitIdentType     = mem::Box<IdentifierExpression>;
+    using ExplicitFunctionType  = mem::Box<FunctionExpression>;
+    using ExplicitRecursiveType = mem::Box<ExplicitType>;
 
     using ExplicitTypeVariant = std::
         variant<ExplicitIdentType, ExplicitFunctionType, ExplicitArrayType, ExplicitRecursiveType>;
@@ -52,7 +52,7 @@ class ExplicitType {
     explicit ExplicitType(TypeModifier modifier, ExplicitTypeVariant type) noexcept;
     ~ExplicitType();
 
-    MAKE_AST_COPY_MOVE(ExplicitType)
+    MAKE_MOVE_CONSTRUCTABLE_ONLY(ExplicitType)
 
     [[nodiscard]] static auto parse(syntax::Parser& parser)
         -> Expected<ExplicitType, syntax::ParserDiagnostic>;
@@ -80,11 +80,11 @@ class TypeExpression : public ExprBase<TypeExpression> {
     explicit TypeExpression(const syntax::Token& start_token, Optional<ExplicitType> exp) noexcept;
     ~TypeExpression() override;
 
-    MAKE_AST_COPY_MOVE(TypeExpression)
+    MAKE_MOVE_CONSTRUCTABLE_ONLY(TypeExpression)
 
     auto                      accept(Visitor& v) const -> void override;
     [[nodiscard]] static auto parse(syntax::Parser& parser)
-        -> Expected<std::pair<Box<Expression>, bool>, syntax::ParserDiagnostic>;
+        -> Expected<std::pair<mem::Box<Expression>, bool>, syntax::ParserDiagnostic>;
 
     MAKE_OPTIONAL_UNPACKER(explicit_type, ExplicitType, explicit_, *)
 

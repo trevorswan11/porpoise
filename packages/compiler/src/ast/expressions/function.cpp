@@ -10,7 +10,8 @@
 
 namespace porpoise::ast {
 
-FunctionParameter::FunctionParameter(Box<IdentifierExpression> ident, ExplicitType&& type) noexcept
+FunctionParameter::FunctionParameter(mem::Box<IdentifierExpression> ident,
+                                     ExplicitType&&                 type) noexcept
     : ident_{std::move(ident)}, type_{std::move(type)} {}
 FunctionParameter::~FunctionParameter() = default;
 
@@ -18,7 +19,7 @@ auto FunctionParameter::is_equal(const FunctionParameter& other) const noexcept 
     return *ident_ == *other.ident_ && type_ == other.type_;
 }
 
-SelfParameter::SelfParameter(TypeModifier modifier, Box<IdentifierExpression> ident) noexcept
+SelfParameter::SelfParameter(TypeModifier modifier, mem::Box<IdentifierExpression> ident) noexcept
     : modifier_{std::move(modifier)}, ident_{std::move(ident)} {}
 SelfParameter::~SelfParameter() = default;
 
@@ -26,11 +27,11 @@ auto SelfParameter::is_equal(const SelfParameter& other) const noexcept -> bool 
     return optional::safe_eq<TypeModifier>(modifier_, other.modifier_) && *ident_ == *other.ident_;
 }
 
-FunctionExpression::FunctionExpression(const syntax::Token&           start_token,
-                                       Optional<SelfParameter>        self,
-                                       std::vector<FunctionParameter> parameters,
-                                       ExplicitType&&                 return_type,
-                                       Optional<Box<BlockStatement>>  body) noexcept
+FunctionExpression::FunctionExpression(const syntax::Token&               start_token,
+                                       Optional<SelfParameter>            self,
+                                       std::vector<FunctionParameter>     parameters,
+                                       ExplicitType&&                     return_type,
+                                       Optional<mem::Box<BlockStatement>> body) noexcept
     : ExprBase{start_token}, self_{std::move(self)}, parameters_{std::move(parameters)},
       return_type_{std::move(return_type)}, body_{std::move(body)} {}
 FunctionExpression::~FunctionExpression() = default;
@@ -38,7 +39,7 @@ FunctionExpression::~FunctionExpression() = default;
 auto FunctionExpression::accept(Visitor& v) const -> void { v.visit(*this); }
 
 auto FunctionExpression::parse(syntax::Parser& parser)
-    -> Expected<Box<Expression>, syntax::ParserDiagnostic> {
+    -> Expected<mem::Box<Expression>, syntax::ParserDiagnostic> {
     const auto start_token = parser.current_token();
     TRY(parser.expect_peek(syntax::TokenType::LPAREN));
 
@@ -113,21 +114,21 @@ auto FunctionExpression::parse(syntax::Parser& parser)
 
     // If there is opening brace then just return without a body
     if (!parser.peek_token_is(syntax::TokenType::LBRACE)) {
-        return make_box<FunctionExpression>(start_token,
-                                            std::move(self),
-                                            std::move(parameters),
-                                            std::move(return_type),
-                                            std::nullopt);
+        return mem::make_box<FunctionExpression>(start_token,
+                                                 std::move(self),
+                                                 std::move(parameters),
+                                                 std::move(return_type),
+                                                 std::nullopt);
     }
 
     // Otherwise there must be a well-formed block
     TRY(parser.expect_peek(syntax::TokenType::LBRACE));
     auto body = downcast<BlockStatement>(TRY(BlockStatement::parse(parser)));
-    return make_box<FunctionExpression>(start_token,
-                                        std::move(self),
-                                        std::move(parameters),
-                                        std::move(return_type),
-                                        std::move(body));
+    return mem::make_box<FunctionExpression>(start_token,
+                                             std::move(self),
+                                             std::move(parameters),
+                                             std::move(return_type),
+                                             std::move(body));
 }
 
 auto FunctionExpression::is_equal(const Node& other) const noexcept -> bool {

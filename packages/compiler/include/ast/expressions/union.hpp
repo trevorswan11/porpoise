@@ -14,19 +14,20 @@ class IdentifierExpression;
 
 class UnionField {
   public:
-    explicit UnionField(Box<IdentifierExpression> ident, ExplicitType&& type) noexcept;
+    explicit UnionField(mem::Box<IdentifierExpression> ident, ExplicitType&& type) noexcept;
     ~UnionField();
 
-    MAKE_AST_COPY_MOVE(UnionField)
+    MAKE_MOVE_CONSTRUCTABLE_ONLY(UnionField)
 
     MAKE_GETTER(ident, const IdentifierExpression&, *)
     MAKE_GETTER(type, const ExplicitType&)
+    [[nodiscard]] auto get_token() const noexcept -> const syntax::Token&;
 
     MAKE_EQ_DELEGATION(UnionField)
 
   private:
-    Box<IdentifierExpression> ident_;
-    ExplicitType              type_;
+    mem::Box<IdentifierExpression> ident_;
+    ExplicitType                   type_;
 };
 
 class UnionExpression : public ExprBase<UnionExpression> {
@@ -34,15 +35,17 @@ class UnionExpression : public ExprBase<UnionExpression> {
     static constexpr auto KIND = NodeKind::UNION_EXPRESSION;
 
   public:
-    explicit UnionExpression(const syntax::Token&    start_token,
-                             std::vector<UnionField> fields) noexcept;
+    MAKE_ITERATOR(Fields, std::vector<UnionField>, fields_)
+
+  public:
+    explicit UnionExpression(const syntax::Token& start_token, Fields fields) noexcept;
     ~UnionExpression() override;
 
-    MAKE_AST_COPY_MOVE(UnionExpression)
+    MAKE_MOVE_CONSTRUCTABLE_ONLY(UnionExpression)
 
     auto                      accept(Visitor& v) const -> void override;
     [[nodiscard]] static auto parse(syntax::Parser& parser)
-        -> Expected<Box<Expression>, syntax::ParserDiagnostic>;
+        -> Expected<mem::Box<Expression>, syntax::ParserDiagnostic>;
 
     MAKE_GETTER(fields, std::span<const UnionField>)
 
@@ -50,7 +53,7 @@ class UnionExpression : public ExprBase<UnionExpression> {
     auto is_equal(const Node& other) const noexcept -> bool override;
 
   private:
-    std::vector<UnionField> fields_;
+    Fields fields_;
 };
 
 } // namespace porpoise::ast

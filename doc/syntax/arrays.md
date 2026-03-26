@@ -26,8 +26,8 @@
         - An open-close bracket pair with nothing in between
         - A type: exactly the same as an array
     - Slices do not have to be of fixed size as they are technically a fat pointer. They store both a pointer and size
-    - Values of type 'array' have an implicit `size` field that can be accessed used the dot operator
-    - Values of type 'slice' also have this `size` field, but are equipped with a second field called `ptr` to access the pointer directly
+    - Values of type 'array' have an implicit `len` field that can be accessed used the dot operator
+    - Values of type 'slice' also have this `len` field, but are equipped with a second field called `ptr` to access the pointer directly
     - Values of either type can be used with array-related builtins
 - Array types can have modifiers
 ```porpoise

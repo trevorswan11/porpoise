@@ -27,13 +27,13 @@ TEST_CASE("Explicit primitive declaration") {
         ast::DeclStatement{
             syntax::Token{keywords::VAR},
             helpers::make_ident("a"),
-            make_box<ast::TypeExpression>(syntax::Token{syntax::TokenType::COLON, ":"},
-                                          ast::ExplicitType{
-                                              mods::BASE,
-                                              helpers::make_ident("int"),
-                                          }),
-            make_box<ast::SignedIntegerExpression>(syntax::Token{syntax::TokenType::INT_10, "2"},
-                                                   2),
+            mem::make_box<ast::TypeExpression>(syntax::Token{syntax::TokenType::COLON, ":"},
+                                               ast::ExplicitType{
+                                                   mods::BASE,
+                                                   helpers::make_ident("int"),
+                                               }),
+            mem::make_box<ast::SignedIntegerExpression>(
+                syntax::Token{syntax::TokenType::INT_10, "2"}, 2),
             ast::DeclModifiers::VARIABLE,
         });
 }
@@ -44,11 +44,11 @@ TEST_CASE("Explicit non-primitive declaration") {
         ast::DeclStatement{
             syntax::Token{keywords::VAR},
             helpers::make_ident("a"),
-            make_box<ast::TypeExpression>(syntax::Token{syntax::TokenType::COLON, ":"},
-                                          ast::ExplicitType{
-                                              mods::BASE,
-                                              helpers::make_ident("Foo"),
-                                          }),
+            mem::make_box<ast::TypeExpression>(syntax::Token{syntax::TokenType::COLON, ":"},
+                                               ast::ExplicitType{
+                                                   mods::BASE,
+                                                   helpers::make_ident("Foo"),
+                                               }),
             helpers::make_ident("bar"),
             ast::DeclModifiers::VARIABLE,
         });
@@ -60,9 +60,9 @@ TEST_CASE("Implicit comptime declaration") {
         ast::DeclStatement{
             syntax::Token{keywords::COMPTIME},
             helpers::make_ident("SIZE"),
-            make_box<ast::TypeExpression>(syntax::Token{operators::WALRUS}, std::nullopt),
-            make_box<ast::USizeIntegerExpression>(syntax::Token{syntax::TokenType::UZINT_10, "2uz"},
-                                                  2uz),
+            mem::make_box<ast::TypeExpression>(syntax::Token{operators::WALRUS}, std::nullopt),
+            mem::make_box<ast::USizeIntegerExpression>(
+                syntax::Token{syntax::TokenType::UZINT_10, "2uz"}, 2uz),
             ast::DeclModifiers::COMPTIME,
         });
 }
@@ -75,16 +75,16 @@ TEST_CASE("Correct declaration modifiers") {
         for (const auto& keyword : modifiers) { ss << keyword.first << " "; }
         if (initialized) {
             ss << " a := 2;";
-            helpers::test_stmt(
-                ss.view(),
-                ast::DeclStatement{
-                    syntax::Token{*modifiers.begin()},
-                    helpers::make_ident("a"),
-                    make_box<ast::TypeExpression>(syntax::Token{operators::WALRUS}, std::nullopt),
-                    make_box<ast::SignedIntegerExpression>(
-                        syntax::Token{syntax::TokenType::INT_10, "2"}, 2),
-                    flags,
-                });
+            helpers::test_stmt(ss.view(),
+                               ast::DeclStatement{
+                                   syntax::Token{*modifiers.begin()},
+                                   helpers::make_ident("a"),
+                                   mem::make_box<ast::TypeExpression>(
+                                       syntax::Token{operators::WALRUS}, std::nullopt),
+                                   mem::make_box<ast::SignedIntegerExpression>(
+                                       syntax::Token{syntax::TokenType::INT_10, "2"}, 2),
+                                   flags,
+                               });
         } else {
             ss << " a: int;";
             helpers::test_stmt(
@@ -92,11 +92,11 @@ TEST_CASE("Correct declaration modifiers") {
                 ast::DeclStatement{
                     syntax::Token{*modifiers.begin()},
                     helpers::make_ident("a"),
-                    make_box<ast::TypeExpression>(syntax::Token{syntax::TokenType::COLON, ":"},
-                                                  ast::ExplicitType{
-                                                      mods::BASE,
-                                                      helpers::make_ident("int"),
-                                                  }),
+                    mem::make_box<ast::TypeExpression>(syntax::Token{syntax::TokenType::COLON, ":"},
+                                                       ast::ExplicitType{
+                                                           mods::BASE,
+                                                           helpers::make_ident("int"),
+                                                       }),
                     std::nullopt,
                     flags,
                 });

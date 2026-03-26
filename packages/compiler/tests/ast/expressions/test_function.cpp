@@ -14,10 +14,10 @@ using Parameters = std::vector<ast::FunctionParameter>;
 
 namespace helpers {
 
-auto function_expr_from(Optional<ast::SelfParameter>&&     self,
-                        Parameters&&                       parameters,
-                        ast::ExplicitType&&                return_type,
-                        Optional<Box<ast::BlockStatement>> block = std::nullopt)
+auto function_expr_from(Optional<ast::SelfParameter>&&          self,
+                        Parameters&&                            parameters,
+                        ast::ExplicitType&&                     return_type,
+                        Optional<mem::Box<ast::BlockStatement>> block = std::nullopt)
     -> ast::FunctionExpression {
     return ast::FunctionExpression{syntax::Token{keywords::FN},
                                    std::move(self),
@@ -26,23 +26,23 @@ auto function_expr_from(Optional<ast::SelfParameter>&&     self,
                                    std::move(block)};
 }
 
-auto function_expr_from(Optional<ast::SelfParameter>&&     self,
-                        ast::ExplicitType&&                return_type,
-                        Optional<Box<ast::BlockStatement>> block = std::nullopt)
+auto function_expr_from(Optional<ast::SelfParameter>&&          self,
+                        ast::ExplicitType&&                     return_type,
+                        Optional<mem::Box<ast::BlockStatement>> block = std::nullopt)
     -> ast::FunctionExpression {
     return function_expr_from(std::move(self), {}, std::move(return_type), std::move(block));
 }
 
-auto function_expr_from(Parameters&&                       parameters,
-                        ast::ExplicitType&&                return_type,
-                        Optional<Box<ast::BlockStatement>> block = std::nullopt)
+auto function_expr_from(Parameters&&                            parameters,
+                        ast::ExplicitType&&                     return_type,
+                        Optional<mem::Box<ast::BlockStatement>> block = std::nullopt)
     -> ast::FunctionExpression {
     return function_expr_from(
         std::nullopt, std::move(parameters), std::move(return_type), std::move(block));
 }
 
-auto function_expr_from(ast::ExplicitType&&                return_type,
-                        Optional<Box<ast::BlockStatement>> block = std::nullopt)
+auto function_expr_from(ast::ExplicitType&&                     return_type,
+                        Optional<mem::Box<ast::BlockStatement>> block = std::nullopt)
     -> ast::FunctionExpression {
     return function_expr_from(std::nullopt, {}, std::move(return_type), std::move(block));
 }

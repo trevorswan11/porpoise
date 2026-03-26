@@ -9,7 +9,7 @@
 
 namespace porpoise::ast {
 
-ForLoopCapture::Valued::Valued(TypeModifier modifier, Box<IdentifierExpression> ident) noexcept
+ForLoopCapture::Valued::Valued(TypeModifier modifier, mem::Box<IdentifierExpression> ident) noexcept
     : modifier_{std::move(modifier)}, ident_{std::move(ident)} {}
 ForLoopCapture::Valued::~Valued() = default;
 
@@ -25,11 +25,11 @@ auto ForLoopCapture::is_equal(const ForLoopCapture& other) const noexcept -> boo
     return underlying_ == other.underlying_;
 }
 
-ForLoopExpression::ForLoopExpression(const syntax::Token&         start_token,
-                                     std::vector<Box<Expression>> iterables,
-                                     std::vector<ForLoopCapture>  captures,
-                                     Box<BlockStatement>          block,
-                                     Optional<Box<Statement>>     non_break) noexcept
+ForLoopExpression::ForLoopExpression(const syntax::Token&              start_token,
+                                     std::vector<mem::Box<Expression>> iterables,
+                                     std::vector<ForLoopCapture>       captures,
+                                     mem::Box<BlockStatement>          block,
+                                     Optional<mem::Box<Statement>>     non_break) noexcept
     : ExprBase{start_token}, iterables_{std::move(iterables)}, captures_{std::move(captures)},
       block_{std::move(block)}, non_break_{std::move(non_break)} {}
 
@@ -38,7 +38,7 @@ ForLoopExpression::~ForLoopExpression() = default;
 auto ForLoopExpression::accept(Visitor& v) const -> void { v.visit(*this); }
 
 auto ForLoopExpression::parse(syntax::Parser& parser)
-    -> Expected<Box<Expression>, syntax::ParserDiagnostic> {
+    -> Expected<mem::Box<Expression>, syntax::ParserDiagnostic> {
     const auto start_token = parser.current_token();
 
     // Iterables have to be surrounded by parentheses
@@ -47,7 +47,7 @@ auto ForLoopExpression::parse(syntax::Parser& parser)
         return make_parser_unexpected(syntax::ParserError::FOR_MISSING_ITERABLES, start_token);
     }
 
-    std::vector<Box<Expression>> iterables;
+    std::vector<mem::Box<Expression>> iterables;
     while (!parser.peek_token_is(syntax::TokenType::RPAREN) &&
            !parser.peek_token_is(syntax::TokenType::END)) {
         parser.advance();
@@ -101,11 +101,11 @@ auto ForLoopExpression::parse(syntax::Parser& parser)
         return make_parser_unexpected(syntax::ParserError::EMPTY_FOR_LOOP, block->get_token());
     }
 
-    return make_box<ForLoopExpression>(start_token,
-                                       std::move(iterables),
-                                       std::move(captures),
-                                       std::move(block),
-                                       std::move(non_break));
+    return mem::make_box<ForLoopExpression>(start_token,
+                                            std::move(iterables),
+                                            std::move(captures),
+                                            std::move(block),
+                                            std::move(non_break));
 }
 
 auto ForLoopExpression::is_equal(const Node& other) const noexcept -> bool {

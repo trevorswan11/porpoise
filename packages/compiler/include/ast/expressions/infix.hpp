@@ -12,9 +12,9 @@ namespace porpoise::ast {
 template <typename Derived> class InfixExpression : public ExprBase<Derived> {
   public:
     explicit InfixExpression(const syntax::Token& start_token,
-                             Box<Expression>      lhs,
+                             mem::Box<Expression> lhs,
                              syntax::TokenType    op,
-                             Box<Expression>      rhs) noexcept
+                             mem::Box<Expression> rhs) noexcept
         : ExprBase<Derived>{start_token}, lhs_{std::move(lhs)}, op_{op}, rhs_{std::move(rhs)} {}
 
     MAKE_GETTER(lhs, const Expression&, *)
@@ -23,8 +23,8 @@ template <typename Derived> class InfixExpression : public ExprBase<Derived> {
 
     auto accept(Visitor& v) const noexcept -> void override { v.visit(Node::as<Derived>(*this)); }
 
-    [[nodiscard]] static auto parse(syntax::Parser& parser, Box<Expression> lhs)
-        -> Expected<Box<Expression>, syntax::ParserDiagnostic> {
+    [[nodiscard]] static auto parse(syntax::Parser& parser, mem::Box<Expression> lhs)
+        -> Expected<mem::Box<Expression>, syntax::ParserDiagnostic> {
         const auto op_token           = parser.current_token();
         const auto current_precedence = parser.poll_current_precedence();
         if (parser.peek_token_is(syntax::TokenType::END)) {
@@ -33,7 +33,8 @@ template <typename Derived> class InfixExpression : public ExprBase<Derived> {
 
         parser.advance();
         auto rhs = TRY(parser.parse_expression(current_precedence));
-        return make_box<Derived>(lhs->get_token(), std::move(lhs), op_token.type, std::move(rhs));
+        return mem::make_box<Derived>(
+            lhs->get_token(), std::move(lhs), op_token.type, std::move(rhs));
     }
 
   protected:
@@ -43,9 +44,9 @@ template <typename Derived> class InfixExpression : public ExprBase<Derived> {
     }
 
   protected:
-    Box<Expression>   lhs_;
-    syntax::TokenType op_;
-    Box<Expression>   rhs_;
+    mem::Box<Expression> lhs_;
+    syntax::TokenType    op_;
+    mem::Box<Expression> rhs_;
 };
 
 #define DECLARE_INFIX_EXPRESSION(Type, Kind)    \
@@ -55,7 +56,7 @@ template <typename Derived> class InfixExpression : public ExprBase<Derived> {
                                                 \
       public:                                   \
         using InfixExpression::InfixExpression; \
-        MAKE_AST_COPY_MOVE(Type)                \
+        MAKE_MOVE_CONSTRUCTABLE_ONLY(Type)      \
                                                 \
         using InfixExpression::parse;           \
     };

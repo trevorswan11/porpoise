@@ -13,18 +13,18 @@ class WhileLoopExpression : public ExprBase<WhileLoopExpression> {
     static constexpr auto KIND = NodeKind::WHILE_LOOP_EXPRESSION;
 
   public:
-    explicit WhileLoopExpression(const syntax::Token&      start_token,
-                                 Box<Expression>           condition,
-                                 Optional<Box<Expression>> continuation,
-                                 Box<BlockStatement>       block,
-                                 Optional<Box<Statement>>  non_break) noexcept;
+    explicit WhileLoopExpression(const syntax::Token&           start_token,
+                                 mem::Box<Expression>           condition,
+                                 Optional<mem::Box<Expression>> continuation,
+                                 mem::Box<BlockStatement>       block,
+                                 Optional<mem::Box<Statement>>  non_break) noexcept;
     ~WhileLoopExpression() override;
 
-    MAKE_AST_COPY_MOVE(WhileLoopExpression)
+    MAKE_MOVE_CONSTRUCTABLE_ONLY(WhileLoopExpression)
 
     auto                      accept(Visitor& v) const -> void override;
     [[nodiscard]] static auto parse(syntax::Parser& parser)
-        -> Expected<Box<Expression>, syntax::ParserDiagnostic>;
+        -> Expected<mem::Box<Expression>, syntax::ParserDiagnostic>;
 
     MAKE_GETTER(condition, const Expression&, *)
     MAKE_OPTIONAL_UNPACKER(continuation, Expression, continuation_, **)
@@ -35,10 +35,10 @@ class WhileLoopExpression : public ExprBase<WhileLoopExpression> {
     auto is_equal(const Node& other) const noexcept -> bool override;
 
   private:
-    Box<Expression>           condition_;
-    Optional<Box<Expression>> continuation_;
-    Box<BlockStatement>       block_;
-    Optional<Box<Statement>>  non_break_;
+    mem::Box<Expression>           condition_;
+    Optional<mem::Box<Expression>> continuation_;
+    mem::Box<BlockStatement>       block_;
+    Optional<mem::Box<Statement>>  non_break_;
 };
 
 } // namespace porpoise::ast

@@ -6,10 +6,10 @@ namespace porpoise::cli::win32 {
 //
 // Can be safely created and destroyed multiple times on multiple threads
 class RichConsole {
-  public:
 #ifdef _WIN32
+  public:
     RichConsole() noexcept;
-    ~RichConsole() noexcept;
+    ~RichConsole();
 #endif
 };
 

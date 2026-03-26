@@ -2,6 +2,7 @@
 
 #include <cassert>
 #include <string_view>
+#include <vector>
 
 #include <ankerl/unordered_dense.h>
 
@@ -21,16 +22,22 @@ class UsingStatement;
 class DeclStatement;
 class ImportStatement;
 
+class UnionField;
+class Enumeration;
+
 } // namespace ast
 
 namespace sema {
 
-using SymbolicDecl   = NonNull<const ast::DeclStatement>;
-using SymbolicImport = NonNull<const ast::ImportStatement>;
-using SymbolicUsing  = NonNull<const ast::UsingStatement>;
+using SymbolicDecl        = NonNull<const ast::DeclStatement>;
+using SymbolicImport      = NonNull<const ast::ImportStatement>;
+using SymbolicUsing       = NonNull<const ast::UsingStatement>;
+using SymbolicUnionField  = NonNull<const ast::UnionField>;
+using SymbolicEnumeration = NonNull<const ast::Enumeration>;
 
 // No other nodes can ever be at the top level
-using SymbolicNode = std::variant<SymbolicDecl, SymbolicImport, SymbolicUsing>;
+using SymbolicNode = std::
+    variant<SymbolicDecl, SymbolicImport, SymbolicUsing, SymbolicUnionField, SymbolicEnumeration>;
 
 class Type;
 
@@ -44,15 +51,15 @@ class Symbol {
     MAKE_VARIANT_UNPACKER(decl_stmt, ast::DeclStatement, SymbolicDecl, node_, *std::get)
     MAKE_VARIANT_UNPACKER(import_stmt, ast::ImportStatement, SymbolicImport, node_, *std::get)
     MAKE_VARIANT_UNPACKER(using_stmt, ast::UsingStatement, SymbolicUsing, node_, *std::get)
+    MAKE_VARIANT_UNPACKER(union_field, ast::UnionField, SymbolicUnionField, node_, *std::get)
+    MAKE_VARIANT_UNPACKER(enumeration, ast::Enumeration, SymbolicEnumeration, node_, *std::get)
 
     MAKE_VARIANT_MATCHER(node_)
 
-    // Fills the internal type. Should only be called once per Symbol.
-    auto resolve(Type& type) const noexcept -> void { // cppcheck-suppress constParameterReference
-        assert(!type_);
-        type_ = type;
-    }
+    auto               mark_public() noexcept -> void { public_ = true; }
+    [[nodiscard]] auto is_public() const noexcept -> bool { return public_; }
 
+    auto               emplace_type(Type& type) const noexcept -> void { type_.emplace(type); }
     [[nodiscard]] auto has_type() const noexcept -> bool { return type_.has_value(); }
     [[nodiscard]] auto get_type() const noexcept -> Type& { return *type_; }
 
@@ -60,6 +67,7 @@ class Symbol {
 
   private:
     std::string_view              name_;
+    bool                          public_{false};
     SymbolicNode                  node_;
     mutable Optional<sema::Type&> type_; // Not populated until pass 2
 };
@@ -67,41 +75,33 @@ class Symbol {
 class SymbolTable {
   public:
     using Table = ankerl::unordered_dense::map<std::string_view, Symbol>;
-    using KV    = Table::iterator::value_type;
-
-    using iterator       = typename Table::iterator;
-    using const_iterator = typename Table::const_iterator;
+    MAKE_UNALIASED_ITERATOR(Table, symbols_)
+    using KV = Table::iterator::value_type;
 
   public:
-    SymbolTable() noexcept = default;
-
-    [[nodiscard]] auto begin() noexcept -> iterator { return symbols_.begin(); }
-    [[nodiscard]] auto end() noexcept -> iterator { return symbols_.end(); }
-
-    [[nodiscard]] auto begin() const noexcept -> const_iterator { return symbols_.begin(); }
-    [[nodiscard]] auto end() const noexcept -> const_iterator { return symbols_.end(); }
-
-    auto insert(std::string_view name, SymbolicNode node)
-        -> Expected<std::monostate, SemaDiagnostic>;
+    auto insert(std::string_view name, SymbolicNode node) -> Expected<std::monostate, Diagnostic>;
 
     auto reserve(usize cap) -> void { symbols_.reserve(cap); }
 
-    [[nodiscard]] auto empty() const noexcept -> bool { return symbols_.empty(); }
-    [[nodiscard]] auto size() const noexcept -> usize { return symbols_.size(); }
-    [[nodiscard]] auto has(std::string_view name) const noexcept -> bool;
+    [[nodiscard]] auto has(std::string_view name) const noexcept -> bool {
+        return symbols_.contains(name);
+    }
 
     // Differs from `get_opt` by asserting that the name is present.
-    [[nodiscard]] auto get(std::string_view name) const noexcept -> const Symbol& {
-        auto it = symbols_.find(name);
-        assert(it != symbols_.end() && "Illegal get on missing key");
+    template <typename Self>
+    [[nodiscard]] auto get(this Self&& self, std::string_view name) noexcept -> auto& {
+        auto it = self.symbols_.find(name);
+        assert(it != self.symbols_.end() && "Illegal get on missing key");
         return it->second;
     }
 
     // Returns an optional containing a mutable or const reference to a symbol depending on context.
-    [[nodiscard]] auto get_opt(std::string_view name) const noexcept -> Optional<const Symbol&> {
-        auto it = symbols_.find(name);
-        if (it == symbols_.end()) { return std::nullopt; }
-        return it->second;
+    template <typename Self>
+    [[nodiscard]] auto get_opt(this Self&& self, std::string_view name) noexcept {
+        auto it = self.symbols_.find(name);
+        using T = decltype(it->second);
+        if (it == self.symbols_.end()) { return Optional<T>{}; }
+        return Optional<T>{it->second};
     }
 
     // Treat this symbol table as an importable module in future passes
@@ -111,6 +111,75 @@ class SymbolTable {
   private:
     Table symbols_;
     bool  is_module_{false};
+};
+
+class SymbolTableStack {
+  public:
+    class Guard {
+      public:
+        Guard(SymbolTableStack& s, usize idx) noexcept : stack_{s} { stack_.push(idx); }
+        ~Guard() { stack_.pop(); }
+
+      private:
+        SymbolTableStack& stack_;
+    };
+
+    MAKE_ITERATOR(Stack, std::vector<usize>, stack_)
+
+  public:
+    auto push(usize idx) -> void { stack_.push_back(idx); }
+    auto pop() noexcept -> usize {
+        const auto back = stack_.back();
+        stack_.pop_back();
+        return back;
+    }
+    [[nodiscard]] auto peek() const noexcept -> usize { return stack_.back(); }
+
+  private:
+    Stack stack_;
+};
+
+class SymbolTableRegistry {
+  public:
+    MAKE_ITERATOR(Tables, std::vector<SymbolTable>, tables_)
+
+  public:
+    [[nodiscard]] auto create() -> usize {
+        tables_.emplace_back();
+        return tables_.size() - 1;
+    }
+
+    [[nodiscard]] auto insert_into(usize table_idx, std::string_view name, SymbolicNode node)
+        -> Expected<std::monostate, Diagnostic>;
+
+    template <typename Self> [[nodiscard]] auto get(this Self&& self, usize idx) -> SymbolTable& {
+        return self.tables_.at(idx);
+    }
+
+    template <typename Self> [[nodiscard]] auto get_opt(this Self&& self, usize idx) noexcept {
+        using T = decltype(self.tables_[idx]);
+        if (idx >= self.tables_.size()) { return Optional<T>{}; }
+        return Optional<T>{self.tables_[idx]};
+    }
+
+    template <typename Self>
+    [[nodiscard]] auto get_from(this Self&& self, usize idx, std::string_view name) -> auto& {
+        return self.tables_.at(idx).get(name);
+    }
+
+    template <typename Self>
+    [[nodiscard]] auto get_from_opt(this Self&& self, usize idx, std::string_view name) noexcept {
+        using T = decltype(self.tables_[idx].get_opt(name));
+        if (idx >= self.tables_.size()) { return Optional<T>{}; }
+        return Optional<T>{self.tables_[idx].get_opt(name)};
+    }
+
+    [[nodiscard]] auto
+    is_shadowing(const SymbolTableStack& stack, std::string_view name, SymbolicNode node) noexcept
+        -> Expected<std::monostate, Diagnostic>;
+
+  private:
+    Tables tables_;
 };
 
 } // namespace sema

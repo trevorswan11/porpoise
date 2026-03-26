@@ -15,7 +15,7 @@ TEST_CASE("Discard statements") {
     helpers::test_stmt(
         "_ = 4;",
         ast::DiscardStatement{start_token,
-                              make_box<ast::SignedIntegerExpression>(
+                              mem::make_box<ast::SignedIntegerExpression>(
                                   syntax::Token{syntax::TokenType::INT_10, "4"}, 4)});
 
     std::vector<ast::Enumeration> enumerations;
@@ -23,9 +23,9 @@ TEST_CASE("Discard statements") {
     helpers::test_stmt(
         "_ = enum { RED };",
         ast::DiscardStatement{start_token,
-                              make_box<ast::EnumExpression>(syntax::Token{keywords::ENUM},
-                                                            std::nullopt,
-                                                            std::move(enumerations))});
+                              mem::make_box<ast::EnumExpression>(syntax::Token{keywords::ENUM},
+                                                                 std::nullopt,
+                                                                 std::move(enumerations))});
 }
 
 TEST_CASE("Malformed discardees") {

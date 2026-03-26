@@ -9,15 +9,16 @@
 
 namespace porpoise::ast {
 
-CallArgument::CallArgument(Box<Expression> argument) noexcept : argument_{std::move(argument)} {}
+CallArgument::CallArgument(mem::Box<Expression> argument) noexcept
+    : argument_{std::move(argument)} {}
 CallArgument::CallArgument(ExplicitType&& argument) noexcept : argument_{std::move(argument)} {}
 CallArgument::~CallArgument() = default;
 
 auto CallArgument::is_equal(const CallArgument& other) const noexcept -> bool {
     const auto& other_argument = other.argument_;
     if (other.argument_.index() != other_argument.index()) { return false; }
-    return std::visit(Overloaded{[&other_argument](const Box<Expression>& e) {
-                                     return *e == *std::get<Box<Expression>>(other_argument);
+    return std::visit(Overloaded{[&other_argument](const mem::Box<Expression>& e) {
+                                     return *e == *std::get<mem::Box<Expression>>(other_argument);
                                  },
                                  [&other_argument](const ExplicitType& e) {
                                      return e == std::get<ExplicitType>(other_argument);
@@ -26,15 +27,15 @@ auto CallArgument::is_equal(const CallArgument& other) const noexcept -> bool {
 }
 
 CallExpression::CallExpression(const syntax::Token&      start_token,
-                               Box<Expression>           function,
+                               mem::Box<Expression>      function,
                                std::vector<CallArgument> arguments) noexcept
     : ExprBase{start_token}, function_{std::move(function)}, arguments_{std::move(arguments)} {}
 CallExpression::~CallExpression() = default;
 
 auto CallExpression::accept(Visitor& v) const -> void { v.visit(*this); }
 
-auto CallExpression::parse(syntax::Parser& parser, Box<Expression> function)
-    -> Expected<Box<Expression>, syntax::ParserDiagnostic> {
+auto CallExpression::parse(syntax::Parser& parser, mem::Box<Expression> function)
+    -> Expected<mem::Box<Expression>, syntax::ParserDiagnostic> {
     std::vector<CallArgument> arguments;
     // Guaranteed to roll back if there is an error
     const auto parse_expr_unsuccessful = [&]() {
@@ -64,7 +65,7 @@ auto CallExpression::parse(syntax::Parser& parser, Box<Expression> function)
     }
     TRY(parser.expect_peek(syntax::TokenType::RPAREN));
 
-    return make_box<CallExpression>(
+    return mem::make_box<CallExpression>(
         function->get_token(), std::move(function), std::move(arguments));
 }
 

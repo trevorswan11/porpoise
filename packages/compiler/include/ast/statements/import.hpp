@@ -11,69 +11,74 @@ namespace porpoise::ast {
 class IdentifierExpression;
 class StringExpression;
 
-class ModuleImport {
+class LibraryImport {
   public:
-    explicit ModuleImport(Box<IdentifierExpression>           name,
-                          Optional<Box<IdentifierExpression>> alias) noexcept;
-    ~ModuleImport();
+    explicit LibraryImport(mem::Box<IdentifierExpression>           name,
+                           Optional<mem::Box<IdentifierExpression>> alias) noexcept;
+    ~LibraryImport();
 
-    MAKE_AST_COPY_MOVE(ModuleImport)
+    MAKE_MOVE_CONSTRUCTABLE_ONLY(LibraryImport)
 
     MAKE_GETTER(name, const IdentifierExpression&, *)
     MAKE_OPTIONAL_UNPACKER(alias, IdentifierExpression, alias_, **)
 
-    MAKE_EQ_DELEGATION(ModuleImport)
+    MAKE_EQ_DELEGATION(LibraryImport)
 
   private:
-    Box<IdentifierExpression>           name_;
-    Optional<Box<IdentifierExpression>> alias_;
+    mem::Box<IdentifierExpression>           name_;
+    Optional<mem::Box<IdentifierExpression>> alias_;
 };
 
-class UserImport {
+class FileImport {
   public:
-    explicit UserImport(Box<StringExpression> file, Box<IdentifierExpression> alias) noexcept;
-    ~UserImport();
+    explicit FileImport(mem::Box<StringExpression>     file,
+                        mem::Box<IdentifierExpression> alias) noexcept;
+    ~FileImport();
 
-    MAKE_AST_COPY_MOVE(UserImport)
+    MAKE_MOVE_CONSTRUCTABLE_ONLY(FileImport)
 
     MAKE_GETTER(file, const StringExpression&, *)
     MAKE_GETTER(alias, const IdentifierExpression&, *)
 
-    MAKE_EQ_DELEGATION(UserImport)
+    MAKE_EQ_DELEGATION(FileImport)
 
   private:
-    Box<StringExpression>     file_;
-    Box<IdentifierExpression> alias_;
+    mem::Box<StringExpression>     file_;
+    mem::Box<IdentifierExpression> alias_;
 };
 
 class ImportStatement : public StmtBase<ImportStatement> {
   public:
     static constexpr auto KIND = NodeKind::IMPORT_STATEMENT;
 
-    using ImportVariant = std::variant<ModuleImport, UserImport>;
+    using ImportVariant = std::variant<LibraryImport, FileImport>;
 
   public:
     explicit ImportStatement(const syntax::Token& start_token, ImportVariant imported) noexcept;
     ~ImportStatement() override;
 
-    MAKE_AST_COPY_MOVE(ImportStatement)
+    MAKE_MOVE_CONSTRUCTABLE_ONLY(ImportStatement)
 
     auto                      accept(Visitor& v) const -> void override;
     [[nodiscard]] static auto parse(syntax::Parser& parser)
-        -> Expected<Box<Statement>, syntax::ParserDiagnostic>;
+        -> Expected<mem::Box<Statement>, syntax::ParserDiagnostic>;
 
-    MAKE_VARIANT_UNPACKER(module_import, ModuleImport, ModuleImport, imported_, std::get)
-    MAKE_VARIANT_UNPACKER(user_import, UserImport, UserImport, imported_, std::get)
+    MAKE_VARIANT_UNPACKER(library_import, LibraryImport, LibraryImport, imported_, std::get)
+    MAKE_VARIANT_UNPACKER(file_import, FileImport, FileImport, imported_, std::get)
 
     // Prefer using the matcher (`match`) over this convenience check
     [[nodiscard]] auto has_alias() const noexcept -> bool;
     MAKE_VARIANT_MATCHER(imported_)
+
+    auto               mark_public() const noexcept -> void { public_ = true; }
+    [[nodiscard]] auto is_public() const noexcept -> bool { return public_; }
 
   protected:
     auto is_equal(const Node& other) const noexcept -> bool override;
 
   private:
     ImportVariant imported_;
+    mutable bool  public_{false}; // Updated in sema
 };
 
 } // namespace porpoise::ast

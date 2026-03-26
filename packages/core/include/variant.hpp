@@ -6,7 +6,6 @@
 template <class... Ts> struct Overloaded : Ts... {
     using Ts::operator()...;
 };
-template <class... Ts> Overloaded(Ts...) -> Overloaded<Ts...>;
 
 #define MAKE_VARIANT_UNPACKER(name, ReturnType, InnerType, member, getter) \
     [[nodiscard]] auto get_##name() const noexcept -> const ReturnType& {  \
@@ -20,10 +19,7 @@ template <class... Ts> Overloaded(Ts...) -> Overloaded<Ts...>;
     }
 
 // Provides std::visit-like access to the internal node
-#define MAKE_VARIANT_MATCHER(member)                               \
-    template <class Matcher> auto match(Matcher&& matcher) {       \
-        return std::visit(std::forward<Matcher>(matcher), member); \
-    }                                                              \
-    template <class Matcher> auto match(Matcher&& matcher) const { \
-        return std::visit(std::forward<Matcher>(matcher), member); \
+#define MAKE_VARIANT_MATCHER(member)                                                          \
+    template <typename Self, class Matcher> auto match(this Self&& self, Matcher&& matcher) { \
+        return std::visit(std::forward<Matcher>(matcher), self.member);                       \
     }

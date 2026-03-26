@@ -13,6 +13,7 @@
 #include "ast/expressions/function.hpp"
 #include "ast/expressions/identifier.hpp"
 #include "ast/statements/block.hpp"
+#include "ast/statements/declaration.hpp"
 #include "ast/statements/expression.hpp"
 
 #include "syntax/keywords.hpp"
@@ -62,11 +63,11 @@ template <ast::LeafNode N> auto test_stmt(std::string_view input, const N& expec
 
 template <ast::LeafNode N>
 auto expr_stmt_from(const syntax::Token& start_token, N&& expected) -> ast::ExpressionStatement {
-    return ast::ExpressionStatement{start_token, make_box<N>(std::move(expected))};
+    return ast::ExpressionStatement{start_token, mem::make_box<N>(std::move(expected))};
 }
 
-template <ast::LeafNode N> auto make_expr_stmt(N&& expected) -> Box<ast::ExpressionStatement> {
-    return make_box<ast::ExpressionStatement>(
+template <ast::LeafNode N> auto make_expr_stmt(N&& expected) -> mem::Box<ast::ExpressionStatement> {
+    return mem::make_box<ast::ExpressionStatement>(
         expr_stmt_from(expected.get_token(), std::move(expected)));
 }
 
@@ -98,42 +99,49 @@ inline auto ident_from(const syntax::Token& tok) -> ast::IdentifierExpression {
     return ast::IdentifierExpression{tok};
 }
 
-inline auto make_ident(std::string_view name) -> Box<ast::IdentifierExpression> {
-    return make_box<ast::IdentifierExpression>(ident_from(name));
+inline auto make_ident(std::string_view name) -> mem::Box<ast::IdentifierExpression> {
+    return mem::make_box<ast::IdentifierExpression>(ident_from(name));
 }
 
-inline auto make_ident(const syntax::Token& tok) -> Box<ast::IdentifierExpression> {
-    return make_box<ast::IdentifierExpression>(ident_from(tok));
+inline auto make_ident(const syntax::Token& tok) -> mem::Box<ast::IdentifierExpression> {
+    return mem::make_box<ast::IdentifierExpression>(ident_from(tok));
 }
 
 // Creates a block statement by boxing all passed statements
 template <ast::LeafNode... Ns> auto block_stmt_from(Ns&&... nodes) -> ast::BlockStatement {
     return ast::BlockStatement{
         syntax::Token{syntax::TokenType::LBRACE, "{"},
-        make_vector<Box<ast::Statement>>(make_box<Ns>(std::forward<Ns>(nodes))...)};
+        make_vector<mem::Box<ast::Statement>>(mem::make_box<Ns>(std::forward<Ns>(nodes))...)};
 }
 
 // Creates a boxed block statement by boxing all passed statements
-template <ast::LeafNode... Ns> auto make_block_stmt(Ns&&... nodes) -> Box<ast::BlockStatement> {
-    return make_box<ast::BlockStatement>(block_stmt_from(std::forward<Ns>(nodes)...));
+template <ast::LeafNode... Ns>
+auto make_block_stmt(Ns&&... nodes) -> mem::Box<ast::BlockStatement> {
+    return mem::make_box<ast::BlockStatement>(block_stmt_from(std::forward<Ns>(nodes)...));
 }
 
 // Creates a block statement by packing all passed expressions into expression statements
 template <ast::LeafNode... Ns> auto expr_block_stmt_from(Ns&&... nodes) -> ast::BlockStatement {
     return block_stmt_from(
-        ast::ExpressionStatement{nodes.get_token(), make_box<Ns>(std::forward<Ns>(nodes))}...);
+        ast::ExpressionStatement{nodes.get_token(), mem::make_box<Ns>(std::forward<Ns>(nodes))}...);
 }
 
 // Creates a boxed block statement by packing all passed expressions into expression statements
 template <ast::LeafNode... Ns>
-auto make_expr_block_stmt(Ns&&... nodes) -> Box<ast::BlockStatement> {
-    return make_box<ast::BlockStatement>(expr_block_stmt_from(std::forward<Ns>(nodes)...));
+auto make_expr_block_stmt(Ns&&... nodes) -> mem::Box<ast::BlockStatement> {
+    return mem::make_box<ast::BlockStatement>(expr_block_stmt_from(std::forward<Ns>(nodes)...));
 }
 
 template <typename... Ps>
     requires(std::same_as<Ps, ast::FunctionParameter> && ...)
 auto make_parameters(Ps&&... params) -> std::vector<ast::FunctionParameter> {
     return make_vector<ast::FunctionParameter>(std::forward<Ps>(params)...);
+}
+
+template <typename... Ds>
+    requires(std::same_as<Ds, ast::DeclStatement> && ...)
+auto make_decls(Ds&&... decls) -> std::vector<mem::Box<ast::DeclStatement>> {
+    return make_vector<mem::Box<ast::DeclStatement>>(mem::make_box<Ds>(std::forward<Ds>(decls))...);
 }
 
 namespace type_modifiers {

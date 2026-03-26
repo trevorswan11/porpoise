@@ -26,7 +26,7 @@ TEST_CASE("Basic enums") {
             {},
             helpers::make_vector<ast::Enumeration>(
                 ast::Enumeration{helpers::make_ident("A"),
-                                 make_box<ast::SignedIntegerExpression>(
+                                 mem::make_box<ast::SignedIntegerExpression>(
                                      syntax::Token{syntax::TokenType::INT_10, "1"}, 1)},
                 ast::Enumeration{helpers::make_ident("B"), helpers::make_ident("T")})});
 }
@@ -39,7 +39,7 @@ TEST_CASE("Underlying type") {
             helpers::make_ident("ulong"),
             helpers::make_vector<ast::Enumeration>(
                 ast::Enumeration{helpers::make_ident("RED"),
-                                 make_box<ast::UnsignedIntegerExpression>(
+                                 mem::make_box<ast::UnsignedIntegerExpression>(
                                      syntax::Token{syntax::TokenType::UINT_10, "3u"}, 3u)},
                 ast::Enumeration{helpers::make_ident("B"), {}})});
 
@@ -49,7 +49,7 @@ TEST_CASE("Underlying type") {
                             helpers::make_ident("U"),
                             helpers::make_vector<ast::Enumeration>(ast::Enumeration{
                                 helpers::make_ident("A"),
-                                make_box<ast::USizeIntegerExpression>(
+                                mem::make_box<ast::USizeIntegerExpression>(
                                     syntax::Token{syntax::TokenType::UZINT_16, "0x4uz"}, 0x4uz)})});
 }
 

@@ -3,7 +3,7 @@
 #include <memory>
 #include <utility>
 
-namespace porpoise {
+namespace porpoise::mem {
 
 template <typename T> using Box = std::unique_ptr<T>;
 template <typename T, typename... Args> constexpr auto make_box(Args&&... args) -> Box<T> {
@@ -25,4 +25,4 @@ template <typename T, typename... Args> constexpr auto make_rc(Args&&... args) -
     return std::make_shared<T>(std::forward<Args>(args)...);
 }
 
-} // namespace porpoise
+} // namespace porpoise::mem

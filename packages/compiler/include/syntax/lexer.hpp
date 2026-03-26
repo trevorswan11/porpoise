@@ -17,7 +17,7 @@ class Lexer {
       public:
         using iterator_category = std::input_iterator_tag;
         using value_type        = Token;
-        using difference_type   = std::ptrdiff_t;
+        using difference_type   = idiff;
         using pointer           = const Token*;
         using reference         = const Token&;
 
@@ -65,10 +65,7 @@ class Lexer {
     auto consume() -> std::vector<Token>;
 
     auto begin() noexcept -> Iterator { return Iterator{*this, advance()}; }
-    auto end() const noexcept // cppcheck-suppress functionStatic
-        -> std::default_sentinel_t {
-        return std::default_sentinel;
-    }
+    auto end() const noexcept -> std::default_sentinel_t { return std::default_sentinel; }
 
   private:
     auto        skip_whitespace() noexcept -> void;

@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cassert>
+#include <concepts>
 #include <memory>
 #include <optional>
 #include <type_traits>
@@ -13,14 +14,20 @@ template <typename T> class OptionalRef {
     OptionalRef() noexcept : ptr_{nullptr} {}
     OptionalRef(std::nullopt_t) noexcept : ptr_{nullptr} {}
     OptionalRef(T& ref) noexcept : ptr_{&ref} {}
+    OptionalRef(T* ref) noexcept : ptr_{ref} {}
     OptionalRef(T&&) = delete;
 
-    template <typename U, std::enable_if_t<std::is_convertible_v<U*, T*>, bool> = false>
+    template <typename U>
+        requires(std::convertible_to<U*, T*>)
     OptionalRef(const OptionalRef<U>& other) noexcept : ptr_{other.operator->()} {}
     // cppcheck-suppress-end noExplicitConstructor
 
     [[nodiscard]] auto     has_value() const noexcept -> bool { return ptr_ != nullptr; }
     [[nodiscard]] explicit operator bool() const noexcept { return ptr_ != nullptr; }
+
+    auto emplace(T& t) noexcept -> void { ptr_ = &t; }
+    auto emplace(T* t) noexcept -> void { ptr_ = t; }
+    auto reset() noexcept -> void { ptr_ = nullptr; }
 
     auto value() const -> T& {
         if (!ptr_) { throw std::bad_optional_access(); }
@@ -56,7 +63,8 @@ class NonNull {
     NonNull(std::nullopt_t) = delete;
     NonNull(T&&)            = delete;
 
-    template <typename U, std::enable_if_t<std::is_convertible_v<U*, T*>, bool> = false>
+    template <typename U>
+        requires(std::convertible_to<U*, T*>)
     NonNull(const NonNull<U>& other) noexcept : ptr_{other.get()} {}
     // cppcheck-suppress-end noExplicitConstructor
 
@@ -65,6 +73,7 @@ class NonNull {
     auto get() const noexcept -> T* { return ptr_; }
 
     explicit operator T() const noexcept { return *ptr_; }
+    bool     operator==(const NonNull<T>&) const noexcept = default;
 
   private:
     T* ptr_;

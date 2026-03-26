@@ -13,11 +13,11 @@ class ModuleStatement : public StmtBase<ModuleStatement> {
   public:
     explicit ModuleStatement(const syntax::Token& start_token) noexcept : StmtBase{start_token} {}
 
-    MAKE_AST_COPY_MOVE(ModuleStatement)
+    MAKE_MOVE_CONSTRUCTABLE_ONLY(ModuleStatement)
 
     auto                      accept(Visitor& v) const -> void override;
     [[nodiscard]] static auto parse(syntax::Parser& parser)
-        -> Expected<Box<Statement>, syntax::ParserDiagnostic>;
+        -> Expected<mem::Box<Statement>, syntax::ParserDiagnostic>;
 
   protected:
     auto is_equal(const Node&) const noexcept -> bool override { return true; }

@@ -47,18 +47,18 @@ class DeclStatement : public StmtBase<DeclStatement> {
     static constexpr auto KIND = NodeKind::DECL_STATEMENT;
 
   public:
-    explicit DeclStatement(const syntax::Token&      start_token,
-                           Box<IdentifierExpression> ident,
-                           Box<TypeExpression>       type,
-                           Optional<Box<Expression>> value,
-                           DeclModifiers             modifiers) noexcept;
+    explicit DeclStatement(const syntax::Token&           start_token,
+                           mem::Box<IdentifierExpression> ident,
+                           mem::Box<TypeExpression>       type,
+                           Optional<mem::Box<Expression>> value,
+                           DeclModifiers                  modifiers) noexcept;
     ~DeclStatement() override;
 
-    MAKE_AST_COPY_MOVE(DeclStatement)
+    MAKE_MOVE_CONSTRUCTABLE_ONLY(DeclStatement)
 
     auto                      accept(Visitor& v) const -> void override;
     [[nodiscard]] static auto parse(syntax::Parser& parser)
-        -> Expected<Box<Statement>, syntax::ParserDiagnostic>;
+        -> Expected<mem::Box<Statement>, syntax::ParserDiagnostic>;
 
     MAKE_GETTER(ident, const IdentifierExpression&, *)
     MAKE_GETTER(type, const TypeExpression&, *)
@@ -113,10 +113,10 @@ class DeclStatement : public StmtBase<DeclStatement> {
     }
 
   private:
-    Box<IdentifierExpression> ident_;
-    Box<TypeExpression>       type_;
-    Optional<Box<Expression>> value_;
-    DeclModifiers             modifiers_;
+    mem::Box<IdentifierExpression> ident_;
+    mem::Box<TypeExpression>       type_;
+    Optional<mem::Box<Expression>> value_;
+    DeclModifiers                  modifiers_;
 };
 
 } // namespace porpoise::ast

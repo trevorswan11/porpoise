@@ -156,7 +156,7 @@ fn buildCurlLib(self: *const Self) Artifact {
         .optimize = self.metadata.config.optimize,
         .link_libc = true,
     });
-    addFrameworkSearchPaths(mod, target);
+    Dependency.addFrameworkSearchPaths(mod, target);
 
     mod.addCMacro("BUILDING_LIBCURL", "1");
     mod.addCMacro("CURL_STATICLIB", "1");
@@ -214,7 +214,7 @@ fn buildCurlExe(self: *const Self) Artifact {
         .optimize = self.metadata.config.optimize,
         .link_libc = true,
     });
-    addFrameworkSearchPaths(mod, target);
+    Dependency.addFrameworkSearchPaths(mod, target);
 
     mod.addCMacro("HAVE_CONFIG_H", "1");
     mod.addCMacro("CURL_STATICLIB", "1");
@@ -234,13 +234,4 @@ fn buildCurlExe(self: *const Self) Artifact {
     });
     mod.linkLibrary(self.libcurl);
     return exe;
-}
-
-pub fn addFrameworkSearchPaths(mod: *std.Build.Module, target: std.Build.ResolvedTarget) void {
-    if (target.result.os.tag != .macos) return;
-    const b = mod.owner;
-    if (b.graph.env_map.get("SDKROOT")) |sdkroot| {
-        mod.addFrameworkPath(.{ .cwd_relative = b.fmt("{s}/System/Library/Frameworks", .{sdkroot}) });
-        mod.addSystemIncludePath(.{ .cwd_relative = b.fmt("{s}/usr/include", .{sdkroot}) });
-    }
 }

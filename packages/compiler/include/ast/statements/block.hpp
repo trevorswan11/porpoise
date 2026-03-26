@@ -15,28 +15,17 @@ class BlockStatement : public StmtBase<BlockStatement> {
     static constexpr auto KIND = NodeKind::BLOCK_STATEMENT;
 
   public:
-    using iterator       = typename std::vector<Box<Statement>>::iterator;
-    using const_iterator = typename std::vector<Box<Statement>>::const_iterator;
+    MAKE_ITERATOR(Statements, std::vector<mem::Box<Statement>>, statements_)
 
   public:
-    explicit BlockStatement(const syntax::Token&        start_token,
-                            std::vector<Box<Statement>> statements) noexcept
+    explicit BlockStatement(const syntax::Token& start_token, Statements statements) noexcept
         : StmtBase{start_token}, statements_{std::move(statements)} {}
 
-    MAKE_AST_COPY_MOVE(BlockStatement)
+    MAKE_MOVE_CONSTRUCTABLE_ONLY(BlockStatement)
 
     auto                      accept(Visitor& v) const -> void override;
     [[nodiscard]] static auto parse(syntax::Parser& parser)
-        -> Expected<Box<Statement>, syntax::ParserDiagnostic>;
-
-    [[nodiscard]] auto begin() noexcept -> iterator { return statements_.begin(); }
-    [[nodiscard]] auto end() noexcept -> iterator { return statements_.end(); }
-
-    [[nodiscard]] auto begin() const noexcept -> const_iterator { return statements_.begin(); }
-    [[nodiscard]] auto end() const noexcept -> const_iterator { return statements_.end(); }
-
-    [[nodiscard]] auto size() const noexcept -> std::size_t { return statements_.size(); }
-    [[nodiscard]] auto empty() const noexcept -> bool { return statements_.empty(); }
+        -> Expected<mem::Box<Statement>, syntax::ParserDiagnostic>;
 
   protected:
     auto is_equal(const Node& other) const noexcept -> bool override {
@@ -46,7 +35,7 @@ class BlockStatement : public StmtBase<BlockStatement> {
     }
 
   private:
-    std::vector<Box<Statement>> statements_;
+    Statements statements_;
 };
 
 } // namespace porpoise::ast

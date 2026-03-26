@@ -16,7 +16,7 @@ TEST_CASE("For loop with base captures") {
         "for (arr) |i| { a; };",
         ast::ForLoopExpression{
             syntax::Token{keywords::FOR},
-            helpers::make_vector<Box<ast::Expression>>(helpers::make_ident("arr")),
+            helpers::make_vector<mem::Box<ast::Expression>>(helpers::make_ident("arr")),
             helpers::make_vector<ast::ForLoopCapture>(
                 ast::ForLoopCapture::Valued{{}, helpers::make_ident("i")}),
             helpers::make_expr_block_stmt(helpers::ident_from("a")),
@@ -28,7 +28,7 @@ TEST_CASE("For loop with modified captures") {
         "for (arr, l, p) |i, &mut j, _| { a; };",
         ast::ForLoopExpression{
             syntax::Token{keywords::FOR},
-            helpers::make_vector<Box<ast::Expression>>(
+            helpers::make_vector<mem::Box<ast::Expression>>(
                 helpers::make_ident("arr"), helpers::make_ident("l"), helpers::make_ident("p")),
             helpers::make_vector<ast::ForLoopCapture>(
                 ast::ForLoopCapture::Valued{{}, helpers::make_ident("i")},
@@ -44,18 +44,18 @@ TEST_CASE("Full for loop with else") {
         "for (0..4) |i| { a; } else return b;",
         ast::ForLoopExpression{
             syntax::Token{keywords::FOR},
-            helpers::make_vector<Box<ast::Expression>>(make_box<ast::RangeExpression>(
+            helpers::make_vector<mem::Box<ast::Expression>>(mem::make_box<ast::RangeExpression>(
                 syntax::Token{syntax::TokenType::INT_10, "0"},
-                make_box<ast::SignedIntegerExpression>(
+                mem::make_box<ast::SignedIntegerExpression>(
                     syntax::Token{syntax::TokenType::INT_10, "0"}, 0),
                 syntax::TokenType::DOT_DOT,
-                make_box<ast::SignedIntegerExpression>(
+                mem::make_box<ast::SignedIntegerExpression>(
                     syntax::Token{syntax::TokenType::INT_10, "4"}, 4))),
             helpers::make_vector<ast::ForLoopCapture>(
                 ast::ForLoopCapture::Valued{{}, helpers::make_ident("i")}),
             helpers::make_expr_block_stmt(helpers::ident_from("a")),
-            make_box<ast::JumpStatement>(syntax::Token{keywords::RETURN},
-                                         helpers::make_ident("b"))});
+            mem::make_box<ast::JumpStatement>(syntax::Token{keywords::RETURN},
+                                              helpers::make_ident("b"))});
 }
 
 TEST_CASE("Non-terminated iterables") {

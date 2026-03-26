@@ -15,7 +15,7 @@ TEST_CASE("Basic table operations") {
     sema::SymbolTable          table;
     const std::string_view     name{"a"};
     const ast::ImportStatement import_node{syntax::Token{syntax::keywords::IMPORT},
-                                           ast::ModuleImport{helpers::make_ident(name), {}}};
+                                           ast::LibraryImport{helpers::make_ident(name), {}}};
     CHECK(table.empty());
     CHECK(table.insert(name, &import_node));
     CHECK(table.size() == 1);
@@ -37,14 +37,14 @@ TEST_CASE("Multiple table import") {
     const std::string_view     module_name{"a"};
     const ast::ImportStatement module_import{
         syntax::Token{syntax::keywords::IMPORT},
-        ast::ModuleImport{helpers::make_ident(module_name), {}}};
+        ast::LibraryImport{helpers::make_ident(module_name), {}}};
     CHECK(table.insert(module_name, &module_import));
 
     const std::string_view     user_name{"node"};
     const std::string          user_file{"node.p"};
     const ast::ImportStatement user_import{
         syntax::Token{syntax::keywords::IMPORT},
-        ast::UserImport{make_box<ast::StringExpression>(
+        ast::FileImport{mem::make_box<ast::StringExpression>(
                             syntax::Token{syntax::TokenType::STRING, user_file}, user_file),
                         helpers::make_ident(user_name)}};
     CHECK(table.insert(user_name, &user_import));
@@ -63,11 +63,29 @@ TEST_CASE("Duplicate table inserts") {
     sema::SymbolTable          table;
     const std::string_view     name{"a"};
     const ast::ImportStatement import_node{syntax::Token{syntax::keywords::IMPORT},
-                                           ast::ModuleImport{helpers::make_ident(name), {}}};
+                                           ast::LibraryImport{helpers::make_ident(name), {}}};
 
     CHECK(table.insert(name, &import_node));
     CHECK_FALSE(table.insert(name, &import_node));
     CHECK(table.size() == 1);
+}
+
+TEST_CASE("Illegal registry insert") {
+    sema::SymbolTableRegistry  registry;
+    const ast::ImportStatement import_node{syntax::Token{syntax::keywords::IMPORT},
+                                           ast::LibraryImport{helpers::make_ident("a"), {}}};
+    const auto                 result = registry.insert_into(0, "a", &import_node);
+
+    CHECK_FALSE(result);
+    CHECK(result.error() == sema::Diagnostic{sema::Error::INVALID_TABLE_IDX});
+}
+
+TEST_CASE("Safety checked registry operations") {
+    sema::SymbolTableRegistry registry;
+    CHECK_THROWS(registry.get(1));
+    CHECK_FALSE(registry.get_opt(1));
+    CHECK_THROWS(registry.get_from(1, "a"));
+    CHECK_FALSE(registry.get_from_opt(1, "a"));
 }
 
 } // namespace porpoise::tests

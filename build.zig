@@ -30,6 +30,8 @@ pub fn build(b: *std.Build) !void {
         "-Wextra",
         "-Werror",
         "-Wpedantic",
+        "-Wconversion",
+        "-Wshadow",
         "-Wno-gnu-statement-expression",
         "-Wno-gnu-statement-expression-from-macro-expansion",
         "-DMAGIC_ENUM_RANGE_MAX=255",
@@ -762,6 +764,7 @@ fn addStaticAnalysisStep(b: *std.Build, config: struct {
         "unmatchedSuppression",
         "missingIncludeSystem",
         "unusedFunction",
+        "functionStatic",
     };
 
     inline for (suppressions) |suppression| {
@@ -951,6 +954,7 @@ fn addPackageStep(b: *std.Build, config: struct {
         .name = "compressor",
         .behavior = .standalone,
     });
+    Dependency.addFrameworkSearchPaths(compressor.root_module, b.graph.host);
 
     // Always clean up the compressed dir before packaging
     const package_parent_dirname = "package";

@@ -7,17 +7,22 @@
 
 namespace porpoise::ast {
 
-Enumeration::Enumeration(Box<IdentifierExpression> ident, Optional<Box<Expression>> value) noexcept
+Enumeration::Enumeration(mem::Box<IdentifierExpression> ident,
+                         Optional<mem::Box<Expression>> value) noexcept
     : ident_{std::move(ident)}, value_{std::move(value)} {}
 Enumeration::~Enumeration() = default;
+
+[[nodiscard]] auto Enumeration::get_token() const noexcept -> const syntax::Token& {
+    return ident_->get_token();
+}
 
 auto Enumeration::is_equal(const Enumeration& other) const noexcept -> bool {
     return *ident_ == *other.ident_ && optional::unsafe_eq<Expression>(value_, other.value_);
 }
 
-EnumExpression::EnumExpression(const syntax::Token&                start_token,
-                               Optional<Box<IdentifierExpression>> underlying,
-                               std::vector<Enumeration>            enumerations) noexcept
+EnumExpression::EnumExpression(const syntax::Token&                     start_token,
+                               Optional<mem::Box<IdentifierExpression>> underlying,
+                               Enumerations                             enumerations) noexcept
     : ExprBase{start_token}, underlying_{std::move(underlying)},
       enumerations_{std::move(enumerations)} {}
 EnumExpression::~EnumExpression() = default;
@@ -25,10 +30,10 @@ EnumExpression::~EnumExpression() = default;
 auto EnumExpression::accept(Visitor& v) const -> void { v.visit(*this); }
 
 auto EnumExpression::parse(syntax::Parser& parser)
-    -> Expected<Box<Expression>, syntax::ParserDiagnostic> {
+    -> Expected<mem::Box<Expression>, syntax::ParserDiagnostic> {
     const auto start_token = parser.current_token();
 
-    Optional<Box<IdentifierExpression>> underlying;
+    Optional<mem::Box<IdentifierExpression>> underlying;
     if (parser.peek_token_is(syntax::TokenType::COLON)) {
         parser.advance(2);
         underlying.emplace(
@@ -42,13 +47,13 @@ auto EnumExpression::parse(syntax::Parser& parser)
         return make_parser_unexpected(syntax::ParserError::ENUM_MISSING_VARIANTS, opening);
     }
 
-    std::vector<Enumeration> enumeration;
+    Enumerations enumeration;
     while (!parser.peek_token_is(syntax::TokenType::RBRACE) &&
            !parser.peek_token_is(syntax::TokenType::END)) {
         TRY(parser.expect_peek(syntax::TokenType::IDENT));
         auto ident = downcast<IdentifierExpression>(TRY(IdentifierExpression::parse(parser)));
 
-        Optional<Box<Expression>> value;
+        Optional<mem::Box<Expression>> value;
         if (parser.peek_token_is(syntax::TokenType::ASSIGN)) {
             parser.advance(2);
             value.emplace(TRY(parser.parse_expression()));
@@ -61,7 +66,8 @@ auto EnumExpression::parse(syntax::Parser& parser)
     }
 
     TRY(parser.expect_peek(syntax::TokenType::RBRACE));
-    return make_box<EnumExpression>(start_token, std::move(underlying), std::move(enumeration));
+    return mem::make_box<EnumExpression>(
+        start_token, std::move(underlying), std::move(enumeration));
 }
 
 auto EnumExpression::is_equal(const Node& other) const noexcept -> bool {

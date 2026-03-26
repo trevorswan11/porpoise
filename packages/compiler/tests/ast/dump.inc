@@ -36,9 +36,9 @@ JumpStatement (RETURN)
     └─ Enumerations:
         └─ Name: IdentifierExpression: RED
 ImportStatement
-└─ Module: IdentifierExpression: std
+└─ Library: IdentifierExpression: std
 ImportStatement
-├─ User: StringExpression: ast/node.p
+├─ File: StringExpression: ast/node.p
 └─ Alias: IdentifierExpression: node
 DiscardStatement
 └─ Discarded: EnumExpression

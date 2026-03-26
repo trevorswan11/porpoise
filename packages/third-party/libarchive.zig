@@ -18,6 +18,8 @@ pub fn build(b: *std.Build, config: Config) Dependency {
         .target = target,
         .optimize = config.optimize,
     });
+    Dependency.addFrameworkSearchPaths(mod, target);
+
     const zlib_dep = zlib.build(b, config);
     mod.linkLibrary(zlib_dep.artifact);
     const zstd_dep = zstd.build(b, config);
@@ -44,6 +46,10 @@ pub fn build(b: *std.Build, config: Config) Dependency {
             .files = &libarchive.windows_sources,
         });
     } else {
+        if (target.result.os.tag == .macos) {
+            mod.linkFramework("CoreServices", .{});
+        }
+
         mod.addCSourceFiles(.{
             .root = source_root,
             .files = &libarchive.unix_sources,

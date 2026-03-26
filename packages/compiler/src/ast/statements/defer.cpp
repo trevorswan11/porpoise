@@ -10,7 +10,7 @@ namespace porpoise::ast {
 auto DeferStatement::accept(Visitor& v) const -> void { v.visit(*this); }
 
 auto DeferStatement::parse(syntax::Parser& parser)
-    -> Expected<Box<Statement>, syntax::ParserDiagnostic> {
+    -> Expected<mem::Box<Statement>, syntax::ParserDiagnostic> {
     const auto start_token = parser.current_token();
     if (parser.peek_token_is(syntax::TokenType::END) ||
         parser.peek_token_is(syntax::TokenType::SEMICOLON)) {
@@ -24,7 +24,7 @@ auto DeferStatement::parse(syntax::Parser& parser)
         return make_parser_unexpected(syntax::ParserError::ILLEGAL_DEFERRED_STATEMENT,
                                       stmt->get_token());
     }
-    return make_box<DeferStatement>(start_token, std::move(stmt));
+    return mem::make_box<DeferStatement>(start_token, std::move(stmt));
 }
 
 } // namespace porpoise::ast

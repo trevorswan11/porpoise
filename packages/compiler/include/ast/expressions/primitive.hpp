@@ -29,7 +29,8 @@ template <typename Derived, typename T> class PrimitiveExpression : public ExprB
     explicit PrimitiveExpression(const syntax::Token& start_token, value_type value) noexcept
         : ExprBase<Derived>{start_token}, value_{std::move(value)} {}
 
-    static auto parse(syntax::Parser& parser) -> Expected<Box<Expression>, syntax::ParserDiagnostic>
+    static auto parse(syntax::Parser& parser)
+        -> Expected<mem::Box<Expression>, syntax::ParserDiagnostic>
         requires(!disable_default_parse<Derived>::value)
     {
         const auto start_token = parser.current_token();
@@ -48,7 +49,7 @@ template <typename Derived, typename T> class PrimitiveExpression : public ExprB
             result = std::from_chars(first, last, v, std::to_underlying(*base));
         }
         if (result.ec == std::errc{} && result.ptr == last) {
-            return make_box<Derived>(start_token, v);
+            return mem::make_box<Derived>(start_token, v);
         }
 
         assert(result.ec == std::errc::result_out_of_range);
@@ -78,11 +79,11 @@ class StringExpression : public PrimitiveExpression<StringExpression, std::strin
 
   public:
     using PrimitiveExpression::PrimitiveExpression;
-    MAKE_AST_COPY_MOVE(StringExpression)
+    MAKE_MOVE_CONSTRUCTABLE_ONLY(StringExpression)
 
     auto                      accept(Visitor& v) const -> void override;
     [[nodiscard]] static auto parse(syntax::Parser& parser)
-        -> Expected<Box<Expression>, syntax::ParserDiagnostic>;
+        -> Expected<mem::Box<Expression>, syntax::ParserDiagnostic>;
 };
 template <> struct disable_default_parse<StringExpression> : std::true_type {};
 
@@ -92,7 +93,7 @@ class SignedIntegerExpression : public PrimitiveExpression<SignedIntegerExpressi
 
   public:
     using PrimitiveExpression::PrimitiveExpression;
-    MAKE_AST_COPY_MOVE(SignedIntegerExpression)
+    MAKE_MOVE_CONSTRUCTABLE_ONLY(SignedIntegerExpression)
 
     auto accept(Visitor& v) const -> void override;
 };
@@ -103,7 +104,7 @@ class SignedLongIntegerExpression : public PrimitiveExpression<SignedLongInteger
 
   public:
     using PrimitiveExpression::PrimitiveExpression;
-    MAKE_AST_COPY_MOVE(SignedLongIntegerExpression)
+    MAKE_MOVE_CONSTRUCTABLE_ONLY(SignedLongIntegerExpression)
 
     auto accept(Visitor& v) const -> void override;
 };
@@ -114,7 +115,7 @@ class ISizeIntegerExpression : public PrimitiveExpression<ISizeIntegerExpression
 
   public:
     using PrimitiveExpression::PrimitiveExpression;
-    MAKE_AST_COPY_MOVE(ISizeIntegerExpression)
+    MAKE_MOVE_CONSTRUCTABLE_ONLY(ISizeIntegerExpression)
 
     auto accept(Visitor& v) const -> void override;
 };
@@ -125,7 +126,7 @@ class UnsignedIntegerExpression : public PrimitiveExpression<UnsignedIntegerExpr
 
   public:
     using PrimitiveExpression::PrimitiveExpression;
-    MAKE_AST_COPY_MOVE(UnsignedIntegerExpression)
+    MAKE_MOVE_CONSTRUCTABLE_ONLY(UnsignedIntegerExpression)
 
     auto accept(Visitor& v) const -> void override;
 };
@@ -137,7 +138,7 @@ class UnsignedLongIntegerExpression
 
   public:
     using PrimitiveExpression::PrimitiveExpression;
-    MAKE_AST_COPY_MOVE(UnsignedLongIntegerExpression)
+    MAKE_MOVE_CONSTRUCTABLE_ONLY(UnsignedLongIntegerExpression)
 
     auto accept(Visitor& v) const -> void override;
 };
@@ -148,7 +149,7 @@ class USizeIntegerExpression : public PrimitiveExpression<USizeIntegerExpression
 
   public:
     using PrimitiveExpression::PrimitiveExpression;
-    MAKE_AST_COPY_MOVE(USizeIntegerExpression)
+    MAKE_MOVE_CONSTRUCTABLE_ONLY(USizeIntegerExpression)
 
     auto accept(Visitor& v) const -> void override;
 };
@@ -159,11 +160,11 @@ class ByteExpression : public PrimitiveExpression<ByteExpression, byte> {
 
   public:
     using PrimitiveExpression::PrimitiveExpression;
-    MAKE_AST_COPY_MOVE(ByteExpression)
+    MAKE_MOVE_CONSTRUCTABLE_ONLY(ByteExpression)
 
     auto                      accept(Visitor& v) const -> void override;
     [[nodiscard]] static auto parse(syntax::Parser& parser)
-        -> Expected<Box<Expression>, syntax::ParserDiagnostic>;
+        -> Expected<mem::Box<Expression>, syntax::ParserDiagnostic>;
 };
 template <> struct disable_default_parse<ByteExpression> : std::true_type {};
 
@@ -173,7 +174,7 @@ class FloatExpression : public PrimitiveExpression<FloatExpression, f32> {
 
   public:
     using PrimitiveExpression::PrimitiveExpression;
-    MAKE_AST_COPY_MOVE(FloatExpression)
+    MAKE_MOVE_CONSTRUCTABLE_ONLY(FloatExpression)
 
     auto accept(Visitor& v) const -> void override;
 
@@ -186,7 +187,7 @@ class DoubleExpression : public PrimitiveExpression<DoubleExpression, f64> {
 
   public:
     using PrimitiveExpression::PrimitiveExpression;
-    MAKE_AST_COPY_MOVE(DoubleExpression)
+    MAKE_MOVE_CONSTRUCTABLE_ONLY(DoubleExpression)
 
     auto accept(Visitor& v) const -> void override;
 
@@ -199,11 +200,11 @@ class BoolExpression : public PrimitiveExpression<BoolExpression, bool> {
 
   public:
     using PrimitiveExpression::PrimitiveExpression;
-    MAKE_AST_COPY_MOVE(BoolExpression)
+    MAKE_MOVE_CONSTRUCTABLE_ONLY(BoolExpression)
 
     auto                      accept(Visitor& v) const -> void override;
     [[nodiscard]] static auto parse(syntax::Parser& parser)
-        -> Expected<Box<Expression>, syntax::ParserDiagnostic>;
+        -> Expected<mem::Box<Expression>, syntax::ParserDiagnostic>;
 
     operator bool() const noexcept { return value_; }
 };

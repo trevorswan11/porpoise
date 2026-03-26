@@ -8,9 +8,9 @@
 
 namespace porpoise::ast {
 
-MatchArm::MatchArm(Box<Expression>   pattern,
-                   Optional<Capture> capture,
-                   Box<Statement>    dispatch) noexcept
+MatchArm::MatchArm(mem::Box<Expression> pattern,
+                   Optional<Capture>    capture,
+                   mem::Box<Statement>  dispatch) noexcept
     : pattern_{std::move(pattern)}, capture_{std::move(capture)}, dispatch_{std::move(dispatch)} {}
 MatchArm::~MatchArm() = default;
 
@@ -21,20 +21,20 @@ auto MatchArm::is_equal(const MatchArm& other) const noexcept -> bool {
                other.capture_,
                [](const Capture& a, const Capture& b) {
                    if (a.index() != b.index()) { return false; }
-                   return std::visit(Overloaded{[&a](const Box<IdentifierExpression>& b) {
-                                                    return *b ==
-                                                           *std::get<Box<IdentifierExpression>>(a);
-                                                },
-                                                [](const std::monostate&) { return true; }},
-                                     b);
+                   return std::visit(
+                       Overloaded{[&a](const mem::Box<IdentifierExpression>& b) {
+                                      return *b == *std::get<mem::Box<IdentifierExpression>>(a);
+                                  },
+                                  [](const std::monostate&) { return true; }},
+                       b);
                }) &&
            *dispatch_ == *other.dispatch_;
 }
 
-MatchExpression::MatchExpression(const syntax::Token&     start_token,
-                                 Box<Expression>          matcher,
-                                 std::vector<MatchArm>    arms,
-                                 Optional<Box<Statement>> catch_all) noexcept
+MatchExpression::MatchExpression(const syntax::Token&          start_token,
+                                 mem::Box<Expression>          matcher,
+                                 std::vector<MatchArm>         arms,
+                                 Optional<mem::Box<Statement>> catch_all) noexcept
     : ExprBase{start_token}, matcher_{std::move(matcher)}, arms_{std::move(arms)},
       catch_all_{std::move(catch_all)} {}
 MatchExpression::~MatchExpression() = default;
@@ -42,7 +42,7 @@ MatchExpression::~MatchExpression() = default;
 auto MatchExpression::accept(Visitor& v) const -> void { v.visit(*this); }
 
 auto MatchExpression::parse(syntax::Parser& parser)
-    -> Expected<Box<Expression>, syntax::ParserDiagnostic> {
+    -> Expected<mem::Box<Expression>, syntax::ParserDiagnostic> {
     const auto start_token = parser.current_token();
 
     // Conditions have to be surrounded by parentheses
@@ -98,7 +98,7 @@ auto MatchExpression::parse(syntax::Parser& parser)
     auto catch_all =
         TRY(parser.try_parse_restricted_alternate(syntax::ParserError::ILLEGAL_MATCH_CATCH_ALL));
 
-    return make_box<MatchExpression>(
+    return mem::make_box<MatchExpression>(
         start_token, std::move(condition), std::move(arms), std::move(catch_all));
 }
 

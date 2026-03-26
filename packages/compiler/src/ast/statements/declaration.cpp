@@ -7,11 +7,11 @@
 
 namespace porpoise::ast {
 
-DeclStatement::DeclStatement(const syntax::Token&      start_token,
-                             Box<IdentifierExpression> ident,
-                             Box<TypeExpression>       type,
-                             Optional<Box<Expression>> value,
-                             DeclModifiers             modifiers) noexcept
+DeclStatement::DeclStatement(const syntax::Token&           start_token,
+                             mem::Box<IdentifierExpression> ident,
+                             mem::Box<TypeExpression>       type,
+                             Optional<mem::Box<Expression>> value,
+                             DeclModifiers                  modifiers) noexcept
     : StmtBase{start_token}, ident_{std::move(ident)}, type_{std::move(type)},
       value_{std::move(value)}, modifiers_{modifiers} {}
 DeclStatement::~DeclStatement() = default;
@@ -19,7 +19,7 @@ DeclStatement::~DeclStatement() = default;
 auto DeclStatement::accept(Visitor& v) const -> void { v.visit(*this); }
 
 auto DeclStatement::parse(syntax::Parser& parser)
-    -> Expected<Box<Statement>, syntax::ParserDiagnostic> {
+    -> Expected<mem::Box<Statement>, syntax::ParserDiagnostic> {
     const auto start_token = parser.current_token();
     auto       modifiers   = token_to_modifier(start_token).value();
 
@@ -42,7 +42,7 @@ auto DeclStatement::parse(syntax::Parser& parser)
     auto [decl_type, value_initialized] = TRY(TypeExpression::parse(parser));
     auto decl_type_expr                 = downcast<TypeExpression>(std::move(decl_type));
 
-    Optional<Box<Expression>> decl_value;
+    Optional<mem::Box<Expression>> decl_value;
     if (value_initialized) {
         decl_value = TRY(parser.parse_expression());
         // If there is a value, then there cannot be an extern keyword
@@ -60,11 +60,11 @@ auto DeclStatement::parse(syntax::Parser& parser)
     if (!parser.current_token_is(syntax::TokenType::SEMICOLON)) {
         TRY(parser.expect_peek(syntax::TokenType::SEMICOLON));
     }
-    return make_box<DeclStatement>(start_token,
-                                   std::move(decl_name),
-                                   std::move(decl_type_expr),
-                                   std::move(decl_value),
-                                   modifiers);
+    return mem::make_box<DeclStatement>(start_token,
+                                        std::move(decl_name),
+                                        std::move(decl_type_expr),
+                                        std::move(decl_value),
+                                        modifiers);
 }
 
 auto DeclStatement::is_equal(const Node& other) const noexcept -> bool {

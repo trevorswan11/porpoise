@@ -8,10 +8,10 @@ namespace porpoise::ast {
 auto BlockStatement::accept(Visitor& v) const -> void { v.visit(*this); }
 
 auto BlockStatement::parse(syntax::Parser& parser)
-    -> Expected<Box<Statement>, syntax::ParserDiagnostic> {
+    -> Expected<mem::Box<Statement>, syntax::ParserDiagnostic> {
     const auto start_token = parser.current_token();
 
-    std::vector<Box<Statement>> statements;
+    Statements statements;
     while (!parser.peek_token_is(syntax::TokenType::RBRACE) &&
            !parser.peek_token_is(syntax::TokenType::END)) {
         parser.advance();
@@ -26,7 +26,7 @@ auto BlockStatement::parse(syntax::Parser& parser)
     }
     TRY(parser.expect_peek(syntax::TokenType::RBRACE));
 
-    return make_box<BlockStatement>(start_token, std::move(statements));
+    return mem::make_box<BlockStatement>(start_token, std::move(statements));
 }
 
 } // namespace porpoise::ast

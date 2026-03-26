@@ -13,18 +13,18 @@ class IfExpression : public ExprBase<IfExpression> {
     static constexpr auto KIND = NodeKind::IF_EXPRESSION;
 
   public:
-    explicit IfExpression(const syntax::Token&     start_token,
-                          Box<Expression>          condition,
-                          Box<Statement>           consequence,
-                          Optional<Box<Statement>> alternate) noexcept
+    explicit IfExpression(const syntax::Token&          start_token,
+                          mem::Box<Expression>          condition,
+                          mem::Box<Statement>           consequence,
+                          Optional<mem::Box<Statement>> alternate) noexcept
         : ExprBase{start_token}, condition_{std::move(condition)},
           consequence_{std::move(consequence)}, alternate_{std::move(alternate)} {}
 
-    MAKE_AST_COPY_MOVE(IfExpression)
+    MAKE_MOVE_CONSTRUCTABLE_ONLY(IfExpression)
 
     auto                      accept(Visitor& v) const -> void override;
     [[nodiscard]] static auto parse(syntax::Parser& parser)
-        -> Expected<Box<Expression>, syntax::ParserDiagnostic>;
+        -> Expected<mem::Box<Expression>, syntax::ParserDiagnostic>;
 
     MAKE_GETTER(condition, const Expression&, *)
     MAKE_GETTER(consequence, const Statement&, *)
@@ -38,9 +38,9 @@ class IfExpression : public ExprBase<IfExpression> {
     }
 
   private:
-    Box<Expression>          condition_;
-    Box<Statement>           consequence_;
-    Optional<Box<Statement>> alternate_;
+    mem::Box<Expression>          condition_;
+    mem::Box<Statement>           consequence_;
+    Optional<mem::Box<Statement>> alternate_;
 };
 
 } // namespace porpoise::ast

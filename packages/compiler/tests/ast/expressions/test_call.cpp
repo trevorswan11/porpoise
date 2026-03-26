@@ -23,10 +23,11 @@ TEST_CASE("Trailing comma") {
     const syntax::Token func{keywords::builtins::SIN};
     helpers::test_expr_stmt(
         "@sin(23.6, );",
-        ast::CallExpression{func,
-                            helpers::make_ident(func),
-                            helpers::make_vector<ast::CallArgument>(make_box<ast::DoubleExpression>(
-                                syntax::Token{syntax::TokenType::DOUBLE, "23.6"}, 23.6))});
+        ast::CallExpression{
+            func,
+            helpers::make_ident(func),
+            helpers::make_vector<ast::CallArgument>(mem::make_box<ast::DoubleExpression>(
+                syntax::Token{syntax::TokenType::DOUBLE, "23.6"}, 23.6))});
 }
 
 TEST_CASE("Builtin with multiple arguments") {
@@ -37,7 +38,7 @@ TEST_CASE("Builtin with multiple arguments") {
                             helpers::make_ident(func),
                             helpers::make_vector<ast::CallArgument>(
                                 helpers::make_ident("a"),
-                                make_box<ast::USizeIntegerExpression>(
+                                mem::make_box<ast::USizeIntegerExpression>(
                                     syntax::Token{syntax::TokenType::UZINT_10, "4uz"}, 4uz))});
 }
 
@@ -49,21 +50,21 @@ TEST_CASE("Type arguments in call") {
             func,
             helpers::make_ident(func),
             helpers::make_vector<ast::CallArgument>(
-                make_box<ast::ReferenceExpression>(syntax::Token{operators::AND_MUT},
-                                                   helpers::make_ident("r")),
+                mem::make_box<ast::ReferenceExpression>(syntax::Token{operators::AND_MUT},
+                                                        helpers::make_ident("r")),
                 helpers::make_ident("t"),
                 ast::ExplicitType{
                     mods::PTR,
                     ast::ExplicitArrayType{
                         helpers::make_ident("N"),
                         false,
-                        make_box<ast::ExplicitType>(mods::BASE, helpers::make_ident("int"))}},
+                        mem::make_box<ast::ExplicitType>(mods::BASE, helpers::make_ident("int"))}},
                 ast::ExplicitType{
                     mods::BASE,
-                    ast::ExplicitArrayType{
-                        {},
-                        true,
-                        make_box<ast::ExplicitType>(mods::BASE, helpers::make_ident("byte"))}})});
+                    ast::ExplicitArrayType{{},
+                                           true,
+                                           mem::make_box<ast::ExplicitType>(
+                                               mods::BASE, helpers::make_ident("byte"))}})});
 }
 
 TEST_CASE("No arguments with comma") {

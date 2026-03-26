@@ -72,12 +72,6 @@ enum class NodeKind : u8 {
     USING_STATEMENT,
 };
 
-#define MAKE_AST_COPY_MOVE(NodeType)                            \
-    NodeType(const NodeType&)                        = delete;  \
-    auto operator=(const NodeType&)->NodeType&       = delete;  \
-    NodeType(NodeType&&) noexcept                    = default; \
-    auto operator=(NodeType&&) noexcept -> NodeType& = delete;
-
 class Node;
 
 // A type that can be anything in the Node inheritance hierarchy
@@ -95,7 +89,7 @@ class Node {
     Node()          = delete;
     virtual ~Node() = default;
 
-    MAKE_AST_COPY_MOVE(Node)
+    MAKE_MOVE_CONSTRUCTABLE_ONLY(Node)
 
     virtual auto accept(Visitor& v) const -> void = 0;
 
@@ -135,9 +129,10 @@ class Node {
     virtual auto is_equal(const Node& other) const noexcept -> bool = 0;
 
     // Transfers ownership and downcasts a boxed node into the requested type.
-    template <LeafNode To, NodeSubtype From> static auto downcast(Box<From>&& from) -> Box<To> {
+    template <LeafNode To, NodeSubtype From>
+    static auto downcast(mem::Box<From>&& from) -> mem::Box<To> {
         assert(from && from->template is<To>());
-        return box_into<To>(std::move(from));
+        return mem::box_into<To>(std::move(from));
     }
 
   protected:
@@ -147,8 +142,8 @@ class Node {
     friend class ExplicitType;
 };
 
-using AST     = std::vector<Box<Node>>;
-using ASTView = std::span<const Box<Node>>;
+using AST     = std::vector<mem::Box<Node>>;
+using ASTView = std::span<const mem::Box<Node>>;
 
 template <typename Derived, typename Base> class NodeBase : public Base {
   protected:
@@ -158,7 +153,7 @@ template <typename Derived, typename Base> class NodeBase : public Base {
 class Expression : public Node {
   protected:
     using Node::Node;
-    MAKE_AST_COPY_MOVE(Expression)
+    MAKE_MOVE_CONSTRUCTABLE_ONLY(Expression)
 
     virtual auto is_equal(const Node& other) const noexcept -> bool override = 0;
 };
@@ -171,7 +166,7 @@ template <typename Derived> class ExprBase : public NodeBase<Derived, Expression
 class Statement : public Node {
   protected:
     using Node::Node;
-    MAKE_AST_COPY_MOVE(Statement)
+    MAKE_MOVE_CONSTRUCTABLE_ONLY(Statement)
 
     virtual auto is_equal(const Node& other) const noexcept -> bool override = 0;
 };
