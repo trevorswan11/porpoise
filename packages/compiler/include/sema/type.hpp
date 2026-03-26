@@ -99,6 +99,7 @@ class Key {
     [[nodiscard]] auto hash() const noexcept -> u64 {
         hash::Hasher h{std::to_underlying(kind_)};
         h.combine(mut_);
+        h.combine(idx_);
         h.combine(marker_a_);
         h.combine(marker_b_);
         h.combine(flag_);

@@ -1,15 +1,12 @@
-#include <utility>
-
 #include "sema/collector.hpp"
 
 #include "ast/ast.hpp"
-#include "common.hpp"
 
 namespace porpoise::sema {
 
 // Few expressions are evaluated directly on this pass
 #define COLLECTOR_NOOP(NodeType) \
-    auto SymbolCollector::visit(const ast::NodeType&) -> void { std::unreachable(); }
+    auto SymbolCollector::visit(const ast::NodeType&) -> void {}
 
 COLLECTOR_NOOP(ArrayExpression)
 COLLECTOR_NOOP(CallExpression)
@@ -44,11 +41,55 @@ COLLECTOR_NOOP(ScopeResolutionExpression)
 COLLECTOR_NOOP(TypeExpression)
 COLLECTOR_NOOP(WhileLoopExpression)
 
-auto SymbolCollector::visit(const ast::EnumExpression& enum_expr) -> void { TODO(enum_expr); }
+auto SymbolCollector::visit(const ast::EnumExpression& enum_expr) -> void {
+    const auto new_idx    = registry_.create();
+    const auto parent_idx = table_idx_;
+    table_idx_            = new_idx;
 
-auto SymbolCollector::visit(const ast::StructExpression& struct_expr) -> void { TODO(struct_expr); }
+    const SymbolTableStack::Guard g{table_stack_, new_idx};
+    for (const auto& field : enum_expr) { visit(field); }
 
-auto SymbolCollector::visit(const ast::UnionExpression& union_expr) -> void { TODO(union_expr); }
+    table_idx_ = parent_idx;
+    last_type_.emplace(pool_.get(types::Key(TypeKind::ENUM, false, new_idx)));
+}
+
+// This is assumed to be invoked only by the enum visitor
+auto SymbolCollector::visit(const ast::Enumeration& enumeration) -> void {
+    const auto name = enumeration.get_ident().get_name();
+    if (!try_result(registry_.is_shadowing(table_stack_, name, &enumeration))) { return; }
+    try_result(registry_.insert_into(table_idx_, name, &enumeration));
+}
+
+auto SymbolCollector::visit(const ast::StructExpression& struct_expr) -> void {
+    const auto new_idx    = registry_.create();
+    const auto parent_idx = table_idx_;
+    table_idx_            = new_idx;
+
+    const SymbolTableStack::Guard g{table_stack_, new_idx};
+    for (const auto& field : struct_expr) { field->accept(*this); }
+
+    table_idx_ = parent_idx;
+    last_type_.emplace(pool_.get(types::Key(TypeKind::STRUCT, false, new_idx)));
+}
+
+auto SymbolCollector::visit(const ast::UnionExpression& union_expr) -> void {
+    const auto new_idx    = registry_.create();
+    const auto parent_idx = table_idx_;
+    table_idx_            = new_idx;
+
+    const SymbolTableStack::Guard g{table_stack_, new_idx};
+    for (const auto& field : union_expr) { visit(field); }
+
+    table_idx_ = parent_idx;
+    last_type_.emplace(pool_.get(types::Key(TypeKind::UNION, false, new_idx)));
+}
+
+// This is assumed to be invoked only by the union visitor
+auto SymbolCollector::visit(const ast::UnionField& field) -> void {
+    const auto name = field.get_ident().get_name();
+    if (!try_result(registry_.is_shadowing(table_stack_, name, &field))) { return; }
+    try_result(registry_.insert_into(table_idx_, name, &field));
+}
 
 #define ILLEGAL_COLLECTOR_TOP_LEVEL(NodeType, stringified_node)                        \
     auto SymbolCollector::visit(const NodeType& node) -> void {                        \
@@ -60,8 +101,23 @@ auto SymbolCollector::visit(const ast::UnionExpression& union_expr) -> void { TO
 ILLEGAL_COLLECTOR_TOP_LEVEL(ast::BlockStatement, "block")
 
 auto SymbolCollector::visit(const ast::DeclStatement& decl) -> void {
-    auto result = registry_.insert_into(table_idx_, decl.get_ident().get_name(), &decl);
-    if (!result) { diagnostics_.emplace_back(result.error()); }
+    // Only move on to value inspection is the node
+    const auto name = decl.get_ident().get_name();
+    if (!try_result(registry_.is_shadowing(table_stack_, name, &decl))) { return; }
+    if (!try_result(registry_.insert_into(table_idx_, decl.get_ident().get_name(), &decl))) {
+        return;
+    }
+
+    // Attach bubbled types to the symbol just created
+    if (decl.has_value()) {
+        decl.get_value().accept(*this);
+
+        if (last_type_) {
+            const auto& symbol = registry_.get(table_idx_).get(name);
+            symbol.emplace_type(*last_type_);
+            last_type_.reset();
+        }
+    }
 }
 
 ILLEGAL_COLLECTOR_TOP_LEVEL(ast::DeferStatement, "defer")
@@ -69,16 +125,22 @@ ILLEGAL_COLLECTOR_TOP_LEVEL(ast::DiscardStatement, "discard")
 ILLEGAL_COLLECTOR_TOP_LEVEL(ast::ExpressionStatement, "expression")
 
 auto SymbolCollector::visit(const ast::ImportStatement& import_stmt) -> void {
+    if (table_stack_.size() > 1) {
+        diagnostics_.emplace_back("Imports are only allowed at the top level",
+                                  SemaError::ILLEGAL_IMPORT_LOCATION,
+                                  import_stmt.get_token());
+        return;
+    }
+
     if (registry_.get(table_idx_).is_module()) { import_stmt.mark_public(); }
-    const auto name   = import_stmt.match(Overloaded{
+    const auto name = import_stmt.match(Overloaded{
         [](const ast::LibraryImport& module) {
             return module.has_alias() ? module.get_alias().get_name()
-                                        : module.get_name().get_name();
+                                      : module.get_name().get_name();
         },
         [](const ast::FileImport& user) { return user.get_alias().get_name(); },
     });
-    auto       result = registry_.insert_into(table_idx_, name, &import_stmt);
-    if (!result) { diagnostics_.emplace_back(result.error()); }
+    try_result(registry_.insert_into(table_idx_, name, &import_stmt));
 }
 
 ILLEGAL_COLLECTOR_TOP_LEVEL(ast::JumpStatement, "jump")
@@ -100,8 +162,10 @@ auto SymbolCollector::visit(const ast::ModuleStatement& module_stmt) -> void {
 
 auto SymbolCollector::visit(const ast::UsingStatement& using_stmt) -> void {
     if (registry_.get(table_idx_).is_module()) { using_stmt.mark_public(); }
-    auto result = registry_.insert_into(table_idx_, using_stmt.get_alias().get_name(), &using_stmt);
-    if (!result) { diagnostics_.emplace_back(result.error()); }
+    if (!try_result(
+            registry_.insert_into(table_idx_, using_stmt.get_alias().get_name(), &using_stmt))) {
+        return;
+    }
 }
 
 } // namespace porpoise::sema

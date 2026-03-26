@@ -128,4 +128,6 @@ TEST_CASE("Illegal top-level statement") {
     helpers::test_illegal_top_level_stmt("return 2;", "jump");
 }
 
+TEST_CASE("Illegal import statement") {}
+
 } // namespace porpoise::tests

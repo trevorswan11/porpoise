@@ -10,9 +10,11 @@ namespace porpoise::sema {
 enum class SemaError : u8 {
     IDENTIFIER_REDECLARATION,
     ILLEGAL_TOP_LEVEL_STATEMENT,
+    ILLEGAL_IMPORT_LOCATION,
     ILLEGAL_MODULE_STATEMENT_LOCATION,
     DUPLICATE_MODULE_STATEMENT,
     INVALID_TABLE_IDX,
+    SHADOWING_DECLARATION,
 };
 
 using SemaDiagnostic = Diagnostic<SemaError>;

@@ -1,5 +1,6 @@
-#include <fmt/format.h>
 #include <type_traits>
+
+#include <fmt/format.h>
 
 #include "sema/symbol.hpp"
 
@@ -44,26 +45,29 @@ auto SymbolTable::insert(std::string_view name, SymbolicNode node)
     return std::monostate{};
 }
 
-auto SymbolTable::has(std::string_view name) const noexcept -> bool {
-    return symbols_.contains(name);
-}
-
-auto SymbolTableRegistry::create() -> usize {
-    tables_.emplace_back();
-    return tables_.size() - 1;
-}
-
 auto SymbolTableRegistry::insert_into(usize table_idx, std::string_view name, SymbolicNode node)
     -> Expected<std::monostate, SemaDiagnostic> {
     if (auto table = get_opt(table_idx)) { return table->insert(name, node); }
     return make_sema_unexpected(SemaError::INVALID_TABLE_IDX);
 }
 
-auto SymbolTableRegistry::get_opt(usize idx) noexcept -> Optional<SymbolTable&> {
-    if (idx >= tables_.size()) { return std::nullopt; }
-    return tables_[idx];
+[[nodiscard]] auto SymbolTableRegistry::is_shadowing(const SymbolTableStack& stack,
+                                                     std::string_view        name,
+                                                     SymbolicNode            node) noexcept
+    -> Expected<std::monostate, SemaDiagnostic> {
+    for (const auto idx : stack) {
+        if (const auto symbol = get(idx).get_opt(name)) {
+            return make_sema_unexpected(
+                fmt::format("Attempt to shadow identifier '{}'. Previous declaration here: {}",
+                            name,
+                            symbol->match([](const auto& inner) {
+                                return SourceInfo<syntax::Token>::get(inner->get_token());
+                            })),
+                SemaError::SHADOWING_DECLARATION,
+                std::visit([](const auto& inner) { return inner->get_token(); }, node));
+        }
+    }
+    return std::monostate{};
 }
-
-auto SymbolTableRegistry::get(usize idx) -> SymbolTable& { return tables_.at(idx); }
 
 } // namespace porpoise::sema

@@ -2,6 +2,7 @@
 
 #include <cassert>
 #include <string_view>
+#include <vector>
 
 #include <ankerl/unordered_dense.h>
 
@@ -79,7 +80,9 @@ class SymbolTable {
 
     auto reserve(usize cap) -> void { symbols_.reserve(cap); }
 
-    [[nodiscard]] auto has(std::string_view name) const noexcept -> bool;
+    [[nodiscard]] auto has(std::string_view name) const noexcept -> bool {
+        return symbols_.contains(name);
+    }
 
     // Differs from `get_opt` by asserting that the name is present.
     [[nodiscard]] auto get(std::string_view name) const noexcept -> const Symbol& {
@@ -104,15 +107,52 @@ class SymbolTable {
     bool  is_module_{false};
 };
 
+class SymbolTableStack {
+  public:
+    class Guard {
+      public:
+        Guard(SymbolTableStack& s, usize idx) : stack_{s} { stack_.push(idx); }
+        ~Guard() { stack_.pop(); }
+
+      private:
+        SymbolTableStack& stack_;
+    };
+
+    MAKE_ITERATOR(Stack, std::vector<usize>, stack_)
+
+  public:
+    auto push(usize idx) -> void { stack_.push_back(idx); }
+    auto pop() noexcept -> usize {
+        const auto back = stack_.back();
+        stack_.pop_back();
+        return back;
+    }
+    [[nodiscard]] auto peek() const noexcept -> usize { return stack_.back(); }
+
+  private:
+    Stack stack_;
+};
+
 class SymbolTableRegistry {
   public:
-    [[nodiscard]] auto create() -> usize;
+    [[nodiscard]] auto create() -> usize {
+        tables_.emplace_back();
+        return tables_.size() - 1;
+    }
 
     [[nodiscard]] auto insert_into(usize table_idx, std::string_view name, SymbolicNode node)
         -> Expected<std::monostate, SemaDiagnostic>;
 
-    [[nodiscard]] auto get_opt(usize idx) noexcept -> Optional<SymbolTable&>;
-    [[nodiscard]] auto get(usize idx) -> SymbolTable&;
+    [[nodiscard]] auto get_opt(usize idx) noexcept -> Optional<SymbolTable&> {
+        if (idx >= tables_.size()) { return std::nullopt; }
+        return tables_[idx];
+    }
+
+    [[nodiscard]] auto get(usize idx) -> SymbolTable& { return tables_.at(idx); }
+
+    [[nodiscard]] auto
+    is_shadowing(const SymbolTableStack& stack, std::string_view name, SymbolicNode node) noexcept
+        -> Expected<std::monostate, SemaDiagnostic>;
 
   private:
     std::vector<SymbolTable> tables_;
