@@ -23,7 +23,7 @@ class MatchArm {
                       mem::Box<Statement>  dispatch) noexcept;
     ~MatchArm();
 
-    MAKE_AST_COPY_MOVE(MatchArm)
+    MAKE_MOVE_CONSTRUCTABLE_ONLY(MatchArm)
 
     MAKE_GETTER(pattern, const Expression&, *)
     [[nodiscard]] auto has_capture_clause() const noexcept -> bool { return capture_.has_value(); }
@@ -58,7 +58,7 @@ class MatchExpression : public ExprBase<MatchExpression> {
                              Optional<mem::Box<Statement>> catch_all) noexcept;
     ~MatchExpression() override;
 
-    MAKE_AST_COPY_MOVE(MatchExpression)
+    MAKE_MOVE_CONSTRUCTABLE_ONLY(MatchExpression)
 
     auto                      accept(Visitor& v) const -> void override;
     [[nodiscard]] static auto parse(syntax::Parser& parser)

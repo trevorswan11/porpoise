@@ -17,7 +17,7 @@ class UnionField {
     explicit UnionField(mem::Box<IdentifierExpression> ident, ExplicitType&& type) noexcept;
     ~UnionField();
 
-    MAKE_AST_COPY_MOVE(UnionField)
+    MAKE_MOVE_CONSTRUCTABLE_ONLY(UnionField)
 
     MAKE_GETTER(ident, const IdentifierExpression&, *)
     MAKE_GETTER(type, const ExplicitType&)
@@ -41,7 +41,7 @@ class UnionExpression : public ExprBase<UnionExpression> {
     explicit UnionExpression(const syntax::Token& start_token, Fields fields) noexcept;
     ~UnionExpression() override;
 
-    MAKE_AST_COPY_MOVE(UnionExpression)
+    MAKE_MOVE_CONSTRUCTABLE_ONLY(UnionExpression)
 
     auto                      accept(Visitor& v) const -> void override;
     [[nodiscard]] static auto parse(syntax::Parser& parser)

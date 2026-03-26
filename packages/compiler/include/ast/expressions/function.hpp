@@ -18,7 +18,7 @@ class FunctionParameter {
     explicit FunctionParameter(mem::Box<IdentifierExpression> ident, ExplicitType&& type) noexcept;
     ~FunctionParameter();
 
-    MAKE_AST_COPY_MOVE(FunctionParameter)
+    MAKE_MOVE_CONSTRUCTABLE_ONLY(FunctionParameter)
 
     MAKE_GETTER(ident, const IdentifierExpression&, *)
     MAKE_GETTER(type, const ExplicitType&)
@@ -35,7 +35,7 @@ class SelfParameter {
     explicit SelfParameter(TypeModifier modifier, mem::Box<IdentifierExpression> name) noexcept;
     ~SelfParameter();
 
-    MAKE_AST_COPY_MOVE(SelfParameter)
+    MAKE_MOVE_CONSTRUCTABLE_ONLY(SelfParameter)
 
     MAKE_GETTER(modifier, const TypeModifier&)
     MAKE_GETTER(ident, const IdentifierExpression&, *)
@@ -59,7 +59,7 @@ class FunctionExpression : public ExprBase<FunctionExpression> {
                                 Optional<mem::Box<BlockStatement>> body) noexcept;
     ~FunctionExpression() override;
 
-    MAKE_AST_COPY_MOVE(FunctionExpression)
+    MAKE_MOVE_CONSTRUCTABLE_ONLY(FunctionExpression)
 
     auto                      accept(Visitor& v) const -> void override;
     [[nodiscard]] static auto parse(syntax::Parser& parser)

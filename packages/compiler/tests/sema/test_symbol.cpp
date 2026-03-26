@@ -70,4 +70,22 @@ TEST_CASE("Duplicate table inserts") {
     CHECK(table.size() == 1);
 }
 
+TEST_CASE("Illegal registry insert") {
+    sema::SymbolTableRegistry  registry;
+    const ast::ImportStatement import_node{syntax::Token{syntax::keywords::IMPORT},
+                                           ast::LibraryImport{helpers::make_ident("a"), {}}};
+    const auto                 result = registry.insert_into(0, "a", &import_node);
+
+    CHECK_FALSE(result);
+    CHECK(result.error() == sema::Diagnostic{sema::Error::INVALID_TABLE_IDX});
+}
+
+TEST_CASE("Safety checked registry operations") {
+    sema::SymbolTableRegistry registry;
+    CHECK_THROWS(registry.get(1));
+    CHECK_FALSE(registry.get_opt(1));
+    CHECK_THROWS(registry.get_from(1, "a"));
+    CHECK_FALSE(registry.get_from_opt(1, "a"));
+}
+
 } // namespace porpoise::tests

@@ -13,6 +13,7 @@
 #include "ast/expressions/function.hpp"
 #include "ast/expressions/identifier.hpp"
 #include "ast/statements/block.hpp"
+#include "ast/statements/declaration.hpp"
 #include "ast/statements/expression.hpp"
 
 #include "syntax/keywords.hpp"
@@ -135,6 +136,12 @@ template <typename... Ps>
     requires(std::same_as<Ps, ast::FunctionParameter> && ...)
 auto make_parameters(Ps&&... params) -> std::vector<ast::FunctionParameter> {
     return make_vector<ast::FunctionParameter>(std::forward<Ps>(params)...);
+}
+
+template <typename... Ds>
+    requires(std::same_as<Ds, ast::DeclStatement> && ...)
+auto make_decls(Ds&&... decls) -> std::vector<mem::Box<ast::DeclStatement>> {
+    return make_vector<mem::Box<ast::DeclStatement>>(mem::make_box<Ds>(std::forward<Ds>(decls))...);
 }
 
 namespace type_modifiers {

@@ -22,7 +22,7 @@ class ForLoopCapture {
         explicit Valued(TypeModifier modifier, mem::Box<IdentifierExpression> ident) noexcept;
         ~Valued();
 
-        MAKE_AST_COPY_MOVE(Valued)
+        MAKE_MOVE_CONSTRUCTABLE_ONLY(Valued)
 
         MAKE_GETTER(modifier, const TypeModifier&)
         MAKE_GETTER(ident, const IdentifierExpression&, *)
@@ -39,7 +39,7 @@ class ForLoopCapture {
     explicit ForLoopCapture(Valued valued) noexcept;
     ~ForLoopCapture();
 
-    MAKE_AST_COPY_MOVE(ForLoopCapture)
+    MAKE_MOVE_CONSTRUCTABLE_ONLY(ForLoopCapture)
 
     MAKE_VARIANT_UNPACKER(valued, Valued, Valued, underlying_, std::get)
     [[nodiscard]] auto is_discarded() const noexcept -> bool {
@@ -64,7 +64,7 @@ class ForLoopExpression : public ExprBase<ForLoopExpression> {
                                Optional<mem::Box<Statement>>     non_break) noexcept;
     ~ForLoopExpression() override;
 
-    MAKE_AST_COPY_MOVE(ForLoopExpression)
+    MAKE_MOVE_CONSTRUCTABLE_ONLY(ForLoopExpression)
 
     auto                      accept(Visitor& v) const -> void override;
     [[nodiscard]] static auto parse(syntax::Parser& parser)

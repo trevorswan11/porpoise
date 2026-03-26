@@ -13,18 +13,7 @@ namespace porpoise::tests {
 
 namespace keywords  = syntax::keywords;
 namespace operators = syntax::operators;
-
-namespace helpers {
-
-template <typename... Ds>
-    requires(std::same_as<Ds, ast::DeclStatement> && ...)
-auto make_decls(Ds&&... decls) -> std::vector<mem::Box<ast::DeclStatement>> {
-    return make_vector<mem::Box<ast::DeclStatement>>(mem::make_box<Ds>(std::forward<Ds>(decls))...);
-}
-
-} // namespace helpers
-
-namespace mods = helpers::type_modifiers;
+namespace mods      = helpers::type_modifiers;
 
 TEST_CASE("Struct flavors") {
     const std::string_view input{

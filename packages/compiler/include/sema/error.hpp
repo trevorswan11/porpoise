@@ -7,7 +7,7 @@
 
 namespace porpoise::sema {
 
-enum class SemaError : u8 {
+enum class Error : u8 {
     IDENTIFIER_REDECLARATION,
     ILLEGAL_TOP_LEVEL_STATEMENT,
     ILLEGAL_IMPORT_LOCATION,
@@ -17,12 +17,11 @@ enum class SemaError : u8 {
     SHADOWING_DECLARATION,
 };
 
-using SemaDiagnostic = Diagnostic<SemaError>;
-using Diagnostics    = std::vector<SemaDiagnostic>;
+using Diagnostic  = Diagnostic<Error>;
+using Diagnostics = std::vector<Diagnostic>;
 
-template <typename... Args>
-auto make_sema_unexpected(Args&&... args) -> Unexpected<SemaDiagnostic> {
-    return make_unexpected<SemaDiagnostic>(std::forward<Args>(args)...);
+template <typename... Args> auto make_sema_unexpected(Args&&... args) -> Unexpected<Diagnostic> {
+    return make_unexpected<Diagnostic>(std::forward<Args>(args)...);
 }
 
 } // namespace porpoise::sema

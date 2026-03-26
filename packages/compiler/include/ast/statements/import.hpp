@@ -17,7 +17,7 @@ class LibraryImport {
                            Optional<mem::Box<IdentifierExpression>> alias) noexcept;
     ~LibraryImport();
 
-    MAKE_AST_COPY_MOVE(LibraryImport)
+    MAKE_MOVE_CONSTRUCTABLE_ONLY(LibraryImport)
 
     MAKE_GETTER(name, const IdentifierExpression&, *)
     MAKE_OPTIONAL_UNPACKER(alias, IdentifierExpression, alias_, **)
@@ -35,7 +35,7 @@ class FileImport {
                         mem::Box<IdentifierExpression> alias) noexcept;
     ~FileImport();
 
-    MAKE_AST_COPY_MOVE(FileImport)
+    MAKE_MOVE_CONSTRUCTABLE_ONLY(FileImport)
 
     MAKE_GETTER(file, const StringExpression&, *)
     MAKE_GETTER(alias, const IdentifierExpression&, *)
@@ -57,7 +57,7 @@ class ImportStatement : public StmtBase<ImportStatement> {
     explicit ImportStatement(const syntax::Token& start_token, ImportVariant imported) noexcept;
     ~ImportStatement() override;
 
-    MAKE_AST_COPY_MOVE(ImportStatement)
+    MAKE_MOVE_CONSTRUCTABLE_ONLY(ImportStatement)
 
     auto                      accept(Visitor& v) const -> void override;
     [[nodiscard]] static auto parse(syntax::Parser& parser)

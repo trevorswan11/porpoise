@@ -16,7 +16,7 @@ class Enumeration {
                          Optional<mem::Box<Expression>> value) noexcept;
     ~Enumeration();
 
-    MAKE_AST_COPY_MOVE(Enumeration)
+    MAKE_MOVE_CONSTRUCTABLE_ONLY(Enumeration)
 
     MAKE_GETTER(ident, const IdentifierExpression&, *)
     MAKE_OPTIONAL_UNPACKER(default_value, Expression, value_, **)
@@ -42,7 +42,7 @@ class EnumExpression : public ExprBase<EnumExpression> {
                             Enumerations                             enumerations) noexcept;
     ~EnumExpression() override;
 
-    MAKE_AST_COPY_MOVE(EnumExpression)
+    MAKE_MOVE_CONSTRUCTABLE_ONLY(EnumExpression)
 
     auto                      accept(Visitor& v) const -> void override;
     [[nodiscard]] static auto parse(syntax::Parser& parser)

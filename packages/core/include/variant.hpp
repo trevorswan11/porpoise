@@ -6,7 +6,6 @@
 template <class... Ts> struct Overloaded : Ts... {
     using Ts::operator()...;
 };
-template <class... Ts> Overloaded(Ts...) -> Overloaded<Ts...>;
 
 #define MAKE_VARIANT_UNPACKER(name, ReturnType, InnerType, member, getter) \
     [[nodiscard]] auto get_##name() const noexcept -> const ReturnType& {  \

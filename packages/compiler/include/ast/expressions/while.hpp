@@ -20,7 +20,7 @@ class WhileLoopExpression : public ExprBase<WhileLoopExpression> {
                                  Optional<mem::Box<Statement>>  non_break) noexcept;
     ~WhileLoopExpression() override;
 
-    MAKE_AST_COPY_MOVE(WhileLoopExpression)
+    MAKE_MOVE_CONSTRUCTABLE_ONLY(WhileLoopExpression)
 
     auto                      accept(Visitor& v) const -> void override;
     [[nodiscard]] static auto parse(syntax::Parser& parser)

@@ -20,7 +20,7 @@ class IfExpression : public ExprBase<IfExpression> {
         : ExprBase{start_token}, condition_{std::move(condition)},
           consequence_{std::move(consequence)}, alternate_{std::move(alternate)} {}
 
-    MAKE_AST_COPY_MOVE(IfExpression)
+    MAKE_MOVE_CONSTRUCTABLE_ONLY(IfExpression)
 
     auto                      accept(Visitor& v) const -> void override;
     [[nodiscard]] static auto parse(syntax::Parser& parser)

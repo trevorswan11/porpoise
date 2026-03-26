@@ -764,6 +764,7 @@ fn addStaticAnalysisStep(b: *std.Build, config: struct {
         "unmatchedSuppression",
         "missingIncludeSystem",
         "unusedFunction",
+        "functionStatic",
     };
 
     inline for (suppressions) |suppression| {

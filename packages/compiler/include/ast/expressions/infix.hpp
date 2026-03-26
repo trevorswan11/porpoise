@@ -56,7 +56,7 @@ template <typename Derived> class InfixExpression : public ExprBase<Derived> {
                                                 \
       public:                                   \
         using InfixExpression::InfixExpression; \
-        MAKE_AST_COPY_MOVE(Type)                \
+        MAKE_MOVE_CONSTRUCTABLE_ONLY(Type)      \
                                                 \
         using InfixExpression::parse;           \
     };

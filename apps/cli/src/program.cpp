@@ -38,8 +38,8 @@ auto Program::interactive() -> void {
         }
 
         // Sema
-        sema::Analyzer analyzer;
-        const auto     idx = analyzer.collect_symbols(ast);
+        sema::Analyzer analyzer{std::move(ast)};
+        const auto     idx = analyzer.collect_symbols();
         if (analyzer.has_diagnostics()) {
             fmt::println("{}", analyzer.get_diagnostics());
             continue;

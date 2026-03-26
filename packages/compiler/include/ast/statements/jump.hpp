@@ -17,7 +17,7 @@ class JumpStatement : public StmtBase<JumpStatement> {
                            Optional<mem::Box<Expression>> expression) noexcept
         : StmtBase{start_token}, expression_{std::move(expression)} {}
 
-    MAKE_AST_COPY_MOVE(JumpStatement)
+    MAKE_MOVE_CONSTRUCTABLE_ONLY(JumpStatement)
 
     auto                      accept(Visitor& v) const -> void override;
     [[nodiscard]] static auto parse(syntax::Parser& parser)

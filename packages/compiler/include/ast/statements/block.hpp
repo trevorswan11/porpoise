@@ -21,7 +21,7 @@ class BlockStatement : public StmtBase<BlockStatement> {
     explicit BlockStatement(const syntax::Token& start_token, Statements statements) noexcept
         : StmtBase{start_token}, statements_{std::move(statements)} {}
 
-    MAKE_AST_COPY_MOVE(BlockStatement)
+    MAKE_MOVE_CONSTRUCTABLE_ONLY(BlockStatement)
 
     auto                      accept(Visitor& v) const -> void override;
     [[nodiscard]] static auto parse(syntax::Parser& parser)

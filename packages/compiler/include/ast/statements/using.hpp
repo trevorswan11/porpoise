@@ -19,7 +19,7 @@ class UsingStatement : public StmtBase<UsingStatement> {
                             ExplicitType&&                 type) noexcept;
     ~UsingStatement() override;
 
-    MAKE_AST_COPY_MOVE(UsingStatement)
+    MAKE_MOVE_CONSTRUCTABLE_ONLY(UsingStatement)
 
     auto                      accept(Visitor& v) const -> void override;
     [[nodiscard]] static auto parse(syntax::Parser& parser)

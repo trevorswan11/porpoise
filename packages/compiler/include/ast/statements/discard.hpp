@@ -17,7 +17,7 @@ class DiscardStatement : public StmtBase<DiscardStatement> {
                               mem::Box<Expression> discarded) noexcept
         : StmtBase{start_token}, discarded_{std::move(discarded)} {}
 
-    MAKE_AST_COPY_MOVE(DiscardStatement)
+    MAKE_MOVE_CONSTRUCTABLE_ONLY(DiscardStatement)
 
     auto                      accept(Visitor& v) const -> void override;
     [[nodiscard]] static auto parse(syntax::Parser& parser)

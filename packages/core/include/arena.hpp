@@ -17,7 +17,7 @@ class Arena {
 
   public:
     Arena() noexcept = default;
-    ~Arena() noexcept { clear(); }
+    ~Arena() { clear(); }
 
     Arena(const Arena&)                    = delete;
     auto operator=(const Arena&) -> Arena& = delete;

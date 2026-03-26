@@ -8,18 +8,17 @@
 
 namespace porpoise::sema {
 
+// All associated type lifetimes are tied to the pool
 class TypePool {
   public:
-    TypePool() noexcept  = default;
-    ~TypePool() noexcept = default;
+    TypePool() noexcept = default;
+    ~TypePool()         = default;
 
-    TypePool(const TypePool&)                    = delete;
-    auto operator=(const TypePool&) -> TypePool& = delete;
-    TypePool(TypePool&& other) noexcept          = default;
-    auto operator=(TypePool&&) -> TypePool&      = delete;
+    MAKE_MOVE_CONSTRUCTABLE_ONLY(TypePool)
 
     // Gets a type by its key or emplace's it into the internal cache
-    [[nodiscard]] auto get(const types::Key& key) -> Type&;
+    [[nodiscard]] auto get_or_emplace(const types::Key& key) -> Type&;
+    [[nodiscard]] auto get(const types::Key& key) -> Optional<Type&>;
 
   private:
     mem::Arena                                      arena_;

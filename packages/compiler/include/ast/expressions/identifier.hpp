@@ -19,7 +19,7 @@ class IdentifierExpression : public ExprBase<IdentifierExpression> {
     explicit IdentifierExpression(const syntax::Token& start_token) noexcept
         : ExprBase{start_token} {}
 
-    MAKE_AST_COPY_MOVE(IdentifierExpression)
+    MAKE_MOVE_CONSTRUCTABLE_ONLY(IdentifierExpression)
 
     auto                      accept(Visitor& v) const -> void override;
     [[nodiscard]] static auto parse(syntax::Parser& parser)

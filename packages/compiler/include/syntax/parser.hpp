@@ -106,7 +106,7 @@ class Parser {
     class Transaction {
       public:
         explicit Transaction(Parser& parser) noexcept : p_{parser}, checkpoint_{parser} {}
-        ~Transaction() noexcept {
+        ~Transaction() {
             if (!committed_) { p_.rollback(checkpoint_); }
         }
 

@@ -1,3 +1,4 @@
+#include <ranges>
 #include <type_traits>
 
 #include <fmt/format.h>
@@ -22,12 +23,13 @@ auto Symbol::is_equal(const Symbol& other) const noexcept -> bool {
                 return *v == *std::get<std::remove_cvref_t<decltype(v)>>(other.node_);
             },
             node_);
-    const auto types_eq = true; // TODO
+    const auto types_eq = optional::safe_eq<Type&>(
+        type_, other.type_, [](const Type& a, const Type& b) { return &a == &b; });
     return names_eq && nodes_eq && types_eq;
 }
 
 auto SymbolTable::insert(std::string_view name, SymbolicNode node)
-    -> Expected<std::monostate, SemaDiagnostic> {
+    -> Expected<std::monostate, Diagnostic> {
     // Reserved identifier use is impossible due to a parser invariant
     auto [it, inserted] = symbols_.try_emplace(name, name, node);
 
@@ -39,23 +41,23 @@ auto SymbolTable::insert(std::string_view name, SymbolicNode node)
                         it->second.match([](const auto& inner) {
                             return SourceInfo<syntax::Token>::get(inner->get_token());
                         })),
-            SemaError::IDENTIFIER_REDECLARATION,
+            Error::IDENTIFIER_REDECLARATION,
             std::visit([](const auto& inner) { return inner->get_token(); }, node));
     }
     return std::monostate{};
 }
 
 auto SymbolTableRegistry::insert_into(usize table_idx, std::string_view name, SymbolicNode node)
-    -> Expected<std::monostate, SemaDiagnostic> {
+    -> Expected<std::monostate, Diagnostic> {
     if (auto table = get_opt(table_idx)) { return table->insert(name, node); }
-    return make_sema_unexpected(SemaError::INVALID_TABLE_IDX);
+    return make_sema_unexpected(Error::INVALID_TABLE_IDX);
 }
 
 [[nodiscard]] auto SymbolTableRegistry::is_shadowing(const SymbolTableStack& stack,
                                                      std::string_view        name,
                                                      SymbolicNode            node) noexcept
-    -> Expected<std::monostate, SemaDiagnostic> {
-    for (const auto idx : stack) {
+    -> Expected<std::monostate, Diagnostic> {
+    for (const auto idx : stack | std::views::take(stack.size() - 1)) {
         if (const auto symbol = get(idx).get_opt(name)) {
             return make_sema_unexpected(
                 fmt::format("Attempt to shadow identifier '{}'. Previous declaration here: {}",
@@ -63,7 +65,7 @@ auto SymbolTableRegistry::insert_into(usize table_idx, std::string_view name, Sy
                             symbol->match([](const auto& inner) {
                                 return SourceInfo<syntax::Token>::get(inner->get_token());
                             })),
-                SemaError::SHADOWING_DECLARATION,
+                Error::SHADOWING_DECLARATION,
                 std::visit([](const auto& inner) { return inner->get_token(); }, node));
         }
     }

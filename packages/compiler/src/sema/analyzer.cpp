@@ -4,11 +4,11 @@
 
 namespace porpoise::sema {
 
-auto Analyzer::collect_symbols(ast::ASTView ast) -> usize {
+auto Analyzer::collect_symbols() -> usize {
     const auto      idx = registry_.create();
     SymbolCollector collector{idx, registry_, pool_, diagnostics_};
 
-    for (const auto& node : ast) {
+    for (const auto& node : tree_) {
         node->accept(collector);
         collector.pass_first();
     }

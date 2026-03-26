@@ -22,7 +22,7 @@ class StructExpression : public ExprBase<StructExpression> {
     explicit StructExpression(const syntax::Token& start_token, Members members) noexcept;
     ~StructExpression() override;
 
-    MAKE_AST_COPY_MOVE(StructExpression)
+    MAKE_MOVE_CONSTRUCTABLE_ONLY(StructExpression)
 
     auto                      accept(Visitor& v) const -> void override;
     [[nodiscard]] static auto parse(syntax::Parser& parser)

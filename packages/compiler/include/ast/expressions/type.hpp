@@ -25,7 +25,7 @@ class ExplicitArrayType {
                                mem::Box<ExplicitType>         inner_type) noexcept;
     ~ExplicitArrayType();
 
-    MAKE_AST_COPY_MOVE(ExplicitArrayType)
+    MAKE_MOVE_CONSTRUCTABLE_ONLY(ExplicitArrayType)
 
     MAKE_OPTIONAL_UNPACKER(dimension, Expression, dimension_, **)
     [[nodiscard]] auto is_null_terminated() const noexcept -> bool { return null_terminated_; }
@@ -52,7 +52,7 @@ class ExplicitType {
     explicit ExplicitType(TypeModifier modifier, ExplicitTypeVariant type) noexcept;
     ~ExplicitType();
 
-    MAKE_AST_COPY_MOVE(ExplicitType)
+    MAKE_MOVE_CONSTRUCTABLE_ONLY(ExplicitType)
 
     [[nodiscard]] static auto parse(syntax::Parser& parser)
         -> Expected<ExplicitType, syntax::ParserDiagnostic>;
@@ -80,7 +80,7 @@ class TypeExpression : public ExprBase<TypeExpression> {
     explicit TypeExpression(const syntax::Token& start_token, Optional<ExplicitType> exp) noexcept;
     ~TypeExpression() override;
 
-    MAKE_AST_COPY_MOVE(TypeExpression)
+    MAKE_MOVE_CONSTRUCTABLE_ONLY(TypeExpression)
 
     auto                      accept(Visitor& v) const -> void override;
     [[nodiscard]] static auto parse(syntax::Parser& parser)

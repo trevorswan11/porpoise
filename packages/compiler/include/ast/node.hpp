@@ -72,12 +72,6 @@ enum class NodeKind : u8 {
     USING_STATEMENT,
 };
 
-#define MAKE_AST_COPY_MOVE(NodeType)                      \
-    NodeType(const NodeType&)                  = delete;  \
-    auto operator=(const NodeType&)->NodeType& = delete;  \
-    NodeType(NodeType&&) noexcept              = default; \
-    auto operator=(NodeType&&)->NodeType&      = delete;
-
 class Node;
 
 // A type that can be anything in the Node inheritance hierarchy
@@ -95,7 +89,7 @@ class Node {
     Node()          = delete;
     virtual ~Node() = default;
 
-    MAKE_AST_COPY_MOVE(Node)
+    MAKE_MOVE_CONSTRUCTABLE_ONLY(Node)
 
     virtual auto accept(Visitor& v) const -> void = 0;
 
@@ -159,7 +153,7 @@ template <typename Derived, typename Base> class NodeBase : public Base {
 class Expression : public Node {
   protected:
     using Node::Node;
-    MAKE_AST_COPY_MOVE(Expression)
+    MAKE_MOVE_CONSTRUCTABLE_ONLY(Expression)
 
     virtual auto is_equal(const Node& other) const noexcept -> bool override = 0;
 };
@@ -172,7 +166,7 @@ template <typename Derived> class ExprBase : public NodeBase<Derived, Expression
 class Statement : public Node {
   protected:
     using Node::Node;
-    MAKE_AST_COPY_MOVE(Statement)
+    MAKE_MOVE_CONSTRUCTABLE_ONLY(Statement)
 
     virtual auto is_equal(const Node& other) const noexcept -> bool override = 0;
 };

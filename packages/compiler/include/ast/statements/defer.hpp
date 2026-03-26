@@ -16,7 +16,7 @@ class DeferStatement : public StmtBase<DeferStatement> {
     explicit DeferStatement(const syntax::Token& start_token, mem::Box<Statement> deferred) noexcept
         : StmtBase{start_token}, deferred_{std::move(deferred)} {}
 
-    MAKE_AST_COPY_MOVE(DeferStatement)
+    MAKE_MOVE_CONSTRUCTABLE_ONLY(DeferStatement)
 
     auto                      accept(Visitor& v) const -> void override;
     [[nodiscard]] static auto parse(syntax::Parser& parser)

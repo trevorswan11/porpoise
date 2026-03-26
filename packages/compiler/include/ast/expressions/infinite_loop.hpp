@@ -17,7 +17,7 @@ class InfiniteLoopExpression : public ExprBase<InfiniteLoopExpression> {
                                     mem::Box<BlockStatement> block) noexcept;
     ~InfiniteLoopExpression() override;
 
-    MAKE_AST_COPY_MOVE(InfiniteLoopExpression)
+    MAKE_MOVE_CONSTRUCTABLE_ONLY(InfiniteLoopExpression)
 
     auto                      accept(Visitor& v) const -> void override;
     [[nodiscard]] static auto parse(syntax::Parser& parser)

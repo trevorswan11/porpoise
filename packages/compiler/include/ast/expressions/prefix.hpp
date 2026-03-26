@@ -51,7 +51,7 @@ template <typename Derived> class PrefixExpression : public ExprBase<Derived> {
                                                   \
       public:                                     \
         using PrefixExpression::PrefixExpression; \
-        MAKE_AST_COPY_MOVE(Type)                  \
+        MAKE_MOVE_CONSTRUCTABLE_ONLY(Type)        \
                                                   \
         using PrefixExpression::parse;            \
     };

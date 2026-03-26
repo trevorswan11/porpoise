@@ -42,59 +42,31 @@ COLLECTOR_NOOP(TypeExpression)
 COLLECTOR_NOOP(WhileLoopExpression)
 
 auto SymbolCollector::visit(const ast::EnumExpression& enum_expr) -> void {
-    const auto new_idx    = registry_.create();
-    const auto parent_idx = table_idx_;
-    table_idx_            = new_idx;
-
-    const SymbolTableStack::Guard g{table_stack_, new_idx};
-    for (const auto& field : enum_expr) { visit(field); }
-
-    table_idx_ = parent_idx;
-    last_type_.emplace(pool_.get(types::Key(TypeKind::ENUM, false, new_idx)));
+    visit_scope(enum_expr, TypeKind::ENUM, [this](const auto& field) { visit(field); });
 }
 
 // This is assumed to be invoked only by the enum visitor
 auto SymbolCollector::visit(const ast::Enumeration& enumeration) -> void {
-    const auto name = enumeration.get_ident().get_name();
-    if (!try_result(registry_.is_shadowing(table_stack_, name, &enumeration))) { return; }
-    try_result(registry_.insert_into(table_idx_, name, &enumeration));
+    try_declare(enumeration.get_ident().get_name(), &enumeration);
 }
 
 auto SymbolCollector::visit(const ast::StructExpression& struct_expr) -> void {
-    const auto new_idx    = registry_.create();
-    const auto parent_idx = table_idx_;
-    table_idx_            = new_idx;
-
-    const SymbolTableStack::Guard g{table_stack_, new_idx};
-    for (const auto& field : struct_expr) { field->accept(*this); }
-
-    table_idx_ = parent_idx;
-    last_type_.emplace(pool_.get(types::Key(TypeKind::STRUCT, false, new_idx)));
+    visit_scope(struct_expr, TypeKind::STRUCT, [this](const auto& field) { field->accept(*this); });
 }
 
 auto SymbolCollector::visit(const ast::UnionExpression& union_expr) -> void {
-    const auto new_idx    = registry_.create();
-    const auto parent_idx = table_idx_;
-    table_idx_            = new_idx;
-
-    const SymbolTableStack::Guard g{table_stack_, new_idx};
-    for (const auto& field : union_expr) { visit(field); }
-
-    table_idx_ = parent_idx;
-    last_type_.emplace(pool_.get(types::Key(TypeKind::UNION, false, new_idx)));
+    visit_scope(union_expr, TypeKind::UNION, [this](const auto& field) { visit(field); });
 }
 
 // This is assumed to be invoked only by the union visitor
 auto SymbolCollector::visit(const ast::UnionField& field) -> void {
-    const auto name = field.get_ident().get_name();
-    if (!try_result(registry_.is_shadowing(table_stack_, name, &field))) { return; }
-    try_result(registry_.insert_into(table_idx_, name, &field));
+    try_declare(field.get_ident().get_name(), &field);
 }
 
 #define ILLEGAL_COLLECTOR_TOP_LEVEL(NodeType, stringified_node)                        \
     auto SymbolCollector::visit(const NodeType& node) -> void {                        \
         diagnostics_.emplace_back("Cannot have " stringified_node " at the top level", \
-                                  SemaError::ILLEGAL_TOP_LEVEL_STATEMENT,              \
+                                  Error::ILLEGAL_TOP_LEVEL_STATEMENT,                  \
                                   node.get_token());                                   \
     }
 
@@ -103,17 +75,16 @@ ILLEGAL_COLLECTOR_TOP_LEVEL(ast::BlockStatement, "block")
 auto SymbolCollector::visit(const ast::DeclStatement& decl) -> void {
     // Only move on to value inspection is the node
     const auto name = decl.get_ident().get_name();
-    if (!try_result(registry_.is_shadowing(table_stack_, name, &decl))) { return; }
-    if (!try_result(registry_.insert_into(table_idx_, decl.get_ident().get_name(), &decl))) {
-        return;
-    }
+    if (!try_declare(name, &decl)) { return; }
+
+    auto& symbol = registry_.get_from(table_idx_, name);
+    if (decl.has_modifier(ast::DeclModifiers::PUBLIC)) { symbol.mark_public(); }
 
     // Attach bubbled types to the symbol just created
     if (decl.has_value()) {
         decl.get_value().accept(*this);
 
         if (last_type_) {
-            const auto& symbol = registry_.get(table_idx_).get(name);
             symbol.emplace_type(*last_type_);
             last_type_.reset();
         }
@@ -125,13 +96,7 @@ ILLEGAL_COLLECTOR_TOP_LEVEL(ast::DiscardStatement, "discard")
 ILLEGAL_COLLECTOR_TOP_LEVEL(ast::ExpressionStatement, "expression")
 
 auto SymbolCollector::visit(const ast::ImportStatement& import_stmt) -> void {
-    if (table_stack_.size() > 1) {
-        diagnostics_.emplace_back("Imports are only allowed at the top level",
-                                  SemaError::ILLEGAL_IMPORT_LOCATION,
-                                  import_stmt.get_token());
-        return;
-    }
-
+    assert(table_stack_.size() == 1 && "Import not at top level");
     if (registry_.get(table_idx_).is_module()) { import_stmt.mark_public(); }
     const auto name = import_stmt.match(Overloaded{
         [](const ast::LibraryImport& module) {
@@ -151,21 +116,18 @@ auto SymbolCollector::visit(const ast::ModuleStatement& module_stmt) -> void {
         table.indicate_module();
     } else if (table.is_module()) {
         diagnostics_.emplace_back("Only one module statement is allowed per file",
-                                  SemaError::DUPLICATE_MODULE_STATEMENT,
+                                  Error::DUPLICATE_MODULE_STATEMENT,
                                   module_stmt.get_token());
     } else {
         diagnostics_.emplace_back("Module indicator must be first statement of file",
-                                  SemaError::ILLEGAL_MODULE_STATEMENT_LOCATION,
+                                  Error::ILLEGAL_MODULE_STATEMENT_LOCATION,
                                   module_stmt.get_token());
     }
 }
 
 auto SymbolCollector::visit(const ast::UsingStatement& using_stmt) -> void {
     if (registry_.get(table_idx_).is_module()) { using_stmt.mark_public(); }
-    if (!try_result(
-            registry_.insert_into(table_idx_, using_stmt.get_alias().get_name(), &using_stmt))) {
-        return;
-    }
+    try_declare(using_stmt.get_alias().get_name(), &using_stmt);
 }
 
 } // namespace porpoise::sema

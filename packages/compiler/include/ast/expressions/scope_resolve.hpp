@@ -18,7 +18,7 @@ class ScopeResolutionExpression : public ExprBase<ScopeResolutionExpression> {
                                        mem::Box<IdentifierExpression> inner) noexcept;
     ~ScopeResolutionExpression() override;
 
-    MAKE_AST_COPY_MOVE(ScopeResolutionExpression)
+    MAKE_MOVE_CONSTRUCTABLE_ONLY(ScopeResolutionExpression)
 
     auto                      accept(Visitor& v) const -> void override;
     [[nodiscard]] static auto parse(syntax::Parser& parser, mem::Box<Expression> outer)

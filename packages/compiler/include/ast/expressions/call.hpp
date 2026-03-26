@@ -18,7 +18,7 @@ class CallArgument {
     explicit CallArgument(ExplicitType&& argument) noexcept;
     ~CallArgument();
 
-    MAKE_AST_COPY_MOVE(CallArgument)
+    MAKE_MOVE_CONSTRUCTABLE_ONLY(CallArgument)
 
     MAKE_VARIANT_UNPACKER(expression, Expression, mem::Box<Expression>, argument_, *std::get)
     MAKE_VARIANT_UNPACKER(type, ExplicitType, ExplicitType, argument_, std::get)
@@ -39,7 +39,7 @@ class CallExpression : public ExprBase<CallExpression> {
                             std::vector<CallArgument> arguments) noexcept;
     ~CallExpression() override;
 
-    MAKE_AST_COPY_MOVE(CallExpression)
+    MAKE_MOVE_CONSTRUCTABLE_ONLY(CallExpression)
 
     auto                      accept(Visitor& v) const -> void override;
     [[nodiscard]] static auto parse(syntax::Parser& parser, mem::Box<Expression> function)

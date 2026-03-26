@@ -18,7 +18,7 @@ class DoWhileLoopExpression : public ExprBase<DoWhileLoopExpression> {
                                    mem::Box<Expression>     condition) noexcept;
     ~DoWhileLoopExpression() override;
 
-    MAKE_AST_COPY_MOVE(DoWhileLoopExpression)
+    MAKE_MOVE_CONSTRUCTABLE_ONLY(DoWhileLoopExpression)
 
     auto                      accept(Visitor& v) const -> void override;
     [[nodiscard]] static auto parse(syntax::Parser& parser)

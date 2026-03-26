@@ -17,7 +17,7 @@ class ExpressionStatement : public StmtBase<ExpressionStatement> {
                                  mem::Box<Expression> expression) noexcept
         : StmtBase{start_token}, expression_{std::move(expression)} {}
 
-    MAKE_AST_COPY_MOVE(ExpressionStatement)
+    MAKE_MOVE_CONSTRUCTABLE_ONLY(ExpressionStatement)
 
     auto                      accept(Visitor& v) const -> void override;
     [[nodiscard]] static auto parse(syntax::Parser& parser)

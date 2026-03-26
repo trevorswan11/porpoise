@@ -21,7 +21,7 @@ class ArrayExpression : public ExprBase<ArrayExpression> {
                              std::vector<mem::Box<Expression>> items) noexcept;
     ~ArrayExpression() override;
 
-    MAKE_AST_COPY_MOVE(ArrayExpression)
+    MAKE_MOVE_CONSTRUCTABLE_ONLY(ArrayExpression)
 
     auto                      accept(Visitor& v) const -> void override;
     [[nodiscard]] static auto parse(syntax::Parser& parser)

@@ -1,16 +1,13 @@
+// I hate that this exists, made with the help of Gemini because microslop
 #ifdef _WIN32
 #    include <atomic>
 #    include <windows.h>
-#endif
 
-#include "platform/win32.hpp"
-#include "types.hpp"
+#    include "platform/win32.hpp"
+#    include "types.hpp"
 
 namespace porpoise::cli::win32 {
 
-// I hate that this exists, made with the help of Gemini because microslop
-
-#ifdef _WIN32
 static std::atomic<i32> REF_COUNT{0};
 static UINT             ORIGINAL_CODE_PAGE   = 0;
 static DWORD            ORIGINAL_STDOUT_MODE = 0;
@@ -32,7 +29,7 @@ RichConsole::RichConsole() noexcept {
     }
 }
 
-RichConsole::~RichConsole() noexcept {
+RichConsole::~RichConsole() {
     if (REF_COUNT.fetch_sub(1) != 1) { return; }
     SetConsoleOutputCP(ORIGINAL_CODE_PAGE);
 
@@ -45,6 +42,6 @@ RichConsole::~RichConsole() noexcept {
     }
 }
 
-#endif
-
 } // namespace porpoise::cli::win32
+
+#endif
