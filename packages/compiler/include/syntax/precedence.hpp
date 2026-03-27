@@ -2,7 +2,6 @@
 
 #include <algorithm>
 #include <array>
-#include <utility>
 
 #include "syntax/token.hpp"
 
@@ -13,22 +12,26 @@ namespace porpoise::syntax {
 
 enum class Precedence : u8 {
     LOWEST,
-    BOOL_AND_OR,
-    BOOL_EQUIV,
-    BOOL_LT_GT,
-    ADD_SUB,
-    MUL_DIV,
-    EXPONENT,
-    PREFIX,
-    RANGE,
-    ASSIGNMENT,
-    SCOPE_RESOLUTION,
-    GROUP_CALL_IDX,
+    ASSIGNMENT       = 10,
+    BOOL_AND_OR      = 20,
+    BOOL_EQUIV       = 30,
+    BOOL_LT_GT       = 40,
+    ADD_SUB          = 50,
+    MUL_DIV          = 60,
+    EXPONENT         = 70,
+    PREFIX           = 80,
+    RANGE            = 90,
+    SCOPE_RESOLUTION = 100,
+    GROUP_CALL_IDX   = 110,
 };
 
-using Binding = std::pair<TokenType, Precedence>;
+struct Binding {
+    TokenType  type;
+    Precedence precedence;
+    bool       right_assoc{false};
+};
 
-constexpr auto ALL_BINDINGS = []() {
+constexpr auto ALL_BINDINGS = [] {
     auto all_bindings = std::to_array<Binding>({
         {TokenType::PLUS, Precedence::ADD_SUB},
         {TokenType::MINUS, Precedence::ADD_SUB},
@@ -52,29 +55,29 @@ constexpr auto ALL_BINDINGS = []() {
         {TokenType::LBRACKET, Precedence::GROUP_CALL_IDX},
         {TokenType::DOT_DOT, Precedence::RANGE},
         {TokenType::DOT_DOT_EQ, Precedence::RANGE},
-        {TokenType::ASSIGN, Precedence::ASSIGNMENT},
-        {TokenType::PLUS_ASSIGN, Precedence::ASSIGNMENT},
-        {TokenType::MINUS_ASSIGN, Precedence::ASSIGNMENT},
-        {TokenType::STAR_ASSIGN, Precedence::ASSIGNMENT},
-        {TokenType::SLASH_ASSIGN, Precedence::ASSIGNMENT},
-        {TokenType::PERCENT_ASSIGN, Precedence::ASSIGNMENT},
-        {TokenType::BW_AND_ASSIGN, Precedence::ASSIGNMENT},
-        {TokenType::BW_OR_ASSIGN, Precedence::ASSIGNMENT},
-        {TokenType::SHL_ASSIGN, Precedence::ASSIGNMENT},
-        {TokenType::SHR_ASSIGN, Precedence::ASSIGNMENT},
-        {TokenType::NOT_ASSIGN, Precedence::ASSIGNMENT},
-        {TokenType::XOR_ASSIGN, Precedence::ASSIGNMENT},
+        {TokenType::ASSIGN, Precedence::ASSIGNMENT, true},
+        {TokenType::PLUS_ASSIGN, Precedence::ASSIGNMENT, true},
+        {TokenType::MINUS_ASSIGN, Precedence::ASSIGNMENT, true},
+        {TokenType::STAR_ASSIGN, Precedence::ASSIGNMENT, true},
+        {TokenType::SLASH_ASSIGN, Precedence::ASSIGNMENT, true},
+        {TokenType::PERCENT_ASSIGN, Precedence::ASSIGNMENT, true},
+        {TokenType::BW_AND_ASSIGN, Precedence::ASSIGNMENT, true},
+        {TokenType::BW_OR_ASSIGN, Precedence::ASSIGNMENT, true},
+        {TokenType::SHL_ASSIGN, Precedence::ASSIGNMENT, true},
+        {TokenType::SHR_ASSIGN, Precedence::ASSIGNMENT, true},
+        {TokenType::NOT_ASSIGN, Precedence::ASSIGNMENT, true},
+        {TokenType::XOR_ASSIGN, Precedence::ASSIGNMENT, true},
         {TokenType::DOT, Precedence::SCOPE_RESOLUTION},
         {TokenType::COLON_COLON, Precedence::SCOPE_RESOLUTION},
     });
 
-    std::ranges::sort(all_bindings, {}, &Binding::first);
+    std::ranges::sort(all_bindings, {}, &Binding::type);
     return all_bindings;
 }();
 
 constexpr auto get_binding(TokenType tt) noexcept -> Optional<Binding> {
-    const auto it = std::ranges::lower_bound(ALL_BINDINGS, tt, {}, &Binding::first);
-    if (it == ALL_BINDINGS.end() || it->first != tt) { return std::nullopt; }
+    const auto it = std::ranges::lower_bound(ALL_BINDINGS, tt, {}, &Binding::type);
+    if (it == ALL_BINDINGS.end() || it->type != tt) { return std::nullopt; }
     return Optional<Binding>{*it};
 }
 

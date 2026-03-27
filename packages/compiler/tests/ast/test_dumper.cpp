@@ -19,7 +19,7 @@ constexpr std::string_view input{R"(
     import std;
     import "ast/node.p" as node;
     _ = enum { RED };
-    comptime SIZE := 2uz;
+    constexpr SIZE := 2uz;
     { a; b; 2; c; };
     while (true) : (i += 1) {a;} else return b;
     var f_ptr: *fn(&a, b: *mut B): &[0x2uz][N]*E;

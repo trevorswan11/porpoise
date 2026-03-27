@@ -16,13 +16,13 @@ class IdentifierExpression;
 class TypeExpression;
 
 enum class DeclModifiers : u8 {
-    VARIABLE = 1 << 0,
-    CONSTANT = 1 << 1,
-    COMPTIME = 1 << 2,
-    PUBLIC   = 1 << 3,
-    EXTERN   = 1 << 4,
-    EXPORT   = 1 << 5,
-    STATIC   = 1 << 6,
+    VARIABLE  = 1 << 0,
+    CONSTANT  = 1 << 1,
+    CONSTEXPR = 1 << 2,
+    PUBLIC    = 1 << 3,
+    EXTERN    = 1 << 4,
+    EXPORT    = 1 << 5,
+    STATIC    = 1 << 6,
 };
 
 constexpr auto operator|(DeclModifiers lhs, DeclModifiers rhs) -> DeclModifiers {
@@ -82,7 +82,7 @@ class DeclStatement : public StmtBase<DeclStatement> {
     static constexpr auto LEGAL_MODIFIERS = std::to_array<ModifierMapping>({
         {syntax::TokenType::VAR, DeclModifiers::VARIABLE},
         {syntax::TokenType::CONST, DeclModifiers::CONSTANT},
-        {syntax::TokenType::COMPTIME, DeclModifiers::COMPTIME},
+        {syntax::TokenType::CONSTEXPR, DeclModifiers::CONSTEXPR},
         {syntax::TokenType::PUBLIC, DeclModifiers::PUBLIC},
         {syntax::TokenType::EXTERN, DeclModifiers::EXTERN},
         {syntax::TokenType::EXPORT, DeclModifiers::EXPORT},
@@ -93,18 +93,18 @@ class DeclStatement : public StmtBase<DeclStatement> {
         // Exactly one mutability flag must be set
         const auto valid_mut = std::popcount(std::to_underlying(
                                    modifiers & (DeclModifiers::VARIABLE | DeclModifiers::CONSTANT |
-                                                DeclModifiers::COMPTIME))) == 1;
+                                                DeclModifiers::CONSTEXPR))) == 1;
 
         // Comptime values cannot be known at link time, obviously
-        const auto valid_comptime =
+        const auto valid_constexpr =
             std::popcount(std::to_underlying(
-                modifiers & (DeclModifiers::EXTERN | DeclModifiers::COMPTIME))) <= 1;
+                modifiers & (DeclModifiers::EXTERN | DeclModifiers::CONSTEXPR))) <= 1;
 
         // At most one ABI flag can be set
         const auto valid_abi =
             std::popcount(std::to_underlying(modifiers &
                                              (DeclModifiers::EXTERN | DeclModifiers::EXPORT))) <= 1;
-        return valid_mut && valid_comptime && valid_abi;
+        return valid_mut && valid_constexpr && valid_abi;
     }
 
     static constexpr auto token_to_modifier(const syntax::Token& tok) -> Optional<DeclModifiers> {

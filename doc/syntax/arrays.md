@@ -1,7 +1,7 @@
 # Arrays
 ## Declarations
 - Arrays are defined with 3 key components
-    - A size: This must be an underscore (signifying inferred size), a compile time constant (denoted with `comptime`), or a usize integer literal (suffix `uz`)
+    - A size: This must be an underscore (signifying inferred size), a compile time constant (denoted with `constexpr`), or a usize integer literal (suffix `uz`)
     - A type: This can be any valid type, but it must be present and cannot be inferred
     - Items: These items must be of the type specified, and must match the provided size if provided
 - Arrays are immutably sized, though internal elements can be mutable based on the provided type

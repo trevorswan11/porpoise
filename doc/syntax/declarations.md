@@ -26,10 +26,10 @@ var e: []byte;         // Allowed, e is forward declared and future assignments 
 - A mutable reference cannot be taken from a constant
 
 ## Compile-time Constants
-- Compile-time-known constants are declared with the `comptime` keyword
-- In most cases, `comptime` values behave identically to `const` constants
-    - The only difference is that `comptime` values can be used as array sizes, assuming their underlying type is `usize`
-- A `comptime` declaration can not be declared `extern`
+- Compile-time-known constants are declared with the `constexpr` keyword
+- In most cases, `constexpr` values behave identically to `const` constants
+    - The only difference is that `constexpr` values can be used as array sizes, assuming their underlying type is `usize`
+- A `constexpr` declaration can not be declared `extern`
 
 ## Variables
 - Variables are declared with the `var keyword
@@ -57,5 +57,15 @@ pub var c := 2;         // Allowed, symbol can be imported
 extern const a: int;    // Allowed, externs must be explicitly typed without values
 export var b := 1;      // Allowed
 static var c := 33;     // Illegal, cannot use static on a non-struct member
-extern comptime a: int; // Illegal, inherently contradictory
+extern constexpr a: int; // Illegal, inherently contradictory
 ```
+
+## Assignment
+- Non-const declarations can be reassigned
+- Re-assignment is right associative, meaning that you can chain assignment expressions:
+```porpoise
+var a: int = 2;
+var b: int = 5;
+a = (b = 6);
+```
+- This works because an assignment returns the assigned value

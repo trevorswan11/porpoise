@@ -64,7 +64,7 @@ constexpr Operator NULL_TERMINATED{":0", TokenType::NULL_TERMINATED};
 
 } // namespace operators
 
-constexpr auto ALL_OPERATORS = []() {
+constexpr auto ALL_OPERATORS = [] {
     auto all_operators = std::array{
         operators::ASSIGN,
         operators::WALRUS,

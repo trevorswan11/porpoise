@@ -52,7 +52,7 @@ auto DeclStatement::parse(syntax::Parser& parser)
         }
     } else if ((modifiers_has(modifiers, DeclModifiers::CONSTANT) &&
                 !modifiers_has(modifiers, DeclModifiers::EXTERN)) ||
-               modifiers_has(modifiers, DeclModifiers::COMPTIME)) {
+               modifiers_has(modifiers, DeclModifiers::CONSTEXPR)) {
         // Constant decls must be declared with a value unless they are extern
         return make_parser_unexpected(syntax::ParserError::CONST_DECL_MISSING_VALUE, start_token);
     }
