@@ -16,16 +16,14 @@
 
 namespace porpoise::syntax {
 
-syntax::Parser::Checkpoint::Checkpoint(const syntax::Parser& parser) noexcept
+Parser::Checkpoint::Checkpoint(const Parser& parser) noexcept
     : snapshot_{parser.lexer_}, current_{parser.current_token_}, peek_{parser.peek_token_} {}
 
-auto syntax::Parser::reset(std::string_view input) noexcept -> void {
-    *this = syntax::Parser{input};
-}
+auto Parser::reset(std::string_view input) noexcept -> void { *this = Parser{input}; }
 
-auto syntax::Parser::advance(u8 times) noexcept -> const syntax::Token& {
+auto Parser::advance(u8 times) noexcept -> const Token& {
     for (u8 i = 0; i < times; ++i) {
-        if (current_token_.type == syntax::TokenType::END &&
+        if (current_token_.type == TokenType::END &&
             (input_.empty() && current_token_.is_at_start())) {
             break;
         }
@@ -36,19 +34,19 @@ auto syntax::Parser::advance(u8 times) noexcept -> const syntax::Token& {
     return current_token_;
 }
 
-auto syntax::Parser::consume() -> std::pair<ast::AST, Diagnostics> {
+auto Parser::consume() -> std::pair<ast::AST, Diagnostics> {
     reset(input_);
     ast::AST    ast;
     Diagnostics diagnostics;
 
-    while (!current_token_is(syntax::TokenType::END)) {
+    while (!current_token_is(TokenType::END)) {
         // Advance through any amount of semicolons
-        const auto skip = [](syntax::TokenType tt) { return tt == syntax::TokenType::SEMICOLON; };
+        const auto skip = [](TokenType tt) { return tt == TokenType::SEMICOLON; };
         if (skip(current_token_.type)) { while (skip(advance().type)); }
-        if (current_token_is(syntax::TokenType::END)) { break; }
+        if (current_token_is(TokenType::END)) { break; }
 
         // Comments are entirely discarded from the tree
-        if (!current_token_is(syntax::TokenType::COMMENT)) {
+        if (!current_token_is(TokenType::COMMENT)) {
             auto stmt = parse_statement();
             if (stmt) {
                 ast.emplace_back(std::move(*stmt));
@@ -56,12 +54,12 @@ auto syntax::Parser::consume() -> std::pair<ast::AST, Diagnostics> {
                 diagnostics.emplace_back(std::move(stmt.error()));
 
                 // Errors should advance up to next logical end to prevent useless errors
-                const auto stop_condition = [](syntax::TokenType tt) {
+                const auto stop_condition = [](TokenType tt) {
                     switch (tt) {
-                    case syntax::TokenType::RBRACE:
-                    case syntax::TokenType::SEMICOLON:
-                    case syntax::TokenType::END:       return true;
-                    default:                           return false;
+                    case TokenType::RBRACE:
+                    case TokenType::SEMICOLON:
+                    case TokenType::END:       return true;
+                    default:                   return false;
                     }
                 };
                 while (!stop_condition(advance().type));
@@ -73,8 +71,7 @@ auto syntax::Parser::consume() -> std::pair<ast::AST, Diagnostics> {
     return {std::move(ast), std::move(diagnostics)};
 }
 
-auto syntax::Parser::expect_peek(syntax::TokenType expected)
-    -> Expected<std::monostate, syntax::ParserDiagnostic> {
+auto Parser::expect_peek(TokenType expected) -> Expected<std::monostate, ParserDiagnostic> {
     if (peek_token_is(expected)) {
         advance();
         return {};
@@ -82,44 +79,47 @@ auto syntax::Parser::expect_peek(syntax::TokenType expected)
     return Unexpected{peek_error(expected)};
 }
 
-auto syntax::Parser::poll_current_precedence() const noexcept -> Precedence {
+auto Parser::poll_current_precedence() const noexcept -> std::pair<Precedence, Optional<Binding>> {
     return get_binding(current_token_.type)
-        .transform([](const auto& binding) { return binding.second; })
-        .value_or(Precedence::LOWEST);
+        .transform([](const auto& binding) {
+            return std::pair{binding.precedence, Optional<Binding>{binding}};
+        })
+        .value_or(std::pair{Precedence::LOWEST, std::nullopt});
 }
 
-auto syntax::Parser::poll_peek_precedence() const noexcept -> Precedence {
+auto Parser::poll_peek_precedence() const noexcept -> std::pair<Precedence, Optional<Binding>> {
     return get_binding(peek_token_.type)
-        .transform([](const auto& binding) { return binding.second; })
-        .value_or(Precedence::LOWEST);
+        .transform([](const auto& binding) {
+            return std::pair{binding.precedence, Optional<Binding>{binding}};
+        })
+        .value_or(std::pair{Precedence::LOWEST, std::nullopt});
 }
 
-auto syntax::Parser::parse_statement()
-    -> Expected<mem::Box<ast::Statement>, syntax::ParserDiagnostic> {
+auto Parser::parse_statement() -> Expected<mem::Box<ast::Statement>, ParserDiagnostic> {
     switch (current_token_.type) {
-    case syntax::TokenType::VAR:
-    case syntax::TokenType::CONST:
-    case syntax::TokenType::COMPTIME:
-    case syntax::TokenType::PUBLIC:
-    case syntax::TokenType::EXTERN:
-    case syntax::TokenType::EXPORT:     return ast::DeclStatement::parse(*this);
-    case syntax::TokenType::BREAK:
-    case syntax::TokenType::RETURN:
-    case syntax::TokenType::CONTINUE:   return ast::JumpStatement::parse(*this);
-    case syntax::TokenType::DEFER:      return ast::DeferStatement::parse(*this);
-    case syntax::TokenType::IMPORT:     return ast::ImportStatement::parse(*this);
-    case syntax::TokenType::LBRACE:     return ast::BlockStatement::parse(*this);
-    case syntax::TokenType::UNDERSCORE: return ast::DiscardStatement::parse(*this);
-    case syntax::TokenType::MODULE:     return ast::ModuleStatement::parse(*this);
-    case syntax::TokenType::USING:      return ast::UsingStatement::parse(*this);
-    default:                            return ast::ExpressionStatement::parse(*this);
+    case TokenType::VAR:
+    case TokenType::CONST:
+    case TokenType::CONSTEXPR:
+    case TokenType::PUBLIC:
+    case TokenType::EXTERN:
+    case TokenType::EXPORT:     return ast::DeclStatement::parse(*this);
+    case TokenType::BREAK:
+    case TokenType::RETURN:
+    case TokenType::CONTINUE:   return ast::JumpStatement::parse(*this);
+    case TokenType::DEFER:      return ast::DeferStatement::parse(*this);
+    case TokenType::IMPORT:     return ast::ImportStatement::parse(*this);
+    case TokenType::LBRACE:     return ast::BlockStatement::parse(*this);
+    case TokenType::UNDERSCORE: return ast::DiscardStatement::parse(*this);
+    case TokenType::MODULE:     return ast::ModuleStatement::parse(*this);
+    case TokenType::USING:      return ast::UsingStatement::parse(*this);
+    default:                    return ast::ExpressionStatement::parse(*this);
     }
 }
 
-auto syntax::Parser::parse_expression(Precedence precedence)
-    -> Expected<mem::Box<ast::Expression>, syntax::ParserDiagnostic> {
-    if (current_token_is(syntax::TokenType::END)) {
-        return make_parser_unexpected(syntax::ParserError::END_OF_TOKEN_STREAM, current_token_);
+auto Parser::parse_expression(Precedence precedence)
+    -> Expected<mem::Box<ast::Expression>, ParserDiagnostic> {
+    if (current_token_is(TokenType::END)) {
+        return make_parser_unexpected(ParserError::END_OF_TOKEN_STREAM, current_token_);
     }
 
     const auto& prefix = poll_prefix_fn(current_token_.type);
@@ -127,12 +127,12 @@ auto syntax::Parser::parse_expression(Precedence precedence)
         return make_parser_unexpected(fmt::format("No prefix parse function for {}({}) found",
                                                   magic_enum::enum_name(current_token_.type),
                                                   current_token_.slice),
-                                      syntax::ParserError::MISSING_PREFIX_PARSER,
+                                      ParserError::MISSING_PREFIX_PARSER,
                                       current_token_);
     }
     auto lhs_expression = TRY((*prefix)(*this));
 
-    while (!peek_token_is(syntax::TokenType::SEMICOLON) && precedence < poll_peek_precedence()) {
+    while (!peek_token_is(TokenType::SEMICOLON) && precedence < poll_peek_precedence().first) {
         const auto& infix = poll_infix_fn(peek_token_.type);
         if (!infix) { break; }
         advance();
@@ -142,8 +142,8 @@ auto syntax::Parser::parse_expression(Precedence precedence)
     return lhs_expression;
 }
 
-[[nodiscard]] auto syntax::Parser::parse_restricted_statement(syntax::ParserError error)
-    -> Expected<mem::Box<ast::Statement>, syntax::ParserDiagnostic> {
+[[nodiscard]] auto Parser::parse_restricted_statement(ParserError error)
+    -> Expected<mem::Box<ast::Statement>, ParserDiagnostic> {
     using namespace ast;
     auto clause = TRY(parse_statement());
 
@@ -154,9 +154,9 @@ auto syntax::Parser::parse_expression(Precedence precedence)
     return clause;
 }
 
-[[nodiscard]] auto syntax::Parser::try_parse_restricted_alternate(syntax::ParserError error)
-    -> Expected<Optional<mem::Box<ast::Statement>>, syntax::ParserDiagnostic> {
-    if (peek_token_is(syntax::TokenType::ELSE)) {
+[[nodiscard]] auto Parser::try_parse_restricted_alternate(ParserError error)
+    -> Expected<Optional<mem::Box<ast::Statement>>, ParserDiagnostic> {
+    if (peek_token_is(TokenType::ELSE)) {
         // Advance twice to actually look at the statement's first token
         advance(2);
         return TRY(parse_restricted_statement(error));
@@ -164,48 +164,48 @@ auto syntax::Parser::parse_expression(Precedence precedence)
     return std::nullopt;
 }
 
-using PrefixPair          = std::pair<syntax::TokenType, syntax::Parser::PrefixFn>;
-constexpr auto PREFIX_FNS = []() {
+using PrefixPair          = std::pair<TokenType, Parser::PrefixFn>;
+constexpr auto PREFIX_FNS = [] {
     constexpr auto initial_prefixes = std::to_array<PrefixPair>({
-        {syntax::TokenType::IDENT, ast::IdentifierExpression::parse},
-        {syntax::TokenType::BYTE, ast::ByteExpression::parse},
-        {syntax::TokenType::FLOAT, ast::FloatExpression::parse},
-        {syntax::TokenType::DOUBLE, ast::DoubleExpression::parse},
-        {syntax::TokenType::BANG, ast::UnaryExpression::parse},
-        {syntax::TokenType::NOT, ast::UnaryExpression::parse},
-        {syntax::TokenType::MINUS, ast::UnaryExpression::parse},
-        {syntax::TokenType::PLUS, ast::UnaryExpression::parse},
-        {syntax::TokenType::STAR, ast::DereferenceExpression::parse},
-        {syntax::TokenType::BW_AND, ast::ReferenceExpression::parse},
-        {syntax::TokenType::AND_MUT, ast::ReferenceExpression::parse},
-        {syntax::TokenType::DOT, ast::ImplicitAccessExpression::parse},
-        {syntax::TokenType::TRUE, ast::BoolExpression::parse},
-        {syntax::TokenType::FALSE, ast::BoolExpression::parse},
-        {syntax::TokenType::STRING, ast::StringExpression::parse},
-        {syntax::TokenType::MULTILINE_STRING, ast::StringExpression::parse},
-        {syntax::TokenType::LPAREN, ast::GroupedExpression::parse},
-        {syntax::TokenType::IF, ast::IfExpression::parse},
-        {syntax::TokenType::FUNCTION, ast::FunctionExpression::parse},
-        {syntax::TokenType::PACKED, ast::StructExpression::parse},
-        {syntax::TokenType::STRUCT, ast::StructExpression::parse},
-        {syntax::TokenType::UNION, ast::UnionExpression::parse},
-        {syntax::TokenType::ENUM, ast::EnumExpression::parse},
-        {syntax::TokenType::MATCH, ast::MatchExpression::parse},
-        {syntax::TokenType::LBRACKET, ast::ArrayExpression::parse},
-        {syntax::TokenType::FOR, ast::ForLoopExpression::parse},
-        {syntax::TokenType::WHILE, ast::WhileLoopExpression::parse},
-        {syntax::TokenType::DO, ast::DoWhileLoopExpression::parse},
-        {syntax::TokenType::LOOP, ast::InfiniteLoopExpression::parse},
+        {TokenType::IDENT, ast::IdentifierExpression::parse},
+        {TokenType::BYTE, ast::ByteExpression::parse},
+        {TokenType::FLOAT, ast::FloatExpression::parse},
+        {TokenType::DOUBLE, ast::DoubleExpression::parse},
+        {TokenType::BANG, ast::UnaryExpression::parse},
+        {TokenType::NOT, ast::UnaryExpression::parse},
+        {TokenType::MINUS, ast::UnaryExpression::parse},
+        {TokenType::PLUS, ast::UnaryExpression::parse},
+        {TokenType::STAR, ast::DereferenceExpression::parse},
+        {TokenType::BW_AND, ast::ReferenceExpression::parse},
+        {TokenType::AND_MUT, ast::ReferenceExpression::parse},
+        {TokenType::DOT, ast::ImplicitAccessExpression::parse},
+        {TokenType::TRUE, ast::BoolExpression::parse},
+        {TokenType::FALSE, ast::BoolExpression::parse},
+        {TokenType::STRING, ast::StringExpression::parse},
+        {TokenType::MULTILINE_STRING, ast::StringExpression::parse},
+        {TokenType::LPAREN, ast::GroupedExpression::parse},
+        {TokenType::IF, ast::IfExpression::parse},
+        {TokenType::FUNCTION, ast::FunctionExpression::parse},
+        {TokenType::PACKED, ast::StructExpression::parse},
+        {TokenType::STRUCT, ast::StructExpression::parse},
+        {TokenType::UNION, ast::UnionExpression::parse},
+        {TokenType::ENUM, ast::EnumExpression::parse},
+        {TokenType::MATCH, ast::MatchExpression::parse},
+        {TokenType::LBRACKET, ast::ArrayExpression::parse},
+        {TokenType::FOR, ast::ForLoopExpression::parse},
+        {TokenType::WHILE, ast::WhileLoopExpression::parse},
+        {TokenType::DO, ast::DoWhileLoopExpression::parse},
+        {TokenType::LOOP, ast::InfiniteLoopExpression::parse},
     });
 
-    constexpr auto total_ints = static_cast<usize>(syntax::TokenType::UZINT_16) -
-                                static_cast<usize>(syntax::TokenType::INT_2) + 1;
+    constexpr auto total_ints =
+        static_cast<usize>(TokenType::UZINT_16) - static_cast<usize>(TokenType::INT_2) + 1;
     std::array<PrefixPair, total_ints> int_prefixes;
     usize                              cursor = 0;
-    for (auto i = std::to_underlying(syntax::TokenType::INT_2);
-         i <= std::to_underlying(syntax::TokenType::UZINT_16);
+    for (auto i = std::to_underlying(TokenType::INT_2);
+         i <= std::to_underlying(TokenType::UZINT_16);
          ++i, ++cursor) {
-        const auto tt = static_cast<syntax::TokenType>(i);
+        const auto tt = static_cast<TokenType>(i);
         using namespace token_type;
         switch (to_int_category(tt)) {
         case IntegerCategory::SIGNED_BASE:
@@ -230,7 +230,7 @@ constexpr auto PREFIX_FNS = []() {
     }
 
     constexpr auto primitive_prefixes =
-        ALL_PRIMITIVES | std::views::transform([](syntax::TokenType tt) -> PrefixPair {
+        ALL_PRIMITIVES | std::views::transform([](TokenType tt) -> PrefixPair {
             return {tt, ast::IdentifierExpression::parse};
         });
 
@@ -251,72 +251,69 @@ constexpr auto PREFIX_FNS = []() {
     return prefix_fns;
 }();
 
-constexpr auto syntax::Parser::poll_prefix_fn(syntax::TokenType tt) noexcept
-    -> Optional<const PrefixFn&> {
+constexpr auto Parser::poll_prefix_fn(TokenType tt) noexcept -> Optional<const PrefixFn&> {
     const auto it = std::ranges::lower_bound(PREFIX_FNS, tt, {}, &PrefixPair::first);
     if (it == PREFIX_FNS.end() || it->first != tt) { return std::nullopt; }
     return Optional<const PrefixFn&>{it->second};
 }
 
-using InfixPair          = std::pair<syntax::TokenType, syntax::Parser::InfixFn>;
-constexpr auto INFIX_FNS = []() {
+using InfixPair          = std::pair<TokenType, Parser::InfixFn>;
+constexpr auto INFIX_FNS = [] {
     auto infix_fns = std::to_array<InfixPair>({
-        {syntax::TokenType::PLUS, ast::BinaryExpression::parse},
-        {syntax::TokenType::MINUS, ast::BinaryExpression::parse},
-        {syntax::TokenType::STAR, ast::BinaryExpression::parse},
-        {syntax::TokenType::SLASH, ast::BinaryExpression::parse},
-        {syntax::TokenType::PERCENT, ast::BinaryExpression::parse},
-        {syntax::TokenType::LT, ast::BinaryExpression::parse},
-        {syntax::TokenType::LT_EQ, ast::BinaryExpression::parse},
-        {syntax::TokenType::GT, ast::BinaryExpression::parse},
-        {syntax::TokenType::GT_EQ, ast::BinaryExpression::parse},
-        {syntax::TokenType::EQ, ast::BinaryExpression::parse},
-        {syntax::TokenType::NEQ, ast::BinaryExpression::parse},
-        {syntax::TokenType::BOOLEAN_AND, ast::BinaryExpression::parse},
-        {syntax::TokenType::BOOLEAN_OR, ast::BinaryExpression::parse},
-        {syntax::TokenType::BW_AND, ast::BinaryExpression::parse},
-        {syntax::TokenType::BW_OR, ast::BinaryExpression::parse},
-        {syntax::TokenType::XOR, ast::BinaryExpression::parse},
-        {syntax::TokenType::SHR, ast::BinaryExpression::parse},
-        {syntax::TokenType::SHL, ast::BinaryExpression::parse},
-        {syntax::TokenType::DOT, ast::DotExpression::parse},
-        {syntax::TokenType::DOT_DOT, ast::RangeExpression::parse},
-        {syntax::TokenType::DOT_DOT_EQ, ast::RangeExpression::parse},
-        {syntax::TokenType::LPAREN, ast::CallExpression::parse},
-        {syntax::TokenType::LBRACKET, ast::IndexExpression::parse},
-        {syntax::TokenType::ASSIGN, ast::AssignmentExpression::parse},
-        {syntax::TokenType::PLUS_ASSIGN, ast::AssignmentExpression::parse},
-        {syntax::TokenType::MINUS_ASSIGN, ast::AssignmentExpression::parse},
-        {syntax::TokenType::STAR_ASSIGN, ast::AssignmentExpression::parse},
-        {syntax::TokenType::SLASH_ASSIGN, ast::AssignmentExpression::parse},
-        {syntax::TokenType::PERCENT_ASSIGN, ast::AssignmentExpression::parse},
-        {syntax::TokenType::BW_AND_ASSIGN, ast::AssignmentExpression::parse},
-        {syntax::TokenType::BW_OR_ASSIGN, ast::AssignmentExpression::parse},
-        {syntax::TokenType::SHL_ASSIGN, ast::AssignmentExpression::parse},
-        {syntax::TokenType::SHR_ASSIGN, ast::AssignmentExpression::parse},
-        {syntax::TokenType::NOT_ASSIGN, ast::AssignmentExpression::parse},
-        {syntax::TokenType::XOR_ASSIGN, ast::AssignmentExpression::parse},
-        {syntax::TokenType::COLON_COLON, ast::ScopeResolutionExpression::parse},
+        {TokenType::PLUS, ast::BinaryExpression::parse},
+        {TokenType::MINUS, ast::BinaryExpression::parse},
+        {TokenType::STAR, ast::BinaryExpression::parse},
+        {TokenType::SLASH, ast::BinaryExpression::parse},
+        {TokenType::PERCENT, ast::BinaryExpression::parse},
+        {TokenType::LT, ast::BinaryExpression::parse},
+        {TokenType::LT_EQ, ast::BinaryExpression::parse},
+        {TokenType::GT, ast::BinaryExpression::parse},
+        {TokenType::GT_EQ, ast::BinaryExpression::parse},
+        {TokenType::EQ, ast::BinaryExpression::parse},
+        {TokenType::NEQ, ast::BinaryExpression::parse},
+        {TokenType::BOOLEAN_AND, ast::BinaryExpression::parse},
+        {TokenType::BOOLEAN_OR, ast::BinaryExpression::parse},
+        {TokenType::BW_AND, ast::BinaryExpression::parse},
+        {TokenType::BW_OR, ast::BinaryExpression::parse},
+        {TokenType::XOR, ast::BinaryExpression::parse},
+        {TokenType::SHR, ast::BinaryExpression::parse},
+        {TokenType::SHL, ast::BinaryExpression::parse},
+        {TokenType::DOT, ast::DotExpression::parse},
+        {TokenType::DOT_DOT, ast::RangeExpression::parse},
+        {TokenType::DOT_DOT_EQ, ast::RangeExpression::parse},
+        {TokenType::LPAREN, ast::CallExpression::parse},
+        {TokenType::LBRACKET, ast::IndexExpression::parse},
+        {TokenType::ASSIGN, ast::AssignmentExpression::parse},
+        {TokenType::PLUS_ASSIGN, ast::AssignmentExpression::parse},
+        {TokenType::MINUS_ASSIGN, ast::AssignmentExpression::parse},
+        {TokenType::STAR_ASSIGN, ast::AssignmentExpression::parse},
+        {TokenType::SLASH_ASSIGN, ast::AssignmentExpression::parse},
+        {TokenType::PERCENT_ASSIGN, ast::AssignmentExpression::parse},
+        {TokenType::BW_AND_ASSIGN, ast::AssignmentExpression::parse},
+        {TokenType::BW_OR_ASSIGN, ast::AssignmentExpression::parse},
+        {TokenType::SHL_ASSIGN, ast::AssignmentExpression::parse},
+        {TokenType::SHR_ASSIGN, ast::AssignmentExpression::parse},
+        {TokenType::NOT_ASSIGN, ast::AssignmentExpression::parse},
+        {TokenType::XOR_ASSIGN, ast::AssignmentExpression::parse},
+        {TokenType::COLON_COLON, ast::ScopeResolutionExpression::parse},
     });
 
     std::ranges::sort(infix_fns, {}, &InfixPair::first);
     return infix_fns;
 }();
 
-constexpr auto syntax::Parser::poll_infix_fn(syntax::TokenType tt) noexcept
-    -> Optional<const InfixFn&> {
+constexpr auto Parser::poll_infix_fn(TokenType tt) noexcept -> Optional<const InfixFn&> {
     const auto it = std::ranges::lower_bound(INFIX_FNS, tt, {}, &InfixPair::first);
     if (it == INFIX_FNS.end() || it->first != tt) { return std::nullopt; }
     return Optional<const InfixFn&>{it->second};
 }
 
-auto syntax::Parser::tt_mismatch_error(syntax::TokenType expected, const syntax::Token& actual)
-    -> syntax::ParserDiagnostic {
-    return syntax::ParserDiagnostic{fmt::format("Expected token {}, found {}",
-                                                magic_enum::enum_name(expected),
-                                                magic_enum::enum_name(actual.type)),
-                                    syntax::ParserError::UNEXPECTED_TOKEN,
-                                    actual};
+auto Parser::tt_mismatch_error(TokenType expected, const Token& actual) -> ParserDiagnostic {
+    return ParserDiagnostic{fmt::format("Expected token {}, found {}",
+                                        magic_enum::enum_name(expected),
+                                        magic_enum::enum_name(actual.type)),
+                            ParserError::UNEXPECTED_TOKEN,
+                            actual};
 }
 
 } // namespace porpoise::syntax

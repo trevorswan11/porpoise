@@ -54,16 +54,16 @@ TEST_CASE("Explicit non-primitive declaration") {
         });
 }
 
-TEST_CASE("Implicit comptime declaration") {
+TEST_CASE("Constexpr declaration") {
     helpers::test_stmt(
-        "comptime SIZE := 2uz;",
+        "constexpr SIZE := 2uz;",
         ast::DeclStatement{
-            syntax::Token{keywords::COMPTIME},
+            syntax::Token{keywords::CONSTEXPR},
             helpers::make_ident("SIZE"),
             mem::make_box<ast::TypeExpression>(syntax::Token{operators::WALRUS}, std::nullopt),
             mem::make_box<ast::USizeIntegerExpression>(
                 syntax::Token{syntax::TokenType::UZINT_10, "2uz"}, 2uz),
-            ast::DeclModifiers::COMPTIME,
+            ast::DeclModifiers::CONSTEXPR,
         });
 }
 
@@ -134,27 +134,27 @@ static auto test_decl_fail(std::initializer_list<syntax::Keyword> modifiers,
 }
 
 TEST_CASE("Mutability restrictions") {
-    const auto contending_mut = std::array{keywords::COMPTIME, keywords::VAR, keywords::CONST};
+    const std::array contending_mut{keywords::CONSTEXPR, keywords::VAR, keywords::CONST};
     for (const auto& mut : array::combinations(contending_mut)) {
         test_decl_fail({mut.first, mut.second},
                        syntax::ParserDiagnostic{syntax::ParserError::ILLEGAL_DECL_MODIFIERS, 1, 1});
     }
-    test_decl_fail({keywords::COMPTIME, keywords::VAR, keywords::CONST},
+    test_decl_fail({keywords::CONSTEXPR, keywords::VAR, keywords::CONST},
                    syntax::ParserDiagnostic{syntax::ParserError::ILLEGAL_DECL_MODIFIERS, 1, 1});
 }
 
-TEST_CASE("Comptime restrictions") {
-    const auto contending_mut = std::array{keywords::EXTERN, keywords::COMPTIME};
+TEST_CASE("CONSTEXPR restrictions") {
+    const std::array contending_mut{keywords::EXTERN, keywords::CONSTEXPR};
     for (const auto& mut : array::combinations(contending_mut)) {
         test_decl_fail({mut.first, mut.second},
                        syntax::ParserDiagnostic{syntax::ParserError::ILLEGAL_DECL_MODIFIERS, 1, 1});
     }
-    test_decl_fail({keywords::EXTERN, keywords::COMPTIME},
+    test_decl_fail({keywords::EXTERN, keywords::CONSTEXPR},
                    syntax::ParserDiagnostic{syntax::ParserError::ILLEGAL_DECL_MODIFIERS, 1, 1});
 }
 
 TEST_CASE("ABI/Linkage restrictions") {
-    const auto contending_mut = std::array{keywords::EXTERN, keywords::EXPORT};
+    const std::array contending_mut{keywords::EXTERN, keywords::EXPORT};
     for (const auto& mut : array::combinations(contending_mut)) {
         test_decl_fail({mut.first, mut.second},
                        syntax::ParserDiagnostic{syntax::ParserError::ILLEGAL_DECL_MODIFIERS, 1, 1});
@@ -174,7 +174,7 @@ TEST_CASE("Constant requirements") {
     test_decl_fail({keywords::CONST},
                    syntax::ParserDiagnostic{syntax::ParserError::CONST_DECL_MISSING_VALUE, 1, 1},
                    "a: int;");
-    test_decl_fail({keywords::COMPTIME},
+    test_decl_fail({keywords::CONSTEXPR},
                    syntax::ParserDiagnostic{syntax::ParserError::CONST_DECL_MISSING_VALUE, 1, 1},
                    "a: int;");
 }

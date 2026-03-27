@@ -18,7 +18,7 @@ namespace keywords {
 constexpr Keyword FN{"fn", TokenType::FUNCTION};
 constexpr Keyword VAR{"var", TokenType::VAR};
 constexpr Keyword CONST{"const", TokenType::CONST};
-constexpr Keyword COMPTIME{"comptime", TokenType::COMPTIME};
+constexpr Keyword CONSTEXPR{"constexpr", TokenType::CONSTEXPR};
 constexpr Keyword STRUCT{"struct", TokenType::STRUCT};
 constexpr Keyword ENUM{"enum", TokenType::ENUM};
 constexpr Keyword UNION{"union", TokenType::UNION};
@@ -97,9 +97,9 @@ constexpr Keyword CTZ{"@ctz", TokenType::CTZ};
 
 } // namespace keywords
 
-constexpr auto ALL_KEYWORDS = []() {
+constexpr auto ALL_KEYWORDS = [] {
     auto all_keywords = std::array{
-        keywords::FN,       keywords::VAR,     keywords::CONST,    keywords::COMPTIME,
+        keywords::FN,       keywords::VAR,     keywords::CONST,    keywords::CONSTEXPR,
         keywords::STRUCT,   keywords::ENUM,    keywords::UNION,    keywords::TRUE,
         keywords::FALSE,    keywords::IF,      keywords::ELSE,     keywords::DO,
         keywords::MATCH,    keywords::RETURN,  keywords::DEFER,    keywords::LOOP,
@@ -137,7 +137,7 @@ constexpr auto ALL_PRIMITIVES = std::array{
     keywords::TYPE.second,
 };
 
-constexpr auto ALL_BUILTINS = []() {
+constexpr auto ALL_BUILTINS = [] {
     using namespace keywords;
     auto all_builtins = std::array{
         builtins::TYPEOF,

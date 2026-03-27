@@ -13,6 +13,8 @@
 
 #include "syntax/operators.hpp"
 
+#include "array.hpp"
+
 namespace porpoise::tests {
 
 namespace operators = syntax::operators;
@@ -65,6 +67,45 @@ TEST_CASE("Assignment expressions") {
         operators::XOR_ASSIGN,
     };
     helpers::test_infix_op_list<ast::AssignmentExpression>(ops);
+}
+
+TEST_CASE("Assignment operator right associativity") {
+    const auto test_assignment_assoc = [](std::pair<syntax::Operator, syntax::Operator> ops) {
+        const auto input = fmt::format("a {} b {} c;", ops.first.first, ops.second.first);
+        helpers::test_infix_expr<ast::AssignmentExpression>(
+            input,
+            helpers::ident_from("a"),
+            ops.first.second,
+            ast::AssignmentExpression{
+                syntax::Token{syntax::TokenType::IDENT, "b"},
+                helpers::make_ident("b"),
+                ops.second.second,
+                helpers::make_ident("c"),
+            });
+    };
+
+    const std::array assignment_ops{
+        operators::ASSIGN,
+        operators::PLUS_ASSIGN,
+        operators::MINUS_ASSIGN,
+        operators::STAR_ASSIGN,
+        operators::SLASH_ASSIGN,
+        operators::PERCENT_ASSIGN,
+        operators::BW_AND_ASSIGN,
+        operators::BW_OR_ASSIGN,
+        operators::SHL_ASSIGN,
+        operators::SHR_ASSIGN,
+        operators::NOT_ASSIGN,
+        operators::XOR_ASSIGN,
+    };
+
+    SECTION("Same operator") {
+        for (const auto& op : assignment_ops) { test_assignment_assoc({op, op}); }
+    }
+
+    SECTION("Combinations") {
+        for (const auto& ops : array::combinations(assignment_ops)) { test_assignment_assoc(ops); }
+    }
 }
 
 TEST_CASE("Binary expressions") {

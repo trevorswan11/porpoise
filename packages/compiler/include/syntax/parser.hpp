@@ -145,8 +145,8 @@ class Parser {
         return tt_mismatch_error(expected, peek_token_);
     }
 
-    auto poll_current_precedence() const noexcept -> Precedence;
-    auto poll_peek_precedence() const noexcept -> Precedence;
+    auto poll_current_precedence() const noexcept -> std::pair<Precedence, Optional<Binding>>;
+    auto poll_peek_precedence() const noexcept -> std::pair<Precedence, Optional<Binding>>;
 
     [[nodiscard]] auto parse_statement() -> Expected<mem::Box<ast::Statement>, ParserDiagnostic>;
     [[nodiscard]] auto parse_expression(Precedence precedence = Precedence::LOWEST)

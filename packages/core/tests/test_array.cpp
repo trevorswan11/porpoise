@@ -22,9 +22,9 @@ TEST_CASE("Array concatenation") {
 }
 
 TEST_CASE("Array combinations") {
-    constexpr auto A        = std::array{0, 1, 2};
-    constexpr auto expected = std::to_array<std::pair<i32, i32>>({{0, 1}, {0, 2}, {1, 2}});
-    constexpr auto actual   = array::combinations<i32>(A);
+    constexpr std::array A{0, 1, 2};
+    constexpr auto       expected = std::to_array<std::pair<i32, i32>>({{0, 1}, {0, 2}, {1, 2}});
+    constexpr auto       actual   = array::combinations<i32>(A);
     CHECK(std::ranges::equal(expected, actual));
 }
 

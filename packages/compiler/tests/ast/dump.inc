@@ -45,7 +45,7 @@ DiscardStatement
     └─ Enumerations:
         └─ Name: IdentifierExpression: RED
 DeclStatement (SIZE)
-├─ Modifiers: COMPTIME
+├─ Modifiers: CONSTEXPR
 ├─ Type: (inferred)
 └─ Value: USizeIntegerExpression: 2
 BlockStatement
