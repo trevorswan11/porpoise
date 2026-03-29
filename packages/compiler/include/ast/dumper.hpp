@@ -3,10 +3,12 @@
 #include <ostream>
 
 #include <fmt/ostream.h>
+#include <type_traits>
 
 #include "ast/visitor.hpp"
 
 #include "indent.hpp"
+#include "memory.hpp"
 
 namespace porpoise::ast {
 
@@ -31,7 +33,11 @@ class ASTDumper : public Visitor {
     template <typename T> void dump_node_list(const T& list) {
         dump_container(list, [this](const auto& node) {
             fmt::print(out_, "{}", indent_.current_branch());
-            node->accept(*this);
+            if constexpr (mem::is_box_v<std::remove_cvref_t<decltype(node)>>) {
+                node->accept(*this);
+            } else {
+                node.accept(*this);
+            }
         });
     }
 

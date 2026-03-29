@@ -21,6 +21,8 @@ ForLoopCapture::ForLoopCapture() noexcept : underlying_{std::monostate{}} {}
 ForLoopCapture::ForLoopCapture(Valued valued) noexcept : underlying_{Valued{std::move(valued)}} {}
 ForLoopCapture::~ForLoopCapture() = default;
 
+auto ForLoopCapture::accept(Visitor& v) const -> void { v.visit(*this); }
+
 auto ForLoopCapture::is_equal(const ForLoopCapture& other) const noexcept -> bool {
     return underlying_ == other.underlying_;
 }

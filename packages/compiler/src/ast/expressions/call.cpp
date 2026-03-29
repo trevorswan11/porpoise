@@ -14,6 +14,8 @@ CallArgument::CallArgument(mem::Box<Expression> argument) noexcept
 CallArgument::CallArgument(ExplicitType&& argument) noexcept : argument_{std::move(argument)} {}
 CallArgument::~CallArgument() = default;
 
+auto CallArgument::accept(Visitor& v) const -> void { v.visit(*this); }
+
 auto CallArgument::is_equal(const CallArgument& other) const noexcept -> bool {
     const auto& other_argument = other.argument_;
     if (other.argument_.index() != other_argument.index()) { return false; }

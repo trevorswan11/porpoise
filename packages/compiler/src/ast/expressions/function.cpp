@@ -10,21 +10,25 @@
 
 namespace porpoise::ast {
 
+SelfParameter::SelfParameter(TypeModifier modifier, mem::Box<IdentifierExpression> ident) noexcept
+    : modifier_{std::move(modifier)}, ident_{std::move(ident)} {}
+SelfParameter::~SelfParameter() = default;
+
+auto SelfParameter::accept(Visitor& v) const -> void { v.visit(*this); }
+
+auto SelfParameter::is_equal(const SelfParameter& other) const noexcept -> bool {
+    return optional::safe_eq<TypeModifier>(modifier_, other.modifier_) && *ident_ == *other.ident_;
+}
+
 FunctionParameter::FunctionParameter(mem::Box<IdentifierExpression> ident,
                                      ExplicitType&&                 type) noexcept
     : ident_{std::move(ident)}, type_{std::move(type)} {}
 FunctionParameter::~FunctionParameter() = default;
 
+auto FunctionParameter::accept(Visitor& v) const -> void { v.visit(*this); }
+
 auto FunctionParameter::is_equal(const FunctionParameter& other) const noexcept -> bool {
     return *ident_ == *other.ident_ && type_ == other.type_;
-}
-
-SelfParameter::SelfParameter(TypeModifier modifier, mem::Box<IdentifierExpression> ident) noexcept
-    : modifier_{std::move(modifier)}, ident_{std::move(ident)} {}
-SelfParameter::~SelfParameter() = default;
-
-auto SelfParameter::is_equal(const SelfParameter& other) const noexcept -> bool {
-    return optional::safe_eq<TypeModifier>(modifier_, other.modifier_) && *ident_ == *other.ident_;
 }
 
 FunctionExpression::FunctionExpression(const syntax::Token&               start_token,

@@ -8,6 +8,8 @@
 
 #include "sema/error.hpp"
 
+#include "syntax/token.hpp"
+
 #include "common.hpp"
 #include "expected.hpp"
 #include "optional.hpp"
@@ -41,6 +43,12 @@ using SymbolicNode = std::
 
 class Type;
 
+enum class ResolveStatus : u8 {
+    UNRESOLVED,
+    RESOLVING,
+    RESOLVED,
+};
+
 class Symbol {
   public:
     explicit Symbol(std::string_view name, SymbolicNode node) noexcept : name_{name}, node_{node} {}
@@ -55,21 +63,26 @@ class Symbol {
     MAKE_VARIANT_UNPACKER(enumeration, ast::Enumeration, SymbolicEnumeration, node_, *std::get)
 
     MAKE_VARIANT_MATCHER(node_)
+    [[nodiscard]] auto get_node_token() const noexcept -> syntax::Token;
 
     auto               mark_public() noexcept -> void { public_ = true; }
     [[nodiscard]] auto is_public() const noexcept -> bool { return public_; }
 
-    auto               emplace_type(Type& type) const noexcept -> void { type_.emplace(type); }
+    auto               emplace_type(Type& type) noexcept -> void { type_.emplace(type); }
     [[nodiscard]] auto has_type() const noexcept -> bool { return type_.has_value(); }
     [[nodiscard]] auto get_type() const noexcept -> Type& { return *type_; }
+
+    [[nodiscard]] auto get_status() const noexcept -> ResolveStatus { return status_; }
+    auto               set_status(ResolveStatus status) noexcept -> void { status_ = status; }
 
     MAKE_EQ_DELEGATION(Symbol)
 
   private:
-    std::string_view              name_;
-    bool                          public_{false};
-    SymbolicNode                  node_;
-    mutable Optional<sema::Type&> type_; // Not populated until pass 2
+    std::string_view      name_;
+    bool                  public_{false};
+    SymbolicNode          node_;
+    Optional<sema::Type&> type_;
+    ResolveStatus         status_{ResolveStatus::UNRESOLVED};
 };
 
 class SymbolTable {

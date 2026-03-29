@@ -13,6 +13,8 @@ UnionField::UnionField(mem::Box<IdentifierExpression> ident, ExplicitType&& type
     : ident_{std::move(ident)}, type_{std::move(type)} {}
 UnionField::~UnionField() = default;
 
+auto UnionField::accept(Visitor& v) const -> void { v.visit(*this); }
+
 [[nodiscard]] auto UnionField::get_token() const noexcept -> const syntax::Token& {
     return ident_->get_token();
 }

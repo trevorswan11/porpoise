@@ -18,6 +18,8 @@ class Enumeration {
 
     MAKE_MOVE_CONSTRUCTABLE_ONLY(Enumeration)
 
+    auto accept(Visitor& v) const -> void;
+
     MAKE_GETTER(ident, const IdentifierExpression&, *)
     MAKE_OPTIONAL_UNPACKER(default_value, Expression, value_, **)
     [[nodiscard]] auto get_token() const noexcept -> const syntax::Token&;

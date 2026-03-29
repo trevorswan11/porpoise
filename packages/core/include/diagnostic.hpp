@@ -57,8 +57,6 @@ class Diagnostic {
     Optional<std::string>    message_{};
     E                        error_;
     Optional<SourceLocation> loc_{};
-
-    friend struct fmt::formatter<Diagnostic>;
 };
 
 } // namespace porpoise

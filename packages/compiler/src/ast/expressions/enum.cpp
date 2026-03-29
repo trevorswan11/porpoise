@@ -12,6 +12,8 @@ Enumeration::Enumeration(mem::Box<IdentifierExpression> ident,
     : ident_{std::move(ident)}, value_{std::move(value)} {}
 Enumeration::~Enumeration() = default;
 
+auto Enumeration::accept(Visitor& v) const -> void { v.visit(*this); }
+
 [[nodiscard]] auto Enumeration::get_token() const noexcept -> const syntax::Token& {
     return ident_->get_token();
 }

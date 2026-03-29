@@ -13,29 +13,14 @@ class IdentifierExpression;
 class ExplicitType;
 class BlockStatement;
 
-class FunctionParameter {
-  public:
-    explicit FunctionParameter(mem::Box<IdentifierExpression> ident, ExplicitType&& type) noexcept;
-    ~FunctionParameter();
-
-    MAKE_MOVE_CONSTRUCTABLE_ONLY(FunctionParameter)
-
-    MAKE_GETTER(ident, const IdentifierExpression&, *)
-    MAKE_GETTER(type, const ExplicitType&)
-
-    MAKE_EQ_DELEGATION(FunctionParameter)
-
-  private:
-    mem::Box<IdentifierExpression> ident_;
-    ExplicitType                   type_;
-};
-
 class SelfParameter {
   public:
     explicit SelfParameter(TypeModifier modifier, mem::Box<IdentifierExpression> name) noexcept;
     ~SelfParameter();
 
     MAKE_MOVE_CONSTRUCTABLE_ONLY(SelfParameter)
+
+    auto accept(Visitor& v) const -> void;
 
     MAKE_GETTER(modifier, const TypeModifier&)
     MAKE_GETTER(ident, const IdentifierExpression&, *)
@@ -45,6 +30,25 @@ class SelfParameter {
   private:
     TypeModifier                   modifier_;
     mem::Box<IdentifierExpression> ident_;
+};
+
+class FunctionParameter {
+  public:
+    explicit FunctionParameter(mem::Box<IdentifierExpression> ident, ExplicitType&& type) noexcept;
+    ~FunctionParameter();
+
+    MAKE_MOVE_CONSTRUCTABLE_ONLY(FunctionParameter)
+
+    auto accept(Visitor& v) const -> void;
+
+    MAKE_GETTER(ident, const IdentifierExpression&, *)
+    MAKE_GETTER(type, const ExplicitType&)
+
+    MAKE_EQ_DELEGATION(FunctionParameter)
+
+  private:
+    mem::Box<IdentifierExpression> ident_;
+    ExplicitType                   type_;
 };
 
 class FunctionExpression : public ExprBase<FunctionExpression> {
@@ -67,6 +71,7 @@ class FunctionExpression : public ExprBase<FunctionExpression> {
 
     MAKE_OPTIONAL_UNPACKER(self, SelfParameter, self_, *)
     MAKE_GETTER(parameters, std::span<const FunctionParameter>)
+    [[nodiscard]] auto has_parameters() const noexcept -> bool { return !parameters_.empty(); }
     MAKE_GETTER(return_type, const ExplicitType&)
     MAKE_OPTIONAL_UNPACKER(body, BlockStatement, body_, **)
 

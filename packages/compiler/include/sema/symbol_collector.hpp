@@ -69,9 +69,6 @@ class SymbolCollector : public ast::Visitor {
                try_result(registry_.insert_into(table_idx_, name, node));
     }
 
-    auto visit(const ast::Enumeration&) -> void;
-    auto visit(const ast::UnionField&) -> void;
-
   private:
     usize                table_idx_;
     SymbolTableStack     table_stack_;

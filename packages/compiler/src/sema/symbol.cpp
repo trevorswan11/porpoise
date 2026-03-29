@@ -28,6 +28,10 @@ auto Symbol::is_equal(const Symbol& other) const noexcept -> bool {
     return names_eq && nodes_eq && types_eq;
 }
 
+auto Symbol::get_node_token() const noexcept -> syntax::Token {
+    return match([](const auto& node) { return node->get_token(); });
+}
+
 auto SymbolTable::insert(std::string_view name, SymbolicNode node)
     -> Expected<std::monostate, Diagnostic> {
     // Reserved identifier use is impossible due to a parser invariant
@@ -38,13 +42,11 @@ auto SymbolTable::insert(std::string_view name, SymbolicNode node)
         return make_sema_unexpected(
             fmt::format("Redeclaration of symbol '{}'. Previous declaration here: {}",
                         name,
-                        it->second.match([](const auto& inner) {
-                            return SourceInfo<syntax::Token>::get(inner->get_token());
-                        })),
+                        SourceInfo<syntax::Token>::get(it->second.get_node_token())),
             Error::IDENTIFIER_REDECLARATION,
             std::visit([](const auto& inner) { return inner->get_token(); }, node));
     }
-    return std::monostate{};
+    return {};
 }
 
 auto SymbolTableRegistry::insert_into(usize table_idx, std::string_view name, SymbolicNode node)
@@ -69,7 +71,7 @@ auto SymbolTableRegistry::insert_into(usize table_idx, std::string_view name, Sy
                 std::visit([](const auto& inner) { return inner->get_token(); }, node));
         }
     }
-    return std::monostate{};
+    return {};
 }
 
 } // namespace porpoise::sema

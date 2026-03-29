@@ -16,6 +16,7 @@ class Analyzer {
     MAKE_MOVE_CONSTRUCTABLE_ONLY(Analyzer)
 
     [[nodiscard]] auto collect_symbols() -> usize;
+    auto               resolve_symbols() -> void;
 
     template <typename Self> [[nodiscard]] auto get_table(this Self&& self, usize idx) {
         return self.registry_.get(idx);
@@ -31,12 +32,20 @@ class Analyzer {
     MAKE_GETTER(diagnostics, const Diagnostics&)
 
     auto has_diagnostics() const noexcept -> bool { return !diagnostics_.empty(); }
+    template <typename... Args> auto push_diagnostic(Args&&... args) -> void {
+        diagnostics_.emplace_back(std::forward<Args>(args)...);
+    }
+
+  private:
+    [[nodiscard]] auto resolve_symbol(Symbol& symbol, SymbolTableStack& stack)
+        -> Expected<std::monostate, Diagnostic>;
 
   private:
     ast::AST            tree_;
     SymbolTableRegistry registry_;
     TypePool            pool_;
     Diagnostics         diagnostics_;
+    usize               root_idx_;
 };
 
 } // namespace porpoise::sema

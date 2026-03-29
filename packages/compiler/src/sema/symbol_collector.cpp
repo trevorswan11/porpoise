@@ -1,45 +1,50 @@
-#include "sema/collector.hpp"
+#include "sema/symbol_collector.hpp"
 
 #include "ast/ast.hpp"
+#include "ast/visitor.hpp"
 
 namespace porpoise::sema {
 
 // Few expressions are evaluated directly on this pass
-#define COLLECTOR_NOOP(NodeType) \
-    auto SymbolCollector::visit(const ast::NodeType&) -> void {}
-
-COLLECTOR_NOOP(ArrayExpression)
-COLLECTOR_NOOP(CallExpression)
-COLLECTOR_NOOP(DoWhileLoopExpression)
-COLLECTOR_NOOP(ForLoopExpression)
-COLLECTOR_NOOP(FunctionExpression)
-COLLECTOR_NOOP(IdentifierExpression)
-COLLECTOR_NOOP(IfExpression)
-COLLECTOR_NOOP(IndexExpression)
-COLLECTOR_NOOP(InfiniteLoopExpression)
-COLLECTOR_NOOP(AssignmentExpression)
-COLLECTOR_NOOP(BinaryExpression)
-COLLECTOR_NOOP(DotExpression)
-COLLECTOR_NOOP(RangeExpression)
-COLLECTOR_NOOP(MatchExpression)
-COLLECTOR_NOOP(ReferenceExpression)
-COLLECTOR_NOOP(DereferenceExpression)
-COLLECTOR_NOOP(ImplicitAccessExpression)
-COLLECTOR_NOOP(UnaryExpression)
-COLLECTOR_NOOP(StringExpression)
-COLLECTOR_NOOP(SignedIntegerExpression)
-COLLECTOR_NOOP(SignedLongIntegerExpression)
-COLLECTOR_NOOP(ISizeIntegerExpression)
-COLLECTOR_NOOP(UnsignedIntegerExpression)
-COLLECTOR_NOOP(UnsignedLongIntegerExpression)
-COLLECTOR_NOOP(USizeIntegerExpression)
-COLLECTOR_NOOP(ByteExpression)
-COLLECTOR_NOOP(FloatExpression)
-COLLECTOR_NOOP(DoubleExpression)
-COLLECTOR_NOOP(BoolExpression)
-COLLECTOR_NOOP(ScopeResolutionExpression)
-COLLECTOR_NOOP(TypeExpression)
-COLLECTOR_NOOP(WhileLoopExpression)
+#define MAKE_COLLECTOR_NOOPS(X)                       \
+    X(SymbolCollector, ArrayExpression)               \
+    X(SymbolCollector, CallArgument)                  \
+    X(SymbolCollector, CallExpression)                \
+    X(SymbolCollector, DoWhileLoopExpression)         \
+    X(SymbolCollector, ForLoopCapture)                \
+    X(SymbolCollector, ForLoopExpression)             \
+    X(SymbolCollector, SelfParameter)                 \
+    X(SymbolCollector, FunctionParameter)             \
+    X(SymbolCollector, FunctionExpression)            \
+    X(SymbolCollector, IdentifierExpression)          \
+    X(SymbolCollector, IfExpression)                  \
+    X(SymbolCollector, IndexExpression)               \
+    X(SymbolCollector, InfiniteLoopExpression)        \
+    X(SymbolCollector, AssignmentExpression)          \
+    X(SymbolCollector, BinaryExpression)              \
+    X(SymbolCollector, DotExpression)                 \
+    X(SymbolCollector, RangeExpression)               \
+    X(SymbolCollector, MatchArm)                      \
+    X(SymbolCollector, MatchExpression)               \
+    X(SymbolCollector, ReferenceExpression)           \
+    X(SymbolCollector, DereferenceExpression)         \
+    X(SymbolCollector, ImplicitAccessExpression)      \
+    X(SymbolCollector, UnaryExpression)               \
+    X(SymbolCollector, StringExpression)              \
+    X(SymbolCollector, SignedIntegerExpression)       \
+    X(SymbolCollector, SignedLongIntegerExpression)   \
+    X(SymbolCollector, ISizeIntegerExpression)        \
+    X(SymbolCollector, UnsignedIntegerExpression)     \
+    X(SymbolCollector, UnsignedLongIntegerExpression) \
+    X(SymbolCollector, USizeIntegerExpression)        \
+    X(SymbolCollector, ByteExpression)                \
+    X(SymbolCollector, FloatExpression)               \
+    X(SymbolCollector, DoubleExpression)              \
+    X(SymbolCollector, BoolExpression)                \
+    X(SymbolCollector, ScopeResolutionExpression)     \
+    X(SymbolCollector, TypeExpression)                \
+    X(SymbolCollector, WhileLoopExpression)
+MAKE_COLLECTOR_NOOPS(GENERATE_VISITOR_NOOP)
 
 auto SymbolCollector::visit(const ast::EnumExpression& enum_expr) -> void {
     visit_scope(enum_expr, TypeKind::ENUM, [this](const auto& field) { visit(field); });

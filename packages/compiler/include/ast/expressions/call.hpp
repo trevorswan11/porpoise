@@ -20,6 +20,8 @@ class CallArgument {
 
     MAKE_MOVE_CONSTRUCTABLE_ONLY(CallArgument)
 
+    auto accept(Visitor& v) const -> void;
+
     MAKE_VARIANT_UNPACKER(expression, Expression, mem::Box<Expression>, argument_, *std::get)
     MAKE_VARIANT_UNPACKER(type, ExplicitType, ExplicitType, argument_, std::get)
 

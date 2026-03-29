@@ -14,6 +14,8 @@ MatchArm::MatchArm(mem::Box<Expression> pattern,
     : pattern_{std::move(pattern)}, capture_{std::move(capture)}, dispatch_{std::move(dispatch)} {}
 MatchArm::~MatchArm() = default;
 
+auto MatchArm::accept(Visitor& v) const -> void { v.visit(*this); }
+
 auto MatchArm::is_equal(const MatchArm& other) const noexcept -> bool {
     return *pattern_ == *other.pattern_ &&
            optional::safe_eq<Capture>(

@@ -25,6 +25,8 @@ class MatchArm {
 
     MAKE_MOVE_CONSTRUCTABLE_ONLY(MatchArm)
 
+    auto accept(Visitor& v) const -> void;
+
     MAKE_GETTER(pattern, const Expression&, *)
     [[nodiscard]] auto has_capture_clause() const noexcept -> bool { return capture_.has_value(); }
     MAKE_VARIANT_UNPACKER(explicit_capture,

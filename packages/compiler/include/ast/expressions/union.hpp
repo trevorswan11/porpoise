@@ -19,6 +19,8 @@ class UnionField {
 
     MAKE_MOVE_CONSTRUCTABLE_ONLY(UnionField)
 
+    auto accept(Visitor& v) const -> void;
+
     MAKE_GETTER(ident, const IdentifierExpression&, *)
     MAKE_GETTER(type, const ExplicitType&)
     [[nodiscard]] auto get_token() const noexcept -> const syntax::Token&;

@@ -15,6 +15,7 @@ enum class Error : u8 {
     DUPLICATE_MODULE_STATEMENT,
     INVALID_TABLE_IDX,
     SHADOWING_DECLARATION,
+    CIRCULAR_DEPENDENCY,
 };
 
 using Diagnostic  = Diagnostic<Error>;

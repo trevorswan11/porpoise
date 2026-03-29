@@ -4,10 +4,15 @@ namespace porpoise::ast {
 
 #define FOREACH_AST_EXPR(X)          \
     X(ArrayExpression)               \
+    X(CallArgument)                  \
     X(CallExpression)                \
     X(DoWhileLoopExpression)         \
+    X(Enumeration)                   \
     X(EnumExpression)                \
+    X(ForLoopCapture)                \
     X(ForLoopExpression)             \
+    X(SelfParameter)                 \
+    X(FunctionParameter)             \
     X(FunctionExpression)            \
     X(IdentifierExpression)          \
     X(IfExpression)                  \
@@ -17,6 +22,7 @@ namespace porpoise::ast {
     X(BinaryExpression)              \
     X(DotExpression)                 \
     X(RangeExpression)               \
+    X(MatchArm)                      \
     X(MatchExpression)               \
     X(ReferenceExpression)           \
     X(DereferenceExpression)         \
@@ -36,6 +42,7 @@ namespace porpoise::ast {
     X(ScopeResolutionExpression)     \
     X(StructExpression)              \
     X(TypeExpression)                \
+    X(UnionField)                    \
     X(UnionExpression)               \
     X(WhileLoopExpression)
 
@@ -66,6 +73,9 @@ namespace porpoise::ast {
 #define GENERATE_OVERRIDE_AST_VISITOR(NodeType) \
     auto visit(const porpoise::ast::NodeType&) -> void override;
 #define MAKE_AST_VISITOR_OVERRIDES() FOREACH_AST_NODE(GENERATE_OVERRIDE_AST_VISITOR)
+
+#define GENERATE_VISITOR_NOOP(Class, NodeType) \
+    auto Class::visit(const ast::NodeType&) -> void {}
 
 FORWARD_DECLARE_AST_NODES()
 

@@ -45,7 +45,7 @@ auto test_collector(std::string_view input, bool is_module, KVs&&... kvs) -> sem
 
             const auto opt = actual.get_opt(std::get<0>(kv));
             CHECK(opt);
-            const sema::Symbol expected{std::get<0>(kv), &std::get<1>(kv)};
+            sema::Symbol expected{std::get<0>(kv), &std::get<1>(kv)};
             if constexpr (std::tuple_size<std::remove_cvref_t<decltype(kv)>>{} > 2) {
                 const auto type = analyzer.get_pool().get(std::get<2>(kv));
                 CHECK(type);
