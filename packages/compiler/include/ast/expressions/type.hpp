@@ -54,6 +54,7 @@ class ExplicitType {
 
     MAKE_MOVE_CONSTRUCTABLE_ONLY(ExplicitType)
 
+    auto                      accept(Visitor& v) const -> void;
     [[nodiscard]] static auto parse(syntax::Parser& parser)
         -> Expected<ExplicitType, syntax::ParserDiagnostic>;
 
@@ -64,6 +65,7 @@ class ExplicitType {
     MAKE_VARIANT_UNPACKER(array_type, ExplicitArrayType, ExplicitArrayType, type_, std::get)
     MAKE_VARIANT_UNPACKER(
         recursive_type, ExplicitRecursiveType, ExplicitRecursiveType, type_, std::get)
+    MAKE_VARIANT_MATCHER(type_)
 
     MAKE_EQ_DELEGATION(ExplicitType)
 

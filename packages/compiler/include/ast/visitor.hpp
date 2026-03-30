@@ -41,6 +41,7 @@ namespace porpoise::ast {
     X(BoolExpression)                \
     X(ScopeResolutionExpression)     \
     X(StructExpression)              \
+    X(ExplicitType)                  \
     X(TypeExpression)                \
     X(UnionField)                    \
     X(UnionExpression)               \

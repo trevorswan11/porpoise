@@ -6,45 +6,48 @@
 namespace porpoise::sema {
 
 // Few expressions are evaluated directly on this pass
-#define MAKE_COLLECTOR_NOOPS(X)                       \
-    X(SymbolCollector, ArrayExpression)               \
-    X(SymbolCollector, CallArgument)                  \
-    X(SymbolCollector, CallExpression)                \
-    X(SymbolCollector, DoWhileLoopExpression)         \
-    X(SymbolCollector, ForLoopCapture)                \
-    X(SymbolCollector, ForLoopExpression)             \
-    X(SymbolCollector, SelfParameter)                 \
-    X(SymbolCollector, FunctionParameter)             \
-    X(SymbolCollector, FunctionExpression)            \
-    X(SymbolCollector, IdentifierExpression)          \
-    X(SymbolCollector, IfExpression)                  \
-    X(SymbolCollector, IndexExpression)               \
-    X(SymbolCollector, InfiniteLoopExpression)        \
-    X(SymbolCollector, AssignmentExpression)          \
-    X(SymbolCollector, BinaryExpression)              \
-    X(SymbolCollector, DotExpression)                 \
-    X(SymbolCollector, RangeExpression)               \
-    X(SymbolCollector, MatchArm)                      \
-    X(SymbolCollector, MatchExpression)               \
-    X(SymbolCollector, ReferenceExpression)           \
-    X(SymbolCollector, DereferenceExpression)         \
-    X(SymbolCollector, ImplicitAccessExpression)      \
-    X(SymbolCollector, UnaryExpression)               \
-    X(SymbolCollector, StringExpression)              \
-    X(SymbolCollector, SignedIntegerExpression)       \
-    X(SymbolCollector, SignedLongIntegerExpression)   \
-    X(SymbolCollector, ISizeIntegerExpression)        \
-    X(SymbolCollector, UnsignedIntegerExpression)     \
-    X(SymbolCollector, UnsignedLongIntegerExpression) \
-    X(SymbolCollector, USizeIntegerExpression)        \
-    X(SymbolCollector, ByteExpression)                \
-    X(SymbolCollector, FloatExpression)               \
-    X(SymbolCollector, DoubleExpression)              \
-    X(SymbolCollector, BoolExpression)                \
-    X(SymbolCollector, ScopeResolutionExpression)     \
-    X(SymbolCollector, TypeExpression)                \
-    X(SymbolCollector, WhileLoopExpression)
-MAKE_COLLECTOR_NOOPS(GENERATE_VISITOR_NOOP)
+#define MAKE_COLLECTOR_NOOPS(X)      \
+    X(ArrayExpression)               \
+    X(CallArgument)                  \
+    X(CallExpression)                \
+    X(DoWhileLoopExpression)         \
+    X(ForLoopCapture)                \
+    X(ForLoopExpression)             \
+    X(SelfParameter)                 \
+    X(FunctionParameter)             \
+    X(FunctionExpression)            \
+    X(IdentifierExpression)          \
+    X(IfExpression)                  \
+    X(IndexExpression)               \
+    X(InfiniteLoopExpression)        \
+    X(AssignmentExpression)          \
+    X(BinaryExpression)              \
+    X(DotExpression)                 \
+    X(RangeExpression)               \
+    X(MatchArm)                      \
+    X(MatchExpression)               \
+    X(ReferenceExpression)           \
+    X(DereferenceExpression)         \
+    X(ImplicitAccessExpression)      \
+    X(UnaryExpression)               \
+    X(StringExpression)              \
+    X(SignedIntegerExpression)       \
+    X(SignedLongIntegerExpression)   \
+    X(ISizeIntegerExpression)        \
+    X(UnsignedIntegerExpression)     \
+    X(UnsignedLongIntegerExpression) \
+    X(USizeIntegerExpression)        \
+    X(ByteExpression)                \
+    X(FloatExpression)               \
+    X(DoubleExpression)              \
+    X(BoolExpression)                \
+    X(ScopeResolutionExpression)     \
+    X(ExplicitType)                  \
+    X(TypeExpression)                \
+    X(WhileLoopExpression)
+
+#define GENERATE_COLLECTOR_NOOP(NodeType) GENERATE_VISITOR_NOOP(SymbolCollector, NodeType)
+MAKE_COLLECTOR_NOOPS(GENERATE_COLLECTOR_NOOP)
 
 auto SymbolCollector::visit(const ast::EnumExpression& enum_expr) -> void {
     visit_scope(enum_expr, TypeKind::ENUM, [this](const auto& field) { visit(field); });

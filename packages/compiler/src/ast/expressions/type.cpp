@@ -23,26 +23,7 @@ ExplicitType::ExplicitType(TypeModifier modifier, ExplicitTypeVariant type) noex
     : modifier_{std::move(modifier)}, type_{std::move(type)} {}
 ExplicitType::~ExplicitType() = default;
 
-auto ExplicitType::is_equal(const ExplicitType& other) const noexcept -> bool {
-    const auto& other_type = other.type_;
-    if (type_.index() != other_type.index()) { return false; }
-    return modifier_ == other.modifier_ &&
-           std::visit(Overloaded{
-                          [&other_type](const ExplicitIdentType& v) {
-                              return *v == *std::get<ExplicitIdentType>(other_type);
-                          },
-                          [&other_type](const ExplicitFunctionType& v) {
-                              return *v == *std::get<ExplicitFunctionType>(other_type);
-                          },
-                          [&other_type](const ExplicitArrayType& v1) {
-                              return v1 == std::get<ExplicitArrayType>(other_type);
-                          },
-                          [&other_type](const mem::Box<ExplicitType>& v1) {
-                              return *v1 == *std::get<ExplicitRecursiveType>(other_type);
-                          },
-                      },
-                      type_);
-}
+auto ExplicitType::accept(Visitor& v) const -> void { v.visit(*this); }
 
 [[nodiscard]] auto ExplicitType::parse(syntax::Parser& parser)
     -> Expected<ExplicitType, syntax::ParserDiagnostic> {
@@ -137,6 +118,27 @@ auto ExplicitType::is_equal(const ExplicitType& other) const noexcept -> bool {
         // No other expressions qualify as types
         return make_parser_unexpected(syntax::ParserError::ILLEGAL_EXPLICIT_TYPE, type_start);
     }()));
+}
+
+auto ExplicitType::is_equal(const ExplicitType& other) const noexcept -> bool {
+    const auto& other_type = other.type_;
+    if (type_.index() != other_type.index()) { return false; }
+    return modifier_ == other.modifier_ &&
+           std::visit(Overloaded{
+                          [&other_type](const ExplicitIdentType& v) {
+                              return *v == *std::get<ExplicitIdentType>(other_type);
+                          },
+                          [&other_type](const ExplicitFunctionType& v) {
+                              return *v == *std::get<ExplicitFunctionType>(other_type);
+                          },
+                          [&other_type](const ExplicitArrayType& v1) {
+                              return v1 == std::get<ExplicitArrayType>(other_type);
+                          },
+                          [&other_type](const mem::Box<ExplicitType>& v1) {
+                              return *v1 == *std::get<ExplicitRecursiveType>(other_type);
+                          },
+                      },
+                      type_);
 }
 
 TypeExpression::TypeExpression(const syntax::Token&   start_token,

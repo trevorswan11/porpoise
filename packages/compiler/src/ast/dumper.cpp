@@ -22,7 +22,7 @@ auto ASTDumper::visit(const ArrayExpression& array) -> void {
     {
         const Indent::Guard g{indent_, false};
         fmt::print(out_, "{}Type: ", indent_.current_branch());
-        dump_explicit_type(array.get_item_type(), false);
+        visit(array.get_item_type());
     }
 
     {
@@ -36,7 +36,7 @@ auto ASTDumper::visit(const CallArgument& argument) -> void {
     if (argument.is_expression()) {
         argument.get_expression().accept(*this);
     } else {
-        dump_explicit_type(argument.get_type(), false);
+        visit(argument.get_type());
     }
 }
 
@@ -149,7 +149,7 @@ auto ASTDumper::visit(const FunctionParameter& parameter) -> void {
     {
         const Indent::Guard g_type{indent_, true};
         fmt::print(out_, "{}Type: ", indent_.current_branch());
-        dump_explicit_type(parameter.get_type(), false);
+        visit(parameter.get_type());
     }
 }
 
@@ -170,7 +170,7 @@ auto ASTDumper::visit(const FunctionExpression& function) -> void {
     {
         const Indent::Guard g{indent_, !function.has_body()};
         fmt::print(out_, "{}Returns: ", indent_.current_branch());
-        dump_explicit_type(function.get_return_type(), false);
+        visit(function.get_return_type());
     }
 
     if (function.has_body()) {
@@ -345,9 +345,55 @@ auto ASTDumper::visit(const StructExpression& struct_expr) -> void {
     dump_node_list(struct_expr.get_members());
 }
 
+auto ASTDumper::visit(const ExplicitType& type) -> void {
+    fmt::println(out_, "ExplicitType (modifier: {})", type.get_modifier());
+
+    const Indent::Guard g{indent_, true};
+    type.match(Overloaded{
+        [this](const ExplicitType::ExplicitIdentType& t) {
+            fmt::print(out_, "{}", indent_.current_branch());
+            t->accept(*this);
+        },
+        [this](const ExplicitType::ExplicitFunctionType& f) {
+            fmt::print(out_, "{}", indent_.current_branch());
+            f->accept(*this);
+        },
+        [this](const ExplicitArrayType& a) {
+            fmt::println(out_, "{}ArrayType", indent_.current_branch());
+            {
+                const Indent::Guard g_inner{indent_, false};
+                fmt::print(out_, "{}Dimensions: ", indent_.current_branch());
+                if (a.has_dimension()) {
+                    a.get_dimension().accept(*this);
+                } else {
+                    fmt::println(out_, "(slice)");
+                }
+            }
+
+            {
+                const Indent::Guard g_inner{indent_, false};
+                fmt::println(out_,
+                             "{}Null terminated: {}",
+                             indent_.current_branch(),
+                             a.is_null_terminated());
+            }
+
+            {
+                const Indent::Guard g_inner{indent_, true};
+                fmt::print(out_, "{}", indent_.current_branch());
+                visit(a.get_inner_type());
+            }
+        },
+        [this](const ExplicitType::ExplicitRecursiveType& r) {
+            fmt::print(out_, "{}", indent_.current_branch());
+            visit(*r);
+        },
+    });
+}
+
 auto ASTDumper::visit(const TypeExpression& node) -> void {
     if (node.has_explicit_type()) {
-        dump_explicit_type(node.get_explicit_type(), false);
+        visit(node.get_explicit_type());
     } else {
         fmt::println(out_, "(inferred)");
     }
@@ -364,7 +410,7 @@ auto ASTDumper::visit(const UnionField& field) -> void {
     {
         const Indent::Guard g_result{indent_, true};
         fmt::print(out_, "{}Type: ", indent_.current_branch());
-        dump_explicit_type(field.get_type(), false);
+        visit(field.get_type());
     }
 }
 
@@ -491,53 +537,8 @@ auto ASTDumper::visit(const UsingStatement& using_stmt) -> void {
     {
         const Indent::Guard g{indent_, true};
         fmt::print(out_, "{}Type: ", indent_.current_branch());
-        dump_explicit_type(using_stmt.get_type(), false);
+        visit(using_stmt.get_type());
     }
-}
-
-auto ASTDumper::dump_explicit_type(const ExplicitType& type, bool print_branch) -> void {
-    if (print_branch) { fmt::print(out_, "{}", indent_.current_branch()); }
-    fmt::println(out_, "ExplicitType (modifier: {})", type.get_modifier());
-
-    const Indent::Guard g{indent_, true};
-    std::visit(
-        Overloaded{
-            [this](const ExplicitType::ExplicitIdentType& t) {
-                fmt::print(out_, "{}", indent_.current_branch());
-                t->accept(*this);
-            },
-            [this](const ExplicitType::ExplicitFunctionType& f) {
-                fmt::print(out_, "{}", indent_.current_branch());
-                f->accept(*this);
-            },
-            [this](const ExplicitArrayType& a) {
-                fmt::println(out_, "{}ArrayType", indent_.current_branch());
-                {
-                    const Indent::Guard g_inner{indent_, false};
-                    fmt::print(out_, "{}Dimensions: ", indent_.current_branch());
-                    if (a.has_dimension()) {
-                        a.get_dimension().accept(*this);
-                    } else {
-                        fmt::println(out_, "(slice)");
-                    }
-                }
-
-                {
-                    const Indent::Guard g_inner{indent_, false};
-                    fmt::println(out_,
-                                 "{}Null terminated: {}",
-                                 indent_.current_branch(),
-                                 a.is_null_terminated());
-                }
-
-                {
-                    const Indent::Guard g_inner{indent_, true};
-                    dump_explicit_type(a.get_inner_type(), true);
-                }
-            },
-            [this](const ExplicitType::ExplicitRecursiveType& r) { dump_explicit_type(*r, true); },
-        },
-        type.get_type());
 }
 
 } // namespace porpoise::ast

@@ -21,8 +21,6 @@ class ASTDumper : public Visitor {
     MAKE_AST_VISITOR_OVERRIDES()
 
   private:
-    auto dump_explicit_type(const ExplicitType& type, bool print_branch) -> void;
-
     template <typename T, typename Func> void dump_container(const T& container, Func&& func) {
         for (auto it = container.begin(); it != container.end(); ++it) {
             Indent::Guard g{indent_, std::next(it) == container.end()};
