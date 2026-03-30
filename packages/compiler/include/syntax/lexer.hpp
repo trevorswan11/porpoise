@@ -22,7 +22,7 @@ class Lexer {
         using reference         = const Token&;
 
       public:
-        explicit Iterator(Lexer& lexer, const Token& current_token)
+        Iterator(Lexer& lexer, const Token& current_token)
             : lexer_{lexer}, current_token_{current_token} {}
 
         auto operator++() -> Iterator& {

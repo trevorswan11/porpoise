@@ -26,19 +26,17 @@ template <typename E>
 class Diagnostic {
   public:
     explicit Diagnostic(E err) noexcept : error_{err} {}
-    explicit Diagnostic(E err, usize line, usize column) noexcept
-        : error_{err}, loc_{{line, column}} {}
-    explicit Diagnostic(std::string msg, E err, usize line, usize column) noexcept
+    Diagnostic(E err, usize line, usize column) noexcept : error_{err}, loc_{{line, column}} {}
+    Diagnostic(std::string msg, E err, usize line, usize column) noexcept
         : message_{std::move(msg)}, error_{err}, loc_{{line, column}} {}
 
     template <Locateable T>
-    explicit Diagnostic(std::string msg, E err, const T& t) noexcept
+    Diagnostic(std::string msg, E err, const T& t) noexcept
         : message_{std::move(msg)}, error_{err}, loc_{SourceInfo<T>::get(t)} {}
 
-    template <Locateable T>
-    explicit Diagnostic(E err, T t) : error_{err}, loc_{SourceInfo<T>::get(t)} {}
+    template <Locateable T> Diagnostic(E err, T t) : error_{err}, loc_{SourceInfo<T>::get(t)} {}
 
-    explicit Diagnostic(Diagnostic& other, E err) noexcept
+    Diagnostic(Diagnostic& other, E err) noexcept
         : message_{std::move(other.message_)}, error_{err}, loc_{std::move(other.loc_)} {}
 
     auto has_msg() const noexcept -> bool { return message_.has_value(); }

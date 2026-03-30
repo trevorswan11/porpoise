@@ -13,7 +13,7 @@ class DeferStatement : public StmtBase<DeferStatement> {
     static constexpr auto KIND = NodeKind::DEFER_STATEMENT;
 
   public:
-    explicit DeferStatement(const syntax::Token& start_token, mem::Box<Statement> deferred) noexcept
+    DeferStatement(const syntax::Token& start_token, mem::Box<Statement> deferred) noexcept
         : StmtBase{start_token}, deferred_{std::move(deferred)} {}
 
     MAKE_MOVE_CONSTRUCTABLE_ONLY(DeferStatement)

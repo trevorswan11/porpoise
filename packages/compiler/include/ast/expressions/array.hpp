@@ -15,10 +15,10 @@ class ArrayExpression : public ExprBase<ArrayExpression> {
     static constexpr auto KIND = NodeKind::ARRAY_EXPRESSION;
 
   public:
-    explicit ArrayExpression(const syntax::Token&              start_token,
-                             Optional<mem::Box<Expression>>    size,
-                             ExplicitType&&                    item_type,
-                             std::vector<mem::Box<Expression>> items) noexcept;
+    ArrayExpression(const syntax::Token&              start_token,
+                    Optional<mem::Box<Expression>>    size,
+                    ExplicitType&&                    item_type,
+                    std::vector<mem::Box<Expression>> items) noexcept;
     ~ArrayExpression() override;
 
     MAKE_MOVE_CONSTRUCTABLE_ONLY(ArrayExpression)

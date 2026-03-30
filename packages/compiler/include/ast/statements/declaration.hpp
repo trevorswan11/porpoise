@@ -47,11 +47,11 @@ class DeclStatement : public StmtBase<DeclStatement> {
     static constexpr auto KIND = NodeKind::DECL_STATEMENT;
 
   public:
-    explicit DeclStatement(const syntax::Token&           start_token,
-                           mem::Box<IdentifierExpression> ident,
-                           mem::Box<TypeExpression>       type,
-                           Optional<mem::Box<Expression>> value,
-                           DeclModifiers                  modifiers) noexcept;
+    DeclStatement(const syntax::Token&           start_token,
+                  mem::Box<IdentifierExpression> ident,
+                  mem::Box<TypeExpression>       type,
+                  Optional<mem::Box<Expression>> value,
+                  DeclModifiers                  modifiers) noexcept;
     ~DeclStatement() override;
 
     MAKE_MOVE_CONSTRUCTABLE_ONLY(DeclStatement)

@@ -36,9 +36,9 @@ class CallExpression : public ExprBase<CallExpression> {
     static constexpr auto KIND = NodeKind::CALL_EXPRESSION;
 
   public:
-    explicit CallExpression(const syntax::Token&      start_token,
-                            mem::Box<Expression>      function,
-                            std::vector<CallArgument> arguments) noexcept;
+    CallExpression(const syntax::Token&      start_token,
+                   mem::Box<Expression>      function,
+                   std::vector<CallArgument> arguments) noexcept;
     ~CallExpression() override;
 
     MAKE_MOVE_CONSTRUCTABLE_ONLY(CallExpression)

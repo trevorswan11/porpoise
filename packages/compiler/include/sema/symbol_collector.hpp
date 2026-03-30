@@ -50,7 +50,7 @@ class SymbolCollector : public ast::Visitor {
         const auto  new_idx = registry_.create();
         const Scope s{table_stack_, new_idx, table_idx_};
         for (const auto& field : expr) { fn(field); }
-        last_type_.emplace(pool_.get_or_emplace(types::Key(kind, false, new_idx)));
+        last_type_.emplace(pool_[{kind, false, new_idx}]);
     }
 
     // Returns false if the passed result was an error type

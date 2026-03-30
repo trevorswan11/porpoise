@@ -18,7 +18,7 @@ class BlockStatement : public StmtBase<BlockStatement> {
     MAKE_ITERATOR(Statements, std::vector<mem::Box<Statement>>, statements_)
 
   public:
-    explicit BlockStatement(const syntax::Token& start_token, Statements statements) noexcept
+    BlockStatement(const syntax::Token& start_token, Statements statements) noexcept
         : StmtBase{start_token}, statements_{std::move(statements)} {}
 
     MAKE_MOVE_CONSTRUCTABLE_ONLY(BlockStatement)

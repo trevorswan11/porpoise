@@ -13,9 +13,9 @@ class DoWhileLoopExpression : public ExprBase<DoWhileLoopExpression> {
     static constexpr auto KIND = NodeKind::DO_WHILE_LOOP_EXPRESSION;
 
   public:
-    explicit DoWhileLoopExpression(const syntax::Token&     start_token,
-                                   mem::Box<BlockStatement> block,
-                                   mem::Box<Expression>     condition) noexcept;
+    DoWhileLoopExpression(const syntax::Token&     start_token,
+                          mem::Box<BlockStatement> block,
+                          mem::Box<Expression>     condition) noexcept;
     ~DoWhileLoopExpression() override;
 
     MAKE_MOVE_CONSTRUCTABLE_ONLY(DoWhileLoopExpression)

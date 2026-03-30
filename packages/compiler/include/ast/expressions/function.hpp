@@ -15,7 +15,7 @@ class BlockStatement;
 
 class SelfParameter {
   public:
-    explicit SelfParameter(TypeModifier modifier, mem::Box<IdentifierExpression> name) noexcept;
+    SelfParameter(TypeModifier modifier, mem::Box<IdentifierExpression> name) noexcept;
     ~SelfParameter();
 
     MAKE_MOVE_CONSTRUCTABLE_ONLY(SelfParameter)
@@ -34,7 +34,7 @@ class SelfParameter {
 
 class FunctionParameter {
   public:
-    explicit FunctionParameter(mem::Box<IdentifierExpression> ident, ExplicitType&& type) noexcept;
+    FunctionParameter(mem::Box<IdentifierExpression> ident, ExplicitType&& type) noexcept;
     ~FunctionParameter();
 
     MAKE_MOVE_CONSTRUCTABLE_ONLY(FunctionParameter)
@@ -56,11 +56,11 @@ class FunctionExpression : public ExprBase<FunctionExpression> {
     static constexpr auto KIND = NodeKind::FUNCTION_EXPRESSION;
 
   public:
-    explicit FunctionExpression(const syntax::Token&               start_token,
-                                Optional<SelfParameter>            self,
-                                std::vector<FunctionParameter>     parameters,
-                                ExplicitType&&                     return_type,
-                                Optional<mem::Box<BlockStatement>> body) noexcept;
+    FunctionExpression(const syntax::Token&               start_token,
+                       Optional<SelfParameter>            self,
+                       std::vector<FunctionParameter>     parameters,
+                       ExplicitType&&                     return_type,
+                       Optional<mem::Box<BlockStatement>> body) noexcept;
     ~FunctionExpression() override;
 
     MAKE_MOVE_CONSTRUCTABLE_ONLY(FunctionExpression)

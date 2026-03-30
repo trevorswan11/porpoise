@@ -123,8 +123,7 @@ class Node {
     }
 
   protected:
-    explicit Node(const syntax::Token& tok, NodeKind kind) noexcept
-        : start_token_{tok}, kind_{kind} {}
+    Node(const syntax::Token& tok, NodeKind kind) noexcept : start_token_{tok}, kind_{kind} {}
 
     virtual auto is_equal(const Node& other) const noexcept -> bool = 0;
 

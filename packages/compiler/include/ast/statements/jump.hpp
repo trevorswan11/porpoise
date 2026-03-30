@@ -13,8 +13,8 @@ class JumpStatement : public StmtBase<JumpStatement> {
     static constexpr auto KIND = NodeKind::JUMP_STATEMENT;
 
   public:
-    explicit JumpStatement(const syntax::Token&           start_token,
-                           Optional<mem::Box<Expression>> expression) noexcept
+    JumpStatement(const syntax::Token&           start_token,
+                  Optional<mem::Box<Expression>> expression) noexcept
         : StmtBase{start_token}, expression_{std::move(expression)} {}
 
     MAKE_MOVE_CONSTRUCTABLE_ONLY(JumpStatement)

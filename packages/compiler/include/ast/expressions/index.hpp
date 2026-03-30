@@ -13,9 +13,9 @@ class IndexExpression : public ExprBase<IndexExpression> {
     static constexpr auto KIND = NodeKind::INDEX_EXPRESSION;
 
   public:
-    explicit IndexExpression(const syntax::Token& start_token,
-                             mem::Box<Expression> array,
-                             mem::Box<Expression> idx) noexcept
+    IndexExpression(const syntax::Token& start_token,
+                    mem::Box<Expression> array,
+                    mem::Box<Expression> idx) noexcept
         : ExprBase{start_token}, array_{std::move(array)}, index_{std::move(idx)} {}
 
     MAKE_MOVE_CONSTRUCTABLE_ONLY(IndexExpression)

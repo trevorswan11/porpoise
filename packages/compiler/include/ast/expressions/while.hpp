@@ -13,11 +13,11 @@ class WhileLoopExpression : public ExprBase<WhileLoopExpression> {
     static constexpr auto KIND = NodeKind::WHILE_LOOP_EXPRESSION;
 
   public:
-    explicit WhileLoopExpression(const syntax::Token&           start_token,
-                                 mem::Box<Expression>           condition,
-                                 Optional<mem::Box<Expression>> continuation,
-                                 mem::Box<BlockStatement>       block,
-                                 Optional<mem::Box<Statement>>  non_break) noexcept;
+    WhileLoopExpression(const syntax::Token&           start_token,
+                        mem::Box<Expression>           condition,
+                        Optional<mem::Box<Expression>> continuation,
+                        mem::Box<BlockStatement>       block,
+                        Optional<mem::Box<Statement>>  non_break) noexcept;
     ~WhileLoopExpression() override;
 
     MAKE_MOVE_CONSTRUCTABLE_ONLY(WhileLoopExpression)

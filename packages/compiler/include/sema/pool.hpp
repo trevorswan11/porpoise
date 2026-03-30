@@ -17,8 +17,11 @@ class TypePool {
     MAKE_MOVE_CONSTRUCTABLE_ONLY(TypePool)
 
     // Gets a type by its key or emplace's it into the internal cache
-    [[nodiscard]] auto get_or_emplace(const types::Key& key) -> Type&;
-    [[nodiscard]] auto get(const types::Key& key) -> Optional<Type&>;
+    [[nodiscard]] auto operator[](const types::Key& key) -> Type& { return get_or_emplace(key); }
+    [[nodiscard]] auto get(const types::Key& key) noexcept -> Optional<Type&>;
+
+  private:
+    auto get_or_emplace(const types::Key& key) -> Type&;
 
   private:
     mem::Arena                                      arena_;

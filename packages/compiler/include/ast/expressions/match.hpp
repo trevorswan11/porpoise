@@ -18,9 +18,9 @@ class MatchArm {
     using Capture = std::variant<mem::Box<IdentifierExpression>, std::monostate>;
 
   public:
-    explicit MatchArm(mem::Box<Expression> pattern,
-                      Optional<Capture>    capture,
-                      mem::Box<Statement>  dispatch) noexcept;
+    MatchArm(mem::Box<Expression> pattern,
+             Optional<Capture>    capture,
+             mem::Box<Statement>  dispatch) noexcept;
     ~MatchArm();
 
     MAKE_MOVE_CONSTRUCTABLE_ONLY(MatchArm)
@@ -54,10 +54,10 @@ class MatchExpression : public ExprBase<MatchExpression> {
     static constexpr auto KIND = NodeKind::MATCH_EXPRESSION;
 
   public:
-    explicit MatchExpression(const syntax::Token&          start_token,
-                             mem::Box<Expression>          matcher,
-                             std::vector<MatchArm>         arms,
-                             Optional<mem::Box<Statement>> catch_all) noexcept;
+    MatchExpression(const syntax::Token&          start_token,
+                    mem::Box<Expression>          matcher,
+                    std::vector<MatchArm>         arms,
+                    Optional<mem::Box<Statement>> catch_all) noexcept;
     ~MatchExpression() override;
 
     MAKE_MOVE_CONSTRUCTABLE_ONLY(MatchExpression)

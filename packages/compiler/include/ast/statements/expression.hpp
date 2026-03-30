@@ -13,8 +13,7 @@ class ExpressionStatement : public StmtBase<ExpressionStatement> {
     static constexpr auto KIND = NodeKind::EXPRESSION_STATEMENT;
 
   public:
-    explicit ExpressionStatement(const syntax::Token& start_token,
-                                 mem::Box<Expression> expression) noexcept
+    ExpressionStatement(const syntax::Token& start_token, mem::Box<Expression> expression) noexcept
         : StmtBase{start_token}, expression_{std::move(expression)} {}
 
     MAKE_MOVE_CONSTRUCTABLE_ONLY(ExpressionStatement)

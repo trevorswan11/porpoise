@@ -13,8 +13,8 @@ class InfiniteLoopExpression : public ExprBase<InfiniteLoopExpression> {
     static constexpr auto KIND = NodeKind::INFINITE_LOOP_EXPRESSION;
 
   public:
-    explicit InfiniteLoopExpression(const syntax::Token&     start_token,
-                                    mem::Box<BlockStatement> block) noexcept;
+    InfiniteLoopExpression(const syntax::Token&     start_token,
+                           mem::Box<BlockStatement> block) noexcept;
     ~InfiniteLoopExpression() override;
 
     MAKE_MOVE_CONSTRUCTABLE_ONLY(InfiniteLoopExpression)

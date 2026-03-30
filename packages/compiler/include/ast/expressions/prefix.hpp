@@ -11,7 +11,7 @@ namespace porpoise::ast {
 
 template <typename Derived> class PrefixExpression : public ExprBase<Derived> {
   public:
-    explicit PrefixExpression(const syntax::Token& start_token, mem::Box<Expression> rhs) noexcept
+    PrefixExpression(const syntax::Token& start_token, mem::Box<Expression> rhs) noexcept
         : ExprBase<Derived>{start_token}, rhs_{std::move(rhs)} {}
 
     auto accept(Visitor& v) const noexcept -> void override { v.visit(Node::as<Derived>(*this)); }

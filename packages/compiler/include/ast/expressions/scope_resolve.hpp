@@ -13,9 +13,9 @@ class ScopeResolutionExpression : public ExprBase<ScopeResolutionExpression> {
     static constexpr auto KIND = NodeKind::SCOPE_RESOLUTION_EXPRESSION;
 
   public:
-    explicit ScopeResolutionExpression(const syntax::Token&           start_token,
-                                       mem::Box<Expression>           outer,
-                                       mem::Box<IdentifierExpression> inner) noexcept;
+    ScopeResolutionExpression(const syntax::Token&           start_token,
+                              mem::Box<Expression>           outer,
+                              mem::Box<IdentifierExpression> inner) noexcept;
     ~ScopeResolutionExpression() override;
 
     MAKE_MOVE_CONSTRUCTABLE_ONLY(ScopeResolutionExpression)

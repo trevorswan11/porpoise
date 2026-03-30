@@ -12,8 +12,8 @@ class IdentifierExpression;
 
 class Enumeration {
   public:
-    explicit Enumeration(mem::Box<IdentifierExpression> ident,
-                         Optional<mem::Box<Expression>> value) noexcept;
+    Enumeration(mem::Box<IdentifierExpression> ident,
+                Optional<mem::Box<Expression>> value) noexcept;
     ~Enumeration();
 
     MAKE_MOVE_CONSTRUCTABLE_ONLY(Enumeration)
@@ -39,9 +39,9 @@ class EnumExpression : public ExprBase<EnumExpression> {
     MAKE_ITERATOR(Enumerations, std::vector<Enumeration>, enumerations_)
 
   public:
-    explicit EnumExpression(const syntax::Token&                     start_token,
-                            Optional<mem::Box<IdentifierExpression>> underlying,
-                            Enumerations                             enumerations) noexcept;
+    EnumExpression(const syntax::Token&                     start_token,
+                   Optional<mem::Box<IdentifierExpression>> underlying,
+                   Enumerations                             enumerations) noexcept;
     ~EnumExpression() override;
 
     MAKE_MOVE_CONSTRUCTABLE_ONLY(EnumExpression)

@@ -19,7 +19,7 @@ class StructExpression : public ExprBase<StructExpression> {
     MAKE_ITERATOR(Members, std::vector<mem::Box<DeclStatement>>, members_)
 
   public:
-    explicit StructExpression(const syntax::Token& start_token, Members members) noexcept;
+    StructExpression(const syntax::Token& start_token, Members members) noexcept;
     ~StructExpression() override;
 
     MAKE_MOVE_CONSTRUCTABLE_ONLY(StructExpression)

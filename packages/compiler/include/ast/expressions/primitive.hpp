@@ -26,7 +26,7 @@ template <typename Derived, typename T> class PrimitiveExpression : public ExprB
     using value_type = T;
 
   public:
-    explicit PrimitiveExpression(const syntax::Token& start_token, value_type value) noexcept
+    PrimitiveExpression(const syntax::Token& start_token, value_type value) noexcept
         : ExprBase<Derived>{start_token}, value_{std::move(value)} {}
 
     static auto parse(syntax::Parser& parser)

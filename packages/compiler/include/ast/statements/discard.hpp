@@ -13,8 +13,7 @@ class DiscardStatement : public StmtBase<DiscardStatement> {
     static constexpr auto KIND = NodeKind::DISCARD_STATEMENT;
 
   public:
-    explicit DiscardStatement(const syntax::Token& start_token,
-                              mem::Box<Expression> discarded) noexcept
+    DiscardStatement(const syntax::Token& start_token, mem::Box<Expression> discarded) noexcept
         : StmtBase{start_token}, discarded_{std::move(discarded)} {}
 
     MAKE_MOVE_CONSTRUCTABLE_ONLY(DiscardStatement)

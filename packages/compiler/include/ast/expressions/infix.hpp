@@ -11,10 +11,10 @@ namespace porpoise::ast {
 
 template <typename Derived> class InfixExpression : public ExprBase<Derived> {
   public:
-    explicit InfixExpression(const syntax::Token& start_token,
-                             mem::Box<Expression> lhs,
-                             syntax::TokenType    op,
-                             mem::Box<Expression> rhs) noexcept
+    InfixExpression(const syntax::Token& start_token,
+                    mem::Box<Expression> lhs,
+                    syntax::TokenType    op,
+                    mem::Box<Expression> rhs) noexcept
         : ExprBase<Derived>{start_token}, lhs_{std::move(lhs)}, op_{op}, rhs_{std::move(rhs)} {}
 
     MAKE_GETTER(lhs, const Expression&, *)

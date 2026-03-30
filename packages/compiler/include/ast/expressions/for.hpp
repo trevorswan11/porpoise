@@ -19,7 +19,7 @@ class ForLoopCapture {
   public:
     class Valued {
       public:
-        explicit Valued(TypeModifier modifier, mem::Box<IdentifierExpression> ident) noexcept;
+        Valued(TypeModifier modifier, mem::Box<IdentifierExpression> ident) noexcept;
         ~Valued();
 
         MAKE_MOVE_CONSTRUCTABLE_ONLY(Valued)
@@ -35,7 +35,7 @@ class ForLoopCapture {
     };
 
   public:
-    explicit ForLoopCapture() noexcept;
+    ForLoopCapture() noexcept;
     explicit ForLoopCapture(Valued valued) noexcept;
     ~ForLoopCapture();
 
@@ -59,11 +59,11 @@ class ForLoopExpression : public ExprBase<ForLoopExpression> {
     static constexpr auto KIND = NodeKind::FOR_LOOP_EXPRESSION;
 
   public:
-    explicit ForLoopExpression(const syntax::Token&              start_token,
-                               std::vector<mem::Box<Expression>> iterables,
-                               std::vector<ForLoopCapture>       captures,
-                               mem::Box<BlockStatement>          block,
-                               Optional<mem::Box<Statement>>     non_break) noexcept;
+    ForLoopExpression(const syntax::Token&              start_token,
+                      std::vector<mem::Box<Expression>> iterables,
+                      std::vector<ForLoopCapture>       captures,
+                      mem::Box<BlockStatement>          block,
+                      Optional<mem::Box<Statement>>     non_break) noexcept;
     ~ForLoopExpression() override;
 
     MAKE_MOVE_CONSTRUCTABLE_ONLY(ForLoopExpression)

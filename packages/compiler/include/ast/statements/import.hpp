@@ -13,8 +13,8 @@ class StringExpression;
 
 class LibraryImport {
   public:
-    explicit LibraryImport(mem::Box<IdentifierExpression>           name,
-                           Optional<mem::Box<IdentifierExpression>> alias) noexcept;
+    LibraryImport(mem::Box<IdentifierExpression>           name,
+                  Optional<mem::Box<IdentifierExpression>> alias) noexcept;
     ~LibraryImport();
 
     MAKE_MOVE_CONSTRUCTABLE_ONLY(LibraryImport)
@@ -31,8 +31,7 @@ class LibraryImport {
 
 class FileImport {
   public:
-    explicit FileImport(mem::Box<StringExpression>     file,
-                        mem::Box<IdentifierExpression> alias) noexcept;
+    FileImport(mem::Box<StringExpression> file, mem::Box<IdentifierExpression> alias) noexcept;
     ~FileImport();
 
     MAKE_MOVE_CONSTRUCTABLE_ONLY(FileImport)
@@ -54,7 +53,7 @@ class ImportStatement : public StmtBase<ImportStatement> {
     using ImportVariant = std::variant<LibraryImport, FileImport>;
 
   public:
-    explicit ImportStatement(const syntax::Token& start_token, ImportVariant imported) noexcept;
+    ImportStatement(const syntax::Token& start_token, ImportVariant imported) noexcept;
     ~ImportStatement() override;
 
     MAKE_MOVE_CONSTRUCTABLE_ONLY(ImportStatement)

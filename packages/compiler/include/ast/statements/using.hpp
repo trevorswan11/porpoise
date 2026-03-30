@@ -14,9 +14,9 @@ class UsingStatement : public StmtBase<UsingStatement> {
     static constexpr auto KIND = NodeKind::USING_STATEMENT;
 
   public:
-    explicit UsingStatement(const syntax::Token&           start_token,
-                            mem::Box<IdentifierExpression> alias,
-                            ExplicitType&&                 type) noexcept;
+    UsingStatement(const syntax::Token&           start_token,
+                   mem::Box<IdentifierExpression> alias,
+                   ExplicitType&&                 type) noexcept;
     ~UsingStatement() override;
 
     MAKE_MOVE_CONSTRUCTABLE_ONLY(UsingStatement)

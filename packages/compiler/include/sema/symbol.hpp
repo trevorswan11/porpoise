@@ -51,7 +51,7 @@ enum class ResolveStatus : u8 {
 
 class Symbol {
   public:
-    explicit Symbol(std::string_view name, SymbolicNode node) noexcept : name_{name}, node_{node} {}
+    Symbol(std::string_view name, SymbolicNode node) noexcept : name_{name}, node_{node} {}
 
     MAKE_GETTER(name, std::string_view)
     MAKE_GETTER(node, const SymbolicNode&)

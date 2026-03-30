@@ -14,7 +14,7 @@ class IdentifierExpression;
 
 class UnionField {
   public:
-    explicit UnionField(mem::Box<IdentifierExpression> ident, ExplicitType&& type) noexcept;
+    UnionField(mem::Box<IdentifierExpression> ident, ExplicitType&& type) noexcept;
     ~UnionField();
 
     MAKE_MOVE_CONSTRUCTABLE_ONLY(UnionField)
@@ -40,7 +40,7 @@ class UnionExpression : public ExprBase<UnionExpression> {
     MAKE_ITERATOR(Fields, std::vector<UnionField>, fields_)
 
   public:
-    explicit UnionExpression(const syntax::Token& start_token, Fields fields) noexcept;
+    UnionExpression(const syntax::Token& start_token, Fields fields) noexcept;
     ~UnionExpression() override;
 
     MAKE_MOVE_CONSTRUCTABLE_ONLY(UnionExpression)

@@ -13,10 +13,10 @@ class IfExpression : public ExprBase<IfExpression> {
     static constexpr auto KIND = NodeKind::IF_EXPRESSION;
 
   public:
-    explicit IfExpression(const syntax::Token&          start_token,
-                          mem::Box<Expression>          condition,
-                          mem::Box<Statement>           consequence,
-                          Optional<mem::Box<Statement>> alternate) noexcept
+    IfExpression(const syntax::Token&          start_token,
+                 mem::Box<Expression>          condition,
+                 mem::Box<Statement>           consequence,
+                 Optional<mem::Box<Statement>> alternate) noexcept
         : ExprBase{start_token}, condition_{std::move(condition)},
           consequence_{std::move(consequence)}, alternate_{std::move(alternate)} {}
 

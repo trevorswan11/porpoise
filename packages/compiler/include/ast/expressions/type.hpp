@@ -20,9 +20,9 @@ class ExplicitType;
 
 class ExplicitArrayType {
   public:
-    explicit ExplicitArrayType(Optional<mem::Box<Expression>> dimension,
-                               bool                           null_terminated,
-                               mem::Box<ExplicitType>         inner_type) noexcept;
+    ExplicitArrayType(Optional<mem::Box<Expression>> dimension,
+                      bool                           null_terminated,
+                      mem::Box<ExplicitType>         inner_type) noexcept;
     ~ExplicitArrayType();
 
     MAKE_MOVE_CONSTRUCTABLE_ONLY(ExplicitArrayType)
@@ -49,7 +49,7 @@ class ExplicitType {
         variant<ExplicitIdentType, ExplicitFunctionType, ExplicitArrayType, ExplicitRecursiveType>;
 
   public:
-    explicit ExplicitType(TypeModifier modifier, ExplicitTypeVariant type) noexcept;
+    ExplicitType(TypeModifier modifier, ExplicitTypeVariant type) noexcept;
     ~ExplicitType();
 
     MAKE_MOVE_CONSTRUCTABLE_ONLY(ExplicitType)
@@ -79,7 +79,7 @@ class TypeExpression : public ExprBase<TypeExpression> {
     static constexpr auto KIND = NodeKind::TYPE_EXPRESSION;
 
   public:
-    explicit TypeExpression(const syntax::Token& start_token, Optional<ExplicitType> exp) noexcept;
+    TypeExpression(const syntax::Token& start_token, Optional<ExplicitType> exp) noexcept;
     ~TypeExpression() override;
 
     MAKE_MOVE_CONSTRUCTABLE_ONLY(TypeExpression)
