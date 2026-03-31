@@ -1,6 +1,11 @@
 #include "sema/type_resolver.hpp"
 
+#include "sema/analyzer.hpp"
+
 namespace porpoise::sema {
+
+TypeResolver::TypeResolver(Analyzer& analyzer, SymbolTableStack& stack) noexcept
+    : analyzer_{analyzer}, pool_{analyzer_.get_pool()}, stack_{stack} {}
 
 auto TypeResolver::visit(const ast::ArrayExpression&) -> void {}
 
@@ -54,25 +59,21 @@ auto TypeResolver::visit(const ast::UnaryExpression&) -> void {}
 
 auto TypeResolver::visit(const ast::StringExpression&) -> void {}
 
-auto TypeResolver::visit(const ast::SignedIntegerExpression&) -> void {}
+#define MAKE_BUILTIN_RESOLVER(NodeType, kind)                \
+    auto TypeResolver::visit(const ast::NodeType&) -> void { \
+        last_type_.emplace(pool_.builtin(TypeKind::kind));   \
+    }
 
-auto TypeResolver::visit(const ast::SignedLongIntegerExpression&) -> void {}
-
-auto TypeResolver::visit(const ast::ISizeIntegerExpression&) -> void {}
-
-auto TypeResolver::visit(const ast::UnsignedIntegerExpression&) -> void {}
-
-auto TypeResolver::visit(const ast::UnsignedLongIntegerExpression&) -> void {}
-
-auto TypeResolver::visit(const ast::USizeIntegerExpression&) -> void {}
-
-auto TypeResolver::visit(const ast::ByteExpression&) -> void {}
-
-auto TypeResolver::visit(const ast::FloatExpression&) -> void {}
-
-auto TypeResolver::visit(const ast::DoubleExpression&) -> void {}
-
-auto TypeResolver::visit(const ast::BoolExpression&) -> void {}
+MAKE_BUILTIN_RESOLVER(SignedIntegerExpression, INT)
+MAKE_BUILTIN_RESOLVER(SignedLongIntegerExpression, LONG)
+MAKE_BUILTIN_RESOLVER(ISizeIntegerExpression, SIZE)
+MAKE_BUILTIN_RESOLVER(UnsignedIntegerExpression, UINT)
+MAKE_BUILTIN_RESOLVER(UnsignedLongIntegerExpression, ULONG)
+MAKE_BUILTIN_RESOLVER(USizeIntegerExpression, USIZE)
+MAKE_BUILTIN_RESOLVER(ByteExpression, BYTE)
+MAKE_BUILTIN_RESOLVER(BoolExpression, BOOL)
+MAKE_BUILTIN_RESOLVER(FloatExpression, FLOAT)
+MAKE_BUILTIN_RESOLVER(DoubleExpression, DOUBLE)
 
 auto TypeResolver::visit(const ast::ScopeResolutionExpression&) -> void {}
 

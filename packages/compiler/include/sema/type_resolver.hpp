@@ -9,17 +9,18 @@
 namespace porpoise::sema {
 
 class Analyzer;
+class TypePool;
 
 // You aren't going to believe what this does (Pass 2)
 class TypeResolver : public ast::Visitor {
   public:
-    TypeResolver(Analyzer& analyzer, SymbolTableStack& stack)
-        : analyzer_{analyzer}, stack_{stack} {}
+    TypeResolver(Analyzer& analyzer, SymbolTableStack& stack) noexcept;
 
     MAKE_AST_VISITOR_OVERRIDES()
 
   private:
     [[maybe_unused]] Analyzer&         analyzer_;
+    [[maybe_unused]] TypePool&         pool_;
     [[maybe_unused]] SymbolTableStack& stack_;
     Optional<Type&>                    last_type_;
 };

@@ -133,6 +133,12 @@ class Type {
 
   public:
     explicit Type(TypeKind kind) noexcept : kind_{kind} {}
+    ~Type() = default;
+
+    Type(const Type&)                    = delete;
+    auto operator=(const Type&) -> Type& = delete;
+    Type(Type&&) noexcept                = delete;
+    auto operator=(Type&&) -> Type&      = delete;
 
     MAKE_GETTER(kind, TypeKind)
     MAKE_OPTIONAL_UNPACKER(resolved, Resolved, resolved_, *)

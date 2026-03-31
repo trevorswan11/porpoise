@@ -52,6 +52,9 @@ enum class ResolveStatus : u8 {
 class Symbol {
   public:
     Symbol(std::string_view name, SymbolicNode node) noexcept : name_{name}, node_{node} {}
+    ~Symbol() = default;
+
+    MAKE_MOVE_CONSTRUCTABLE_ONLY(Symbol)
 
     MAKE_GETTER(name, std::string_view)
     MAKE_GETTER(node, const SymbolicNode&)
@@ -92,6 +95,11 @@ class SymbolTable {
     using KV = Table::iterator::value_type;
 
   public:
+    SymbolTable() noexcept = default;
+    ~SymbolTable()         = default;
+
+    MAKE_MOVE_CONSTRUCTABLE_ONLY(SymbolTable)
+
     auto insert(std::string_view name, SymbolicNode node) -> Expected<std::monostate, Diagnostic>;
 
     auto reserve(usize cap) -> void { symbols_.reserve(cap); }
@@ -111,10 +119,12 @@ class SymbolTable {
     // Returns an optional containing a mutable or const reference to a symbol depending on context.
     template <typename Self>
     [[nodiscard]] auto get_opt(this Self&& self, std::string_view name) noexcept {
-        auto it = self.symbols_.find(name);
-        using T = decltype(it->second);
-        if (it == self.symbols_.end()) { return Optional<T>{}; }
-        return Optional<T>{it->second};
+        auto it          = self.symbols_.find(name);
+        using ReturnType = std::conditional_t<std::is_const_v<std::remove_reference_t<Self>>,
+                                              Optional<const Symbol&>,
+                                              Optional<Symbol&>>;
+        if (it == self.symbols_.end()) { return ReturnType{std::nullopt}; }
+        return ReturnType{it->second};
     }
 
     // Treat this symbol table as an importable module in future passes
@@ -140,13 +150,15 @@ class SymbolTableStack {
     MAKE_ITERATOR(Stack, std::vector<usize>, stack_)
 
   public:
+    SymbolTableStack() noexcept = default;
+    ~SymbolTableStack()         = default;
+
+    MAKE_MOVE_CONSTRUCTABLE_ONLY(SymbolTableStack)
+
     auto push(usize idx) -> void { stack_.push_back(idx); }
-    auto pop() noexcept -> usize {
-        const auto back = stack_.back();
-        stack_.pop_back();
-        return back;
+    auto pop() noexcept -> void {
+        if (!stack_.empty()) { stack_.pop_back(); }
     }
-    [[nodiscard]] auto peek() const noexcept -> usize { return stack_.back(); }
 
   private:
     Stack stack_;
@@ -157,6 +169,11 @@ class SymbolTableRegistry {
     MAKE_ITERATOR(Tables, std::vector<SymbolTable>, tables_)
 
   public:
+    SymbolTableRegistry() noexcept = default;
+    ~SymbolTableRegistry()         = default;
+
+    MAKE_MOVE_CONSTRUCTABLE_ONLY(SymbolTableRegistry)
+
     [[nodiscard]] auto create() -> usize {
         tables_.emplace_back();
         return tables_.size() - 1;
@@ -165,14 +182,16 @@ class SymbolTableRegistry {
     [[nodiscard]] auto insert_into(usize table_idx, std::string_view name, SymbolicNode node)
         -> Expected<std::monostate, Diagnostic>;
 
-    template <typename Self> [[nodiscard]] auto get(this Self&& self, usize idx) -> SymbolTable& {
+    template <typename Self> [[nodiscard]] auto get(this Self&& self, usize idx) -> auto& {
         return self.tables_.at(idx);
     }
 
     template <typename Self> [[nodiscard]] auto get_opt(this Self&& self, usize idx) noexcept {
-        using T = decltype(self.tables_[idx]);
-        if (idx >= self.tables_.size()) { return Optional<T>{}; }
-        return Optional<T>{self.tables_[idx]};
+        using ReturnType = std::conditional_t<std::is_const_v<std::remove_reference_t<Self>>,
+                                              Optional<const SymbolTable&>,
+                                              Optional<SymbolTable&>>;
+        if (idx >= self.tables_.size()) { return ReturnType{std::nullopt}; }
+        return ReturnType{self.tables_[idx]};
     }
 
     template <typename Self>
@@ -182,9 +201,11 @@ class SymbolTableRegistry {
 
     template <typename Self>
     [[nodiscard]] auto get_from_opt(this Self&& self, usize idx, std::string_view name) noexcept {
-        using T = decltype(self.tables_[idx].get_opt(name));
-        if (idx >= self.tables_.size()) { return Optional<T>{}; }
-        return Optional<T>{self.tables_[idx].get_opt(name)};
+        using ReturnType = std::conditional_t<std::is_const_v<std::remove_reference_t<Self>>,
+                                              Optional<const Symbol&>,
+                                              Optional<Symbol&>>;
+        if (idx >= self.tables_.size()) { return ReturnType{std::nullopt}; }
+        return self.tables_[idx].get_opt(name);
     }
 
     [[nodiscard]] auto

@@ -18,7 +18,7 @@ class Analyzer {
     [[nodiscard]] auto collect_symbols() -> usize;
     auto               resolve_symbols() -> void;
 
-    template <typename Self> [[nodiscard]] auto get_table(this Self&& self, usize idx) {
+    template <typename Self> [[nodiscard]] auto get_table(this Self&& self, usize idx) -> auto& {
         return self.registry_.get(idx);
     }
 
