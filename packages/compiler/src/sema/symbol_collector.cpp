@@ -1,3 +1,5 @@
+#include <utility>
+
 #include "sema/symbol_collector.hpp"
 
 #include "ast/ast.hpp"
@@ -87,15 +89,42 @@ auto SymbolCollector::visit(const ast::DeclStatement& decl) -> void {
 
     auto& symbol = registry_.get_from(table_idx_, name);
     if (decl.has_modifier(ast::DeclModifiers::PUBLIC)) { symbol.mark_public(); }
+    if (!decl.has_value()) { return; }
 
-    // Attach bubbled types to the symbol just created
-    if (decl.has_value()) {
-        decl.get_value().accept(*this);
+    // Valued decls should be evaluated to get shallow types
+    const auto& expr = decl.get_value();
+    if (expr.any<ast::EnumExpression,
+                 ast::FunctionExpression,
+                 ast::UnionExpression,
+                 ast::StructExpression>()) {
+        static constexpr auto expr_name = [](ast::NodeKind kind) {
+            switch (kind) {
+            case ast::NodeKind::ENUM_EXPRESSION:     return "enum";
+            case ast::NodeKind::FUNCTION_EXPRESSION: return "function";
+            case ast::NodeKind::UNION_EXPRESSION:    return "union";
+            case ast::NodeKind::STRUCT_EXPRESSION:   return "struct";
+            default:                                 std::unreachable();
+            }
+        };
 
-        if (last_type_) {
-            symbol.emplace_type(*last_type_);
-            last_type_.reset();
+        if (decl.has_modifier(ast::DeclModifiers::CONSTEXPR)) {
+            diagnostics_.emplace_back(fmt::format("Top level {}s are implicitly compile time known",
+                                                  expr_name(expr.get_kind())),
+                                      Error::REDUNDANT_CONSTEXPR,
+                                      decl.get_token());
+        } else if (!decl.has_modifier(ast::DeclModifiers::CONSTANT)) {
+            diagnostics_.emplace_back(
+                fmt::format("Top level {}s must be marked const at the top level",
+                            expr_name(expr.get_kind())),
+                Error::ILLEGAL_NON_CONST_STATEMENT,
+                decl.get_token());
         }
+    }
+
+    expr.accept(*this);
+    if (last_type_) {
+        symbol.emplace_type(*last_type_);
+        last_type_.reset();
     }
 }
 
