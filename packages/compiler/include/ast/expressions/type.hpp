@@ -96,8 +96,9 @@ class TypeExpression : public ExprBase<TypeExpression> {
   private:
     Optional<ExplicitType> explicit_;
 
-    // FunctionExpression needs to destructively move explicit on success
+    // Function's need to destructively move explicit on success
     friend class FunctionExpression;
+    friend class FunctionParameter;
 };
 
 } // namespace porpoise::ast

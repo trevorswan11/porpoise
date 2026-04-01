@@ -15,9 +15,6 @@ namespace porpoise::sema {
     X(DoWhileLoopExpression)         \
     X(ForLoopCapture)                \
     X(ForLoopExpression)             \
-    X(SelfParameter)                 \
-    X(FunctionParameter)             \
-    X(FunctionExpression)            \
     X(IdentifierExpression)          \
     X(IfExpression)                  \
     X(IndexExpression)               \
@@ -60,6 +57,16 @@ auto SymbolCollector::visit(const ast::EnumExpression& enum_expr) -> void {
 // This is assumed to be invoked only by the enum visitor
 auto SymbolCollector::visit(const ast::Enumeration& enumeration) -> void {
     try_declare(enumeration.get_ident().get_name(), &enumeration);
+}
+
+auto SymbolCollector::visit(const ast::SelfParameter& param) -> void {
+    [[maybe_unused]] const auto& a = param;
+}
+auto SymbolCollector::visit(const ast::FunctionParameter& param) -> void {
+    [[maybe_unused]] const auto& a = param;
+}
+auto SymbolCollector::visit(const ast::FunctionExpression& fn) -> void {
+    [[maybe_unused]] const auto& a = fn;
 }
 
 auto SymbolCollector::visit(const ast::StructExpression& struct_expr) -> void {

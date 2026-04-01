@@ -98,10 +98,7 @@ class Node {
 
     [[nodiscard]] auto has_sema_type() const noexcept -> bool { return sema_type_.has_value(); }
     [[nodiscard]] auto get_sema_type() const noexcept -> sema::Type& { return *sema_type_; }
-    auto set_sema_type(sema::Type& type) const noexcept // cppcheck-suppress constParameterReference
-        -> void {
-        sema_type_ = type;
-    }
+    auto set_sema_type(sema::Type& type) const noexcept -> void { sema_type_.emplace(type); }
 
     // Compares two nodes at the AST level, ignoring semantic differences.
     friend auto operator==(const Node& lhs, const Node& rhs) noexcept -> bool {

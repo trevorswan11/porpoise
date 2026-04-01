@@ -141,7 +141,7 @@ auto ASTDumper::visit(const SelfParameter& self) -> void {
 
 auto ASTDumper::visit(const FunctionParameter& parameter) -> void {
     fmt::println(out_, "Param:");
-    {
+    if (parameter.has_ident()) {
         const Indent::Guard g_name{indent_, false};
         fmt::print(out_, "{}Name: ", indent_.current_branch());
         parameter.get_ident().accept(*this);

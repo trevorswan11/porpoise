@@ -72,10 +72,11 @@ DeclStatement (f_ptr)
 ├─ Modifiers: VARIABLE
 └─ Type: ExplicitType (modifier: PTR)
     └─ FunctionExpression
-        ├─ Self: a (modifier: REF)
         ├─ Parameters:
+        │   ├─ Param:
+        │   │   └─ Type: ExplicitType (modifier: REF)
+        │   │       └─ IdentifierExpression: a
         │   └─ Param:
-        │       ├─ Name: IdentifierExpression: b
         │       └─ Type: ExplicitType (modifier: MUT_PTR)
         │           └─ IdentifierExpression: B
         └─ Returns: ExplicitType (modifier: REF)

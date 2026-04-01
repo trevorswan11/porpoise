@@ -68,11 +68,10 @@ TEST_CASE("Function with parameters but no self or body") {
     helpers::test_expr_stmt(
         "fn(a: A, b: *B): int;",
         helpers::function_expr_from(
-            helpers::make_parameters(
-                ast::FunctionParameter{helpers::make_ident("a"),
-                                       ast::ExplicitType{mods::BASE, helpers::make_ident("A")}},
-                ast::FunctionParameter{helpers::make_ident("b"),
-                                       ast::ExplicitType{mods::PTR, helpers::make_ident("B")}}),
+            helpers::make_parameters(ast::FunctionParameter{helpers::make_ident("a"),
+                                                            {mods::BASE, helpers::make_ident("A")}},
+                                     ast::FunctionParameter{helpers::make_ident("b"),
+                                                            {mods::PTR, helpers::make_ident("B")}}),
             ast::ExplicitType{mods::BASE, helpers::make_ident("int")}));
 }
 
@@ -81,11 +80,10 @@ TEST_CASE("Function with self & parameters but no body") {
         "fn(&mut this, a: A, b: *B): int;",
         helpers::function_expr_from(
             ast::SelfParameter{mods::MUT_REF, helpers::make_ident("this")},
-            helpers::make_parameters(
-                ast::FunctionParameter{helpers::make_ident("a"),
-                                       ast::ExplicitType{mods::BASE, helpers::make_ident("A")}},
-                ast::FunctionParameter{helpers::make_ident("b"),
-                                       ast::ExplicitType{mods::PTR, helpers::make_ident("B")}}),
+            helpers::make_parameters(ast::FunctionParameter{helpers::make_ident("a"),
+                                                            {mods::BASE, helpers::make_ident("A")}},
+                                     ast::FunctionParameter{helpers::make_ident("b"),
+                                                            {mods::PTR, helpers::make_ident("B")}}),
             ast::ExplicitType{mods::BASE, helpers::make_ident("int")}));
 }
 
@@ -121,9 +119,7 @@ TEST_CASE("Function missing return type") {
 
     helpers::test_parser_fail(
         "fn(*mut this, a: A, b: *B, ): ;",
-        syntax::ParserDiagnostic{"No prefix parse function for SEMICOLON(;) found",
-                                 syntax::ParserError::MISSING_PREFIX_PARSER,
-                                 std::pair{1uz, 31uz}});
+        syntax::ParserDiagnostic{syntax::ParserError::ILLEGAL_EXPLICIT_TYPE, 1, 29});
 }
 
 TEST_CASE("Function parameter missing type") {

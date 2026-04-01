@@ -50,12 +50,10 @@ TEST_CASE("Struct flavors") {
                             syntax::Token{keywords::FN},
                             ast::SelfParameter{mods::MUT_PTR, helpers::make_ident("this")},
                             helpers::make_parameters(
-                                ast::FunctionParameter{
-                                    helpers::make_ident("a"),
-                                    ast::ExplicitType{mods::BASE, helpers::make_ident("A")}},
-                                ast::FunctionParameter{
-                                    helpers::make_ident("b"),
-                                    ast::ExplicitType{mods::PTR, helpers::make_ident("B")}}),
+                                ast::FunctionParameter{helpers::make_ident("a"),
+                                                       {mods::BASE, helpers::make_ident("A")}},
+                                ast::FunctionParameter{helpers::make_ident("b"),
+                                                       {mods::PTR, helpers::make_ident("B")}}),
                             ast::ExplicitType{mods::BASE, helpers::make_ident("C")},
                             helpers::make_expr_block_stmt(helpers::ident_from("c"))),
                         ast::DeclModifiers::CONSTANT,

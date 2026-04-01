@@ -23,12 +23,13 @@ auto SelfParameter::is_equal(const SelfParameter& other) const noexcept -> bool 
 FunctionParameter::FunctionParameter(mem::Box<IdentifierExpression> ident,
                                      ExplicitType&&                 type) noexcept
     : ident_{std::move(ident)}, type_{std::move(type)} {}
+FunctionParameter::FunctionParameter(ExplicitType&& type) noexcept : type_{std::move(type)} {}
 FunctionParameter::~FunctionParameter() = default;
 
 auto FunctionParameter::accept(Visitor& v) const -> void { v.visit(*this); }
 
 auto FunctionParameter::is_equal(const FunctionParameter& other) const noexcept -> bool {
-    return *ident_ == *other.ident_ && type_ == other.type_;
+    return optional::unsafe_eq<IdentifierExpression>(ident_, other.ident_) && type_ == other.type_;
 }
 
 FunctionExpression::FunctionExpression(const syntax::Token&               start_token,
@@ -133,6 +134,50 @@ auto FunctionExpression::parse(syntax::Parser& parser)
                                              std::move(parameters),
                                              std::move(return_type),
                                              std::move(body));
+}
+
+auto FunctionExpression::parse_type(syntax::Parser& parser)
+    -> Expected<mem::Box<Expression>, syntax::ParserDiagnostic> {
+    const auto start_token = parser.current_token();
+    TRY(parser.expect_peek(syntax::TokenType::LPAREN));
+
+    // Parse the definition now that we're at the fn token
+    std::vector<FunctionParameter> parameters;
+    if (parser.peek_token_is(syntax::TokenType::RPAREN)) {
+        parser.advance();
+    } else {
+        // There is no self parameter for types
+        while (!parser.peek_token_is(syntax::TokenType::RPAREN) &&
+               !parser.peek_token_is(syntax::TokenType::END)) {
+            auto type = TRY(ExplicitType::parse(parser));
+
+            // There are no default values for parameters, and they must be explicitly typed
+            if (type.is_ident_type()) {
+                // noreturn is not allowed for parameters
+                const auto& token = type.get_ident_type().get_token();
+                if (token.type == syntax::TokenType::NORETURN) {
+                    return make_parser_unexpected(
+                        syntax::ParserError::FUNCTION_PARAMETER_IS_NORETURN, token);
+                }
+            }
+
+            parameters.emplace_back(std::move(type));
+            if (!parser.peek_token_is(syntax::TokenType::RPAREN)) {
+                TRY(parser.expect_peek(syntax::TokenType::COMMA));
+            }
+        }
+        TRY(parser.expect_peek(syntax::TokenType::RPAREN));
+    }
+
+    // There must be a return type but there cannot be a block
+    TRY(parser.expect_peek(syntax::TokenType::COLON));
+    auto return_type = TRY(ExplicitType::parse(parser));
+    if (parser.peek_token_is(syntax::TokenType::LBRACE)) {
+        return make_parser_unexpected(syntax::ParserError::EXPLICIT_FN_TYPE_HAS_BODY, start_token);
+    }
+
+    return mem::make_box<FunctionExpression>(
+        start_token, std::nullopt, std::move(parameters), std::move(return_type), std::nullopt);
 }
 
 auto FunctionExpression::is_equal(const Node& other) const noexcept -> bool {

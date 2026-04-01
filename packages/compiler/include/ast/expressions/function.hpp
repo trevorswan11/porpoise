@@ -35,20 +35,21 @@ class SelfParameter {
 class FunctionParameter {
   public:
     FunctionParameter(mem::Box<IdentifierExpression> ident, ExplicitType&& type) noexcept;
+    explicit FunctionParameter(ExplicitType&& type) noexcept;
     ~FunctionParameter();
 
     MAKE_MOVE_CONSTRUCTABLE_ONLY(FunctionParameter)
 
     auto accept(Visitor& v) const -> void;
 
-    MAKE_GETTER(ident, const IdentifierExpression&, *)
+    MAKE_OPTIONAL_UNPACKER(ident, IdentifierExpression, ident_, **)
     MAKE_GETTER(type, const ExplicitType&)
 
     MAKE_EQ_DELEGATION(FunctionParameter)
 
   private:
-    mem::Box<IdentifierExpression> ident_;
-    ExplicitType                   type_;
+    Optional<mem::Box<IdentifierExpression>> ident_;
+    ExplicitType                             type_;
 };
 
 class FunctionExpression : public ExprBase<FunctionExpression> {
@@ -67,6 +68,10 @@ class FunctionExpression : public ExprBase<FunctionExpression> {
 
     auto                      accept(Visitor& v) const -> void override;
     [[nodiscard]] static auto parse(syntax::Parser& parser)
+        -> Expected<mem::Box<Expression>, syntax::ParserDiagnostic>;
+
+    // Meant to be called by the explicit type parser only
+    [[nodiscard]] static auto parse_type(syntax::Parser& parser)
         -> Expected<mem::Box<Expression>, syntax::ParserDiagnostic>;
 
     MAKE_OPTIONAL_UNPACKER(self, SelfParameter, self_, *)
