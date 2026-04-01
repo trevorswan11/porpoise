@@ -1,7 +1,6 @@
 #pragma once
 
 #include <cassert>
-#include <limits>
 #include <string_view>
 #include <vector>
 
@@ -166,9 +165,6 @@ class SymbolTableStack {
 };
 
 class SymbolTableRegistry {
-  public:
-    static constexpr auto SENTINEL_IDX = std::numeric_limits<usize>::max();
-
   public:
     MAKE_ITERATOR(Tables, std::vector<SymbolTable>, tables_)
 

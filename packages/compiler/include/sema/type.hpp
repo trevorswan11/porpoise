@@ -1,11 +1,13 @@
 #pragma once
 
+#include <cassert>
 #include <span>
 #include <type_traits>
 #include <utility>
 
 #include <ankerl/unordered_dense.h>
 
+#include "array.hpp"
 #include "common.hpp"
 #include "hash.hpp"
 #include "optional.hpp"
@@ -127,6 +129,11 @@ class Type {
 
     // Should be populated on pass 1 when used
     struct Metadata {
+        constexpr Metadata(usize scope_idx, usize param_idx) noexcept
+            : scope_table_idx{scope_idx}, parameter_table_idx{param_idx} {
+            assert(scope_table_idx != array::SENTINEL_IDX && "Illegal scope table index");
+        }
+
         usize scope_table_idx;
         usize parameter_table_idx;
     };
@@ -158,9 +165,16 @@ class Type {
     }
 
     // The scope table should be valid (i.e. not a sentinel index)
-    auto               set_metadata(usize           scope_table_idx,
-                                    Optional<usize> parameter_table_idx = std::nullopt) noexcept -> void;
-    [[nodiscard]] auto has_parameter_table() const noexcept -> bool;
+    constexpr auto set_metadata(usize           scope_table_idx,
+                                Optional<usize> parameter_table_idx = std::nullopt) noexcept
+        -> void {
+        metadata_.emplace(scope_table_idx, parameter_table_idx.value_or(array::SENTINEL_IDX));
+    }
+
+    [[nodiscard]] constexpr auto has_parameter_table() const noexcept -> bool {
+        return metadata_ && metadata_->parameter_table_idx != array::SENTINEL_IDX;
+    }
+
     auto resolve(Resolved type) noexcept -> void { resolved_.emplace(std::move(type)); }
 
   private:

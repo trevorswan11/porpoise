@@ -2,11 +2,14 @@
 
 #include <algorithm>
 #include <array>
+#include <limits>
 #include <utility>
 
 #include "types.hpp"
 
 namespace porpoise::array {
+
+constexpr auto SENTINEL_IDX = std::numeric_limits<usize>::max();
 
 // Materializes a sized view into its corresponding array representation
 template <auto N, typename Range> [[nodiscard]] constexpr auto materialize_sized_view(Range&& r) {
