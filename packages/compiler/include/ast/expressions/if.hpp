@@ -14,11 +14,13 @@ class IfExpression : public ExprBase<IfExpression> {
 
   public:
     IfExpression(const syntax::Token&          start_token,
+                 bool                          constexpr_condition,
                  mem::Box<Expression>          condition,
                  mem::Box<Statement>           consequence,
                  Optional<mem::Box<Statement>> alternate) noexcept
-        : ExprBase{start_token}, condition_{std::move(condition)},
-          consequence_{std::move(consequence)}, alternate_{std::move(alternate)} {}
+        : ExprBase{start_token}, constexpr_condition_{constexpr_condition},
+          condition_{std::move(condition)}, consequence_{std::move(consequence)},
+          alternate_{std::move(alternate)} {}
 
     MAKE_MOVE_CONSTRUCTABLE_ONLY(IfExpression)
 
@@ -26,18 +28,22 @@ class IfExpression : public ExprBase<IfExpression> {
     [[nodiscard]] static auto parse(syntax::Parser& parser)
         -> Expected<mem::Box<Expression>, syntax::ParserDiagnostic>;
 
+    [[nodiscard]] auto is_constexpr() const noexcept -> bool { return constexpr_condition_; }
     MAKE_GETTER(condition, const Expression&, *)
     MAKE_GETTER(consequence, const Statement&, *)
     MAKE_OPTIONAL_UNPACKER(alternate, Statement, alternate_, **)
 
   protected:
     auto is_equal(const Node& other) const noexcept -> bool override {
-        const auto& casted = as<IfExpression>(other);
-        return *condition_ == *casted.condition_ && *consequence_ == *casted.consequence_ &&
+        const auto& casted       = as<IfExpression>(other);
+        const auto  constexpr_eq = constexpr_condition_ == casted.constexpr_condition_;
+        return constexpr_eq && *condition_ == *casted.condition_ &&
+               *consequence_ == *casted.consequence_ &&
                optional::unsafe_eq<Statement>(alternate_, casted.alternate_);
     }
 
   private:
+    bool                          constexpr_condition_;
     mem::Box<Expression>          condition_;
     mem::Box<Statement>           consequence_;
     Optional<mem::Box<Statement>> alternate_;

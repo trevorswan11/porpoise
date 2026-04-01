@@ -30,6 +30,7 @@ constexpr std::string_view input{R"(
     loop { a; };
     (*arr[i][j]) = 2;
     if (a) { b; } else { c; };
+    if constexpr (a) { b; };
     fn(*mut this, a: A, b: *B, ): int { c; };
     for (arr, l, p) |i, &mut j, _| { a; } else return b;
     enum : ulong {A = 1ul, B = T, C, };

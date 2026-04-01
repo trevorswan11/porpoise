@@ -165,13 +165,21 @@ ExpressionStatement
     └─ Value: SignedIntegerExpression: 2
 ExpressionStatement
 └─ Expr: IfExpression
+    ├─ Constexpr: false
     ├─ Condition: IdentifierExpression: a
-    ├─ Then:BlockStatement
+    ├─ Consequence: BlockStatement
     │   └─ ExpressionStatement
     │       └─ Expr: IdentifierExpression: b
-    └─ Else:BlockStatement
+    └─ Alternate: BlockStatement
         └─ ExpressionStatement
             └─ Expr: IdentifierExpression: c
+ExpressionStatement
+└─ Expr: IfExpression
+    ├─ Constexpr: true
+    ├─ Condition: IdentifierExpression: a
+    └─ Consequence: BlockStatement
+        └─ ExpressionStatement
+            └─ Expr: IdentifierExpression: b
 ExpressionStatement
 └─ Expr: FunctionExpression
     ├─ Self: this (modifier: MUT_PTR)

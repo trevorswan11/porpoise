@@ -194,19 +194,24 @@ auto ASTDumper::visit(const IfExpression& if_expr) -> void {
     fmt::println(out_, "IfExpression");
     {
         const Indent::Guard g{indent_, false};
+        fmt::println(out_, "{}Constexpr: {}", indent_.current_branch(), if_expr.is_constexpr());
+    }
+
+    {
+        const Indent::Guard g{indent_, false};
         fmt::print(out_, "{}Condition: ", indent_.current_branch());
         if_expr.get_condition().accept(*this);
     }
 
     {
         Indent::Guard g{indent_, !if_expr.has_alternate()};
-        fmt::print(out_, "{}Then:", indent_.current_branch());
+        fmt::print(out_, "{}Consequence: ", indent_.current_branch());
         if_expr.get_consequence().accept(*this);
     }
 
     if (if_expr.has_alternate()) {
         Indent::Guard g{indent_, true};
-        fmt::print(out_, "{}Else:", indent_.current_branch());
+        fmt::print(out_, "{}Alternate: ", indent_.current_branch());
         if_expr.get_alternate().accept(*this);
     }
 }
