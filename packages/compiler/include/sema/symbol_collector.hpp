@@ -46,11 +46,12 @@ class SymbolCollector : public ast::Visitor {
 
   private:
     template <typename T, typename VisitorFn>
-    auto visit_scope(const T& expr, TypeKind kind, VisitorFn fn) -> void {
+    [[nodiscard]] auto visit_scope(const T& expr, TypeKind kind, VisitorFn fn) -> usize {
         const auto  new_idx = registry_.create();
         const Scope s{table_stack_, new_idx, table_idx_};
         for (const auto& field : expr) { fn(field); }
         last_type_.emplace(pool_[{kind, false, new_idx}]);
+        return new_idx;
     }
 
     // Returns false if the passed result was an error type

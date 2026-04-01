@@ -52,7 +52,9 @@ namespace porpoise::sema {
 MAKE_COLLECTOR_NOOPS(GENERATE_COLLECTOR_NOOP)
 
 auto SymbolCollector::visit(const ast::EnumExpression& enum_expr) -> void {
-    visit_scope(enum_expr, TypeKind::ENUM, [this](const auto& field) { visit(field); });
+    const auto scope_idx =
+        visit_scope(enum_expr, TypeKind::ENUM, [this](const auto& field) { visit(field); });
+    last_type_->set_metadata(scope_idx);
 }
 
 // This is assumed to be invoked only by the enum visitor
@@ -61,11 +63,15 @@ auto SymbolCollector::visit(const ast::Enumeration& enumeration) -> void {
 }
 
 auto SymbolCollector::visit(const ast::StructExpression& struct_expr) -> void {
-    visit_scope(struct_expr, TypeKind::STRUCT, [this](const auto& field) { field->accept(*this); });
+    const auto scope_idx = visit_scope(
+        struct_expr, TypeKind::STRUCT, [this](const auto& field) { field->accept(*this); });
+    last_type_->set_metadata(scope_idx);
 }
 
 auto SymbolCollector::visit(const ast::UnionExpression& union_expr) -> void {
-    visit_scope(union_expr, TypeKind::UNION, [this](const auto& field) { visit(field); });
+    const auto scope_idx =
+        visit_scope(union_expr, TypeKind::UNION, [this](const auto& field) { visit(field); });
+    last_type_->set_metadata(scope_idx);
 }
 
 // This is assumed to be invoked only by the union visitor

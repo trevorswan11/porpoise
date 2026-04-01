@@ -64,16 +64,10 @@ struct Reference {
 
 struct Enum {
     NonNull<Type> underlying;
-    usize         variant_table_idx;
 };
 
 struct Struct {
-    usize body_table_idx;
-    bool  packed;
-};
-
-struct Union {
-    usize field_table_idx;
+    bool packed;
 };
 
 struct Function {
@@ -96,6 +90,7 @@ class Key {
 
     MAKE_GETTER(kind, TypeKind)
 
+    // This is a high quality hash for the purposes of `unordered_dense`
     [[nodiscard]] auto hash() const noexcept -> u64 {
         hash::Hasher h{std::to_underlying(kind_)};
         h.combine(mut_);
@@ -128,8 +123,13 @@ class Type {
                                   types::Reference,
                                   types::Enum,
                                   types::Struct,
-                                  types::Union,
                                   types::Function>;
+
+    // Should be populated on pass 1 when used
+    struct Metadata {
+        usize scope_table_idx;
+        usize parameter_table_idx;
+    };
 
   public:
     explicit Type(TypeKind kind) noexcept : kind_{kind} {}
@@ -143,20 +143,29 @@ class Type {
     MAKE_GETTER(kind, TypeKind)
     MAKE_OPTIONAL_UNPACKER(resolved, Resolved, resolved_, *)
 
-    template <typename T> [[nodiscard]] auto as() const -> const T& {
-        return std::get<T>(resolved_.value());
+    template <typename Self, typename T> [[nodiscard]] auto as(this Self&& self) -> auto& {
+        return std::get<T>(self.resolved_.value());
     }
 
-    template <typename T> [[nodiscard]] auto as_opt() const noexcept -> Optional<const T&> {
-        if (!resolved_) { return std::nullopt; }
-        if (!std::holds_alternative<T>(*resolved_)) { return std::nullopt; }
-        return std::get<T>(*resolved_);
+    template <typename Self, typename T> [[nodiscard]] auto as_opt(this Self&& self) noexcept {
+        if (!self.resolved_) { return std::nullopt; }
+        using ReturnType = std::conditional_t<std::is_const_v<std::remove_reference_t<Self>>,
+                                              Optional<const T&>,
+                                              Optional<T&>>;
+
+        if (!std::holds_alternative<T>(*self.resolved_)) { return ReturnType{std::nullopt}; }
+        return ReturnType{std::get<T>(*self.resolved_)};
     }
 
+    // The scope table should be valid (i.e. not a sentinel index)
+    auto               set_metadata(usize           scope_table_idx,
+                                    Optional<usize> parameter_table_idx = std::nullopt) noexcept -> void;
+    [[nodiscard]] auto has_parameter_table() const noexcept -> bool;
     auto resolve(Resolved type) noexcept -> void { resolved_.emplace(std::move(type)); }
 
   private:
     TypeKind           kind_;
+    Optional<Metadata> metadata_;
     Optional<Resolved> resolved_;
 };
 
