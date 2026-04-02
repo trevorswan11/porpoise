@@ -46,6 +46,7 @@ TEST_CASE("Function types") {
                               syntax::Token{keywords::FN},
                               std::nullopt,
                               Parameters{},
+                              false,
                               ast::ExplicitType{mods::BASE, helpers::make_ident("noreturn")},
                               std::nullopt)});
 
@@ -57,6 +58,7 @@ TEST_CASE("Function types") {
                               std::nullopt,
                               helpers::make_parameters(
                                   ast::FunctionParameter{{mods::REF, helpers::make_ident("self")}}),
+                              false,
                               ast::ExplicitType{mods::MUT_PTR, helpers::make_ident("E")},
                               std::nullopt)});
 }
@@ -98,7 +100,7 @@ TEST_CASE("Recursive types") {
 
 TEST_CASE("Complex function type (holistic)") {
     helpers::test_type_expr(
-        "*fn(&a, *mut B): &[0x2uz][N:0]*E",
+        "*fn(&a, *mut B, ...): &[0x2uz][N:0]*E",
         ast::ExplicitType{
             mods::PTR,
             mem::make_box<ast::FunctionExpression>(
@@ -107,6 +109,7 @@ TEST_CASE("Complex function type (holistic)") {
                 helpers::make_parameters(
                     ast::FunctionParameter{{mods::REF, helpers::make_ident("a")}},
                     ast::FunctionParameter{{mods::MUT_PTR, helpers::make_ident("B")}}),
+                true,
                 ast::ExplicitType{
                     mods::REF,
                     ast::ExplicitArrayType{

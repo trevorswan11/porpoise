@@ -54,6 +54,7 @@ TEST_CASE("Struct flavors") {
                                                        {mods::BASE, helpers::make_ident("A")}},
                                 ast::FunctionParameter{helpers::make_ident("b"),
                                                        {mods::PTR, helpers::make_ident("B")}}),
+                            false,
                             ast::ExplicitType{mods::BASE, helpers::make_ident("C")},
                             helpers::make_expr_block_stmt(helpers::ident_from("c"))),
                         ast::DeclModifiers::CONSTANT,

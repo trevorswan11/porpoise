@@ -60,6 +60,7 @@ class FunctionExpression : public ExprBase<FunctionExpression> {
     FunctionExpression(const syntax::Token&               start_token,
                        Optional<SelfParameter>            self,
                        std::vector<FunctionParameter>     parameters,
+                       bool                               variadic,
                        ExplicitType&&                     return_type,
                        Optional<mem::Box<BlockStatement>> body) noexcept;
     ~FunctionExpression() override;
@@ -77,6 +78,7 @@ class FunctionExpression : public ExprBase<FunctionExpression> {
     MAKE_OPTIONAL_UNPACKER(self, SelfParameter, self_, *)
     MAKE_GETTER(parameters, std::span<const FunctionParameter>)
     [[nodiscard]] auto has_parameters() const noexcept -> bool { return !parameters_.empty(); }
+    [[nodiscard]] auto is_variadic() const noexcept -> bool { return variadic_; }
     MAKE_GETTER(return_type, const ExplicitType&)
     MAKE_OPTIONAL_UNPACKER(body, BlockStatement, body_, **)
 
@@ -86,6 +88,7 @@ class FunctionExpression : public ExprBase<FunctionExpression> {
   private:
     Optional<SelfParameter>            self_;
     std::vector<FunctionParameter>     parameters_;
+    bool                               variadic_;
     ExplicitType                       return_type_;
     Optional<mem::Box<BlockStatement>> body_;
 };

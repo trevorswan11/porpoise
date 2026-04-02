@@ -22,7 +22,7 @@ constexpr std::string_view input{R"(
     constexpr SIZE := 2uz;
     { a; b; 2; c; };
     while (true) : (i += 1) {a;} else return b;
-    var f_ptr: *fn(&a, *mut B): &[0x2uz][N]*E;
+    var f_ptr: *fn(&a, *mut B, ...): &[0x2uz][N]*E;
     A::B::C;
     packed struct { var a: Foo = bar; const b := fn(*mut this, a: A, b: *B): C { c; }; };
     &a; &mut b; *a;

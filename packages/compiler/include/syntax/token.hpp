@@ -106,6 +106,7 @@ enum class TokenType : u8 {
     COLON,
     SEMICOLON,
     COLON_COLON,
+    ELLIPSIS,
 
     LPAREN,
     RPAREN,

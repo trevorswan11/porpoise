@@ -168,6 +168,11 @@ auto ASTDumper::visit(const FunctionExpression& function) -> void {
     }
 
     {
+        const Indent::Guard g{indent_, false};
+        fmt::println(out_, "{}Variadic: {}", indent_.current_branch(), function.is_variadic());
+    }
+
+    {
         const Indent::Guard g{indent_, !function.has_body()};
         fmt::print(out_, "{}Returns: ", indent_.current_branch());
         visit(function.get_return_type());
