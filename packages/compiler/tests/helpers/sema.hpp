@@ -39,9 +39,13 @@ auto test_collector(std::string_view input, bool is_module, KVs&&... kvs) -> sem
 
     (
         [&](auto&& kv) mutable {
-            CHECK(
-                std::get<1>(kv)
-                    .template any<ast::DeclStatement, ast::ImportStatement, ast::UsingStatement>());
+            using SymbolicNodeType = decltype(std::get<1>(kv));
+            if constexpr (ast::is_leaf_node_v<std::remove_cvref_t<SymbolicNodeType>>) {
+                CHECK(std::get<1>(kv)
+                          .template any<ast::DeclStatement,
+                                        ast::ImportStatement,
+                                        ast::UsingStatement>());
+            }
 
             const auto opt = actual.get_opt(std::get<0>(kv));
             CHECK(opt);

@@ -30,6 +30,7 @@ class ExplicitArrayType {
     MAKE_OPTIONAL_UNPACKER(dimension, Expression, dimension_, **)
     [[nodiscard]] auto is_null_terminated() const noexcept -> bool { return null_terminated_; }
     MAKE_GETTER(inner_type, const ExplicitType&, *)
+    [[nodiscard]] auto get_token() const noexcept -> const syntax::Token&;
 
     MAKE_EQ_DELEGATION(ExplicitArrayType)
 
@@ -66,6 +67,7 @@ class ExplicitType {
     MAKE_VARIANT_UNPACKER(
         recursive_type, ExplicitRecursiveType, ExplicitRecursiveType, type_, std::get)
     MAKE_VARIANT_MATCHER(type_)
+    [[nodiscard]] auto get_token() const noexcept -> const syntax::Token&;
 
     MAKE_EQ_DELEGATION(ExplicitType)
 

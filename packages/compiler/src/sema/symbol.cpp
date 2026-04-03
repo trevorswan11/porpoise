@@ -5,12 +5,7 @@
 
 #include "sema/symbol.hpp"
 
-#include "ast/expressions/enum.hpp"       // IWYU pragma: keep
-#include "ast/expressions/identifier.hpp" // IWYU pragma: keep
-#include "ast/expressions/union.hpp"      // IWYU pragma: keep
-#include "ast/statements/declaration.hpp" // IWYU pragma: keep
-#include "ast/statements/import.hpp"      // IWYU pragma: keep
-#include "ast/statements/using.hpp"       // IWYU pragma: keep
+#include "ast/ast.hpp"
 
 namespace porpoise::sema {
 
@@ -46,7 +41,7 @@ auto SymbolTable::insert(std::string_view name, SymbolicNode node)
             Error::IDENTIFIER_REDECLARATION,
             std::visit([](const auto& inner) { return inner->get_token(); }, node));
     }
-    return {};
+    return std::monostate{};
 }
 
 auto SymbolTableRegistry::insert_into(usize table_idx, std::string_view name, SymbolicNode node)
@@ -71,7 +66,7 @@ auto SymbolTableRegistry::insert_into(usize table_idx, std::string_view name, Sy
                 std::visit([](const auto& inner) { return inner->get_token(); }, node));
         }
     }
-    return {};
+    return std::monostate{};
 }
 
 } // namespace porpoise::sema

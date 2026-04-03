@@ -77,10 +77,12 @@ struct Function {
     NonNull<Type>            return_type;
 };
 
+template <typename T>
+concept KeyMarker = std::is_convertible_v<T, uptr> && std::is_convertible_v<T, uptr>;
+
 class Key {
   public:
-    template <typename A = uptr, typename B = uptr>
-        requires(std::is_convertible_v<A, uptr> && std::is_convertible_v<B, uptr>)
+    template <KeyMarker A = uptr, KeyMarker B = uptr>
     Key(TypeKind kind,
         bool     mut,
         usize    idx      = 0,
@@ -102,6 +104,16 @@ class Key {
         h.combine(flag_);
         return h.finalize();
     }
+
+    auto                        emplace_idx(usize idx) noexcept -> void { idx_ = idx; }
+    template <KeyMarker T> auto emplace_marker_a(T marker_a) noexcept -> void {
+        marker_a_ = static_cast<uptr>(marker_a);
+    }
+
+    template <KeyMarker T> auto emplace_marker_b(T marker_b) noexcept -> void {
+        marker_b_ = static_cast<uptr>(marker_b);
+    }
+    auto emplace_flag(bool flag) noexcept -> void { flag_ = flag; }
 
     bool operator==(const Key&) const noexcept = default;
 
@@ -126,17 +138,6 @@ class Type {
                                   types::Enum,
                                   types::Struct,
                                   types::Function>;
-
-    // Should be populated on pass 1 when used
-    struct Metadata {
-        constexpr Metadata(usize scope_idx, usize param_idx) noexcept
-            : scope_table_idx{scope_idx}, parameter_table_idx{param_idx} {
-            assert(scope_table_idx != array::SENTINEL_IDX && "Illegal scope table index");
-        }
-
-        usize scope_table_idx;
-        usize parameter_table_idx;
-    };
 
   public:
     explicit Type(TypeKind kind) noexcept : kind_{kind} {}
@@ -164,22 +165,21 @@ class Type {
         return ReturnType{std::get<T>(*self.resolved_)};
     }
 
-    // The scope table should be valid (i.e. not a sentinel index)
-    constexpr auto set_metadata(usize           scope_table_idx,
-                                Optional<usize> parameter_table_idx = std::nullopt) noexcept
-        -> void {
-        metadata_.emplace(scope_table_idx, parameter_table_idx.value_or(array::SENTINEL_IDX));
+    // Intended for use on pass 1 only
+    constexpr auto set_symbol_table(usize idx) noexcept -> void {
+        assert(idx != array::SENTINEL_IDX && "Attempt to set sentinel index");
+        scope_table_idx_ = idx;
     }
 
-    [[nodiscard]] constexpr auto has_parameter_table() const noexcept -> bool {
-        return metadata_ && metadata_->parameter_table_idx != array::SENTINEL_IDX;
+    [[nodiscard]] constexpr auto has_symbol_table() const noexcept -> bool {
+        return scope_table_idx_ != array::SENTINEL_IDX;
     }
 
     auto resolve(Resolved type) noexcept -> void { resolved_.emplace(std::move(type)); }
 
   private:
     TypeKind           kind_;
-    Optional<Metadata> metadata_;
+    usize              scope_table_idx_{array::SENTINEL_IDX};
     Optional<Resolved> resolved_;
 };
 

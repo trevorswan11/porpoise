@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cassert>
+#include <deque>
 #include <string_view>
 #include <vector>
 
@@ -27,6 +28,9 @@ class ImportStatement;
 class UnionField;
 class Enumeration;
 
+class SelfParameter;
+class FunctionParameter;
+
 } // namespace ast
 
 namespace sema {
@@ -36,10 +40,17 @@ using SymbolicImport      = NonNull<const ast::ImportStatement>;
 using SymbolicUsing       = NonNull<const ast::UsingStatement>;
 using SymbolicUnionField  = NonNull<const ast::UnionField>;
 using SymbolicEnumeration = NonNull<const ast::Enumeration>;
+using SymbolicSelfParam   = NonNull<const ast::SelfParameter>;
+using SymbolicParam       = NonNull<const ast::FunctionParameter>;
 
 // No other nodes can ever be at the top level
-using SymbolicNode = std::
-    variant<SymbolicDecl, SymbolicImport, SymbolicUsing, SymbolicUnionField, SymbolicEnumeration>;
+using SymbolicNode = std::variant<SymbolicDecl,
+                                  SymbolicImport,
+                                  SymbolicUsing,
+                                  SymbolicUnionField,
+                                  SymbolicEnumeration,
+                                  SymbolicSelfParam,
+                                  SymbolicParam>;
 
 class Type;
 
@@ -64,6 +75,8 @@ class Symbol {
     MAKE_VARIANT_UNPACKER(using_stmt, ast::UsingStatement, SymbolicUsing, node_, *std::get)
     MAKE_VARIANT_UNPACKER(union_field, ast::UnionField, SymbolicUnionField, node_, *std::get)
     MAKE_VARIANT_UNPACKER(enumeration, ast::Enumeration, SymbolicEnumeration, node_, *std::get)
+    MAKE_VARIANT_UNPACKER(self_param, ast::SelfParameter, SymbolicSelfParam, node_, *std::get)
+    MAKE_VARIANT_UNPACKER(basic_param, ast::FunctionParameter, SymbolicParam, node_, *std::get)
 
     MAKE_VARIANT_MATCHER(node_)
     [[nodiscard]] auto get_node_token() const noexcept -> syntax::Token;
@@ -166,7 +179,7 @@ class SymbolTableStack {
 
 class SymbolTableRegistry {
   public:
-    MAKE_ITERATOR(Tables, std::vector<SymbolTable>, tables_)
+    MAKE_ITERATOR(Tables, std::deque<SymbolTable>, tables_)
 
   public:
     SymbolTableRegistry() noexcept = default;

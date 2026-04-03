@@ -29,6 +29,13 @@ template <typename T> class OptionalRef {
     auto emplace(T* t) noexcept -> void { ptr_ = t; }
     auto reset() noexcept -> void { ptr_ = nullptr; }
 
+    // Resets the optional and returns the stored reference
+    auto take() noexcept -> T* {
+        auto* ptr = ptr_;
+        reset();
+        return ptr;
+    }
+
     auto value() const -> T& {
         if (!ptr_) { throw std::bad_optional_access(); }
         return *ptr_;

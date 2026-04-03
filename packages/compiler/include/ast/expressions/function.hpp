@@ -24,6 +24,7 @@ class SelfParameter {
 
     MAKE_GETTER(modifier, const TypeModifier&)
     MAKE_GETTER(ident, const IdentifierExpression&, *)
+    [[nodiscard]] auto get_token() const noexcept -> const syntax::Token&;
 
     MAKE_EQ_DELEGATION(SelfParameter)
 
@@ -44,6 +45,7 @@ class FunctionParameter {
 
     MAKE_OPTIONAL_UNPACKER(ident, IdentifierExpression, ident_, **)
     MAKE_GETTER(type, const ExplicitType&)
+    [[nodiscard]] auto get_token() const noexcept -> const syntax::Token&;
 
     MAKE_EQ_DELEGATION(FunctionParameter)
 

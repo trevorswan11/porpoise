@@ -13,6 +13,8 @@ namespace porpoise::sema {
     X(CallArgument)                  \
     X(CallExpression)                \
     X(DoWhileLoopExpression)         \
+    X(SelfParameter)                 \
+    X(FunctionParameter)             \
     X(ForLoopCapture)                \
     X(ForLoopExpression)             \
     X(IdentifierExpression)          \
@@ -51,7 +53,7 @@ MAKE_COLLECTOR_NOOPS(GENERATE_COLLECTOR_NOOP)
 auto SymbolCollector::visit(const ast::EnumExpression& enum_expr) -> void {
     const auto scope_idx =
         visit_scope(enum_expr, TypeKind::ENUM, [this](const auto& field) { visit(field); });
-    last_type_->set_metadata(scope_idx);
+    last_type_->set_symbol_table(scope_idx);
 }
 
 // This is assumed to be invoked only by the enum visitor
@@ -59,26 +61,38 @@ auto SymbolCollector::visit(const ast::Enumeration& enumeration) -> void {
     try_declare(enumeration.get_ident().get_name(), &enumeration);
 }
 
-auto SymbolCollector::visit(const ast::SelfParameter& param) -> void {
-    [[maybe_unused]] const auto& a = param;
-}
-auto SymbolCollector::visit(const ast::FunctionParameter& param) -> void {
-    [[maybe_unused]] const auto& a = param;
-}
 auto SymbolCollector::visit(const ast::FunctionExpression& fn) -> void {
-    [[maybe_unused]] const auto& a = fn;
+    types::Key key{TypeKind::FUNCTION, false};
+
+    // Parameters belong to the parent scope
+    if (fn.has_self()) { try_declare(fn.get_self().get_ident().get_name(), &fn.get_self()); }
+    for (const auto& param : fn.get_parameters()) {
+        try_declare(param.get_ident().get_name(), &param);
+    }
+
+    // The new table index has to be handled differently than a normal scope
+    Optional<usize> new_idx;
+    if (fn.has_body()) {
+        new_idx.emplace(registry_.create());
+        const Scope s{table_stack_, *new_idx, table_idx_};
+        visit(fn.get_body());
+    }
+
+    if (new_idx) { key.emplace_idx(*new_idx); }
+    last_type_.emplace(pool_[key]);
+    if (new_idx) { last_type_->set_symbol_table(*new_idx); }
 }
 
 auto SymbolCollector::visit(const ast::StructExpression& struct_expr) -> void {
     const auto scope_idx = visit_scope(
         struct_expr, TypeKind::STRUCT, [this](const auto& field) { field->accept(*this); });
-    last_type_->set_metadata(scope_idx);
+    last_type_->set_symbol_table(scope_idx);
 }
 
 auto SymbolCollector::visit(const ast::UnionExpression& union_expr) -> void {
     const auto scope_idx =
         visit_scope(union_expr, TypeKind::UNION, [this](const auto& field) { visit(field); });
-    last_type_->set_metadata(scope_idx);
+    last_type_->set_symbol_table(scope_idx);
 }
 
 // This is assumed to be invoked only by the union visitor
@@ -86,22 +100,23 @@ auto SymbolCollector::visit(const ast::UnionField& field) -> void {
     try_declare(field.get_ident().get_name(), &field);
 }
 
-#define ILLEGAL_COLLECTOR_TOP_LEVEL(NodeType, stringified_node)                        \
-    auto SymbolCollector::visit(const NodeType& node) -> void {                        \
-        diagnostics_.emplace_back("Cannot have " stringified_node " at the top level", \
-                                  Error::ILLEGAL_TOP_LEVEL_STATEMENT,                  \
-                                  node.get_token());                                   \
+auto SymbolCollector ::visit(const ast::BlockStatement& block) -> void {
+    if (table_idx_ == 0) {
+        diagnostics_.emplace_back("Cannot have block at the top level",
+                                  Error::ILLEGAL_TOP_LEVEL_STATEMENT,
+                                  block.get_token());
     }
-
-ILLEGAL_COLLECTOR_TOP_LEVEL(ast::BlockStatement, "block")
+    for (const auto& stmt : block) { stmt->accept(*this); }
+}
 
 auto SymbolCollector::visit(const ast::DeclStatement& decl) -> void {
     // Only move on to value inspection is the node
     const auto name = decl.get_ident().get_name();
     if (!try_declare(name, &decl)) { return; }
 
-    auto& symbol = registry_.get_from(table_idx_, name);
-    if (decl.has_modifier(ast::DeclModifiers::PUBLIC)) { symbol.mark_public(); }
+    if (decl.has_modifier(ast::DeclModifiers::PUBLIC)) {
+        registry_.get_from(table_idx_, name).mark_public();
+    }
     if (!decl.has_value()) { return; }
 
     // Valued decls should be evaluated to get shallow types
@@ -134,12 +149,27 @@ auto SymbolCollector::visit(const ast::DeclStatement& decl) -> void {
         }
     }
 
-    expr.accept(*this);
-    if (last_type_) {
-        symbol.emplace_type(*last_type_);
-        last_type_.reset();
+    // Functions cannot be used as valued stubs
+    if (expr.is<ast::FunctionExpression>()) {
+        const auto& func = ast::Node::as<ast::FunctionExpression>(expr);
+        if (!func.has_body()) {
+            diagnostics_.emplace_back(
+                fmt::format("Functions cannot be used as valued stubs in declarations"),
+                Error::FUNCTION_DECLARATION_MISSING_BODY,
+                decl.get_token());
+        }
     }
+
+    expr.accept(*this);
+    if (last_type_) { registry_.get_from(table_idx_, name).emplace_type(*last_type_.take()); }
 }
+
+#define ILLEGAL_COLLECTOR_TOP_LEVEL(NodeType, stringified_node)                        \
+    auto SymbolCollector::visit(const NodeType& node) -> void {                        \
+        diagnostics_.emplace_back("Cannot have " stringified_node " at the top level", \
+                                  Error::ILLEGAL_TOP_LEVEL_STATEMENT,                  \
+                                  node.get_token());                                   \
+    }
 
 ILLEGAL_COLLECTOR_TOP_LEVEL(ast::DeferStatement, "defer")
 ILLEGAL_COLLECTOR_TOP_LEVEL(ast::DiscardStatement, "discard")

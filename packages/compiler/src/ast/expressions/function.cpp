@@ -20,6 +20,10 @@ auto SelfParameter::is_equal(const SelfParameter& other) const noexcept -> bool 
     return optional::safe_eq<TypeModifier>(modifier_, other.modifier_) && *ident_ == *other.ident_;
 }
 
+auto SelfParameter::get_token() const noexcept -> const syntax::Token& {
+    return ident_->get_token();
+}
+
 FunctionParameter::FunctionParameter(mem::Box<IdentifierExpression> ident,
                                      ExplicitType&&                 type) noexcept
     : ident_{std::move(ident)}, type_{std::move(type)} {}
@@ -30,6 +34,11 @@ auto FunctionParameter::accept(Visitor& v) const -> void { v.visit(*this); }
 
 auto FunctionParameter::is_equal(const FunctionParameter& other) const noexcept -> bool {
     return optional::unsafe_eq<IdentifierExpression>(ident_, other.ident_) && type_ == other.type_;
+}
+
+auto FunctionParameter::get_token() const noexcept -> const syntax::Token& {
+    if (ident_) { return (*ident_)->get_token(); }
+    return type_.get_token();
 }
 
 FunctionExpression::FunctionExpression(const syntax::Token&               start_token,

@@ -14,6 +14,10 @@ ExplicitArrayType::ExplicitArrayType(Optional<mem::Box<Expression>> dimension,
       inner_type_{std::move(inner_type)} {}
 ExplicitArrayType::~ExplicitArrayType() = default;
 
+auto ExplicitArrayType::get_token() const noexcept -> const syntax::Token& {
+    return inner_type_->get_token();
+}
+
 auto ExplicitArrayType::is_equal(const ExplicitArrayType& other) const noexcept -> bool {
     return optional::unsafe_eq<Expression>(dimension_, other.dimension_) &&
            *inner_type_ == *other.inner_type_;
@@ -111,6 +115,12 @@ auto ExplicitType::accept(Visitor& v) const -> void { v.visit(*this); }
     // Function types cannot have bodies
     assert(!function->has_body() && "Function type has body");
     return ExplicitType{modifier, std::move(function)};
+}
+
+auto ExplicitType::get_token() const noexcept -> const syntax::Token& {
+    return match(Overloaded{
+        [](const auto& t) -> const syntax::Token& { return t->get_token(); },
+        [](const ExplicitArrayType& a) -> const syntax::Token& { return a.get_token(); }});
 }
 
 auto ExplicitType::is_equal(const ExplicitType& other) const noexcept -> bool {

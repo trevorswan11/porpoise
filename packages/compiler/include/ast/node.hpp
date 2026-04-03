@@ -84,6 +84,10 @@ concept LeafNode = NodeSubtype<T> && requires {
     { T::KIND } -> std::convertible_to<NodeKind>;
 };
 
+template <typename T> struct is_leaf_node : std::false_type {};
+template <LeafNode T> struct is_leaf_node<T> : std::true_type {};
+template <typename T> constexpr bool is_leaf_node_v = is_leaf_node<T>::value;
+
 class Node {
   public:
     Node()          = delete;
@@ -114,7 +118,7 @@ class Node {
     }
 
     // A 'safe' alternative to a raw static cast for nodes. Assertion > UB
-    template <LeafNode T> static auto as(const Node& n) -> const T& {
+    template <LeafNode T> [[nodiscard]] static auto as(const Node& n) -> const T& {
         assert(n.is<T>());
         return static_cast<const T&>(n);
     }
