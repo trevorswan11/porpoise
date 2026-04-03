@@ -1,6 +1,5 @@
 # Structs
 - Structs are defined using the standard declaration syntax
-    - As structs are types, they can also be defined with a `using` statement. This restricts the modifiers you can use, preventing access/abi restrictions
 - Struct definitions must be `const`
 - Struct members are simply declarations
     - Members cannot be marked `extern` or `export`

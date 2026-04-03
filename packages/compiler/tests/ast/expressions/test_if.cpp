@@ -12,12 +12,14 @@ TEST_CASE("If without alternate") {
     helpers::test_expr_stmt(
         "if (a) { b; };",
         ast::IfExpression{syntax::Token{keywords::IF},
+                          false,
                           helpers::make_ident("a"),
                           helpers::make_expr_block_stmt(helpers::ident_from("b")),
                           {}});
 
-    helpers::test_expr_stmt("if (a) b;",
+    helpers::test_expr_stmt("if constexpr (a) b;",
                             ast::IfExpression{syntax::Token{keywords::IF},
+                                              true,
                                               helpers::make_ident("a"),
                                               helpers::make_expr_stmt(helpers::ident_from("b")),
                                               {}});
@@ -27,6 +29,7 @@ TEST_CASE("If with alternate") {
     helpers::test_expr_stmt(
         "if (a) { b; } else { c; };",
         ast::IfExpression{syntax::Token{keywords::IF},
+                          false,
                           helpers::make_ident("a"),
                           helpers::make_expr_block_stmt(helpers::ident_from("b")),
                           helpers::make_expr_block_stmt(helpers::ident_from("c"))});
@@ -34,6 +37,7 @@ TEST_CASE("If with alternate") {
     helpers::test_expr_stmt(
         "if (a) b; else { c; };",
         ast::IfExpression{syntax::Token{keywords::IF},
+                          false,
                           helpers::make_ident("a"),
                           helpers::make_expr_stmt(helpers::ident_from("b")),
                           helpers::make_expr_block_stmt(helpers::ident_from("c"))});

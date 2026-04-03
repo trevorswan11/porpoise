@@ -1,7 +1,6 @@
 # Unions
 - Unions in porpoise act very similar to Zig-style tagged unions
 - Unions are defined using the standard declaration syntax
-    - As unions are types, they can also be defined with a `using` statement. This restricts the modifiers you can use, preventing access/abi restrictions
 - A union is defined by a a comma separated list of key-value pairs, where:
     - Each key is an identifier which is used for the active tag
     - Each value is a type for said identifier

@@ -10,6 +10,12 @@ auto IfExpression::parse(syntax::Parser& parser)
     -> Expected<mem::Box<Expression>, syntax::ParserDiagnostic> {
     const auto start_token = parser.current_token();
 
+    bool constexpr_condition = false;
+    if (parser.peek_token_is(syntax::TokenType::CONSTEXPR)) {
+        constexpr_condition = true;
+        parser.advance();
+    }
+
     // Conditions have to be surrounded by parentheses
     TRY(parser.expect_peek(syntax::TokenType::LPAREN));
     parser.advance();
@@ -27,8 +33,11 @@ auto IfExpression::parse(syntax::Parser& parser)
     auto alternate =
         TRY(parser.try_parse_restricted_alternate(syntax::ParserError::ILLEGAL_IF_BRANCH));
 
-    return mem::make_box<IfExpression>(
-        start_token, std::move(condition), std::move(consequence), std::move(alternate));
+    return mem::make_box<IfExpression>(start_token,
+                                       constexpr_condition,
+                                       std::move(condition),
+                                       std::move(consequence),
+                                       std::move(alternate));
 }
 
 } // namespace porpoise::ast

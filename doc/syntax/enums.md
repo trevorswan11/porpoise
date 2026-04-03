@@ -4,7 +4,6 @@
     - Variants
     - Optional default values for variants
 - Enums are strongly typed, and are declared with the standard declaration syntax
-    - As enums are types, they can also be defined with a `using` statement. This restricts the modifiers you can use, preventing access/abi restrictions
 - In the event that the standard declaration syntax is used, it must be `const`
 - The backing type of an enum is defaulted to the smallest available type, but can be set to any integer (signed, unsigned, or byte)
 - Enums can be casted to and from their underlying type by using the `@cast` builtin

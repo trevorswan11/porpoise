@@ -72,12 +72,14 @@ DeclStatement (f_ptr)
 ├─ Modifiers: VARIABLE
 └─ Type: ExplicitType (modifier: PTR)
     └─ FunctionExpression
-        ├─ Self: a (modifier: REF)
         ├─ Parameters:
+        │   ├─ Param:
+        │   │   └─ Type: ExplicitType (modifier: REF)
+        │   │       └─ IdentifierExpression: a
         │   └─ Param:
-        │       ├─ Name: IdentifierExpression: b
         │       └─ Type: ExplicitType (modifier: MUT_PTR)
         │           └─ IdentifierExpression: B
+        ├─ Variadic: true
         └─ Returns: ExplicitType (modifier: REF)
             └─ ArrayType
                 ├─ Dimensions: USizeIntegerExpression: 2
@@ -115,6 +117,7 @@ ExpressionStatement
             │       ├─ Name: IdentifierExpression: b
             │       └─ Type: ExplicitType (modifier: PTR)
             │           └─ IdentifierExpression: B
+            ├─ Variadic: false
             ├─ Returns: ExplicitType (modifier: BASE)
             │   └─ IdentifierExpression: C
             └─ Body: BlockStatement
@@ -164,13 +167,21 @@ ExpressionStatement
     └─ Value: SignedIntegerExpression: 2
 ExpressionStatement
 └─ Expr: IfExpression
+    ├─ Constexpr: false
     ├─ Condition: IdentifierExpression: a
-    ├─ Then:BlockStatement
+    ├─ Consequence: BlockStatement
     │   └─ ExpressionStatement
     │       └─ Expr: IdentifierExpression: b
-    └─ Else:BlockStatement
+    └─ Alternate: BlockStatement
         └─ ExpressionStatement
             └─ Expr: IdentifierExpression: c
+ExpressionStatement
+└─ Expr: IfExpression
+    ├─ Constexpr: true
+    ├─ Condition: IdentifierExpression: a
+    └─ Consequence: BlockStatement
+        └─ ExpressionStatement
+            └─ Expr: IdentifierExpression: b
 ExpressionStatement
 └─ Expr: FunctionExpression
     ├─ Self: this (modifier: MUT_PTR)
@@ -183,6 +194,7 @@ ExpressionStatement
     │       ├─ Name: IdentifierExpression: b
     │       └─ Type: ExplicitType (modifier: PTR)
     │           └─ IdentifierExpression: B
+    ├─ Variadic: false
     ├─ Returns: ExplicitType (modifier: BASE)
     │   └─ IdentifierExpression: int (primitive)
     └─ Body: BlockStatement

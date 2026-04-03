@@ -46,6 +46,7 @@ TEST_CASE("Function types") {
                               syntax::Token{keywords::FN},
                               std::nullopt,
                               Parameters{},
+                              false,
                               ast::ExplicitType{mods::BASE, helpers::make_ident("noreturn")},
                               std::nullopt)});
 
@@ -54,8 +55,10 @@ TEST_CASE("Function types") {
         ast::ExplicitType{mods::BASE,
                           mem::make_box<ast::FunctionExpression>(
                               syntax::Token{keywords::FN},
-                              ast::SelfParameter{mods::REF, helpers::make_ident("self")},
-                              Parameters{},
+                              std::nullopt,
+                              helpers::make_parameters(
+                                  ast::FunctionParameter{{mods::REF, helpers::make_ident("self")}}),
+                              false,
                               ast::ExplicitType{mods::MUT_PTR, helpers::make_ident("E")},
                               std::nullopt)});
 }
@@ -97,15 +100,16 @@ TEST_CASE("Recursive types") {
 
 TEST_CASE("Complex function type (holistic)") {
     helpers::test_type_expr(
-        "*fn(&a, b: *mut B): &[0x2uz][N:0]*E",
+        "*fn(&a, *mut B, ...): &[0x2uz][N:0]*E",
         ast::ExplicitType{
             mods::PTR,
             mem::make_box<ast::FunctionExpression>(
                 syntax::Token{keywords::FN},
-                ast::SelfParameter{mods::REF, helpers::make_ident("a")},
-                helpers::make_parameters(ast::FunctionParameter{
-                    helpers::make_ident("b"),
-                    ast::ExplicitType{mods::MUT_PTR, helpers::make_ident("B")}}),
+                std::nullopt,
+                helpers::make_parameters(
+                    ast::FunctionParameter{{mods::REF, helpers::make_ident("a")}},
+                    ast::FunctionParameter{{mods::MUT_PTR, helpers::make_ident("B")}}),
+                true,
                 ast::ExplicitType{
                     mods::REF,
                     ast::ExplicitArrayType{
@@ -124,9 +128,7 @@ TEST_CASE("Complex function type (holistic)") {
 TEST_CASE("Volatile restricted to declarations") {
     helpers::test_parser_fail(
         "var a: volatile int;",
-        syntax::ParserDiagnostic{"No prefix parse function for VOLATILE(volatile) found",
-                                 syntax::ParserError::MISSING_PREFIX_PARSER,
-                                 std::pair{1uz, 8uz}});
+        syntax::ParserDiagnostic{syntax::ParserError::ILLEGAL_EXPLICIT_TYPE, 1, 6});
 }
 
 TEST_CASE("Array type requirement") {
@@ -143,13 +145,21 @@ TEST_CASE("Function type restrictions") {
         "var a: *mut fn(): void;",
         "var a: &fn(): void;",
         "var a: &mut fn(): void;",
-        "var a: *mut fn(): void { b; };",
     });
     for (const auto& illegal : illegals) {
         helpers::test_parser_fail(
             illegal,
             syntax::ParserDiagnostic{syntax::ParserError::ILLEGAL_FUNCTION_TYPE_MODIFIER, 1, 8});
     }
+}
+
+TEST_CASE("Bodied function type") {
+    helpers::test_parser_fail(
+        "var a: *mut fn(): void { b; };",
+        syntax::ParserDiagnostic{syntax::ParserError::EXPLICIT_FN_TYPE_HAS_BODY, 1, 13},
+        syntax::ParserDiagnostic{"No prefix parse function for RBRACE(}) found",
+                                 syntax::ParserError::MISSING_PREFIX_PARSER,
+                                 std::pair{1uz, 29uz}});
 }
 
 TEST_CASE("Function return type restrictions") {

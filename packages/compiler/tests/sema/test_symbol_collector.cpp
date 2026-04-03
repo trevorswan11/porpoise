@@ -185,6 +185,44 @@ TEST_CASE("Union hollow types") {
     helpers::test_hollow_symbol(analyzer, field);
 }
 
+TEST_CASE("Function hollow types") {
+    const auto function_block_decl = [] {
+        return ast::DeclStatement{
+            syntax::Token{keywords::CONST},
+            helpers::make_ident("b"),
+            mem::make_box<ast::TypeExpression>(syntax::Token{operators::WALRUS}, std::nullopt),
+            helpers::make_ident("bar"),
+            ast::DeclModifiers::CONSTANT,
+        };
+    };
+
+    auto analyzer = helpers::test_collector(
+        "const a := fn(&self, c: type): void { const b := bar; };",
+        false,
+        std::tuple{
+            "a",
+            ast::DeclStatement{
+                syntax::Token{keywords::CONST},
+                helpers::make_ident("a"),
+                mem::make_box<ast::TypeExpression>(syntax::Token{operators::WALRUS}, std::nullopt),
+                mem::make_box<ast::FunctionExpression>(
+                    syntax::Token{keywords::FN},
+                    ast::SelfParameter{mods::REF, helpers::make_ident("self")},
+                    helpers::make_parameters(ast::FunctionParameter{
+                        helpers::make_ident("c"), {mods::BASE, helpers::make_ident("type")}}),
+                    false,
+                    ast::ExplicitType{mods::BASE, helpers::make_ident("void")},
+                    helpers::make_block_stmt(function_block_decl())),
+                ast::DeclModifiers::CONSTANT,
+            },
+            sema::types::Key{sema::TypeKind::FUNCTION, false, 1}},
+        std::tuple{"self", ast::SelfParameter{mods::REF, helpers::make_ident("self")}},
+        std::tuple{"c",
+                   ast::FunctionParameter{helpers::make_ident("c"),
+                                          {mods::BASE, helpers::make_ident("type")}}});
+    helpers::test_hollow_symbol(analyzer, function_block_decl);
+}
+
 TEST_CASE("Duplicate module declaration") {
     helpers::test_collector_fail("module; module;",
                                  sema::Diagnostic{"Only one module statement is allowed per file",
@@ -280,5 +318,37 @@ TEST_CASE("Redundant constexpr usage on top level declarations") {
 }
 
 } // namespace
+
+TEST_CASE("Function self param redeclaration") {
+    helpers::test_collector_fail(
+        "const f := fn(f: bool): void {};",
+        sema::Diagnostic{"Redeclaration of symbol 'f'. Previous declaration here: [1, 1]",
+                         sema::Error::IDENTIFIER_REDECLARATION,
+                         std::pair{1uz, 15uz}});
+}
+
+TEST_CASE("Function basic param redeclaration") {
+    helpers::test_collector_fail(
+        "const f := fn(f): void {};",
+        sema::Diagnostic{"Redeclaration of symbol 'f'. Previous declaration here: [1, 1]",
+                         sema::Error::IDENTIFIER_REDECLARATION,
+                         std::pair{1uz, 15uz}});
+}
+
+TEST_CASE("Function local param redeclaration") {
+    helpers::test_collector_fail(
+        "const f := fn(a, a: bool): void {};",
+        sema::Diagnostic{"Redeclaration of symbol 'a'. Previous declaration here: [1, 15]",
+                         sema::Error::IDENTIFIER_REDECLARATION,
+                         std::pair{1uz, 18uz}});
+}
+
+TEST_CASE("Function block shadowing") {
+    helpers::test_collector_fail(
+        "const f := fn(): void { var f := 3; };",
+        sema::Diagnostic{"Attempt to shadow identifier 'f'. Previous declaration here: [1, 1]",
+                         sema::Error::SHADOWING_DECLARATION,
+                         std::pair{1uz, 25uz}});
+}
 
 } // namespace porpoise::tests

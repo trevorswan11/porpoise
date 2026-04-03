@@ -14,6 +14,10 @@ ExplicitArrayType::ExplicitArrayType(Optional<mem::Box<Expression>> dimension,
       inner_type_{std::move(inner_type)} {}
 ExplicitArrayType::~ExplicitArrayType() = default;
 
+auto ExplicitArrayType::get_token() const noexcept -> const syntax::Token& {
+    return inner_type_->get_token();
+}
+
 auto ExplicitArrayType::is_equal(const ExplicitArrayType& other) const noexcept -> bool {
     return optional::unsafe_eq<Expression>(dimension_, other.dimension_) &&
            *inner_type_ == *other.inner_type_;
@@ -70,54 +74,53 @@ auto ExplicitType::accept(Visitor& v) const -> void { v.visit(*this); }
     }
 
     // Otherwise the type has to be a 'simple' function or ident
-    return TRY(([&]() -> Expected<ExplicitType, syntax::ParserDiagnostic> {
-        const auto& peek_token = parser.peek_token();
-        if (peek_token.is_valid_ident() && !peek_token.is_builtin()) {
-            // It's trivial to catch these syntactic errors here
-            if (!modifier.is_value()) {
-                switch (peek_token.type) {
-                case syntax::TokenType::TYPE_TYPE:
-                    return make_parser_unexpected(syntax::ParserError::ILLEGAL_TYPE_TYPE_MODIFIER,
-                                                  modifier_token);
-                case syntax::TokenType::VOID_TYPE:
-                    return make_parser_unexpected(syntax::ParserError::ILLEGAL_VOID_TYPE_MODIFIER,
-                                                  modifier_token);
-                case syntax::TokenType::NORETURN:
-                    return make_parser_unexpected(
-                        syntax::ParserError::ILLEGAL_NORETURN_TYPE_MODIFIER, modifier_token);
-                default: break;
-                }
+    const auto& peek_token = parser.peek_token();
+    if (peek_token.is_valid_ident() && !peek_token.is_builtin()) {
+        // It's trivial to catch these syntactic errors here
+        if (!modifier.is_value()) {
+            switch (peek_token.type) {
+            case syntax::TokenType::TYPE_TYPE:
+                return make_parser_unexpected(syntax::ParserError::ILLEGAL_TYPE_TYPE_MODIFIER,
+                                              modifier_token);
+            case syntax::TokenType::VOID_TYPE:
+                return make_parser_unexpected(syntax::ParserError::ILLEGAL_VOID_TYPE_MODIFIER,
+                                              modifier_token);
+            case syntax::TokenType::NORETURN:
+                return make_parser_unexpected(syntax::ParserError::ILLEGAL_NORETURN_TYPE_MODIFIER,
+                                              modifier_token);
+            default: break;
             }
-
-            parser.advance();
-            return ExplicitType{
-                modifier,
-                Node::downcast<IdentifierExpression>(TRY(IdentifierExpression::parse(parser)))};
         }
 
-        // Otherwise the inner type must be a function
-        const auto type_start = parser.current_token();
         parser.advance();
-        auto type_expr = TRY(parser.parse_expression());
+        return ExplicitType{
+            modifier,
+            Node::downcast<IdentifierExpression>(TRY(IdentifierExpression::parse(parser)))};
+    }
 
-        if (type_expr->is<FunctionExpression>()) {
-            auto function = Node::downcast<FunctionExpression>(std::move(type_expr));
-            if (!(modifier.is_value() || modifier.is_const_ptr())) {
-                return make_parser_unexpected(syntax::ParserError::ILLEGAL_FUNCTION_TYPE_MODIFIER,
-                                              type_start);
-            }
-
-            // Function types cannot have bodies
-            if (function->has_body()) {
-                return make_parser_unexpected(syntax::ParserError::EXPLICIT_FN_TYPE_HAS_BODY,
-                                              type_start);
-            }
-            return ExplicitType{modifier, std::move(function)};
-        }
-
-        // No other expressions qualify as types
+    // Otherwise the inner type must be a function
+    const auto type_start = parser.current_token();
+    if (!parser.peek_token_is(syntax::TokenType::FUNCTION)) {
         return make_parser_unexpected(syntax::ParserError::ILLEGAL_EXPLICIT_TYPE, type_start);
-    }()));
+    }
+    parser.advance();
+    auto type_expr = TRY(FunctionExpression::parse_type(parser));
+
+    auto function = Node::downcast<FunctionExpression>(std::move(type_expr));
+    if (!(modifier.is_value() || modifier.is_const_ptr())) {
+        return make_parser_unexpected(syntax::ParserError::ILLEGAL_FUNCTION_TYPE_MODIFIER,
+                                      type_start);
+    }
+
+    // Function types cannot have bodies
+    assert(!function->has_body() && "Function type has body");
+    return ExplicitType{modifier, std::move(function)};
+}
+
+auto ExplicitType::get_token() const noexcept -> const syntax::Token& {
+    return match(Overloaded{
+        [](const auto& t) -> const syntax::Token& { return t->get_token(); },
+        [](const ExplicitArrayType& a) -> const syntax::Token& { return a.get_token(); }});
 }
 
 auto ExplicitType::is_equal(const ExplicitType& other) const noexcept -> bool {

@@ -83,7 +83,7 @@ zig build --release
 - [x] Pratt parsing
     - [x] Syntax documentation
 - [ ] Multi-pass Semantic Analysis (to support order independent declarations)
-    - [x] Symbol registration pass
+    - [ ] Symbol registration pass
     - [ ] Type checking pass
 - [ ] LLVM Integration
     - [ ] Build system integration

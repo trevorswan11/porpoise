@@ -40,7 +40,7 @@ auto Analyzer::resolve_symbol(Symbol& symbol, SymbolTableStack& stack)
 
     symbol.set_status(ResolveStatus::RESOLVING);
     TypeResolver resolver{*this, stack};
-    symbol.match([&](auto& node) { node->accept(resolver); });
+    symbol.match([&](const auto& node) { node->accept(resolver); });
 
     symbol.set_status(ResolveStatus::RESOLVED);
     return {};

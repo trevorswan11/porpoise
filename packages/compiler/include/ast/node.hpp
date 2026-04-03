@@ -84,6 +84,10 @@ concept LeafNode = NodeSubtype<T> && requires {
     { T::KIND } -> std::convertible_to<NodeKind>;
 };
 
+template <typename T> struct is_leaf_node : std::false_type {};
+template <LeafNode T> struct is_leaf_node<T> : std::true_type {};
+template <typename T> constexpr bool is_leaf_node_v = is_leaf_node<T>::value;
+
 class Node {
   public:
     Node()          = delete;
@@ -98,10 +102,7 @@ class Node {
 
     [[nodiscard]] auto has_sema_type() const noexcept -> bool { return sema_type_.has_value(); }
     [[nodiscard]] auto get_sema_type() const noexcept -> sema::Type& { return *sema_type_; }
-    auto set_sema_type(sema::Type& type) const noexcept // cppcheck-suppress constParameterReference
-        -> void {
-        sema_type_ = type;
-    }
+    auto set_sema_type(sema::Type& type) const noexcept -> void { sema_type_.emplace(type); }
 
     // Compares two nodes at the AST level, ignoring semantic differences.
     friend auto operator==(const Node& lhs, const Node& rhs) noexcept -> bool {
@@ -117,7 +118,7 @@ class Node {
     }
 
     // A 'safe' alternative to a raw static cast for nodes. Assertion > UB
-    template <LeafNode T> static auto as(const Node& n) -> const T& {
+    template <LeafNode T> [[nodiscard]] static auto as(const Node& n) -> const T& {
         assert(n.is<T>());
         return static_cast<const T&>(n);
     }

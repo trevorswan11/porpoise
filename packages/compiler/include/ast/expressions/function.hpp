@@ -24,6 +24,7 @@ class SelfParameter {
 
     MAKE_GETTER(modifier, const TypeModifier&)
     MAKE_GETTER(ident, const IdentifierExpression&, *)
+    [[nodiscard]] auto get_token() const noexcept -> const syntax::Token&;
 
     MAKE_EQ_DELEGATION(SelfParameter)
 
@@ -35,20 +36,22 @@ class SelfParameter {
 class FunctionParameter {
   public:
     FunctionParameter(mem::Box<IdentifierExpression> ident, ExplicitType&& type) noexcept;
+    explicit FunctionParameter(ExplicitType&& type) noexcept;
     ~FunctionParameter();
 
     MAKE_MOVE_CONSTRUCTABLE_ONLY(FunctionParameter)
 
     auto accept(Visitor& v) const -> void;
 
-    MAKE_GETTER(ident, const IdentifierExpression&, *)
+    MAKE_OPTIONAL_UNPACKER(ident, IdentifierExpression, ident_, **)
     MAKE_GETTER(type, const ExplicitType&)
+    [[nodiscard]] auto get_token() const noexcept -> const syntax::Token&;
 
     MAKE_EQ_DELEGATION(FunctionParameter)
 
   private:
-    mem::Box<IdentifierExpression> ident_;
-    ExplicitType                   type_;
+    Optional<mem::Box<IdentifierExpression>> ident_;
+    ExplicitType                             type_;
 };
 
 class FunctionExpression : public ExprBase<FunctionExpression> {
@@ -59,6 +62,7 @@ class FunctionExpression : public ExprBase<FunctionExpression> {
     FunctionExpression(const syntax::Token&               start_token,
                        Optional<SelfParameter>            self,
                        std::vector<FunctionParameter>     parameters,
+                       bool                               variadic,
                        ExplicitType&&                     return_type,
                        Optional<mem::Box<BlockStatement>> body) noexcept;
     ~FunctionExpression() override;
@@ -69,9 +73,14 @@ class FunctionExpression : public ExprBase<FunctionExpression> {
     [[nodiscard]] static auto parse(syntax::Parser& parser)
         -> Expected<mem::Box<Expression>, syntax::ParserDiagnostic>;
 
+    // Meant to be called by the explicit type parser only
+    [[nodiscard]] static auto parse_type(syntax::Parser& parser)
+        -> Expected<mem::Box<Expression>, syntax::ParserDiagnostic>;
+
     MAKE_OPTIONAL_UNPACKER(self, SelfParameter, self_, *)
     MAKE_GETTER(parameters, std::span<const FunctionParameter>)
     [[nodiscard]] auto has_parameters() const noexcept -> bool { return !parameters_.empty(); }
+    [[nodiscard]] auto is_variadic() const noexcept -> bool { return variadic_; }
     MAKE_GETTER(return_type, const ExplicitType&)
     MAKE_OPTIONAL_UNPACKER(body, BlockStatement, body_, **)
 
@@ -81,6 +90,7 @@ class FunctionExpression : public ExprBase<FunctionExpression> {
   private:
     Optional<SelfParameter>            self_;
     std::vector<FunctionParameter>     parameters_;
+    bool                               variadic_;
     ExplicitType                       return_type_;
     Optional<mem::Box<BlockStatement>> body_;
 };

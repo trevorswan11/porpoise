@@ -32,6 +32,16 @@ pub const main := fn(args: [][:0]byte): int {
 ```porpoise
 a = if (a) b; else c; // Assigns a conditionally
 ```
+- Conditionals can be evaluated at compile time with a syntax similar to C++
+```porpoise
+if constexpr (true) {
+    ...
+} else {
+    ...
+}
+```
+- In the above example, the top block is the only statement evaluated, with the `else` branch and condition being completely dropped at runtime
+- Statements inside the consequent of a conditional are still scoped as written, `constexpr` will not hoist a branch into the outer scope
 
 ## Defer
 - Defer statements defer execution to the end of their scope

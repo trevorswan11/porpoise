@@ -53,6 +53,7 @@ constexpr Operator GT_EQ{">=", TokenType::GT_EQ};
 constexpr Operator EQ{"==", TokenType::EQ};
 constexpr Operator NEQ{"!=", TokenType::NEQ};
 
+constexpr Operator ELLIPSIS{"...", TokenType::ELLIPSIS};
 constexpr Operator COLON_COLON{"::", TokenType::COLON_COLON};
 constexpr Operator DOT{".", TokenType::DOT};
 constexpr Operator DOT_DOT{"..", TokenType::DOT_DOT};
@@ -101,6 +102,7 @@ constexpr auto ALL_OPERATORS = [] {
         operators::GT_EQ,
         operators::EQ,
         operators::NEQ,
+        operators::ELLIPSIS,
         operators::COLON_COLON,
         operators::DOT,
         operators::DOT_DOT,
