@@ -81,8 +81,10 @@
         },
     },
     .paths = .{
-        "apps",
-        "packages",
+        "lib",
+        "porpoise",
+        "tools",
+        "third-party",
         "build.zig",
         "build.zig.zon",
         "flake.nix",

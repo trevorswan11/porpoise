@@ -5,8 +5,10 @@ on:
         branches: [main, dev]
         paths:
             - ".github/workflows/ci.yml"
-            - "apps/**"
-            - "packages/**"
+            - "lib/**"
+            - "porpoise/main.cpp"
+            - "third-party/**"
+            - "tools/harness/**"
             - "build.zig"
             - "build.zig.zon"
 
@@ -42,7 +44,7 @@ jobs:
                 path: |
                   ${{ env.ZIG_LOCAL_CACHE_DIR }}
                   ${{ env.ZIG_GLOBAL_CACHE_DIR }}
-                key: ${{ runner.os }}-zig-${{ hashFiles('packages/third-party/llvm/**.zig') }}
+                key: ${{ runner.os }}-zig-${{ hashFiles('third-party/llvm/**.zig') }}
                 restore-keys: |
                   ${{ runner.os }}-zig-
 

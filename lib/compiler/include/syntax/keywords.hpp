@@ -1,0 +1,196 @@
+#pragma once
+
+#include <algorithm>
+#include <array>
+#include <string_view>
+#include <utility>
+
+#include "syntax/token.hpp"
+
+#include "optional.hpp"
+
+namespace porpoise::syntax {
+
+using Keyword = std::pair<std::string_view, TokenType>;
+
+namespace keywords {
+
+constexpr Keyword FN{"fn", TokenType::FUNCTION};
+constexpr Keyword VAR{"var", TokenType::VAR};
+constexpr Keyword CONST{"const", TokenType::CONST};
+constexpr Keyword CONSTEXPR{"constexpr", TokenType::CONSTEXPR};
+constexpr Keyword STRUCT{"struct", TokenType::STRUCT};
+constexpr Keyword ENUM{"enum", TokenType::ENUM};
+constexpr Keyword UNION{"union", TokenType::UNION};
+constexpr Keyword TRUE{"true", TokenType::TRUE};
+constexpr Keyword FALSE{"false", TokenType::FALSE};
+constexpr Keyword IF{"if", TokenType::IF};
+constexpr Keyword ELSE{"else", TokenType::ELSE};
+constexpr Keyword DO{"do", TokenType::DO};
+constexpr Keyword MATCH{"match", TokenType::MATCH};
+constexpr Keyword RETURN{"return", TokenType::RETURN};
+constexpr Keyword DEFER{"defer", TokenType::DEFER};
+constexpr Keyword LOOP{"loop", TokenType::LOOP};
+constexpr Keyword FOR{"for", TokenType::FOR};
+constexpr Keyword WHILE{"while", TokenType::WHILE};
+constexpr Keyword CONTINUE{"continue", TokenType::CONTINUE};
+constexpr Keyword BREAK{"break", TokenType::BREAK};
+constexpr Keyword IMPORT{"import", TokenType::IMPORT};
+constexpr Keyword I32{"i32", TokenType::I32_TYPE};
+constexpr Keyword I64{"i64", TokenType::I64_TYPE};
+constexpr Keyword ISIZE{"isize", TokenType::ISIZE_TYPE};
+constexpr Keyword U32{"u32", TokenType::U32_TYPE};
+constexpr Keyword U64{"u64", TokenType::U64_TYPE};
+constexpr Keyword USIZE{"usize", TokenType::USIZE_TYPE};
+constexpr Keyword F32{"f32", TokenType::F32_TYPE};
+constexpr Keyword F64{"f64", TokenType::F64_TYPE};
+constexpr Keyword U8{"u8", TokenType::U8_TYPE};
+constexpr Keyword BOOL{"bool", TokenType::BOOL_TYPE};
+constexpr Keyword VOID{"void", TokenType::VOID_TYPE};
+constexpr Keyword TYPE{"type", TokenType::TYPE_TYPE};
+constexpr Keyword AS{"as", TokenType::AS};
+constexpr Keyword PUBLIC{"pub", TokenType::PUBLIC};
+constexpr Keyword EXTERN{"extern", TokenType::EXTERN};
+constexpr Keyword EXPORT{"export", TokenType::EXPORT};
+constexpr Keyword PACKED{"packed", TokenType::PACKED};
+constexpr Keyword VOLATILE{"volatile", TokenType::VOLATILE};
+constexpr Keyword STATIC{"static", TokenType::STATIC};
+constexpr Keyword NORETURN{"noreturn", TokenType::NORETURN};
+constexpr Keyword NULLPTR{"nullptr", TokenType::NULLPTR};
+constexpr Keyword USING{"using", TokenType::USING};
+constexpr Keyword MODULE{"module", TokenType::MODULE};
+
+namespace builtins {
+
+constexpr Keyword TYPEOF{"@typeOf", TokenType::TYPEOF};
+constexpr Keyword SIZEOF{"@sizeOf", TokenType::SIZEOF};
+constexpr Keyword ALIGNOF{"@alignOf", TokenType::ALIGNOF};
+constexpr Keyword PTR_ADD{"@ptrAdd", TokenType::PTR_ADD};
+constexpr Keyword PTR_SUB{"@ptrSub", TokenType::PTR_SUB};
+constexpr Keyword PTR_FROM_ARRAY{"@ptrFromArray", TokenType::PTR_FROM_ARRAY};
+constexpr Keyword SLICE_FROM_PTR{"@sliceFromPtr", TokenType::SLICE_FROM_PTR};
+constexpr Keyword PTR_IDX{"@ptrIdx", TokenType::PTR_IDX};
+constexpr Keyword PTR_FROM_INT{"@ptrFromInt", TokenType::PTR_FROM_INT};
+constexpr Keyword INT_FROM_PTR{"@intFromPtr", TokenType::INT_FROM_PTR};
+constexpr Keyword SIN{"@sin", TokenType::SIN};
+constexpr Keyword COS{"@cos", TokenType::COS};
+constexpr Keyword TAN{"@tan", TokenType::TAN};
+constexpr Keyword SQRT{"@sqrt", TokenType::SQRT};
+constexpr Keyword LOG{"@log", TokenType::LOG};
+constexpr Keyword LOG_10{"@log10", TokenType::LOG_10};
+constexpr Keyword LOG_2{"@log2", TokenType::LOG_2};
+constexpr Keyword MIN{"@min", TokenType::MIN};
+constexpr Keyword MAX{"@max", TokenType::MAX};
+constexpr Keyword MOD{"@mod", TokenType::MOD};
+constexpr Keyword DIVMOD{"@divmod", TokenType::DIVMOD};
+constexpr Keyword TRUNC{"@trunc", TokenType::TRUNC};
+constexpr Keyword CAST{"@cast", TokenType::CAST};
+constexpr Keyword CEIL{"@ceil", TokenType::CEIL};
+constexpr Keyword FLOOR{"@floor", TokenType::FLOOR};
+constexpr Keyword EXP{"@exp", TokenType::EXP};
+constexpr Keyword EXP_2{"@exp2", TokenType::EXP_2};
+constexpr Keyword POW{"@pow", TokenType::POW};
+constexpr Keyword CLZ{"@clz", TokenType::CLZ};
+constexpr Keyword CTZ{"@ctz", TokenType::CTZ};
+
+} // namespace builtins
+
+} // namespace keywords
+
+constexpr auto ALL_KEYWORDS = [] {
+    auto all_keywords = std::array{
+        keywords::FN,       keywords::VAR,     keywords::CONST,    keywords::CONSTEXPR,
+        keywords::STRUCT,   keywords::ENUM,    keywords::UNION,    keywords::TRUE,
+        keywords::FALSE,    keywords::IF,      keywords::ELSE,     keywords::DO,
+        keywords::MATCH,    keywords::RETURN,  keywords::DEFER,    keywords::LOOP,
+        keywords::FOR,      keywords::WHILE,   keywords::CONTINUE, keywords::BREAK,
+        keywords::IMPORT,   keywords::I32,     keywords::I64,      keywords::ISIZE,
+        keywords::U32,      keywords::U64,     keywords::USIZE,    keywords::F32,
+        keywords::F64,      keywords::U8,      keywords::BOOL,     keywords::VOID,
+        keywords::TYPE,     keywords::AS,      keywords::PUBLIC,   keywords::EXTERN,
+        keywords::EXPORT,   keywords::PACKED,  keywords::VOLATILE, keywords::STATIC,
+        keywords::NORETURN, keywords::NULLPTR, keywords::USING,    keywords::MODULE,
+    };
+
+    std::ranges::sort(all_keywords, {}, &Keyword::first);
+    return all_keywords;
+}();
+
+constexpr auto get_keyword(std::string_view sv) noexcept -> Optional<Keyword> {
+    const auto it = std::ranges::lower_bound(ALL_KEYWORDS, sv, {}, &Keyword::first);
+    if (it == ALL_KEYWORDS.end() || it->first != sv) { return std::nullopt; }
+    return Optional<Keyword>{*it};
+}
+
+constexpr auto ALL_PRIMITIVES = std::array{
+    keywords::I32.second,
+    keywords::I64.second,
+    keywords::ISIZE.second,
+    keywords::U32.second,
+    keywords::U64.second,
+    keywords::USIZE.second,
+    keywords::F32.second,
+    keywords::F64.second,
+    keywords::U8.second,
+    keywords::BOOL.second,
+    keywords::VOID.second,
+    keywords::TYPE.second,
+};
+
+constexpr auto ALL_BUILTINS = [] {
+    using namespace keywords;
+    auto all_builtins = std::array{
+        builtins::TYPEOF,
+        builtins::SIZEOF,
+        builtins::ALIGNOF,
+        builtins::PTR_ADD,
+        builtins::PTR_SUB,
+        builtins::PTR_FROM_ARRAY,
+        builtins::SLICE_FROM_PTR,
+        builtins::PTR_IDX,
+        builtins::PTR_FROM_INT,
+        builtins::INT_FROM_PTR,
+        builtins::SIN,
+        builtins::COS,
+        builtins::TAN,
+        builtins::SQRT,
+        builtins::LOG,
+        builtins::LOG_10,
+        builtins::LOG_2,
+        builtins::MIN,
+        builtins::MAX,
+        builtins::MOD,
+        builtins::DIVMOD,
+        builtins::TRUNC,
+        builtins::CAST,
+        builtins::CEIL,
+        builtins::FLOOR,
+        builtins::POW,
+        builtins::EXP,
+        builtins::EXP_2,
+        builtins::CLZ,
+        builtins::CTZ,
+    };
+
+    std::ranges::sort(all_builtins, {}, &Keyword::first);
+    return all_builtins;
+}();
+
+constexpr auto get_builtin(std::string_view sv) noexcept -> Optional<Keyword> {
+    const auto it = std::ranges::lower_bound(ALL_BUILTINS, sv, {}, &Keyword::first);
+    if (it == ALL_BUILTINS.end() || it->first != sv) { return std::nullopt; }
+    return Optional<Keyword>{*it};
+}
+
+constexpr auto is_builtin(TokenType tt) noexcept -> bool {
+    constexpr auto ALL_BUILTINS_BY_TT = [] {
+        auto arr = ALL_BUILTINS;
+        std::ranges::sort(arr, {}, &Keyword::second);
+        return arr;
+    }();
+
+    const auto it = std::ranges::lower_bound(ALL_BUILTINS_BY_TT, tt, {}, &Keyword::second);
+    return it != ALL_BUILTINS_BY_TT.end() && it->second == tt;
+}
+
+} // namespace porpoise::syntax

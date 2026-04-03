@@ -5,8 +5,9 @@ on:
         branches: [main]
         paths:
             - ".github/workflows/coverage.yml"
-            - "apps/**"
-            - "packages/**"
+            - "lib/**"
+            - "third-party/**"
+            - "tools/harness/**"
             - "build.zig"
             - "build.zig.zon"
 

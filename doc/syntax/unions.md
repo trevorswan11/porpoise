@@ -13,7 +13,7 @@
 ```porpoise
 const Hand := union {
     card: bool,
-    pen: int,
+    pen: i32,
     shoe: void,
 };
 
