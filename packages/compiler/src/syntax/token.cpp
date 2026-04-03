@@ -76,16 +76,16 @@ auto misc_from_char(byte c) noexcept -> Optional<TokenType> {
 
 using SuffixMapping                = std::pair<bool (*)(TokenType), usize>;
 constexpr auto INT_SUFFIX_MAPPINGS = std::to_array<SuffixMapping>({
-    {is_signed_int, 0},
-    {is_signed_long_int, 1},
+    {is_i32, 0},
+    {is_i64, 1},
     {is_isize_int, 1},
-    {is_unsigned_int, 1},
-    {is_unsigned_long_int, 2},
+    {is_u32, 1},
+    {is_u64, 2},
     {is_usize_int, 2},
 });
 
 auto suffix_length(TokenType tt) noexcept -> usize {
-    if (tt == TokenType::FLOAT) { return 1; }
+    if (tt == TokenType::F32) { return 1; }
     if (tt < TokenType::INT_2 || tt > TokenType::UZINT_16) { return 0; }
     return std::ranges::find_if(
                INT_SUFFIX_MAPPINGS,

@@ -54,69 +54,69 @@ namespace mods = helpers::type_modifiers;
 
 TEST_CASE("Function without body, self, or parameters") {
     helpers::test_expr_stmt(
-        "fn(): int;",
-        helpers::function_expr_from(ast::ExplicitType{mods::BASE, helpers::make_ident("int")}));
+        "fn(): i32;",
+        helpers::function_expr_from(ast::ExplicitType{mods::BASE, helpers::make_ident("i32")}));
 }
 
 TEST_CASE("Function with self but no parameters or body") {
     helpers::test_expr_stmt(
-        "fn(&self): int;",
+        "fn(&self): i32;",
         helpers::function_expr_from(ast::SelfParameter{mods::REF, helpers::make_ident("self")},
-                                    ast::ExplicitType{mods::BASE, helpers::make_ident("int")}));
+                                    ast::ExplicitType{mods::BASE, helpers::make_ident("i32")}));
 }
 
 TEST_CASE("Function with parameters but no self or body") {
     helpers::test_expr_stmt(
-        "fn(a: A, b: *B): int;",
+        "fn(a: A, b: *B): i32;",
         helpers::function_expr_from(
             helpers::make_parameters(ast::FunctionParameter{helpers::make_ident("a"),
                                                             {mods::BASE, helpers::make_ident("A")}},
                                      ast::FunctionParameter{helpers::make_ident("b"),
                                                             {mods::PTR, helpers::make_ident("B")}}),
-            ast::ExplicitType{mods::BASE, helpers::make_ident("int")}));
+            ast::ExplicitType{mods::BASE, helpers::make_ident("i32")}));
 }
 
 TEST_CASE("Function with self & parameters but no body") {
     helpers::test_expr_stmt(
-        "fn(&mut this, a: A, b: *B): int;",
+        "fn(&mut this, a: A, b: *B): i32;",
         helpers::function_expr_from(
             ast::SelfParameter{mods::MUT_REF, helpers::make_ident("this")},
             helpers::make_parameters(ast::FunctionParameter{helpers::make_ident("a"),
                                                             {mods::BASE, helpers::make_ident("A")}},
                                      ast::FunctionParameter{helpers::make_ident("b"),
                                                             {mods::PTR, helpers::make_ident("B")}}),
-            ast::ExplicitType{mods::BASE, helpers::make_ident("int")}));
+            ast::ExplicitType{mods::BASE, helpers::make_ident("i32")}));
 }
 
 TEST_CASE("Functions with variadic parameter") {
     SECTION("Sole variadic") {
         helpers::test_expr_stmt(
-            "fn(...): int;",
+            "fn(...): i32;",
             helpers::function_expr_from(std::nullopt,
                                         Parameters{},
-                                        ast::ExplicitType{mods::BASE, helpers::make_ident("int")},
+                                        ast::ExplicitType{mods::BASE, helpers::make_ident("i32")},
                                         std::nullopt,
                                         true));
     }
 
     SECTION("Variadic following self parameter") {
-        helpers::test_expr_stmt("fn(&mut this, ...): int;",
+        helpers::test_expr_stmt("fn(&mut this, ...): i32;",
                                 helpers::function_expr_from(
                                     ast::SelfParameter{mods::MUT_REF, helpers::make_ident("this")},
                                     Parameters{},
-                                    ast::ExplicitType{mods::BASE, helpers::make_ident("int")},
+                                    ast::ExplicitType{mods::BASE, helpers::make_ident("i32")},
                                     std::nullopt,
                                     true));
     }
 
     SECTION("Variadic following standard parameter") {
         helpers::test_expr_stmt(
-            "fn(a: A, ...): int;",
+            "fn(a: A, ...): i32;",
             helpers::function_expr_from(
                 std::nullopt,
                 helpers::make_parameters(ast::FunctionParameter{
                     helpers::make_ident("a"), {mods::BASE, helpers::make_ident("A")}}),
-                ast::ExplicitType{mods::BASE, helpers::make_ident("int")},
+                ast::ExplicitType{mods::BASE, helpers::make_ident("i32")},
                 std::nullopt,
                 true));
     }
@@ -124,12 +124,12 @@ TEST_CASE("Functions with variadic parameter") {
 
 TEST_CASE("Full function signature") {
     helpers::test_expr_stmt(
-        "fn(&self, a: A, ...): *int;",
+        "fn(&self, a: A, ...): *i32;",
         helpers::function_expr_from(
             ast::SelfParameter{mods::REF, helpers::make_ident("self")},
             helpers::make_parameters(ast::FunctionParameter{
                 helpers::make_ident("a"), {mods::BASE, helpers::make_ident("A")}}),
-            ast::ExplicitType{mods::PTR, helpers::make_ident("int")},
+            ast::ExplicitType{mods::PTR, helpers::make_ident("i32")},
             std::nullopt,
             true));
 }
@@ -146,7 +146,7 @@ TEST_CASE("Function with type types") {
 
 TEST_CASE("Full function expression") {
     helpers::test_expr_stmt(
-        "fn(*mut this, a: A, b: *B, ): int { c; };",
+        "fn(*mut this, a: A, b: *B, ): i32 { c; };",
         helpers::function_expr_from(
             ast::SelfParameter{mods::MUT_PTR, helpers::make_ident("this")},
             helpers::make_parameters(
@@ -154,7 +154,7 @@ TEST_CASE("Full function expression") {
                                        ast::ExplicitType{mods::BASE, helpers::make_ident("A")}},
                 ast::FunctionParameter{helpers::make_ident("b"),
                                        ast::ExplicitType{mods::PTR, helpers::make_ident("B")}}),
-            ast::ExplicitType{mods::BASE, helpers::make_ident("int")},
+            ast::ExplicitType{mods::BASE, helpers::make_ident("i32")},
             helpers::make_expr_block_stmt(helpers::ident_from("c"))));
 }
 
@@ -171,41 +171,41 @@ TEST_CASE("Function missing return type") {
 
 TEST_CASE("Function parameter missing type") {
     helpers::test_parser_fail(
-        "fn(*mut this, a): int;",
+        "fn(*mut this, a): i32;",
         syntax::ParserDiagnostic{
             "Expected token COLON, found RPAREN", syntax::ParserError::UNEXPECTED_TOKEN, 1, 16});
 }
 
 TEST_CASE("Out-of-place self parameter") {
     helpers::test_parser_fail(
-        "fn(a: A, &self): int;",
+        "fn(a: A, &self): i32;",
         syntax::ParserDiagnostic{syntax::ParserError::ILLEGAL_IDENTIFIER, 1, 10});
 
     helpers::test_parser_fail(
-        "fn(a: A, self): int;",
+        "fn(a: A, self): i32;",
         syntax::ParserDiagnostic{
             "Expected token COLON, found RPAREN", syntax::ParserError::UNEXPECTED_TOKEN, 1, 14});
 }
 
 TEST_CASE("Out-of-place variadic parameter") {
     helpers::test_parser_fail(
-        "fn(a: A, ..., b: B): int;",
+        "fn(a: A, ..., b: B): i32;",
         syntax::ParserDiagnostic{
             "Expected token RPAREN, found IDENT", syntax::ParserError::UNEXPECTED_TOKEN, 1, 15});
 }
 
 TEST_CASE("Default function parameter") {
     helpers::test_parser_fail(
-        "fn(a: A = 2): int;",
+        "fn(a: A = 2): i32;",
         syntax::ParserDiagnostic{syntax::ParserError::FUNCTION_PARAMETER_HAS_DEFAULT_VALUE, 1, 5});
 }
 
 TEST_CASE("Noreturn function types") {
     helpers::test_parser_fail(
-        "fn(a: &noreturn): int;",
+        "fn(a: &noreturn): i32;",
         syntax::ParserDiagnostic{syntax::ParserError::ILLEGAL_NORETURN_TYPE_MODIFIER, 1, 7});
     helpers::test_parser_fail(
-        "fn(a: noreturn): int;",
+        "fn(a: noreturn): i32;",
         syntax::ParserDiagnostic{syntax::ParserError::FUNCTION_PARAMETER_IS_NORETURN, 1, 5});
     helpers::test_parser_fail(
         "fn(a: A): &noreturn;",
@@ -214,7 +214,7 @@ TEST_CASE("Noreturn function types") {
 
 TEST_CASE("Illegal type function types") {
     helpers::test_parser_fail(
-        "fn(A: &type): int;",
+        "fn(A: &type): i32;",
         syntax::ParserDiagnostic{syntax::ParserError::ILLEGAL_TYPE_TYPE_MODIFIER, 1, 7});
     helpers::test_parser_fail(
         "fn(A: type): &type;",
@@ -223,7 +223,7 @@ TEST_CASE("Illegal type function types") {
 
 TEST_CASE("Non-terminated parameter list") {
     helpers::test_parser_fail(
-        "fn(a: A, : int;",
+        "fn(a: A, : i32;",
         syntax::ParserDiagnostic{syntax::ParserError::ILLEGAL_IDENTIFIER, 1, 10});
 }
 

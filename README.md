@@ -57,7 +57,7 @@ Using AI for the development of porpoise should be seen as a last resort. All co
 ```porpoise
 import std;
 
-pub const main := fn(args: [][:0]byte): int {
+pub const main := fn(args: [][:0]u8): i32 {
     const message := "Hello, world!";
     std::io::println(message);
 };

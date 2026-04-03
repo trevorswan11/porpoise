@@ -28,7 +28,7 @@
 
 ```porpoise
 const Foo := struct {           // Standard declaration with type inference
-    var bar: int;               // Mutable member variable
+    var bar: i32;               // Mutable member variable
     const baz: []byte = "baz";  // Constant member variable, must be initialized in-line
 
     pub var boo := 4u;          // Members are private by default
@@ -47,7 +47,7 @@ const Foo := struct {           // Standard declaration with type inference
     };
 
     // Compile Error - top-level functions cannot be marked 'var'
-    // var worker_four := fn(a: int, b: uint): ulong {
+    // var worker_four := fn(a: i32, b: u32): u64 {
     //
     // };
 

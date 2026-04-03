@@ -277,7 +277,7 @@ auto Lexer::read_number() noexcept -> Token {
         if (base != Base::DECIMAL) {
             return {type, input_.substr(start, length), start_line, start_col};
         }
-        type = forced_float ? TokenType::FLOAT : TokenType::DOUBLE;
+        type = forced_float ? TokenType::F32 : TokenType::F64;
     } else {
         // Use an offset to increment the actual token type based on its base and width
         auto offset = base_idx(base);
@@ -434,7 +434,7 @@ auto Lexer::read_byte_literal() noexcept -> Token {
     }
     read_character();
 
-    return {TokenType::BYTE, input_.substr(start, pos_ - start), start_line, start_col};
+    return {TokenType::U8, input_.substr(start, pos_ - start), start_line, start_col};
 }
 
 // Reads a comment from the token, assuming the '//' operator has been consumed

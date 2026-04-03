@@ -26,20 +26,20 @@ TEST_CASE("Basic enums") {
             {},
             helpers::make_vector<ast::Enumeration>(
                 ast::Enumeration{helpers::make_ident("A"),
-                                 mem::make_box<ast::SignedIntegerExpression>(
+                                 mem::make_box<ast::I32Expression>(
                                      syntax::Token{syntax::TokenType::INT_10, "1"}, 1)},
                 ast::Enumeration{helpers::make_ident("B"), helpers::make_ident("T")})});
 }
 
 TEST_CASE("Underlying type") {
     helpers::test_expr_stmt(
-        "enum : ulong {RED = 3u, B, };",
+        "enum : u64 {RED = 3u, B, };",
         ast::EnumExpression{
             syntax::Token{keywords::ENUM},
-            helpers::make_ident("ulong"),
+            helpers::make_ident("u64"),
             helpers::make_vector<ast::Enumeration>(
                 ast::Enumeration{helpers::make_ident("RED"),
-                                 mem::make_box<ast::UnsignedIntegerExpression>(
+                                 mem::make_box<ast::U32Expression>(
                                      syntax::Token{syntax::TokenType::UINT_10, "3u"}, 3u)},
                 ast::Enumeration{helpers::make_ident("B"), {}})});
 

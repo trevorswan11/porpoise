@@ -17,11 +17,11 @@
     - Nested types: Consist of an outer type modifier acting on any of these types in a recursive fashion
 - The location of the type modifier is extremely important:
 ```porpoise
-*mut [5uz]int // A mutable pointer to an array of 5 integers.
-[5uz]*mut int // A constant array of 5 mutable pointers to integers
+*mut [5uz]i32 // A mutable pointer to an array of 5 integers.
+[5uz]*mut i32 // A constant array of 5 mutable pointers to integers
 ```
 - Each of these explicit types can be accompanied by any amount of type modifiers (syntactically)
-    `&&&&&&&&&&&&&&&int` is technically a valid type, though it likely would never be used
+    `&&&&&&&&&&&&&&&i32` is technically a valid type, though it likely would never be used
 - Types can be passed to functions whose parameter has the type `type`
     - Function argument parsing prioritizes expressions over types
 ```porpoise
@@ -39,7 +39,7 @@ func(tP);
 - Types can also be returned from functions, assuming the type can be fully constructed at compile time
 - Function types require parameter names for clarity and maintainability:
 ```porpoise
-using Callback = fn(status: int, result: *bool): void;
+using Callback = fn(status: i32, result: *bool): void;
 const register := fn(cb: Callback): void { ... };
 ```
 
@@ -64,15 +64,15 @@ a.b;   // Syntactic sugar
 - You can get the align of a type by using the `@alignOf` builtin
 
 ## Primitive Types
-- `int`: A 32-bit signed integer, represented by a standalone number
-- `long`: A 64-bit signed integer, represented by a `l` suffixed number
+- `i32`: A 32-bit signed integer, represented by a standalone number
+- `i64`: A 64-bit signed integer, represented by a `l` suffixed number
 - `isize`: A platform specific signed integer equivalent to ptrdiff_t (64-bit on 64-bit systems), represented by a `z` suffixed number
-- `uint`: A 32-bit unsigned integer, represented by a `u` suffixed number
-- `ulong`: A 64-bit unsigned integer, represented by a `ul` suffixed number
+- `u32`: A 32-bit unsigned integer, represented by a `u` suffixed number
+- `u64`: A 64-bit unsigned integer, represented by a `ul` suffixed number
 - `usize`: A platform specific unsigned integer equivalent to size_t (64-bit on 64-bit systems), represented by a `uz` suffixed number
-- `float`: A 32-bit floating point, represented by a `f` suffixed number, decimal, or scientific notation
-- `double`: A 64-bit floating point, represented by a standalone decimal or scientific notation
-- `byte`: An unsigned 8-bit value, typically used for characters (i.e. `'a'`) or ascii values
-    - There is no string type in porpoise. Instead you must use an array or slice of bytes (i.e. `[]byte` or `[N]byte`)
+- `f32`: A 32-bit floating point, represented by a `f` suffixed number, decimal, or scientific notation
+- `f64`: A 64-bit floating point, represented by a standalone decimal or scientific notation
+- `u8`: An unsigned 8-bit value, typically used for characters (i.e. `'a'`) or ascii values
+    - There is no string type in porpoise. Instead you must use an array or slice of bytes (i.e. `[]u8` or `[N]u8`)
 - `bool`: True (`true`) or false (`false`)
 - `void`: The unit type

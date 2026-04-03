@@ -53,10 +53,10 @@ enum class TokenType : u8 {
     UZINT_10,
     UZINT_16,
 
-    FLOAT,
-    DOUBLE,
+    F32,
+    F64,
     STRING,
-    BYTE,
+    U8,
 
     ASSIGN,
     WALRUS,
@@ -148,15 +148,15 @@ enum class TokenType : u8 {
     DEFER,
     MODULE,
 
-    INT_TYPE,
-    LONG_TYPE,
+    I32_TYPE,
+    I64_TYPE,
     ISIZE_TYPE,
-    UINT_TYPE,
-    ULONG_TYPE,
+    U32_TYPE,
+    U64_TYPE,
     USIZE_TYPE,
-    BYTE_TYPE,
-    FLOAT_TYPE,
-    DOUBLE_TYPE,
+    U8_TYPE,
+    F32_TYPE,
+    F64_TYPE,
     BOOL_TYPE,
     VOID_TYPE,
 
@@ -257,11 +257,11 @@ consteval auto to_int_category(TokenType tt) noexcept -> IntegerCategory {
 auto to_base(TokenType tt) noexcept -> Optional<Base>;
 auto misc_from_char(byte b) noexcept -> Optional<TokenType>;
 
-constexpr auto is_signed_int(TokenType tt) noexcept -> bool {
+constexpr auto is_i32(TokenType tt) noexcept -> bool {
     return TokenType::INT_2 <= tt && tt <= TokenType::INT_16;
 }
 
-constexpr auto is_signed_long_int(TokenType tt) noexcept -> bool {
+constexpr auto is_i64(TokenType tt) noexcept -> bool {
     return TokenType::LINT_2 <= tt && tt <= TokenType::LINT_16;
 }
 
@@ -269,11 +269,11 @@ constexpr auto is_isize_int(TokenType tt) noexcept -> bool {
     return TokenType::ZINT_2 <= tt && tt <= TokenType::ZINT_16;
 }
 
-constexpr auto is_unsigned_int(TokenType tt) noexcept -> bool {
+constexpr auto is_u32(TokenType tt) noexcept -> bool {
     return TokenType::UINT_2 <= tt && tt <= TokenType::UINT_16;
 }
 
-constexpr auto is_unsigned_long_int(TokenType tt) noexcept -> bool {
+constexpr auto is_u64(TokenType tt) noexcept -> bool {
     return TokenType::ULINT_2 <= tt && tt <= TokenType::ULINT_16;
 }
 

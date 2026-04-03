@@ -3,7 +3,7 @@
 - Function types can be aliased with a `using` statement
 - Function parameters are immutable by default
 ```porpoise
-const foo := fn(a: int, b: uint): ulong {
+const foo := fn(a: i32, b: u32): u64 {
     // ...
 };
 ```
@@ -20,15 +20,15 @@ const foo := fn(a: int, b: uint): ulong {
     - A mutable pointer is created with the same operator, but the definition denotes this with `*mut`
 - There are no default parameters
 ```porpoise
-const foo := fn(a: &int): ulong {
+const foo := fn(a: &i32): u64 {
     // ...
 };
 
-const bar := fn(b: int): ulong {
+const bar := fn(b: i32): u64 {
     // ...
 };
 
-const baz := fn(c: &mut int): ulong {
+const baz := fn(c: &mut i32): u64 {
     // ...
 };
 
@@ -45,7 +45,7 @@ _ = baz(&mut b);    // Illegal, cannot mutate const
 
 - Variadic function parameters are supported to allow for c-interop
     - Currently, porpoise does not expose primitives for interacting with this parameter type
-    - For example, you can declare an extern function like `printf` from libc as: `extern const printf: fn(*byte, ...): int;`
+    - For example, you can declare an extern function like `printf` from libc as: `extern const printf: fn(*byte, ...): i32;`
 
 ## Semantics
 - There is no function overloading
@@ -75,10 +75,10 @@ _ = baz(&mut b);    // Illegal, cannot mutate const
     - Signatures do include the variadic argument distinction
 - A function can be declared verbosely by using the type before the declaration function
 ```porpoise
-const f: fn(bool): int = fn(b: bool): int { ... };
+const f: fn(bool): i32 = fn(b: bool): i32 { ... };
 ```
 
 - You can also use this to indicate that a function takes a function as an argument
 ```porpoise
-const f := fn(g: fn(): int): int { ... };
+const f := fn(g: fn(): i32): i32 { ... };
 ```

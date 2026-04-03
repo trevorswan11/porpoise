@@ -325,15 +325,15 @@ MAKE_PREFIX_DUMP(ImplicitAccessExpression)
     }
 
 MAKE_LEAF_DUMP(StringExpression)
-MAKE_LEAF_DUMP(SignedIntegerExpression)
-MAKE_LEAF_DUMP(SignedLongIntegerExpression)
+MAKE_LEAF_DUMP(I32Expression)
+MAKE_LEAF_DUMP(I64Expression)
 MAKE_LEAF_DUMP(ISizeIntegerExpression)
-MAKE_LEAF_DUMP(UnsignedIntegerExpression)
-MAKE_LEAF_DUMP(UnsignedLongIntegerExpression)
+MAKE_LEAF_DUMP(U32Expression)
+MAKE_LEAF_DUMP(U64Expression)
 MAKE_LEAF_DUMP(USizeIntegerExpression)
-MAKE_LEAF_DUMP(ByteExpression)
-MAKE_LEAF_DUMP(FloatExpression)
-MAKE_LEAF_DUMP(DoubleExpression)
+MAKE_LEAF_DUMP(U8Expression)
+MAKE_LEAF_DUMP(F32Expression)
+MAKE_LEAF_DUMP(F64Expression)
 MAKE_LEAF_DUMP(BoolExpression)
 
 auto ASTDumper::visit(const ScopeResolutionExpression& scope_resolve) -> void {

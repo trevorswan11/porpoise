@@ -23,17 +23,16 @@ namespace mods      = helpers::type_modifiers;
 
 TEST_CASE("Explicit primitive declaration") {
     helpers::test_stmt(
-        "var a: int = 2;",
+        "var a: i32 = 2;",
         ast::DeclStatement{
             syntax::Token{keywords::VAR},
             helpers::make_ident("a"),
             mem::make_box<ast::TypeExpression>(syntax::Token{syntax::TokenType::COLON, ":"},
                                                ast::ExplicitType{
                                                    mods::BASE,
-                                                   helpers::make_ident("int"),
+                                                   helpers::make_ident("i32"),
                                                }),
-            mem::make_box<ast::SignedIntegerExpression>(
-                syntax::Token{syntax::TokenType::INT_10, "2"}, 2),
+            mem::make_box<ast::I32Expression>(syntax::Token{syntax::TokenType::INT_10, "2"}, 2),
             ast::DeclModifiers::VARIABLE,
         });
 }
@@ -81,12 +80,12 @@ TEST_CASE("Correct declaration modifiers") {
                                    helpers::make_ident("a"),
                                    mem::make_box<ast::TypeExpression>(
                                        syntax::Token{operators::WALRUS}, std::nullopt),
-                                   mem::make_box<ast::SignedIntegerExpression>(
+                                   mem::make_box<ast::I32Expression>(
                                        syntax::Token{syntax::TokenType::INT_10, "2"}, 2),
                                    flags,
                                });
         } else {
-            ss << " a: int;";
+            ss << " a: i32;";
             helpers::test_stmt(
                 ss.view(),
                 ast::DeclStatement{
@@ -95,7 +94,7 @@ TEST_CASE("Correct declaration modifiers") {
                     mem::make_box<ast::TypeExpression>(syntax::Token{syntax::TokenType::COLON, ":"},
                                                        ast::ExplicitType{
                                                            mods::BASE,
-                                                           helpers::make_ident("int"),
+                                                           helpers::make_ident("i32"),
                                                        }),
                     std::nullopt,
                     flags,
@@ -173,15 +172,15 @@ TEST_CASE("Extern requirements") {
 TEST_CASE("Constant requirements") {
     test_decl_fail({keywords::CONST},
                    syntax::ParserDiagnostic{syntax::ParserError::CONST_DECL_MISSING_VALUE, 1, 1},
-                   "a: int;");
+                   "a: i32;");
     test_decl_fail({keywords::CONSTEXPR},
                    syntax::ParserDiagnostic{syntax::ParserError::CONST_DECL_MISSING_VALUE, 1, 1},
-                   "a: int;");
+                   "a: i32;");
 }
 
 TEST_CASE("Non-terminated decls") {
     helpers::test_parser_fail(
-        "var a: int = 2",
+        "var a: i32 = 2",
         syntax::ParserDiagnostic{
             "Expected token SEMICOLON, found END", syntax::ParserError::UNEXPECTED_TOKEN, 1, 15});
 }

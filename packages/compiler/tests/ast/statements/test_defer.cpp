@@ -13,7 +13,7 @@ TEST_CASE("Correct defers") {
     const syntax::Token defer{keywords::DEFER};
     helpers::test_stmt("defer 3;",
                        ast::DeferStatement{defer,
-                                           helpers::make_expr_stmt(ast::SignedIntegerExpression{
+                                           helpers::make_expr_stmt(ast::I32Expression{
                                                syntax::Token{syntax::TokenType::INT_10, "3"}, 3})});
 
     helpers::test_stmt(
@@ -29,10 +29,10 @@ TEST_CASE("Illegal deferred statements") {
         "defer return 3;",
         syntax::ParserDiagnostic{syntax::ParserError::ILLEGAL_DEFERRED_STATEMENT, 1, 7});
     helpers::test_parser_fail(
-        "defer var a: int;",
+        "defer var a: i32;",
         syntax::ParserDiagnostic{syntax::ParserError::ILLEGAL_DEFERRED_STATEMENT, 1, 7});
     helpers::test_parser_fail(
-        "defer using a = int;",
+        "defer using a = i32;",
         syntax::ParserDiagnostic{syntax::ParserError::ILLEGAL_DEFERRED_STATEMENT, 1, 7});
 }
 

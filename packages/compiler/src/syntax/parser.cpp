@@ -168,9 +168,9 @@ using PrefixPair          = std::pair<TokenType, Parser::PrefixFn>;
 constexpr auto PREFIX_FNS = [] {
     constexpr auto initial_prefixes = std::to_array<PrefixPair>({
         {TokenType::IDENT, ast::IdentifierExpression::parse},
-        {TokenType::BYTE, ast::ByteExpression::parse},
-        {TokenType::FLOAT, ast::FloatExpression::parse},
-        {TokenType::DOUBLE, ast::DoubleExpression::parse},
+        {TokenType::U8, ast::U8Expression::parse},
+        {TokenType::F32, ast::F32Expression::parse},
+        {TokenType::F64, ast::F64Expression::parse},
         {TokenType::BANG, ast::UnaryExpression::parse},
         {TokenType::NOT, ast::UnaryExpression::parse},
         {TokenType::MINUS, ast::UnaryExpression::parse},
@@ -209,19 +209,19 @@ constexpr auto PREFIX_FNS = [] {
         using namespace token_type;
         switch (to_int_category(tt)) {
         case IntegerCategory::SIGNED_BASE:
-            int_prefixes[cursor] = {tt, ast::SignedIntegerExpression::parse};
+            int_prefixes[cursor] = {tt, ast::I32Expression::parse};
             break;
         case IntegerCategory::SIGNED_WIDE:
-            int_prefixes[cursor] = {tt, ast::SignedLongIntegerExpression::parse};
+            int_prefixes[cursor] = {tt, ast::I64Expression::parse};
             break;
         case IntegerCategory::SIGNED_SIZE:
             int_prefixes[cursor] = {tt, ast::ISizeIntegerExpression::parse};
             break;
         case IntegerCategory::UNSIGNED_BASE:
-            int_prefixes[cursor] = {tt, ast::UnsignedIntegerExpression::parse};
+            int_prefixes[cursor] = {tt, ast::U32Expression::parse};
             break;
         case IntegerCategory::UNSIGNED_WIDE:
-            int_prefixes[cursor] = {tt, ast::UnsignedLongIntegerExpression::parse};
+            int_prefixes[cursor] = {tt, ast::U64Expression::parse};
             break;
         case IntegerCategory::UNSIGNED_SIZE:
             int_prefixes[cursor] = {tt, ast::USizeIntegerExpression::parse};

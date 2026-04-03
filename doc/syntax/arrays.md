@@ -8,8 +8,8 @@
 - A trailing comma is allowed, but not required
 ```porpoise
 [_]*N{a, b, c, d, e, }; // Inferred Size
-[2uz]int{A, B, }; // Explicit size
-[1uz]int{2, 3}; // Illegal - size mismatch
+[2uz]i32{A, B, }; // Explicit size
+[1uz]i32{2, 3}; // Illegal - size mismatch
 ```
 
 - Arrays do not decay to pointers implicitly as they do in C
@@ -21,7 +21,7 @@
 - There are two types of Array types 
     - Array types are extremely similar to their declaration counterpart, requiring two key components
         - A size: This must be a compile time constant or a usize integer literal
-        - A type: This can be any valid type, but it must be present and cannot be inferred. It can be as deeply nested as you'd like (i.e. `[2uz][2uz]int`)
+        - A type: This can be any valid type, but it must be present and cannot be inferred. It can be as deeply nested as you'd like (i.e. `[2uz][2uz]i32`)
     - Slice types differ from array types in that they lack a size. They are composed of:
         - An open-close bracket pair with nothing in between
         - A type: exactly the same as an array
@@ -74,15 +74,15 @@ var a: &[]&*mut T; // Analogous slice type
     - Looping through the array/slice directly
 - An array/slice can be directly iterated over such that items are constant in the loop body:
 ```porpoise
-const a := [_]int{1, 2, 3, 4};
+const a := [_]i32{1, 2, 3, 4};
 for (a) |b| { ... };
 ```
 - An array/slice can be mutable iterated over if the array/slice is mutable and the underlying type is also mutable (i.e. not a constant pointer/reference)
 - Arrays that hold value types inherit the mutability of the array itself when being iterated
 ```porpoise
-var a := [_]int{1, 2, 3, 4};
+var a := [_]i32{1, 2, 3, 4};
 for (a) |&mut b| { ... };
 
-const c := [_]int{1, 2, 3, 4};
+const c := [_]i32{1, 2, 3, 4};
 for (c) |&mut b| { ... }; // Illegal, c is a constant
 ```

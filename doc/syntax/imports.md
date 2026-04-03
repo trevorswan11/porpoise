@@ -61,6 +61,6 @@ pub const ArrayList := fn(T: type): type {...};
 ```
 - This can be used just like any other function through the scope resolution operator:
 ```porpoise
-var a: std::array_list::ArrayList(int);
-var a: std::ArrayList(int); // Allowed due to function declaration alias
+var a: std::array_list::ArrayList(i32);
+var a: std::ArrayList(i32); // Allowed due to function declaration alias
 ```

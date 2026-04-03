@@ -9,7 +9,7 @@ R"(ExpressionStatement
         ├─ IdentifierExpression: c
         ├─ IdentifierExpression: d
         ├─ IdentifierExpression: e
-        ├─ SignedIntegerExpression: 3
+        ├─ I32Expression: 3
         └─ StringExpression: 54
 ExpressionStatement
 └─ Expr: BinaryExpression (BOOLEAN_AND)
@@ -54,7 +54,7 @@ BlockStatement
 ├─ ExpressionStatement
 │   └─ Expr: IdentifierExpression: b
 ├─ ExpressionStatement
-│   └─ Expr: SignedIntegerExpression: 2
+│   └─ Expr: I32Expression: 2
 └─ ExpressionStatement
     └─ Expr: IdentifierExpression: c
 ExpressionStatement
@@ -62,7 +62,7 @@ ExpressionStatement
     ├─ Condition: BoolExpression: true
     ├─ Continuation: AssignmentExpression (PLUS_ASSIGN)
     │   ├─ Assignee: IdentifierExpression: i
-    │   └─ Value: SignedIntegerExpression: 1
+    │   └─ Value: I32Expression: 1
     ├─ Body: BlockStatement
     │   └─ ExpressionStatement
     │       └─ Expr: IdentifierExpression: a
@@ -164,7 +164,7 @@ ExpressionStatement
     │       │   ├─ Object: IdentifierExpression: arr
     │       │   └─ Index: IdentifierExpression: i
     │       └─ Index: IdentifierExpression: j
-    └─ Value: SignedIntegerExpression: 2
+    └─ Value: I32Expression: 2
 ExpressionStatement
 └─ Expr: IfExpression
     ├─ Constexpr: false
@@ -196,7 +196,7 @@ ExpressionStatement
     │           └─ IdentifierExpression: B
     ├─ Variadic: false
     ├─ Returns: ExplicitType (modifier: BASE)
-    │   └─ IdentifierExpression: int (primitive)
+    │   └─ IdentifierExpression: i32 (primitive)
     └─ Body: BlockStatement
         └─ ExpressionStatement
             └─ Expr: IdentifierExpression: c
@@ -217,10 +217,10 @@ ExpressionStatement
         └─ Value: IdentifierExpression: b
 ExpressionStatement
 └─ Expr: EnumExpression
-    ├─ Underlying: IdentifierExpression: ulong (primitive)
+    ├─ Underlying: IdentifierExpression: u64 (primitive)
     └─ Enumerations:
         ├─ Name: IdentifierExpression: A
-        │   └─ Default: UnsignedLongIntegerExpression: 1
+        │   └─ Default: U64Expression: 1
         ├─ Name: IdentifierExpression: B
         │   └─ Default: IdentifierExpression: T
         └─ Name: IdentifierExpression: C
@@ -233,7 +233,7 @@ ExpressionStatement
 UsingStatement
 ├─ Alias: IdentifierExpression: T
 └─ Type: ExplicitType (modifier: BASE)
-    └─ IdentifierExpression: int (primitive)
+    └─ IdentifierExpression: i32 (primitive)
 ExpressionStatement
 └─ Expr: CallExpression
     ├─ Callee: IdentifierExpression: a
@@ -246,7 +246,7 @@ ExpressionStatement
                 ├─ Dimensions: IdentifierExpression: N
                 ├─ Null terminated: true
                 └─ ExplicitType (modifier: BASE)
-                    └─ IdentifierExpression: byte (primitive)
+                    └─ IdentifierExpression: u8 (primitive)
 ExpressionStatement
 └─ Expr: ImplicitAccessExpression (DOT)
     └─ Operand: IdentifierExpression: a
@@ -255,7 +255,7 @@ ExpressionStatement
     ├─ Field:
     │   ├─ Tag: IdentifierExpression: a
     │   └─ Type: ExplicitType (modifier: BASE)
-    │       └─ IdentifierExpression: int (primitive)
+    │       └─ IdentifierExpression: i32 (primitive)
     └─ Field:
         ├─ Tag: IdentifierExpression: b
         └─ Type: ExplicitType (modifier: MUT_REF)
@@ -267,17 +267,17 @@ ExpressionStatement
     │       └─ Expr: IdentifierExpression: a
     └─ Condition: BoolExpression: true
 ExpressionStatement
-└─ Expr: SignedLongIntegerExpression: 1
+└─ Expr: I64Expression: 1
 ExpressionStatement
 └─ Expr: ISizeIntegerExpression: 2
 ExpressionStatement
-└─ Expr: UnsignedIntegerExpression: 3
+└─ Expr: U32Expression: 3
 ExpressionStatement
-└─ Expr: ByteExpression: a
+└─ Expr: U8Expression: a
 ExpressionStatement
-└─ Expr: FloatExpression: 2.3
+└─ Expr: F32Expression: 2.3
 ExpressionStatement
-└─ Expr: DoubleExpression: 2.3
+└─ Expr: F64Expression: 2.3
 ExpressionStatement
 └─ Expr: ArrayExpression
     ├─ Size: USizeIntegerExpression: 1
@@ -304,10 +304,10 @@ DeclStatement (a)
         ├─ Dimensions: (slice)
         ├─ Null terminated: false
         └─ ExplicitType (modifier: BASE)
-            └─ IdentifierExpression: int (primitive)
+            └─ IdentifierExpression: i32 (primitive)
 BlockStatement
 └─ <empty>
 DeferStatement
 └─ Deferred: ExpressionStatement
-    └─ Expr: SignedIntegerExpression: 3
+    └─ Expr: I32Expression: 3
 )"

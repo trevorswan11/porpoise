@@ -34,8 +34,8 @@ namespace mods = helpers::type_modifiers;
 using Parameters = std::vector<ast::FunctionParameter>;
 
 TEST_CASE("Indent type") {
-    helpers::test_type_expr("int", ast::ExplicitType{mods::BASE, helpers::make_ident("int")});
-    helpers::test_type_expr("*int", ast::ExplicitType{mods::PTR, helpers::make_ident("int")});
+    helpers::test_type_expr("i32", ast::ExplicitType{mods::BASE, helpers::make_ident("i32")});
+    helpers::test_type_expr("*i32", ast::ExplicitType{mods::PTR, helpers::make_ident("i32")});
 }
 
 TEST_CASE("Function types") {
@@ -65,24 +65,24 @@ TEST_CASE("Function types") {
 
 TEST_CASE("Array type") {
     helpers::test_type_expr(
-        "[5uz]*ulong",
+        "[5uz]*u64",
         ast::ExplicitType{
             mods::BASE,
             ast::ExplicitArrayType{
                 mem::make_box<ast::USizeIntegerExpression>(
                     syntax::Token{syntax::TokenType::UZINT_10, "5uz"}, 5uz),
                 false,
-                mem::make_box<ast::ExplicitType>(mods::PTR, helpers::make_ident("ulong"))}});
+                mem::make_box<ast::ExplicitType>(mods::PTR, helpers::make_ident("u64"))}});
 }
 
 TEST_CASE("Slice type") {
     helpers::test_type_expr(
-        "[]*ulong",
+        "[]*u64",
         ast::ExplicitType{mods::BASE,
                           ast::ExplicitArrayType{{},
                                                  false,
                                                  mem::make_box<ast::ExplicitType>(
-                                                     mods::PTR, helpers::make_ident("ulong"))}});
+                                                     mods::PTR, helpers::make_ident("u64"))}});
 }
 
 TEST_CASE("Recursive types") {
@@ -127,16 +127,16 @@ TEST_CASE("Complex function type (holistic)") {
 
 TEST_CASE("Volatile restricted to declarations") {
     helpers::test_parser_fail(
-        "var a: volatile int;",
+        "var a: volatile i32;",
         syntax::ParserDiagnostic{syntax::ParserError::ILLEGAL_EXPLICIT_TYPE, 1, 6});
 }
 
 TEST_CASE("Array type requirement") {
     helpers::test_parser_fail(
-        "var a: [9]int;",
+        "var a: [9]i32;",
         syntax::ParserDiagnostic{syntax::ParserError::ILLEGAL_ARRAY_SIZE_TYPE, 1, 9});
     helpers::test_parser_fail(
-        R"(var a: ["e"]int;)",
+        R"(var a: ["e"]i32;)",
         syntax::ParserDiagnostic{syntax::ParserError::ILLEGAL_ARRAY_SIZE_TYPE, 1, 9});
 }
 

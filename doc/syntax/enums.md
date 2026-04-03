@@ -9,7 +9,7 @@
 - Enums can be casted to and from their underlying type by using the `@cast` builtin
 ```porpoise
 const Colors := enum { red, blue = 3, green };
-const Shapes := enum : ulong { circle, square };
+const Shapes := enum : u64 { circle, square };
 ```
 - Enum variants are namespaced, meaning they do not leak into their outer scope as they would in C
 - To access an enum's variant, the `.` operator is used

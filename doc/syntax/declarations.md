@@ -10,7 +10,7 @@
     - You cannot declare the same variable name in the same scope or enclosing scope
 
 ```porpoise
-const a := 2;           // Type deduced to be a signed 32 bit int
+const a := 2;           // Type deduced to be i32
 const b := "str";       // Type deduced to be a constant size array of bytes (non-null terminated)
 const c: byte = 's';    // Explicitly typed, so value must agree
 const d :=;             // Illegal, walrus needs a value!
@@ -54,18 +54,18 @@ var c := &mut a;    // Illegal, cannot take mutable reference of constant
 
 ```porpoise
 pub var c := 2;          // Allowed, symbol can be imported
-extern const a: int;     // Allowed, externs must be explicitly typed without values
+extern const a: i32;     // Allowed, externs must be explicitly typed without values
 export var b := 1;       // Allowed
 static var c := 33;      // Illegal, cannot use static on a non-struct member
-extern constexpr a: int; // Illegal, inherently contradictory
+extern constexpr a: i32; // Illegal, inherently contradictory
 ```
 
 ## Assignment
 - Non-const declarations can be reassigned
 - Re-assignment is right associative, meaning that you can chain assignment expressions:
 ```porpoise
-var a: int = 2;
-var b: int = 5;
+var a: i32 = 2;
+var b: i32 = 5;
 a = (b = 6);
 ```
 - This works because an assignment returns the assigned value

@@ -36,15 +36,15 @@ constexpr Keyword WHILE{"while", TokenType::WHILE};
 constexpr Keyword CONTINUE{"continue", TokenType::CONTINUE};
 constexpr Keyword BREAK{"break", TokenType::BREAK};
 constexpr Keyword IMPORT{"import", TokenType::IMPORT};
-constexpr Keyword INT{"int", TokenType::INT_TYPE};
-constexpr Keyword LONG{"long", TokenType::LONG_TYPE};
+constexpr Keyword I32{"i32", TokenType::I32_TYPE};
+constexpr Keyword I64{"i64", TokenType::I64_TYPE};
 constexpr Keyword ISIZE{"isize", TokenType::ISIZE_TYPE};
-constexpr Keyword UINT{"uint", TokenType::UINT_TYPE};
-constexpr Keyword ULONG{"ulong", TokenType::ULONG_TYPE};
+constexpr Keyword U32{"u32", TokenType::U32_TYPE};
+constexpr Keyword U64{"u64", TokenType::U64_TYPE};
 constexpr Keyword USIZE{"usize", TokenType::USIZE_TYPE};
-constexpr Keyword FLOAT{"float", TokenType::FLOAT_TYPE};
-constexpr Keyword DOUBLE{"double", TokenType::DOUBLE_TYPE};
-constexpr Keyword BYTE{"byte", TokenType::BYTE_TYPE};
+constexpr Keyword F32{"f32", TokenType::F32_TYPE};
+constexpr Keyword F64{"f64", TokenType::F64_TYPE};
+constexpr Keyword U8{"u8", TokenType::U8_TYPE};
 constexpr Keyword BOOL{"bool", TokenType::BOOL_TYPE};
 constexpr Keyword VOID{"void", TokenType::VOID_TYPE};
 constexpr Keyword TYPE{"type", TokenType::TYPE_TYPE};
@@ -104,9 +104,9 @@ constexpr auto ALL_KEYWORDS = [] {
         keywords::FALSE,    keywords::IF,      keywords::ELSE,     keywords::DO,
         keywords::MATCH,    keywords::RETURN,  keywords::DEFER,    keywords::LOOP,
         keywords::FOR,      keywords::WHILE,   keywords::CONTINUE, keywords::BREAK,
-        keywords::IMPORT,   keywords::INT,     keywords::LONG,     keywords::ISIZE,
-        keywords::UINT,     keywords::ULONG,   keywords::USIZE,    keywords::FLOAT,
-        keywords::DOUBLE,   keywords::BYTE,    keywords::BOOL,     keywords::VOID,
+        keywords::IMPORT,   keywords::I32,     keywords::I64,      keywords::ISIZE,
+        keywords::U32,      keywords::U64,     keywords::USIZE,    keywords::F32,
+        keywords::F64,      keywords::U8,      keywords::BOOL,     keywords::VOID,
         keywords::TYPE,     keywords::AS,      keywords::PUBLIC,   keywords::EXTERN,
         keywords::EXPORT,   keywords::PACKED,  keywords::VOLATILE, keywords::STATIC,
         keywords::NORETURN, keywords::NULLPTR, keywords::USING,    keywords::MODULE,
@@ -123,15 +123,15 @@ constexpr auto get_keyword(std::string_view sv) noexcept -> Optional<Keyword> {
 }
 
 constexpr auto ALL_PRIMITIVES = std::array{
-    keywords::INT.second,
-    keywords::LONG.second,
+    keywords::I32.second,
+    keywords::I64.second,
     keywords::ISIZE.second,
-    keywords::UINT.second,
-    keywords::ULONG.second,
+    keywords::U32.second,
+    keywords::U64.second,
     keywords::USIZE.second,
-    keywords::FLOAT.second,
-    keywords::DOUBLE.second,
-    keywords::BYTE.second,
+    keywords::F32.second,
+    keywords::F64.second,
+    keywords::U8.second,
     keywords::BOOL.second,
     keywords::VOID.second,
     keywords::TYPE.second,

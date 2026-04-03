@@ -14,9 +14,9 @@ TEST_CASE("Discard statements") {
     const syntax::Token start_token{syntax::TokenType::UNDERSCORE, "_"};
     helpers::test_stmt(
         "_ = 4;",
-        ast::DiscardStatement{start_token,
-                              mem::make_box<ast::SignedIntegerExpression>(
-                                  syntax::Token{syntax::TokenType::INT_10, "4"}, 4)});
+        ast::DiscardStatement{
+            start_token,
+            mem::make_box<ast::I32Expression>(syntax::Token{syntax::TokenType::INT_10, "4"}, 4)});
 
     std::vector<ast::Enumeration> enumerations;
     enumerations.emplace_back(ast::Enumeration{helpers::make_ident("RED"), std::nullopt});

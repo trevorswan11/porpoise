@@ -46,11 +46,10 @@ TEST_CASE("Full for loop with else") {
             syntax::Token{keywords::FOR},
             helpers::make_vector<mem::Box<ast::Expression>>(mem::make_box<ast::RangeExpression>(
                 syntax::Token{syntax::TokenType::INT_10, "0"},
-                mem::make_box<ast::SignedIntegerExpression>(
-                    syntax::Token{syntax::TokenType::INT_10, "0"}, 0),
+                mem::make_box<ast::I32Expression>(syntax::Token{syntax::TokenType::INT_10, "0"}, 0),
                 syntax::TokenType::DOT_DOT,
-                mem::make_box<ast::SignedIntegerExpression>(
-                    syntax::Token{syntax::TokenType::INT_10, "4"}, 4))),
+                mem::make_box<ast::I32Expression>(syntax::Token{syntax::TokenType::INT_10, "4"},
+                                                  4))),
             helpers::make_vector<ast::ForLoopCapture>(
                 ast::ForLoopCapture::Valued{{}, helpers::make_ident("i")}),
             helpers::make_expr_block_stmt(helpers::ident_from("a")),

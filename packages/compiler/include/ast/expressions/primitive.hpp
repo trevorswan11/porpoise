@@ -87,24 +87,24 @@ class StringExpression : public PrimitiveExpression<StringExpression, std::strin
 };
 template <> struct disable_default_parse<StringExpression> : std::true_type {};
 
-class SignedIntegerExpression : public PrimitiveExpression<SignedIntegerExpression, i32> {
+class I32Expression : public PrimitiveExpression<I32Expression, i32> {
   public:
-    static constexpr auto KIND = NodeKind::SIGNED_INTEGER_EXPRESSION;
+    static constexpr auto KIND = NodeKind::I32_EXPRESSION;
 
   public:
     using PrimitiveExpression::PrimitiveExpression;
-    MAKE_MOVE_CONSTRUCTABLE_ONLY(SignedIntegerExpression)
+    MAKE_MOVE_CONSTRUCTABLE_ONLY(I32Expression)
 
     auto accept(Visitor& v) const -> void override;
 };
 
-class SignedLongIntegerExpression : public PrimitiveExpression<SignedLongIntegerExpression, i64> {
+class I64Expression : public PrimitiveExpression<I64Expression, i64> {
   public:
-    static constexpr auto KIND = NodeKind::SIGNED_LONG_INTEGER_EXPRESSION;
+    static constexpr auto KIND = NodeKind::I64_EXPRESSION;
 
   public:
     using PrimitiveExpression::PrimitiveExpression;
-    MAKE_MOVE_CONSTRUCTABLE_ONLY(SignedLongIntegerExpression)
+    MAKE_MOVE_CONSTRUCTABLE_ONLY(I64Expression)
 
     auto accept(Visitor& v) const -> void override;
 };
@@ -120,25 +120,24 @@ class ISizeIntegerExpression : public PrimitiveExpression<ISizeIntegerExpression
     auto accept(Visitor& v) const -> void override;
 };
 
-class UnsignedIntegerExpression : public PrimitiveExpression<UnsignedIntegerExpression, u32> {
+class U32Expression : public PrimitiveExpression<U32Expression, u32> {
   public:
-    static constexpr auto KIND = NodeKind::UNSIGNED_INTEGER_EXPRESSION;
+    static constexpr auto KIND = NodeKind::U32_EXPRESSION;
 
   public:
     using PrimitiveExpression::PrimitiveExpression;
-    MAKE_MOVE_CONSTRUCTABLE_ONLY(UnsignedIntegerExpression)
+    MAKE_MOVE_CONSTRUCTABLE_ONLY(U32Expression)
 
     auto accept(Visitor& v) const -> void override;
 };
 
-class UnsignedLongIntegerExpression
-    : public PrimitiveExpression<UnsignedLongIntegerExpression, u64> {
+class U64Expression : public PrimitiveExpression<U64Expression, u64> {
   public:
-    static constexpr auto KIND = NodeKind::UNSIGNED_LONG_INTEGER_EXPRESSION;
+    static constexpr auto KIND = NodeKind::U64_EXPRESSION;
 
   public:
     using PrimitiveExpression::PrimitiveExpression;
-    MAKE_MOVE_CONSTRUCTABLE_ONLY(UnsignedLongIntegerExpression)
+    MAKE_MOVE_CONSTRUCTABLE_ONLY(U64Expression)
 
     auto accept(Visitor& v) const -> void override;
 };
@@ -154,40 +153,40 @@ class USizeIntegerExpression : public PrimitiveExpression<USizeIntegerExpression
     auto accept(Visitor& v) const -> void override;
 };
 
-class ByteExpression : public PrimitiveExpression<ByteExpression, byte> {
+class U8Expression : public PrimitiveExpression<U8Expression, byte> {
   public:
-    static constexpr auto KIND = NodeKind::BYTE_EXPRESSION;
+    static constexpr auto KIND = NodeKind::U8_EXPRESSION;
 
   public:
     using PrimitiveExpression::PrimitiveExpression;
-    MAKE_MOVE_CONSTRUCTABLE_ONLY(ByteExpression)
+    MAKE_MOVE_CONSTRUCTABLE_ONLY(U8Expression)
 
     auto                      accept(Visitor& v) const -> void override;
     [[nodiscard]] static auto parse(syntax::Parser& parser)
         -> Expected<mem::Box<Expression>, syntax::ParserDiagnostic>;
 };
-template <> struct disable_default_parse<ByteExpression> : std::true_type {};
+template <> struct disable_default_parse<U8Expression> : std::true_type {};
 
-class FloatExpression : public PrimitiveExpression<FloatExpression, f32> {
+class F32Expression : public PrimitiveExpression<F32Expression, f32> {
   public:
-    static constexpr auto KIND = NodeKind::FLOAT_EXPRESSION;
+    static constexpr auto KIND = NodeKind::F32_EXPRESSION;
 
   public:
     using PrimitiveExpression::PrimitiveExpression;
-    MAKE_MOVE_CONSTRUCTABLE_ONLY(FloatExpression)
+    MAKE_MOVE_CONSTRUCTABLE_ONLY(F32Expression)
 
     auto accept(Visitor& v) const -> void override;
 
     auto is_equal(const Node& other) const noexcept -> bool override;
 };
 
-class DoubleExpression : public PrimitiveExpression<DoubleExpression, f64> {
+class F64Expression : public PrimitiveExpression<F64Expression, f64> {
   public:
-    static constexpr auto KIND = NodeKind::DOUBLE_EXPRESSION;
+    static constexpr auto KIND = NodeKind::F64_EXPRESSION;
 
   public:
     using PrimitiveExpression::PrimitiveExpression;
-    MAKE_MOVE_CONSTRUCTABLE_ONLY(DoubleExpression)
+    MAKE_MOVE_CONSTRUCTABLE_ONLY(F64Expression)
 
     auto accept(Visitor& v) const -> void override;
 

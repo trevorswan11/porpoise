@@ -21,20 +21,20 @@ auto StringExpression::parse(syntax::Parser& parser)
     return mem::make_box<StringExpression>(start_token, *promoted);
 }
 
-auto SignedIntegerExpression::accept(Visitor& v) const -> void { v.visit(*this); }
-auto SignedLongIntegerExpression::accept(Visitor& v) const -> void { v.visit(*this); }
+auto I32Expression::accept(Visitor& v) const -> void { v.visit(*this); }
+auto I64Expression::accept(Visitor& v) const -> void { v.visit(*this); }
 auto ISizeIntegerExpression::accept(Visitor& v) const -> void { v.visit(*this); }
-auto UnsignedIntegerExpression::accept(Visitor& v) const -> void { v.visit(*this); }
-auto UnsignedLongIntegerExpression::accept(Visitor& v) const -> void { v.visit(*this); }
+auto U32Expression::accept(Visitor& v) const -> void { v.visit(*this); }
+auto U64Expression::accept(Visitor& v) const -> void { v.visit(*this); }
 auto USizeIntegerExpression::accept(Visitor& v) const -> void { v.visit(*this); }
 
-auto ByteExpression::accept(Visitor& v) const -> void { v.visit(*this); }
+auto U8Expression::accept(Visitor& v) const -> void { v.visit(*this); }
 
-auto ByteExpression::parse(syntax::Parser& parser)
+auto U8Expression::parse(syntax::Parser& parser)
     -> Expected<mem::Box<Expression>, syntax::ParserDiagnostic> {
     const auto start_token = parser.current_token();
     const auto slice       = start_token.slice;
-    if (slice[1] != '\\') { return mem::make_box<ByteExpression>(start_token, slice[1]); }
+    if (slice[1] != '\\') { return mem::make_box<U8Expression>(start_token, slice[1]); }
 
     const auto escaped = slice[2];
     byte       value;
@@ -50,7 +50,7 @@ auto ByteExpression::parse(syntax::Parser& parser)
         return make_parser_unexpected(syntax::ParserError::UNKNOWN_CHARACTER_ESCAPE, start_token);
     }
 
-    return mem::make_box<ByteExpression>(start_token, value);
+    return mem::make_box<U8Expression>(start_token, value);
 }
 
 template <typename T> auto approx_eq(T a, T b) -> bool {
@@ -59,17 +59,17 @@ template <typename T> auto approx_eq(T a, T b) -> bool {
     return diff <= largest * std::numeric_limits<T>::epsilon();
 }
 
-auto FloatExpression::accept(Visitor& v) const -> void { v.visit(*this); }
+auto F32Expression::accept(Visitor& v) const -> void { v.visit(*this); }
 
-auto FloatExpression::is_equal(const Node& other) const noexcept -> bool {
-    const auto& casted = as<FloatExpression>(other);
+auto F32Expression::is_equal(const Node& other) const noexcept -> bool {
+    const auto& casted = as<F32Expression>(other);
     return approx_eq(value_, casted.value_);
 }
 
-auto DoubleExpression::accept(Visitor& v) const -> void { v.visit(*this); }
+auto F64Expression::accept(Visitor& v) const -> void { v.visit(*this); }
 
-auto DoubleExpression::is_equal(const Node& other) const noexcept -> bool {
-    const auto& casted = as<DoubleExpression>(other);
+auto F64Expression::is_equal(const Node& other) const noexcept -> bool {
+    const auto& casted = as<F64Expression>(other);
     return approx_eq(value_, casted.value_);
 }
 

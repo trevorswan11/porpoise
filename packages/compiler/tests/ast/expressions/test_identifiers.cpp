@@ -14,11 +14,10 @@ auto test_ident(std::string_view input) -> void {
 
 TEST_CASE("Normal identifiers") {
     helpers::test_ident("foobar;");
-    helpers::test_ident("int;");
-    helpers::test_ident("uint;");
-    helpers::test_ident("float;");
-    helpers::test_ident("byte;");
-    helpers::test_ident("string;");
+    helpers::test_ident("i32;");
+    helpers::test_ident("u32;");
+    helpers::test_ident("f32;");
+    helpers::test_ident("u8;");
     helpers::test_ident("bool;");
     helpers::test_ident("void;");
 }

@@ -26,8 +26,8 @@ TEST_CASE("Trailing comma") {
         ast::CallExpression{
             func,
             helpers::make_ident(func),
-            helpers::make_vector<ast::CallArgument>(mem::make_box<ast::DoubleExpression>(
-                syntax::Token{syntax::TokenType::DOUBLE, "23.6"}, 23.6))});
+            helpers::make_vector<ast::CallArgument>(mem::make_box<ast::F64Expression>(
+                syntax::Token{syntax::TokenType::F64, "23.6"}, 23.6))});
 }
 
 TEST_CASE("Builtin with multiple arguments") {
@@ -45,7 +45,7 @@ TEST_CASE("Builtin with multiple arguments") {
 TEST_CASE("Type arguments in call") {
     const syntax::Token func{syntax::TokenType::IDENT, "a"};
     helpers::test_expr_stmt(
-        "a(&mut r, t, *[N]int, [:0]byte);",
+        "a(&mut r, t, *[N]i32, [:0]u8);",
         ast::CallExpression{
             func,
             helpers::make_ident(func),
@@ -58,13 +58,13 @@ TEST_CASE("Type arguments in call") {
                     ast::ExplicitArrayType{
                         helpers::make_ident("N"),
                         false,
-                        mem::make_box<ast::ExplicitType>(mods::BASE, helpers::make_ident("int"))}},
+                        mem::make_box<ast::ExplicitType>(mods::BASE, helpers::make_ident("i32"))}},
                 ast::ExplicitType{
                     mods::BASE,
                     ast::ExplicitArrayType{{},
                                            true,
                                            mem::make_box<ast::ExplicitType>(
-                                               mods::BASE, helpers::make_ident("byte"))}})});
+                                               mods::BASE, helpers::make_ident("u8"))}})});
 }
 
 TEST_CASE("No arguments with comma") {

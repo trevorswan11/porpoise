@@ -67,8 +67,8 @@ TEST_CASE("Multi-line string parsing") {
     helpers::test_primitive<N>("\\\\\n;", "", syntax::TokenType::MULTILINE_STRING, "");
 }
 
-TEST_CASE("Signed integer parsing") {
-    using N = ast::SignedIntegerExpression;
+TEST_CASE("i32 parsing") {
+    using N = ast::I32Expression;
     helpers::test_primitive<N>("0;", syntax::TokenType::INT_10, 0);
     helpers::test_primitive<N>("0b10011101101;", syntax::TokenType::INT_2, 0b10011101101);
     helpers::test_primitive<N>("0o1234567;", syntax::TokenType::INT_8, 342'391);
@@ -80,8 +80,8 @@ TEST_CASE("Signed integer parsing") {
         syntax::ParserDiagnostic{syntax::ParserError::INTEGER_OVERFLOW, 1, 1});
 }
 
-TEST_CASE("Signed long integer parsing") {
-    using N = ast::SignedLongIntegerExpression;
+TEST_CASE("i64") {
+    using N = ast::I64Expression;
     helpers::test_primitive<N>("0l;", syntax::TokenType::LINT_10, 0LL);
     helpers::test_primitive<N>("0b10011101101l;", syntax::TokenType::LINT_2, 0b10011101101LL);
     helpers::test_primitive<N>("0o1234567l;", syntax::TokenType::LINT_8, 342'391LL);
@@ -93,7 +93,7 @@ TEST_CASE("Signed long integer parsing") {
         syntax::ParserDiagnostic{syntax::ParserError::INTEGER_OVERFLOW, 1, 1});
 }
 
-TEST_CASE("Signed size integer parsing") {
+TEST_CASE("isize parsing") {
     using N = ast::ISizeIntegerExpression;
     helpers::test_primitive<N>("0z;", syntax::TokenType::ZINT_10, 0Z);
     helpers::test_primitive<N>("0b10011101101z;", syntax::TokenType::ZINT_2, 0b10011101101Z);
@@ -106,8 +106,8 @@ TEST_CASE("Signed size integer parsing") {
         syntax::ParserDiagnostic{syntax::ParserError::INTEGER_OVERFLOW, 1, 1});
 }
 
-TEST_CASE("Unsigned integer parsing") {
-    using N = ast::UnsignedIntegerExpression;
+TEST_CASE("u32 parsing") {
+    using N = ast::U32Expression;
     helpers::test_primitive<N>("0u;", syntax::TokenType::UINT_10, 0U);
     helpers::test_primitive<N>("0b10011101101u;", syntax::TokenType::UINT_2, 0b10011101101U);
     helpers::test_primitive<N>("0o1234567u;", syntax::TokenType::UINT_8, 342'391U);
@@ -119,8 +119,8 @@ TEST_CASE("Unsigned integer parsing") {
         syntax::ParserDiagnostic{syntax::ParserError::INTEGER_OVERFLOW, 1, 1});
 }
 
-TEST_CASE("Unsigned long integer parsing") {
-    using N = ast::UnsignedLongIntegerExpression;
+TEST_CASE("u64 parsing") {
+    using N = ast::U64Expression;
     helpers::test_primitive<N>("0ul;", syntax::TokenType::ULINT_10, 0ULL);
     helpers::test_primitive<N>("0b10011101101ul;", syntax::TokenType::ULINT_2, 0b10011101101ULL);
     helpers::test_primitive<N>("0o1234567ul;", syntax::TokenType::ULINT_8, 342'391ULL);
@@ -132,7 +132,7 @@ TEST_CASE("Unsigned long integer parsing") {
         syntax::ParserDiagnostic{syntax::ParserError::INTEGER_OVERFLOW, 1, 1});
 }
 
-TEST_CASE("Unsigned size integer parsing") {
+TEST_CASE("usize parsing") {
     using N = ast::USizeIntegerExpression;
     helpers::test_primitive<N>("0uz;", syntax::TokenType::UZINT_10, 0UZ);
     helpers::test_primitive<N>("0b10011101101uz;", syntax::TokenType::UZINT_2, 0b10011101101UZ);
@@ -145,16 +145,16 @@ TEST_CASE("Unsigned size integer parsing") {
         syntax::ParserDiagnostic{syntax::ParserError::INTEGER_OVERFLOW, 1, 1});
 }
 
-TEST_CASE("Byte parsing") {
-    using N = ast::ByteExpression;
-    helpers::test_primitive<N>("'3';", syntax::TokenType::BYTE, '3');
-    helpers::test_primitive<N>("'\\n';", syntax::TokenType::BYTE, '\n');
-    helpers::test_primitive<N>("'\\r';", syntax::TokenType::BYTE, '\r');
-    helpers::test_primitive<N>("'\\t';", syntax::TokenType::BYTE, '\t');
-    helpers::test_primitive<N>("'\\\\';", syntax::TokenType::BYTE, '\\');
-    helpers::test_primitive<N>("'\\\'';", syntax::TokenType::BYTE, '\'');
-    helpers::test_primitive<N>("'\\\"';", syntax::TokenType::BYTE, '\"');
-    helpers::test_primitive<N>("'\\0';", syntax::TokenType::BYTE, '\0');
+TEST_CASE("u8 parsing") {
+    using N = ast::U8Expression;
+    helpers::test_primitive<N>("'3';", syntax::TokenType::U8, '3');
+    helpers::test_primitive<N>("'\\n';", syntax::TokenType::U8, '\n');
+    helpers::test_primitive<N>("'\\r';", syntax::TokenType::U8, '\r');
+    helpers::test_primitive<N>("'\\t';", syntax::TokenType::U8, '\t');
+    helpers::test_primitive<N>("'\\\\';", syntax::TokenType::U8, '\\');
+    helpers::test_primitive<N>("'\\\'';", syntax::TokenType::U8, '\'');
+    helpers::test_primitive<N>("'\\\"';", syntax::TokenType::U8, '\"');
+    helpers::test_primitive<N>("'\\0';", syntax::TokenType::U8, '\0');
 
     helpers::test_primitive<N>(
         "'\\f';",
@@ -162,21 +162,21 @@ TEST_CASE("Byte parsing") {
         syntax::ParserDiagnostic{syntax::ParserError::UNKNOWN_CHARACTER_ESCAPE, 1, 1});
 }
 
-TEST_CASE("Floating point parsing") {
-    using N = ast::FloatExpression;
-    helpers::test_primitive<N>("1023.0f;", syntax::TokenType::FLOAT, 1023.0f);
-    helpers::test_primitive<N>("1023.234612f;", syntax::TokenType::FLOAT, 1023.234612f);
+TEST_CASE("f32 parsing") {
+    using N = ast::F32Expression;
+    helpers::test_primitive<N>("1023.0f;", syntax::TokenType::F32, 1023.0f);
+    helpers::test_primitive<N>("1023.234612f;", syntax::TokenType::F32, 1023.234612f);
 
     helpers::test_primitive<N>("1023.234612e234000f;",
                                std::nullopt,
                                syntax::ParserDiagnostic{syntax::ParserError::FLOAT_OVERFLOW, 1, 1});
 }
 
-TEST_CASE("Double parsing") {
-    using N = ast::DoubleExpression;
-    helpers::test_primitive<N>("1023.0;", syntax::TokenType::DOUBLE, 1023.0);
-    helpers::test_primitive<N>("1023.234612;", syntax::TokenType::DOUBLE, 1023.234612);
-    helpers::test_primitive<N>("1023.234612e234;", syntax::TokenType::DOUBLE, 1023.234612e234);
+TEST_CASE("f64 parsing") {
+    using N = ast::F64Expression;
+    helpers::test_primitive<N>("1023.0;", syntax::TokenType::F64, 1023.0);
+    helpers::test_primitive<N>("1023.234612;", syntax::TokenType::F64, 1023.234612);
+    helpers::test_primitive<N>("1023.234612e234;", syntax::TokenType::F64, 1023.234612e234);
 
     helpers::test_primitive<N>(
         "1023.234612e234000;",

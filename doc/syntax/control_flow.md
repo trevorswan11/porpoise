@@ -2,13 +2,13 @@
 ## Entry Point
 - The entry point of a program must be a public `main` function that returns an integer
     - This is a special function that does not need an explicit return statement (implicitly returns 0)
-- This function must take in a single parameter of type `[][:0]byte` representing the passed command line args
+- This function must take in a single parameter of type `[][:0]u8` representing the passed command line args
     - This is conventionally named `args` but can be named to your choosing
     - Note that these args are null terminated to respect C-interop with minimal friction
 ```porpoise
 import std;
 
-pub const main := fn(args: [][:0]byte): int {
+pub const main := fn(args: [][:0]u8): i32 {
     const message := "Hello, world!";
     std::io::println(message);
 };

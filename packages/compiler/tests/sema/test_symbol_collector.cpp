@@ -41,7 +41,7 @@ TEST_CASE("Holistic language examples") {
     const auto test = [](bool is_module) {
         const auto input = fmt::format(R"({}module;
                                         import std;
-                                        using Integer = int;
+                                        using Integer = i32;
                                         const a: Integer = 1;)",
                                        is_module ? "" : "//");
 
@@ -62,7 +62,7 @@ TEST_CASE("Holistic language examples") {
                                                          helpers::make_ident("Integer"),
                                                          ast::ExplicitType{
                                                              mods::BASE,
-                                                             helpers::make_ident("int"),
+                                                             helpers::make_ident("i32"),
                                                          }};
                           if (is_module) { using_stmt.mark_public(); }
                           return using_stmt;
@@ -77,8 +77,8 @@ TEST_CASE("Holistic language examples") {
                                                            mods::BASE,
                                                            helpers::make_ident("Integer"),
                                                        }),
-                    mem::make_box<ast::SignedIntegerExpression>(
-                        syntax::Token{syntax::TokenType::INT_10, "1"}, 1),
+                    mem::make_box<ast::I32Expression>(syntax::Token{syntax::TokenType::INT_10, "1"},
+                                                      1),
                     ast::DeclModifiers::CONSTANT,
                 }});
     };
@@ -101,8 +101,8 @@ TEST_CASE("Import aliases correctly used") {
                 syntax::Token{keywords::CONST},
                 helpers::make_ident("a"),
                 mem::make_box<ast::TypeExpression>(syntax::Token{operators::WALRUS}, std::nullopt),
-                mem::make_box<ast::SignedIntegerExpression>(
-                    syntax::Token{syntax::TokenType::INT_10, "22"}, 22),
+                mem::make_box<ast::I32Expression>(syntax::Token{syntax::TokenType::INT_10, "22"},
+                                                  22),
                 ast::DeclModifiers::CONSTANT,
             }});
 }
@@ -165,11 +165,11 @@ TEST_CASE("Enum hollow types") {
 TEST_CASE("Union hollow types") {
     const auto field = [] {
         return ast::UnionField{helpers::make_ident("b"),
-                               ast::ExplicitType{mods::BASE, helpers::make_ident("int")}};
+                               ast::ExplicitType{mods::BASE, helpers::make_ident("i32")}};
     };
 
     auto analyzer = helpers::test_collector(
-        "const a := union { b: int };",
+        "const a := union { b: i32 };",
         false,
         std::tuple{
             "a",
@@ -268,7 +268,7 @@ TEST_CASE("Shadowing declarations") {
                          std::pair{1uz, 18uz}});
 
     helpers::test_collector_fail(
-        "const a := union { a: int };",
+        "const a := union { a: i32 };",
         sema::Diagnostic{"Attempt to shadow identifier 'a'. Previous declaration here: [1, 1]",
                          sema::Error::SHADOWING_DECLARATION,
                          std::pair{1uz, 20uz}});

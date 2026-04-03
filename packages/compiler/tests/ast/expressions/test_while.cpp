@@ -32,8 +32,8 @@ TEST_CASE("While with continuation") {
                 syntax::Token{syntax::TokenType::IDENT, "i"},
                 helpers::make_ident("i"),
                 syntax::TokenType::PLUS_ASSIGN,
-                mem::make_box<ast::SignedIntegerExpression>(
-                    syntax::Token{syntax::TokenType::INT_10, "1"}, 1)),
+                mem::make_box<ast::I32Expression>(syntax::Token{syntax::TokenType::INT_10, "1"},
+                                                  1)),
             helpers::make_expr_block_stmt(helpers::ident_from("a")),
             {}});
 }
@@ -60,8 +60,8 @@ TEST_CASE("Full while loop") {
                 syntax::Token{syntax::TokenType::IDENT, "i"},
                 helpers::make_ident("i"),
                 syntax::TokenType::PLUS_ASSIGN,
-                mem::make_box<ast::SignedIntegerExpression>(
-                    syntax::Token{syntax::TokenType::INT_10, "1"}, 1)),
+                mem::make_box<ast::I32Expression>(syntax::Token{syntax::TokenType::INT_10, "1"},
+                                                  1)),
             helpers::make_expr_block_stmt(helpers::ident_from("a")),
             mem::make_box<ast::JumpStatement>(syntax::Token{keywords::RETURN},
                                               helpers::make_ident("b"))});
@@ -77,8 +77,8 @@ TEST_CASE("Empty while with continuation") {
                 syntax::Token{syntax::TokenType::IDENT, "i"},
                 helpers::make_ident("i"),
                 syntax::TokenType::PLUS_ASSIGN,
-                mem::make_box<ast::SignedIntegerExpression>(
-                    syntax::Token{syntax::TokenType::INT_10, "1"}, 1)),
+                mem::make_box<ast::I32Expression>(syntax::Token{syntax::TokenType::INT_10, "1"},
+                                                  1)),
             helpers::make_block_stmt(),
             {}});
 }

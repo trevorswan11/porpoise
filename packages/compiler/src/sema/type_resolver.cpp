@@ -64,16 +64,16 @@ auto TypeResolver::visit(const ast::StringExpression&) -> void {}
         last_type_.emplace(pool_.builtin(TypeKind::kind));   \
     }
 
-MAKE_BUILTIN_RESOLVER(SignedIntegerExpression, INT)
-MAKE_BUILTIN_RESOLVER(SignedLongIntegerExpression, LONG)
+MAKE_BUILTIN_RESOLVER(I32Expression, INT)
+MAKE_BUILTIN_RESOLVER(I64Expression, LONG)
 MAKE_BUILTIN_RESOLVER(ISizeIntegerExpression, SIZE)
-MAKE_BUILTIN_RESOLVER(UnsignedIntegerExpression, UINT)
-MAKE_BUILTIN_RESOLVER(UnsignedLongIntegerExpression, ULONG)
+MAKE_BUILTIN_RESOLVER(U32Expression, UINT)
+MAKE_BUILTIN_RESOLVER(U64Expression, ULONG)
 MAKE_BUILTIN_RESOLVER(USizeIntegerExpression, USIZE)
-MAKE_BUILTIN_RESOLVER(ByteExpression, BYTE)
+MAKE_BUILTIN_RESOLVER(U8Expression, BYTE)
 MAKE_BUILTIN_RESOLVER(BoolExpression, BOOL)
-MAKE_BUILTIN_RESOLVER(FloatExpression, FLOAT)
-MAKE_BUILTIN_RESOLVER(DoubleExpression, DOUBLE)
+MAKE_BUILTIN_RESOLVER(F32Expression, FLOAT)
+MAKE_BUILTIN_RESOLVER(F64Expression, DOUBLE)
 
 auto TypeResolver::visit(const ast::ScopeResolutionExpression&) -> void {}
 
