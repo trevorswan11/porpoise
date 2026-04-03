@@ -16,7 +16,7 @@ pub fn configHeader(
     config: Config,
 ) *std.Build.Step.ConfigHeader {
     return b.addConfigHeader(.{
-        .style = .{ .autoconf_undef = b.path("packages/third-party/kcov/gen/elfutils-config.h.in") },
+        .style = .{ .autoconf_undef = b.path("third-party/kcov/gen/elfutils-config.h.in") },
         .include_path = "config.h",
     }, .{
         .CHECK_UNDEFINED = switch (config.optimize) {

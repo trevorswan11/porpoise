@@ -174,7 +174,7 @@ fn buildBfd(self: *const Self) struct { Artifact, bfd.ConfigHeaders } {
     mod.linkLibrary(self.libsframe);
     mod.addIncludePath(root);
     mod.addIncludePath(include);
-    mod.addIncludePath(b.path("packages/third-party/kcov/gen"));
+    mod.addIncludePath(b.path("third-party/kcov/gen"));
     mod.addCSourceFiles(.{
         .root = root,
         .files = &bfd.sources,

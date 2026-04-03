@@ -44,6 +44,8 @@ The following are "standalone" dependencies, required and manually fetched by po
         - [argp-standalone](https://github.com/argp-standalone/argp-standalone)
     - [libdwarf-code](https://github.com/davea42/libdwarf-code) is required on MacOS only.
 
+Many build functions heavily reference [allyourcodebase](https://github.com/allyourcodebase)'s implementations. Links to specific repositories can be found as a documentation comment above respective `build` functions.
+
 </details>
 
 ### Core Principles

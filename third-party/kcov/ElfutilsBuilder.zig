@@ -295,7 +295,7 @@ fn buildDw(self: *const Self) Artifact {
         .root_module = mod,
     });
     lib.installHeader(root.path(b, "libdw.h"), "elfutils/libdw.h");
-    lib.installHeader(b.path("packages/third-party/kcov/gen/known-dwarf.h"), "elfutils/known-dwarf.h");
+    lib.installHeader(b.path("third-party/kcov/gen/known-dwarf.h"), "elfutils/known-dwarf.h");
     lib.installHeader(root.path(b, "dwarf.h"), "dwarf.h");
     return lib;
 }

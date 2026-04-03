@@ -10,7 +10,7 @@ pub fn configHeader(b: *std.Build, config: struct {
 }) *std.Build.Step.ConfigHeader {
     const target = config.target;
     return b.addConfigHeader(.{
-        .style = .{ .cmake = b.path("packages/third-party/kcov/gen/argp-config.h.in") },
+        .style = .{ .cmake = b.path("third-party/kcov/gen/argp-config.h.in") },
         .include_path = "config.h",
     }, .{
         .HAVE_CONFIG_H = true,

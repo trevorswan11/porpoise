@@ -192,7 +192,7 @@ pub fn generateHeaders(b: *std.Build, root: std.Build.LazyPath, mod: *std.Build.
     const sed_exe = b.addExecutable(.{
         .name = "sed",
         .root_module = b.createModule(.{
-            .root_source_file = b.path("packages/third-party/kcov/utils/sed.zig"),
+            .root_source_file = b.path("third-party/kcov/utils/sed.zig"),
             .target = b.graph.host,
         }),
     });

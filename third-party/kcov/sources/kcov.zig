@@ -26,7 +26,7 @@ const mib = 1024 * 1024;
 pub fn runBinToCSource(builder: *const KcovBuilder) BinToCSourceFiles {
     const b = builder.b;
     const mod = b.createModule(.{
-        .root_source_file = b.path("packages/third-party/kcov/utils/bin_to_c_source.zig"),
+        .root_source_file = b.path("third-party/kcov/utils/bin_to_c_source.zig"),
         .target = b.graph.host,
         .optimize = .ReleaseFast,
     });
