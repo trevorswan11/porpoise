@@ -1,5 +1,6 @@
 # Functions
 - Functions are defined using the standard declaration syntax
+- Function types can be aliased with a `using` statement
 - Function parameters are immutable by default
 ```porpoise
 const foo := fn(a: int, b: uint): ulong {
@@ -42,6 +43,10 @@ _ = bar(b);         // Allowed, passed by value
 _ = baz(&mut b);    // Illegal, cannot mutate const
 ```
 
+- Variadic function parameters are supported to allow for c-interop
+    - Currently, porpoise does not expose primitives for interacting with this parameter type
+    - For example, you can declare an extern function like `printf` from libc as: `extern const printf: fn(*byte, ...): int;`
+
 ## Semantics
 - There is no function overloading
     - This includes operators. There is no operator overloading
@@ -66,9 +71,11 @@ _ = baz(&mut b);    // Illegal, cannot mutate const
 
 ## Types
 - Function's signatures are their types, including parameter modifiers and the return type
+    - Note that these signatures do not contain parameter names (this is not supported, even optionally)
+    - Signatures do include the variadic argument distinction
 - A function can be declared verbosely by using the type before the declaration function
 ```porpoise
-const f: fn(): int = fn(): int { ... };
+const f: fn(bool): int = fn(b: bool): int { ... };
 ```
 
 - You can also use this to indicate that a function takes a function as an argument

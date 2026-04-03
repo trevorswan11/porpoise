@@ -32,7 +32,7 @@ var e: []byte;         // Allowed, e is forward declared and future assignments 
 - A `constexpr` declaration can not be declared `extern`
 
 ## Variables
-- Variables are declared with the `var keyword
+- Variables are declared with the `var` keyword
 - A variable can be initialized with or without a value
     - Variables without an initial value must be initialized with an explicit type
     - Variables declared without an initial value are necessarily uninitialized, and reading from them in this state is undefined behavior
@@ -53,10 +53,10 @@ var c := &mut a;    // Illegal, cannot take mutable reference of constant
     - `static`: This keyword is only valid for struct members. It denotes a symbol as being owned (namespaced) by the struct itself, not by instances of said struct.
 
 ```porpoise
-pub var c := 2;         // Allowed, symbol can be imported
-extern const a: int;    // Allowed, externs must be explicitly typed without values
-export var b := 1;      // Allowed
-static var c := 33;     // Illegal, cannot use static on a non-struct member
+pub var c := 2;          // Allowed, symbol can be imported
+extern const a: int;     // Allowed, externs must be explicitly typed without values
+export var b := 1;       // Allowed
+static var c := 33;      // Illegal, cannot use static on a non-struct member
 extern constexpr a: int; // Illegal, inherently contradictory
 ```
 
@@ -69,3 +69,16 @@ var b: int = 5;
 a = (b = 6);
 ```
 - This works because an assignment returns the assigned value
+
+## Type Aliasing
+- Type aliases can be declared with the `using` keyword
+- This is very similar to C++, for example:
+```porpoise
+using MyBool = bool;
+```
+- Note that this is an _alias_, so there is no difference between using the aliased type and handwriting the entire raw type
+- The most common use cases for this are for saving keystrokes for long types and for passing complex types to functions at the call site
+    - Since function calls prioritize expressions over types, so an attempt to pass `&mut P` will always be parsed as a mutable reference to an object P
+    - Declaring the type using `using T = &mut P;` allows you to then pass the identifier to the function
+    - This is more explicit than having to go to the function definition to see what is being expected at the call site
+- Note that these statements are allowed in any scope and are always private unless in a file that has been declared as a module

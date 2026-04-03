@@ -74,5 +74,5 @@ a.b;   // Syntactic sugar
 - `double`: A 64-bit floating point, represented by a standalone decimal or scientific notation
 - `byte`: An unsigned 8-bit value, typically used for characters (i.e. `'a'`) or ascii values
     - There is no string type in porpoise. Instead you must use an array or slice of bytes (i.e. `[]byte` or `[N]byte`)
-- `bool`: True or false
+- `bool`: True (`true`) or false (`false`)
 - `void`: The unit type
