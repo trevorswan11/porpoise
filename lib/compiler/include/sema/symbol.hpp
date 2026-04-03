@@ -11,7 +11,7 @@
 
 #include "syntax/token.hpp"
 
-#include "common.hpp"
+#include "utility.hpp"
 #include "expected.hpp"
 #include "optional.hpp"
 #include "variant.hpp"

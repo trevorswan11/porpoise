@@ -4,14 +4,13 @@
 #include <cassert>
 #include <concepts>
 #include <span>
-#include <utility>
 #include <vector>
 
 #include <magic_enum/magic_enum.hpp>
 
 #include "syntax/token.hpp"
 
-#include "common.hpp"
+#include "utility.hpp"
 #include "memory.hpp"
 #include "optional.hpp"
 #include "types.hpp"

@@ -2,7 +2,6 @@
 
 #include <tuple>
 #include <type_traits>
-#include <utility>
 
 #include <catch2/catch_test_macros.hpp>
 #include <fmt/format.h>

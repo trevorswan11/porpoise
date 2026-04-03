@@ -6,7 +6,7 @@
 #    include "platform/win32.hpp"
 #    include "types.hpp"
 
-namespace porpoise::cli::win32 {
+namespace porpoise::win32 {
 
 static std::atomic<i32> REF_COUNT{0};
 static UINT             ORIGINAL_CODE_PAGE   = 0;
@@ -42,6 +42,6 @@ RichConsole::~RichConsole() {
     }
 }
 
-} // namespace porpoise::cli::win32
+} // namespace porpoise::win32
 
 #endif

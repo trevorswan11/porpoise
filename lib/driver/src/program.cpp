@@ -13,7 +13,7 @@
 
 #include "string.hpp"
 
-namespace porpoise::cli {
+namespace porpoise {
 
 auto Program::interactive() -> void {
     std::string line;
@@ -49,4 +49,4 @@ auto Program::interactive() -> void {
     }
 }
 
-} // namespace porpoise::cli
+} // namespace porpoise
