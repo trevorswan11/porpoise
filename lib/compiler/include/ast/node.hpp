@@ -10,10 +10,10 @@
 
 #include "syntax/token.hpp"
 
-#include "utility.hpp"
 #include "memory.hpp"
 #include "optional.hpp"
 #include "types.hpp"
+#include "utility.hpp"
 
 namespace porpoise {
 

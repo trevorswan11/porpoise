@@ -11,9 +11,9 @@
 
 #include "syntax/token.hpp"
 
-#include "utility.hpp"
 #include "expected.hpp"
 #include "optional.hpp"
+#include "utility.hpp"
 #include "variant.hpp"
 
 namespace porpoise {

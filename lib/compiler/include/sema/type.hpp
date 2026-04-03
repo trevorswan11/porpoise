@@ -7,10 +7,10 @@
 #include <ankerl/unordered_dense.h>
 
 #include "array.hpp"
-#include "utility.hpp"
 #include "hash.hpp"
 #include "optional.hpp"
 #include "types.hpp"
+#include "utility.hpp"
 #include "variant.hpp"
 
 namespace porpoise::sema {
