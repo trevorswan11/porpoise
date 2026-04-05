@@ -130,4 +130,4 @@ Project Link: [https://github.com/trevorswan11/porpoise](https://github.com/trev
 - [Zig](https://ziglang.org/)'s community, language features, and compiler source code
 - [Rust](https://rust-lang.org/)'s language features and philosophy
 - [cppreference](https://www.cppreference.com/)'s extensive C++ language documentation
-- [Thorsten Ball](https://store.thorstenball.com/)'s "Writing an Interpreter/Compiler in Go" two-book series
+- [Thorsten Ball](https://thorstenball.com/)'s "Writing an Interpreter/Compiler in Go" two-book series

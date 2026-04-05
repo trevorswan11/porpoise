@@ -96,7 +96,7 @@ auto suffix_length(TokenType tt) noexcept -> usize {
 
 } // namespace token_type
 
-auto Token::promote() const -> Expected<std::string, Diagnostic<TokenError>> {
+auto Token::promote() const -> Expected<std::string, TokenDiagnostic> {
     if (type != TokenType::STRING && type != TokenType::MULTILINE_STRING) {
         return Unexpected{Diagnostic{TokenError::NON_STRING_TOKEN, line, column}};
     }

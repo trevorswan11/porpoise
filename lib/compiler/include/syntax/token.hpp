@@ -289,6 +289,8 @@ auto suffix_length(TokenType tt) noexcept -> usize;
 
 } // namespace token_type
 
+using TokenDiagnostic = Diagnostic<TokenError>;
+
 struct Token {
     TokenType        type{};
     std::string_view slice{};
@@ -306,7 +308,7 @@ struct Token {
         : type{tok.second}, slice{tok.first} {}
 
     [[nodiscard]] auto is_at_start() const noexcept -> bool { return line == 0 && column == 0; }
-    [[nodiscard]] auto promote() const -> Expected<std::string, Diagnostic<TokenError>>;
+    [[nodiscard]] auto promote() const -> Expected<std::string, TokenDiagnostic>;
     auto               is_primitive() const noexcept -> bool;
     auto               is_builtin() const noexcept -> bool;
 

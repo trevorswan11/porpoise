@@ -1,102 +1,67 @@
-#include <string>
-
 #include <fmt/format.h>
 
 #include <catch2/catch_test_macros.hpp>
 
 #include "syntax/token.hpp"
 
+#include "variant.hpp"
+
 namespace porpoise::tests {
 
 using namespace syntax;
 
-TEST_CASE("Promotion of invalid tokens") {
-    const auto  input{"1"};
-    const Token tok{TokenType::INT_10, input, 0, 0};
+namespace helpers {
 
-    const auto promoted = tok.promote();
-    CHECK_FALSE(promoted);
-    CHECK(promoted.error() == Diagnostic{TokenError::NON_STRING_TOKEN, 0, 0});
+auto test_token_promotion(std::string_view                           input,
+                          TokenType                                  type,
+                          std::variant<std::string_view, TokenError> expected) -> void {
+    const Token tok{type, input, 0, 0};
+    const auto  promoted = tok.promote();
+
+    std::visit(Overloaded{[&promoted](const std::string_view& string) {
+                              CHECK(promoted);
+                              CHECK(*promoted == string);
+                          },
+                          [&promoted](const TokenError& error) {
+                              CHECK_FALSE(promoted);
+                              CHECK(promoted.error() == TokenDiagnostic{error, 0, 0});
+                          }},
+               expected);
+}
+
+auto test_string(std::string_view input, std::variant<std::string_view, TokenError> expected) {
+    test_token_promotion(input, TokenType::STRING, expected);
+}
+
+auto test_ml_string(std::string_view input, std::variant<std::string_view, TokenError> expected) {
+    test_token_promotion(input, TokenType::MULTILINE_STRING, expected);
+}
+
+} // namespace helpers
+
+TEST_CASE("Promotion of invalid tokens") {
+    helpers::test_token_promotion("1", TokenType::INT_10, TokenError::NON_STRING_TOKEN);
 }
 
 TEST_CASE("Promotion of standard string literals") {
-    SECTION("Normal case") {
-        const auto  input{R"("Hello, World!")"};
-        const Token tok = {TokenType::STRING, input, 0, 0};
+    helpers::test_string(R"("Hello, World!")", "Hello, World!");
+    helpers::test_string(R"(""Hello, World!"")", R"("Hello, World!")");
+    helpers::test_string(R"("")", "");
+}
 
-        const auto promoted = tok.promote();
-        CHECK(promoted);
-        const auto expected{"Hello, World!"};
-        CHECK(expected == *promoted);
-    }
-
-    SECTION("Escaped case") {
-        const auto  input{R"(""Hello, World!"")"};
-        const Token tok{TokenType::STRING, input, 0, 0};
-
-        const auto promoted = tok.promote();
-        CHECK(promoted);
-        const auto expected{R"("Hello, World!")"};
-        CHECK(expected == *promoted);
-    }
-
-    SECTION("Empty case") {
-        const auto  input{R"("")"};
-        const Token tok{TokenType::STRING, input, 0, 0};
-
-        const auto promoted = tok.promote();
-        CHECK(promoted);
-        const std::string expected;
-        CHECK(expected == *promoted);
-    }
-
-    SECTION("Malformed case") {
-        const auto  input{R"(")"};
-        const Token tok{TokenType::STRING, input, 0, 0};
-
-        const auto promoted = tok.promote();
-        CHECK_FALSE(promoted);
-        CHECK(promoted.error() == Diagnostic{TokenError::UNEXPECTED_CHAR, 0, 0});
-    }
+TEST_CASE("Malformed string literal") {
+    helpers::test_token_promotion(R"(")", TokenType::STRING, TokenError::UNEXPECTED_CHAR);
 }
 
 TEST_CASE("Promotion of multiline literals") {
-    SECTION("Normal case no newline") {
-        const auto  input{R"(\\Hello,"World!")"};
-        const Token tok{TokenType::MULTILINE_STRING, input, 0, 0};
-
-        const auto promoted = tok.promote();
-        CHECK(promoted);
-        const auto expected = R"(Hello,"World!")";
-        CHECK(expected == *promoted);
-    }
-
-    SECTION("Normal case newline") {
-        const auto  input{"\\\\Hello,\n\\\\World!\n\\\\"};
-        const Token tok{TokenType::MULTILINE_STRING, input, 0, 0};
-
-        const auto promoted = tok.promote();
-        CHECK(promoted);
-        const auto expected = "Hello,\nWorld!\n";
-        CHECK(expected == *promoted);
-    }
-
-    SECTION("Empty case") {
-        const auto  input{R"(\\)"};
-        const Token tok{TokenType::MULTILINE_STRING, input, 0, 0};
-
-        const auto promoted = tok.promote();
-        CHECK(promoted);
-        const std::string expected;
-        CHECK(expected == *promoted);
-    }
+    helpers::test_ml_string(R"(\\Hello,"World!")", R"(Hello,"World!")");
+    helpers::test_ml_string("\\\\Hello,\n\\\\World!\n\\\\", "Hello,\nWorld!\n");
+    helpers::test_ml_string(R"(\\)", "");
 }
 
 TEST_CASE("Token formatting") {
-    const Token tok{TokenType::STRING, R"("Hello, World!")", 1, 24};
-
     const auto expected{R"(STRING("Hello, World!") [1, 24])"};
-    const auto actual = fmt::format("{}", tok);
+    const auto actual = fmt::format("{}", Token{TokenType::STRING, R"("Hello, World!")", 1, 24});
     CHECK(expected == actual);
 }
 
