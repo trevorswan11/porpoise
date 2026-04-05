@@ -144,11 +144,10 @@ auto Parser::parse_expression(Precedence precedence)
 
 [[nodiscard]] auto Parser::parse_restricted_statement(ParserError error)
     -> Expected<mem::Box<ast::Statement>, ParserDiagnostic> {
-    using namespace ast;
     auto clause = TRY(parse_statement());
 
     // The clause can only be a jump, block, or expression statement
-    if (!clause->any<ExpressionStatement, JumpStatement, BlockStatement>()) {
+    if (!clause->any<ast::ExpressionStatement, ast::JumpStatement, ast::BlockStatement>()) {
         return make_parser_unexpected(error, clause->get_token());
     }
     return clause;
@@ -206,8 +205,8 @@ constexpr auto PREFIX_FNS = [] {
          i <= std::to_underlying(TokenType::UZINT_16);
          ++i, ++cursor) {
         const auto tt = static_cast<TokenType>(i);
-        using namespace token_type;
-        switch (to_int_category(tt)) {
+        using token_type::IntegerCategory;
+        switch (token_type::to_int_category(tt)) {
         case IntegerCategory::SIGNED_BASE:
             int_prefixes[cursor] = {tt, ast::I32Expression::parse};
             break;

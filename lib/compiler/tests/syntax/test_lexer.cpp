@@ -11,14 +11,13 @@
 
 namespace porpoise::tests {
 
-using namespace syntax;
-
+using syntax::TokenType;
 using ExpectedLexeme = std::pair<TokenType, std::string_view>;
 
 namespace helpers {
 
 auto test_lexer(std::string_view input, std::initializer_list<ExpectedLexeme> expecteds) -> void {
-    Lexer l{input};
+    syntax::Lexer l{input};
     for (const auto& [expected_tok, expected_slice] : expecteds) {
         const auto token = l.advance();
         CHECK(expected_tok == token.type);
@@ -34,8 +33,8 @@ auto test_lexer(std::string_view input, std::initializer_list<ExpectedLexeme> ex
 } // namespace helpers
 
 TEST_CASE("Lexing illegal characters") {
-    Lexer      l{"月😭🎶"};
-    const auto tokens = l.consume();
+    syntax::Lexer l{"月😭🎶"};
+    const auto    tokens = l.consume();
 
     for (size_t i = 0; i < tokens.size(); ++i) {
         const auto& token = tokens[i];
@@ -48,7 +47,7 @@ TEST_CASE("Lexing illegal characters") {
 }
 
 TEST_CASE("Lexer over-consumption") {
-    Lexer l{"Lexer"};
+    syntax::Lexer l{"Lexer"};
     l.consume();
     for (size_t i = 0; i < 100; ++i) { CHECK(l.advance().type == TokenType::END); }
 }
@@ -334,20 +333,19 @@ TEST_CASE("Lexing pointers and references") {
 }
 
 TEST_CASE("Lexing compiler builtins & Lexer resetting") {
-    const auto expecteds =
-        std::ranges::views::transform(ALL_BUILTINS, [](const auto& builtin) -> ExpectedLexeme {
-            return {builtin.second, builtin.first};
-        });
+    const auto expecteds = std::ranges::views::transform(
+        syntax::ALL_BUILTINS,
+        [](const auto& builtin) -> ExpectedLexeme { return {builtin.second, builtin.first}; });
 
     std::string input;
-    std::ranges::for_each(ALL_BUILTINS, [&input](const auto& builtin) -> void {
+    std::ranges::for_each(syntax::ALL_BUILTINS, [&input](const auto& builtin) -> void {
         input.append(builtin.first);
         input.push_back(' ');
     });
-    Lexer l{input};
+    syntax::Lexer l{input};
 
-    Lexer      l_accumulator{input};
-    const auto accumulated_tokens = l_accumulator.consume();
+    syntax::Lexer l_accumulator{input};
+    const auto    accumulated_tokens = l_accumulator.consume();
     l_accumulator.reset(input);
     const auto reset_acc = l_accumulator.consume();
 
@@ -368,7 +366,7 @@ TEST_CASE("Lexing compiler builtins & Lexer resetting") {
 
 TEST_CASE("Lexing illegal builtin") {
     const std::string_view input{"@run"};
-    Lexer                  l{input};
+    syntax::Lexer          l{input};
     const auto             illegal = l.advance();
     CHECK(TokenType::ILLEGAL == illegal.type);
     CHECK(input == illegal.slice);

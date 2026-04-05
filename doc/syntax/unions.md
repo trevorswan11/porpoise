@@ -1,5 +1,5 @@
 # Unions
-- Unions in porpoise act very similar to Zig-style tagged unions
+- Unions in porpoise act very similar to tagged unions in other languages
 - Unions are defined using the standard declaration syntax
 - A union is defined by a a comma separated list of key-value pairs, where:
     - Each key is an identifier which is used for the active tag
@@ -29,4 +29,7 @@ match (h1) {
     .shoe => { ... } // No capture
 };
 ```
-- You can not put methods on a union as you would with a struct
+- You can put declarations inside of an union as you would with a struct
+    - These can be member functions, static functions, or static variables only
+        - Member functions have a first argument which is an instance of the union as explained in the struct documentation
+    - Attempting to emplace an instance variable in an union is not supported

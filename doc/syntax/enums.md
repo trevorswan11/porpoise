@@ -17,4 +17,7 @@ const Shapes := enum : u64 { circle, square };
 const a := Colors.red;
 const a: Colors = .red; // Equivalent
 ```
-- You can not put methods on an enum as you would with a struct
+- You can put declarations inside of an enum as you would with a struct
+    - These can be member functions, static functions, or static variables only
+        - Member functions have a first argument which is an instance of the enum as explained in the struct documentation
+    - Attempting to emplace an instance variable in an enum is not supported
