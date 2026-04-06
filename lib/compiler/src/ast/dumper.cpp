@@ -360,13 +360,9 @@ auto ASTDumper::visit(const ExplicitType& type) -> void {
 
     const Indent::Guard g{indent_, true};
     type.match(Overloaded{
-        [this](const ExplicitType::ExplicitIdentType& t) {
+        [this](const auto& t) {
             fmt::print(out_, "{}", indent_.current_branch());
             t->accept(*this);
-        },
-        [this](const ExplicitType::ExplicitFunctionType& f) {
-            fmt::print(out_, "{}", indent_.current_branch());
-            f->accept(*this);
         },
         [this](const ExplicitArrayType& a) {
             fmt::println(out_, "{}ArrayType", indent_.current_branch());

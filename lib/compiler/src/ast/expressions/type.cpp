@@ -1,9 +1,13 @@
 #include "ast/expressions/type.hpp"
 
+#include "ast/expressions/enum.hpp"
 #include "ast/expressions/function.hpp"
 #include "ast/expressions/identifier.hpp"
 #include "ast/expressions/primitive.hpp"
+#include "ast/expressions/struct.hpp"
+#include "ast/expressions/union.hpp"
 #include "ast/visitor.hpp"
+#include <type_traits>
 
 namespace porpoise::ast {
 
@@ -98,23 +102,34 @@ auto ExplicitType::accept(Visitor& v) const -> void { v.visit(*this); }
             Node::downcast<IdentifierExpression>(TRY(IdentifierExpression::parse(parser)))};
     }
 
-    // Otherwise the inner type must be a function
+    // The inner type is limited to functions and user-defined types
     const auto type_start = parser.current_token();
-    if (!parser.peek_token_is(syntax::TokenType::FUNCTION)) {
-        return make_parser_unexpected(syntax::ParserError::ILLEGAL_EXPLICIT_TYPE, type_start);
-    }
-    parser.advance();
-    auto type_expr = TRY(FunctionExpression::parse_type(parser));
+    if (parser.peek_token_is(syntax::TokenType::FUNCTION)) {
+        parser.advance();
+        auto type_expr = TRY(FunctionExpression::parse_type(parser));
 
-    auto function = Node::downcast<FunctionExpression>(std::move(type_expr));
-    if (!(modifier.is_value() || modifier.is_const_ptr())) {
-        return make_parser_unexpected(syntax::ParserError::ILLEGAL_FUNCTION_TYPE_MODIFIER,
-                                      type_start);
+        auto function = Node::downcast<FunctionExpression>(std::move(type_expr));
+        if (!(modifier.is_value() || modifier.is_ptr())) {
+            return make_parser_unexpected(syntax::ParserError::ILLEGAL_FUNCTION_TYPE_MODIFIER,
+                                          type_start);
+        }
+
+        // Function types cannot have bodies
+        assert(!function->has_body() && "Function type has body");
+        return ExplicitType{modifier, std::move(function)};
     }
 
-    // Function types cannot have bodies
-    assert(!function->has_body() && "Function type has body");
-    return ExplicitType{modifier, std::move(function)};
+    // The user-defined types can be handled by parsing any expression and verifying it
+    switch (auto user = TRY(parser.parse_expression()); user->get_kind()) {
+    case NodeKind::STRUCT_EXPRESSION:
+        return ExplicitType{modifier, Node::downcast<StructExpression>(std::move(user))};
+    case NodeKind::ENUM_EXPRESSION:
+        return ExplicitType{modifier, Node::downcast<EnumExpression>(std::move(user))};
+    case NodeKind::UNION_EXPRESSION:
+        return ExplicitType{modifier, Node::downcast<UnionExpression>(std::move(user))};
+    default: break;
+    }
+    return make_parser_unexpected(syntax::ParserError::ILLEGAL_EXPLICIT_TYPE, type_start);
 }
 
 auto ExplicitType::get_token() const noexcept -> const syntax::Token& {
@@ -128,17 +143,11 @@ auto ExplicitType::is_equal(const ExplicitType& other) const noexcept -> bool {
     if (type_.index() != other_type.index()) { return false; }
     return modifier_ == other.modifier_ &&
            std::visit(Overloaded{
-                          [&other_type](const ExplicitIdentType& v) {
-                              return *v == *std::get<ExplicitIdentType>(other_type);
+                          [&other_type](const auto& v) {
+                              return *v == *std::get<std::remove_cvref_t<decltype(v)>>(other_type);
                           },
-                          [&other_type](const ExplicitFunctionType& v) {
-                              return *v == *std::get<ExplicitFunctionType>(other_type);
-                          },
-                          [&other_type](const ExplicitArrayType& v1) {
-                              return v1 == std::get<ExplicitArrayType>(other_type);
-                          },
-                          [&other_type](const mem::Box<ExplicitType>& v1) {
-                              return *v1 == *std::get<ExplicitRecursiveType>(other_type);
+                          [&other_type](const ExplicitArrayType& v) {
+                              return v == std::get<ExplicitArrayType>(other_type);
                           },
                       },
                       type_);

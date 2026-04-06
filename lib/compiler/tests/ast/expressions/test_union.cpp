@@ -2,8 +2,6 @@
 
 #include "helpers/ast.hpp"
 
-#include "ast/expressions/union.hpp"
-
 namespace porpoise::tests {
 
 namespace keywords = syntax::keywords;
@@ -31,7 +29,9 @@ TEST_CASE("Illegal union field name") {
 TEST_CASE("Illegal union field type") {
     helpers::test_parser_fail(
         "union { a: 2 };",
-        syntax::ParserDiagnostic{syntax::ParserError::ILLEGAL_EXPLICIT_TYPE, 1, 10});
+        syntax::ParserDiagnostic{"No prefix parse function for COLON(:) found",
+                                 syntax::ParserError::MISSING_PREFIX_PARSER,
+                                 std::pair{1uz, 10uz}});
 }
 
 TEST_CASE("Empty union") {

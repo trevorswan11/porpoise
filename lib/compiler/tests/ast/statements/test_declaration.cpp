@@ -4,16 +4,11 @@
 
 #include <catch2/catch_test_macros.hpp>
 
-#include "array.hpp"
-
 #include "helpers/ast.hpp"
 
-#include "ast/expressions/function.hpp"
-#include "ast/expressions/primitive.hpp"
-#include "ast/expressions/type.hpp"
-#include "ast/statements/declaration.hpp"
-
 #include "syntax/operators.hpp"
+
+#include "array.hpp"
 
 namespace porpoise::tests {
 

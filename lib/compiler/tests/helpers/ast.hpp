@@ -9,11 +9,7 @@
 
 #include "helpers/common.hpp"
 
-#include "ast/expressions/function.hpp"
-#include "ast/expressions/identifier.hpp"
-#include "ast/statements/block.hpp"
-#include "ast/statements/declaration.hpp"
-#include "ast/statements/expression.hpp"
+#include "ast/ast.hpp"
 
 #include "syntax/keywords.hpp"
 

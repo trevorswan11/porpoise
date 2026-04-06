@@ -2,13 +2,6 @@
 
 #include "helpers/ast.hpp"
 
-#include "ast/expressions/function.hpp"
-#include "ast/expressions/primitive.hpp"
-#include "ast/expressions/type.hpp"
-#include "ast/expressions/type_modifiers.hpp"
-#include "ast/statements/block.hpp" // IWYU pragma: keep
-#include "ast/statements/declaration.hpp"
-
 namespace porpoise::tests {
 
 namespace keywords = syntax::keywords;
@@ -128,7 +121,9 @@ TEST_CASE("Complex function type (holistic)") {
 TEST_CASE("Volatile restricted to declarations") {
     helpers::test_parser_fail(
         "var a: volatile i32;",
-        syntax::ParserDiagnostic{syntax::ParserError::ILLEGAL_EXPLICIT_TYPE, 1, 6});
+        syntax::ParserDiagnostic{"No prefix parse function for COLON(:) found",
+                                 syntax::ParserError::MISSING_PREFIX_PARSER,
+                                 std::pair{1uz, 6uz}});
 }
 
 TEST_CASE("Array type requirement") {
@@ -142,7 +137,6 @@ TEST_CASE("Array type requirement") {
 
 TEST_CASE("Function type restrictions") {
     const auto illegals = std::to_array<std::string_view>({
-        "var a: *mut fn(): void;",
         "var a: &fn(): void;",
         "var a: &mut fn(): void;",
     });

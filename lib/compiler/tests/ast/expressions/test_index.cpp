@@ -2,9 +2,6 @@
 
 #include "helpers/ast.hpp"
 
-#include "ast/expressions/index.hpp"
-#include "ast/expressions/primitive.hpp"
-
 namespace porpoise::tests {
 
 TEST_CASE("Single-level index") {

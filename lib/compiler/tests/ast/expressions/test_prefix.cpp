@@ -2,8 +2,6 @@
 
 #include "helpers/ast.hpp"
 
-#include "ast/expressions/prefix.hpp"
-
 #include "syntax/operators.hpp"
 
 namespace porpoise::tests {

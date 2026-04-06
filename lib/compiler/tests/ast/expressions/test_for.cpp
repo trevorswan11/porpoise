@@ -2,11 +2,6 @@
 
 #include "helpers/ast.hpp"
 
-#include "ast/expressions/for.hpp"
-#include "ast/expressions/infix.hpp"
-#include "ast/expressions/primitive.hpp"
-#include "ast/statements/jump.hpp"
-
 namespace porpoise::tests {
 
 namespace keywords = syntax::keywords;

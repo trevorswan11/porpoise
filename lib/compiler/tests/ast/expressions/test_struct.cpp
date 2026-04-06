@@ -2,11 +2,6 @@
 
 #include "helpers/ast.hpp"
 
-#include "ast/expressions/function.hpp"
-#include "ast/expressions/struct.hpp"
-#include "ast/expressions/type.hpp"
-#include "ast/statements/declaration.hpp"
-
 #include "syntax/operators.hpp"
 
 namespace porpoise::tests {

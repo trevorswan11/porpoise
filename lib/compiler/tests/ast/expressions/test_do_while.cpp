@@ -2,9 +2,6 @@
 
 #include "helpers/ast.hpp"
 
-#include "ast/expressions/do_while.hpp"
-#include "ast/expressions/primitive.hpp"
-
 namespace porpoise::tests {
 
 namespace keywords = syntax::keywords;

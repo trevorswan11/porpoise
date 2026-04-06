@@ -2,10 +2,6 @@
 
 #include "helpers/ast.hpp"
 
-#include "ast/expressions/function.hpp"
-#include "ast/expressions/type.hpp"
-#include "ast/statements/block.hpp"
-
 namespace porpoise::tests {
 
 namespace keywords = syntax::keywords;
@@ -52,96 +48,101 @@ auto function_expr_from(ast::ExplicitType&&                     return_type,
 
 namespace mods = helpers::type_modifiers;
 
-TEST_CASE("Function without body, self, or parameters") {
+TEST_CASE("Function without self or parameters") {
     helpers::test_expr_stmt(
-        "fn(): i32;",
-        helpers::function_expr_from(ast::ExplicitType{mods::BASE, helpers::make_ident("i32")}));
+        "fn(): i32 {};",
+        helpers::function_expr_from(ast::ExplicitType{mods::BASE, helpers::make_ident("i32")},
+                                    helpers::make_block_stmt()));
 }
 
-TEST_CASE("Function with self but no parameters or body") {
+TEST_CASE("Function with self but no parameters") {
     helpers::test_expr_stmt(
-        "fn(&self): i32;",
+        "fn(&self): i32 {};",
         helpers::function_expr_from(ast::SelfParameter{mods::REF, helpers::make_ident("self")},
-                                    ast::ExplicitType{mods::BASE, helpers::make_ident("i32")}));
+                                    ast::ExplicitType{mods::BASE, helpers::make_ident("i32")},
+                                    helpers::make_block_stmt()));
 }
 
-TEST_CASE("Function with parameters but no self or body") {
+TEST_CASE("Function with parameters but no self") {
     helpers::test_expr_stmt(
-        "fn(a: A, b: *B): i32;",
+        "fn(a: A, b: *B): i32 {};",
         helpers::function_expr_from(
             helpers::make_parameters(ast::FunctionParameter{helpers::make_ident("a"),
                                                             {mods::BASE, helpers::make_ident("A")}},
                                      ast::FunctionParameter{helpers::make_ident("b"),
                                                             {mods::PTR, helpers::make_ident("B")}}),
-            ast::ExplicitType{mods::BASE, helpers::make_ident("i32")}));
+            ast::ExplicitType{mods::BASE, helpers::make_ident("i32")},
+            helpers::make_block_stmt()));
 }
 
-TEST_CASE("Function with self & parameters but no body") {
+TEST_CASE("Function with self & parameters") {
     helpers::test_expr_stmt(
-        "fn(&mut this, a: A, b: *B): i32;",
+        "fn(&mut this, a: A, b: *B): i32 {};",
         helpers::function_expr_from(
             ast::SelfParameter{mods::MUT_REF, helpers::make_ident("this")},
             helpers::make_parameters(ast::FunctionParameter{helpers::make_ident("a"),
                                                             {mods::BASE, helpers::make_ident("A")}},
                                      ast::FunctionParameter{helpers::make_ident("b"),
                                                             {mods::PTR, helpers::make_ident("B")}}),
-            ast::ExplicitType{mods::BASE, helpers::make_ident("i32")}));
+            ast::ExplicitType{mods::BASE, helpers::make_ident("i32")},
+            helpers::make_block_stmt()));
 }
 
 TEST_CASE("Functions with variadic parameter") {
     SECTION("Sole variadic") {
         helpers::test_expr_stmt(
-            "fn(...): i32;",
+            "fn(...): i32 {};",
             helpers::function_expr_from(std::nullopt,
                                         Parameters{},
                                         ast::ExplicitType{mods::BASE, helpers::make_ident("i32")},
-                                        std::nullopt,
+                                        helpers::make_block_stmt(),
                                         true));
     }
 
     SECTION("Variadic following self parameter") {
-        helpers::test_expr_stmt("fn(&mut this, ...): i32;",
+        helpers::test_expr_stmt("fn(&mut this, ...): i32 {};",
                                 helpers::function_expr_from(
                                     ast::SelfParameter{mods::MUT_REF, helpers::make_ident("this")},
                                     Parameters{},
                                     ast::ExplicitType{mods::BASE, helpers::make_ident("i32")},
-                                    std::nullopt,
+                                    helpers::make_block_stmt(),
                                     true));
     }
 
     SECTION("Variadic following standard parameter") {
         helpers::test_expr_stmt(
-            "fn(a: A, ...): i32;",
+            "fn(a: A, ...): i32 {};",
             helpers::function_expr_from(
                 std::nullopt,
                 helpers::make_parameters(ast::FunctionParameter{
                     helpers::make_ident("a"), {mods::BASE, helpers::make_ident("A")}}),
                 ast::ExplicitType{mods::BASE, helpers::make_ident("i32")},
-                std::nullopt,
+                helpers::make_block_stmt(),
                 true));
     }
 }
 
 TEST_CASE("Full function signature") {
     helpers::test_expr_stmt(
-        "fn(&self, a: A, ...): *i32;",
+        "fn(&self, a: A, ...): *i32 {};",
         helpers::function_expr_from(
             ast::SelfParameter{mods::REF, helpers::make_ident("self")},
             helpers::make_parameters(ast::FunctionParameter{
                 helpers::make_ident("a"), {mods::BASE, helpers::make_ident("A")}}),
             ast::ExplicitType{mods::PTR, helpers::make_ident("i32")},
-            std::nullopt,
+            helpers::make_block_stmt(),
             true));
 }
 
 TEST_CASE("Function with type types") {
-    helpers::test_expr_stmt("fn(self, A: type): type;",
+    helpers::test_expr_stmt("fn(self, A: type): type {};",
                             helpers::function_expr_from(
                                 ast::SelfParameter{mods::BASE, helpers::make_ident("self")},
                                 helpers::make_parameters(ast::FunctionParameter{
                                     helpers::make_ident("A"),
                                     ast::ExplicitType{mods::BASE, helpers::make_ident("type")}}),
-                                ast::ExplicitType{mods::BASE, helpers::make_ident("type")}));
+                                ast::ExplicitType{mods::BASE, helpers::make_ident("type")},
+                                helpers::make_block_stmt()));
 }
 
 TEST_CASE("Full function expression") {
@@ -166,7 +167,9 @@ TEST_CASE("Function missing return type") {
 
     helpers::test_parser_fail(
         "fn(*mut this, a: A, b: *B, ): ;",
-        syntax::ParserDiagnostic{syntax::ParserError::ILLEGAL_EXPLICIT_TYPE, 1, 29});
+        syntax::ParserDiagnostic{"No prefix parse function for COLON(:) found",
+                                 syntax::ParserError::MISSING_PREFIX_PARSER,
+                                 std::pair{1uz, 29uz}});
 }
 
 TEST_CASE("Function parameter missing type") {

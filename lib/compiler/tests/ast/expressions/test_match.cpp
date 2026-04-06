@@ -2,8 +2,6 @@
 
 #include "helpers/ast.hpp"
 
-#include "ast/expressions/match.hpp"
-
 namespace porpoise::tests {
 
 namespace keywords = syntax::keywords;

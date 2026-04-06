@@ -2,11 +2,6 @@
 
 #include "helpers/ast.hpp"
 
-#include "ast/expressions/array.hpp"
-#include "ast/expressions/function.hpp"
-#include "ast/expressions/primitive.hpp"
-#include "ast/expressions/type.hpp"
-
 namespace porpoise::tests {
 
 using Items = std::vector<mem::Box<ast::Expression>>;

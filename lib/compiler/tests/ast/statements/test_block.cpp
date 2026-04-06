@@ -2,8 +2,6 @@
 
 #include "helpers/ast.hpp"
 
-#include "ast/expressions/primitive.hpp"
-
 namespace porpoise::tests {
 
 TEST_CASE("Single statement blocks") {

@@ -4,13 +4,6 @@
 
 #include "helpers/ast.hpp"
 
-#include "ast/expressions/call.hpp"
-#include "ast/expressions/index.hpp"
-#include "ast/expressions/infix.hpp"
-#include "ast/expressions/prefix.hpp"
-#include "ast/expressions/primitive.hpp"
-#include "ast/expressions/scope_resolve.hpp"
-
 #include "syntax/operators.hpp"
 
 #include "array.hpp"
