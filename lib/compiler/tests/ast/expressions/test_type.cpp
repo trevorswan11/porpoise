@@ -121,9 +121,9 @@ TEST_CASE("Complex function type (holistic)") {
 TEST_CASE("Volatile restricted to declarations") {
     helpers::test_parser_fail(
         "var a: volatile i32;",
-        syntax::ParserDiagnostic{"No prefix parse function for COLON(:) found",
+        syntax::ParserDiagnostic{"No prefix parse function for VOLATILE(volatile) found",
                                  syntax::ParserError::MISSING_PREFIX_PARSER,
-                                 std::pair{1uz, 6uz}});
+                                 std::pair{1uz, 8uz}});
 }
 
 TEST_CASE("Array type requirement") {
@@ -166,6 +166,55 @@ TEST_CASE("Function return type restrictions") {
     helpers::test_parser_fail(
         "var a: fn(): &noreturn;",
         syntax::ParserDiagnostic{syntax::ParserError::ILLEGAL_NORETURN_TYPE_MODIFIER, 1, 14});
+}
+
+TEST_CASE("Union inline types") {
+    helpers::test_type_expr(
+        "&union { a: i32, b: &mut T, };",
+        ast::ExplicitType{
+            mods::REF,
+            mem::make_box<ast::UnionExpression>(
+                syntax::Token{keywords::UNION},
+                helpers::make_vector<ast::UnionField>(
+                    ast::UnionField{helpers::make_ident("a"),
+                                    ast::ExplicitType{mods::BASE, helpers::make_ident("i32")}},
+                    ast::UnionField{helpers::make_ident("b"),
+                                    ast::ExplicitType{mods::MUT_REF, helpers::make_ident("T")}}))});
+}
+
+TEST_CASE("Struct inline types") {
+    helpers::test_type_expr(
+        "*struct { var b: Foo = bar; };",
+        ast::ExplicitType{
+            mods::PTR,
+            mem::make_box<ast::StructExpression>(
+                syntax::Token{keywords::STRUCT},
+                helpers::make_decls(ast::DeclStatement{
+                    syntax::Token{keywords::VAR},
+                    helpers::make_ident("b"),
+                    mem::make_box<ast::TypeExpression>(syntax::Token{syntax::TokenType::COLON, ":"},
+                                                       ast::ExplicitType{
+                                                           mods::BASE,
+                                                           helpers::make_ident("Foo"),
+                                                       }),
+                    helpers::make_ident("bar"),
+                    ast::DeclModifiers::VARIABLE,
+                }))});
+}
+
+TEST_CASE("Enum inline types") {
+    helpers::test_type_expr(
+        "enum : u64 {RED = 3u, B, };",
+        ast::ExplicitType{
+            mods::BASE,
+            mem::make_box<ast::EnumExpression>(
+                syntax::Token{keywords::ENUM},
+                helpers::make_ident("u64"),
+                helpers::make_vector<ast::Enumeration>(
+                    ast::Enumeration{helpers::make_ident("RED"),
+                                     mem::make_box<ast::U32Expression>(
+                                         syntax::Token{syntax::TokenType::UINT_10, "3u"}, 3u)},
+                    ast::Enumeration{helpers::make_ident("B"), {}}))});
 }
 
 } // namespace porpoise::tests

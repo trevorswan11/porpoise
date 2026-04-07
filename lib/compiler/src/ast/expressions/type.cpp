@@ -120,6 +120,11 @@ auto ExplicitType::accept(Visitor& v) const -> void { v.visit(*this); }
     }
 
     // The user-defined types can be handled by parsing any expression and verifying it
+    parser.advance();
+    if (parser.current_token_is(syntax::TokenType::END)) {
+        return make_parser_unexpected(syntax::ParserError::MISSING_EXPLICIT_TYPE, type_start);
+    }
+
     switch (auto user = TRY(parser.parse_expression()); user->get_kind()) {
     case NodeKind::STRUCT_EXPRESSION:
         return ExplicitType{modifier, Node::downcast<StructExpression>(std::move(user))};

@@ -167,9 +167,13 @@ TEST_CASE("Function missing return type") {
 
     helpers::test_parser_fail(
         "fn(*mut this, a: A, b: *B, ): ;",
-        syntax::ParserDiagnostic{"No prefix parse function for COLON(:) found",
+        syntax::ParserDiagnostic{"No prefix parse function for SEMICOLON(;) found",
                                  syntax::ParserError::MISSING_PREFIX_PARSER,
-                                 std::pair{1uz, 29uz}});
+                                 std::pair{1uz, 31uz}});
+
+    helpers::test_parser_fail(
+        "fn(*mut this, a: A, b: *B, ): ",
+        syntax::ParserDiagnostic{syntax::ParserError::MISSING_EXPLICIT_TYPE, 1, 29});
 }
 
 TEST_CASE("Function parameter missing type") {
