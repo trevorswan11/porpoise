@@ -4,11 +4,6 @@
 
 #include "sema/symbol.hpp"
 
-#include "syntax/keywords.hpp"
-#include "syntax/token.hpp"
-
-#include "ast/ast.hpp"
-
 namespace porpoise::tests {
 
 TEST_CASE("Basic table operations") {

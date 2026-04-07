@@ -25,7 +25,8 @@ auto StructExpression::parse(syntax::Parser& parser)
 
     Members members;
     TRY(parser.expect_peek(syntax::TokenType::LBRACE));
-    while (!parser.peek_token_is(syntax::TokenType::RBRACE)) {
+    while (!parser.peek_token_is(syntax::TokenType::RBRACE) &&
+           !parser.peek_token_is(syntax::TokenType::END)) {
         parser.advance();
         auto member = TRY(parser.parse_statement());
         if (!member->is<DeclStatement>()) {

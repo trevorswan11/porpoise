@@ -15,8 +15,6 @@ namespace porpoise::ast {
 
 // cppcheck-suppress-begin [constParameterReference, duplInheritedMember]
 
-template <typename T> struct disable_default_parse : std::false_type {};
-
 // A necessarily instantiable Node with an underlying primitive value type.
 template <typename N>
 concept PrimitiveNode = LeafNode<N> && requires { typename N::value_type; };

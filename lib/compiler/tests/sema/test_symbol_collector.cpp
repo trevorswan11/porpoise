@@ -3,11 +3,6 @@
 #include "helpers/ast.hpp"
 #include "helpers/sema.hpp"
 
-#include "syntax/keywords.hpp"
-#include "syntax/operators.hpp"
-
-#include "ast/ast.hpp"
-
 namespace porpoise::tests {
 
 namespace keywords  = syntax::keywords;

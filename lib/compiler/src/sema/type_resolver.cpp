@@ -45,6 +45,10 @@ auto TypeResolver::visit(const ast::DotExpression&) -> void {}
 
 auto TypeResolver::visit(const ast::RangeExpression&) -> void {}
 
+auto TypeResolver::visit(const ast::Initializer&) -> void {}
+
+auto TypeResolver::visit(const ast::InitializerExpression&) -> void {}
+
 auto TypeResolver::visit(const ast::MatchArm&) -> void {}
 
 auto TypeResolver::visit(const ast::MatchExpression&) -> void {}
@@ -53,9 +57,9 @@ auto TypeResolver::visit(const ast::ReferenceExpression&) -> void {}
 
 auto TypeResolver::visit(const ast::DereferenceExpression&) -> void {}
 
-auto TypeResolver::visit(const ast::ImplicitAccessExpression&) -> void {}
-
 auto TypeResolver::visit(const ast::UnaryExpression&) -> void {}
+
+auto TypeResolver::visit(const ast::ImplicitAccessExpression&) -> void {}
 
 auto TypeResolver::visit(const ast::StringExpression&) -> void {}
 

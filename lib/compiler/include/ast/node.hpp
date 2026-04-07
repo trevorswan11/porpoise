@@ -37,6 +37,7 @@ enum class NodeKind : u8 {
     IF_EXPRESSION,
     INDEX_EXPRESSION,
     INFINITE_LOOP_EXPRESSION,
+    INITIALIZER_EXPRESSION,
     MATCH_EXPRESSION,
     UNARY_EXPRESSION,
     REFERENCE_EXPRESSION,
@@ -87,6 +88,9 @@ template <typename T> struct is_leaf_node : std::false_type {};
 template <LeafNode T> struct is_leaf_node<T> : std::true_type {};
 template <typename T> constexpr bool is_leaf_node_v = is_leaf_node<T>::value;
 
+// Used for types who inherit from a CRTP class, avoid otherwise
+template <typename T> struct disable_default_parse : std::false_type {};
+
 class Node {
   public:
     Node()          = delete;
@@ -117,7 +121,7 @@ class Node {
     }
 
     // A 'safe' alternative to a raw static cast for nodes. Assertion > UB
-    template <LeafNode T> [[nodiscard]] static auto as(const Node& n) -> const T& {
+    template <LeafNode T> [[nodiscard]] static auto as(const Node& n) noexcept -> const T& {
         assert(n.is<T>());
         return static_cast<const T&>(n);
     }

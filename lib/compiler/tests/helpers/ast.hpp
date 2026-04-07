@@ -12,6 +12,7 @@
 #include "ast/ast.hpp"
 
 #include "syntax/keywords.hpp"
+#include "syntax/operators.hpp"
 
 namespace porpoise::tests::helpers {
 
@@ -137,6 +138,11 @@ template <typename... Ds>
     requires(std::same_as<Ds, ast::DeclStatement> && ...)
 auto make_decls(Ds&&... decls) -> std::vector<mem::Box<ast::DeclStatement>> {
     return make_vector<mem::Box<ast::DeclStatement>>(mem::make_box<Ds>(std::forward<Ds>(decls))...);
+}
+
+template <ast::LeafNode N> auto test_prefix_expr(const syntax::Operator& op) -> void {
+    const auto input = fmt::format("{}a;", op.first);
+    test_expr_stmt(input, N{syntax::Token{op}, make_ident("a")});
 }
 
 namespace type_modifiers {

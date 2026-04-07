@@ -25,12 +25,14 @@ namespace porpoise::sema {
     X(BinaryExpression)          \
     X(DotExpression)             \
     X(RangeExpression)           \
+    X(Initializer)               \
+    X(InitializerExpression)     \
     X(MatchArm)                  \
     X(MatchExpression)           \
     X(ReferenceExpression)       \
     X(DereferenceExpression)     \
-    X(ImplicitAccessExpression)  \
     X(UnaryExpression)           \
+    X(ImplicitAccessExpression)  \
     X(StringExpression)          \
     X(I32Expression)             \
     X(I64Expression)             \

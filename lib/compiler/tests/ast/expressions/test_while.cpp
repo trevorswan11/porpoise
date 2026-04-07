@@ -101,10 +101,10 @@ TEST_CASE("Unclosed while body") {
 }
 
 TEST_CASE("Unclosed while condition") {
-    helpers::test_parser_fail(
-        "while (true {};",
-        syntax::ParserDiagnostic{
-            "Expected token RPAREN, found LBRACE", syntax::ParserError::UNEXPECTED_TOKEN, 1, 13});
+    helpers::test_parser_fail("while (true {};",
+                              syntax::ParserDiagnostic{"Expected token RPAREN, found SEMICOLON",
+                                                       syntax::ParserError::UNEXPECTED_TOKEN,
+                                                       std::pair{1uz, 15uz}});
 }
 
 TEST_CASE("Malformed while continuation") {
@@ -112,10 +112,10 @@ TEST_CASE("Malformed while continuation") {
         "while (true) : () {};",
         syntax::ParserDiagnostic{syntax::ParserError::EMPTY_WHILE_CONTINUATION, 1, 12});
 
-    helpers::test_parser_fail(
-        "while (true) : (i += 1 {};",
-        syntax::ParserDiagnostic{
-            "Expected token RPAREN, found LBRACE", syntax::ParserError::UNEXPECTED_TOKEN, 1, 24});
+    helpers::test_parser_fail("while (true) : (i += 1 {};",
+                              syntax::ParserDiagnostic{"Expected token RPAREN, found SEMICOLON",
+                                                       syntax::ParserError::UNEXPECTED_TOKEN,
+                                                       std::pair{1uz, 26uz}});
 }
 
 TEST_CASE("Illegal while-else clause") {

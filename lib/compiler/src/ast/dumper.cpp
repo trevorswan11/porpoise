@@ -260,6 +260,9 @@ MAKE_INFIX_DUMP(BinaryExpression, LHS, RHS)
 MAKE_INFIX_DUMP(DotExpression, Object, Member)
 MAKE_INFIX_DUMP(RangeExpression, Lower, Upper)
 
+auto ASTDumper::visit(const Initializer& init) -> void { TODO(init); }
+auto ASTDumper::visit(const InitializerExpression& init) -> void { TODO(init); }
+
 auto ASTDumper::visit(const MatchArm& arm) -> void {
     fmt::println(out_, "Arm:");
     {

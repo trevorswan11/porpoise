@@ -282,6 +282,7 @@ constexpr auto INFIX_FNS = [] {
         {TokenType::DOT_DOT_EQ, ast::RangeExpression::parse},
         {TokenType::LPAREN, ast::CallExpression::parse},
         {TokenType::LBRACKET, ast::IndexExpression::parse},
+        {TokenType::LBRACE, ast::InitializerExpression::parse},
         {TokenType::ASSIGN, ast::AssignmentExpression::parse},
         {TokenType::PLUS_ASSIGN, ast::AssignmentExpression::parse},
         {TokenType::MINUS_ASSIGN, ast::AssignmentExpression::parse},

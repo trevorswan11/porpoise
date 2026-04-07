@@ -4,8 +4,6 @@
 
 #include "helpers/ast.hpp"
 
-#include "syntax/operators.hpp"
-
 #include "array.hpp"
 
 namespace porpoise::tests {

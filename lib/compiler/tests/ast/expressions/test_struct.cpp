@@ -2,8 +2,6 @@
 
 #include "helpers/ast.hpp"
 
-#include "syntax/operators.hpp"
-
 namespace porpoise::tests {
 
 namespace keywords  = syntax::keywords;
