@@ -93,9 +93,15 @@ auto ASTDumper::visit(const EnumExpression& enum_expr) -> void {
     }
 
     {
-        const Indent::Guard g{indent_, true};
+        const Indent::Guard g{indent_, !enum_expr.has_members()};
         fmt::println(out_, "{}Enumerations:", indent_.current_branch());
         dump_node_list(enum_expr.get_enumerations());
+    }
+
+    if (enum_expr.has_members()) {
+        const Indent::Guard g{indent_, true};
+        fmt::println(out_, "{}Members:", indent_.current_branch());
+        dump_node_list(enum_expr.get_members());
     }
 }
 
@@ -278,7 +284,7 @@ auto ASTDumper::visit(const Initializer& init) -> void {
 auto ASTDumper::visit(const InitializerExpression& init) -> void {
     fmt::println(out_, "Initializer Expression:");
     {
-        const Indent::Guard g{indent_, false};
+        const Indent::Guard g{indent_, !init.has_initializers()};
         fmt::print(out_, "{}Object Type: ", indent_.current_branch());
         if (init.has_object_type()) {
             init.get_object_type().accept(*this);
@@ -287,7 +293,7 @@ auto ASTDumper::visit(const InitializerExpression& init) -> void {
         }
     }
 
-    {
+    if (init.has_initializers()) {
         const Indent::Guard g{indent_, true};
         fmt::println(out_, "{}Initializers:", indent_.current_branch());
         dump_node_list(init.get_initializers());
@@ -456,7 +462,18 @@ auto ASTDumper::visit(const UnionField& field) -> void {
 
 auto ASTDumper::visit(const UnionExpression& union_expr) -> void {
     fmt::println(out_, "UnionExpression");
-    dump_node_list(union_expr.get_fields());
+
+    {
+        const Indent::Guard g{indent_, !union_expr.has_members()};
+        fmt::println(out_, "{}Fields:", indent_.current_branch());
+        dump_node_list(union_expr.get_fields());
+    }
+
+    if (union_expr.has_members()) {
+        const Indent::Guard g{indent_, true};
+        fmt::println(out_, "{}Members:", indent_.current_branch());
+        dump_node_list(union_expr.get_members());
+    }
 }
 
 auto ASTDumper::visit(const WhileLoopExpression& while_expr) -> void {

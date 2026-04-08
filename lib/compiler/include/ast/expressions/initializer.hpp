@@ -51,6 +51,7 @@ class InitializerExpression : public ExprBase<InitializerExpression> {
         -> Expected<mem::Box<Expression>, syntax::ParserDiagnostic>;
 
     MAKE_OPTIONAL_UNPACKER(object_type, Expression, object_type_, **)
+    [[nodiscard]] auto has_initializers() const noexcept -> bool { return !initializers_.empty(); }
     MAKE_GETTER(initializers, std::span<const Initializer>, )
 
   protected:

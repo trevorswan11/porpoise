@@ -1,22 +1,21 @@
 #pragma once
 
-#include <span>
-
 #include "ast/node.hpp"
 
 #include "syntax/parser.hpp"
 
+#include "iterator.hpp"
+
 namespace porpoise::ast {
 
 class FunctionExpression;
-class DeclStatement;
 
 class StructExpression : public ExprBase<StructExpression> {
   public:
     static constexpr auto KIND = NodeKind::STRUCT_EXPRESSION;
 
   public:
-    MAKE_ITERATOR(Members, std::vector<mem::Box<DeclStatement>>, members_)
+    MAKE_UNALIASED_ITERATOR(Members, members_)
 
   public:
     StructExpression(const syntax::Token& start_token, Members members) noexcept;
@@ -28,7 +27,7 @@ class StructExpression : public ExprBase<StructExpression> {
     [[nodiscard]] static auto parse(syntax::Parser& parser)
         -> Expected<mem::Box<Expression>, syntax::ParserDiagnostic>;
 
-    MAKE_GETTER(members, std::span<const mem::Box<DeclStatement>>)
+    MAKE_GETTER(members, MembersView)
     [[nodiscard]] auto is_packed() const noexcept -> bool {
         return start_token_.type == syntax::TokenType::PACKED;
     }
@@ -37,7 +36,7 @@ class StructExpression : public ExprBase<StructExpression> {
     auto is_equal(const Node& other) const noexcept -> bool override;
 
   private:
-    std::vector<mem::Box<DeclStatement>> members_;
+    Members members_;
 };
 
 } // namespace porpoise::ast

@@ -7,9 +7,9 @@
 - Only one field of a union can be active at one time
 - Attempting to access an inactive field of a union is safety-checked
 - A union field's identifier can be used to check if it is active by using the equality operator and implicit access expression
-    - You can also use this to match over an enum, capturing the active fields value with a capture clause
+    - You can also use this to match over an union, capturing the active fields value with a capture clause
 - The inner types of a union are not restricted to any subset or superset of the language (i.e. you are not restricted to only primitive types nor are you prohibited from using user-defined types)
-- Initializing a union is done through Call initialization syntax and can be combined with an implicit access expression
+- Initializing a union is done through the exact same mechanism as structs, using the `Name{.field = value}` syntax (shorthand `.{.field = value}`)
 ```porpoise
 const Hand := union {
     card: bool,
@@ -17,8 +17,8 @@ const Hand := union {
     shoe: void,
 };
 
-var h1 := Hand.card(true); // Initializes h1 to have the card field active
-var h2: Hand = .card(true); // Equivalent to h1
+var h1 := Hand{ .card = true }; // Initializes h1 to have the card field active
+var h2: Hand = .{ .card = true }; // Equivalent to h1
 
 if (h1 == Hand.card) { ... }; // Checks if the card field is active
 if (h1 == .card) { ... }; // Equivalent to above
@@ -33,3 +33,5 @@ match (h1) {
     - These can be member functions, static functions, or static variables only
         - Member functions have a first argument which is an instance of the union as explained in the struct documentation
     - Attempting to emplace an instance variable in an union is not supported
+        - This means that all non-function declarations must be explicitly marked `static`
+    - These members must appear after all fields

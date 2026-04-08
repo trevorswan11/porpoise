@@ -96,13 +96,8 @@ auto Parser::poll_peek_precedence() const noexcept -> std::pair<Precedence, Opti
 }
 
 auto Parser::parse_statement() -> Expected<mem::Box<ast::Statement>, ParserDiagnostic> {
+    if (current_token_.is_decl_token()) { return ast::DeclStatement::parse(*this); }
     switch (current_token_.type) {
-    case TokenType::VAR:
-    case TokenType::CONST:
-    case TokenType::CONSTEXPR:
-    case TokenType::PUBLIC:
-    case TokenType::EXTERN:
-    case TokenType::EXPORT:     return ast::DeclStatement::parse(*this);
     case TokenType::BREAK:
     case TokenType::RETURN:
     case TokenType::CONTINUE:   return ast::JumpStatement::parse(*this);
@@ -161,6 +156,25 @@ auto Parser::parse_expression(Precedence precedence)
         return TRY(parse_restricted_statement(error));
     }
     return std::nullopt;
+}
+
+auto Parser::parse_member_decls(ast::MemberValidator validator)
+    -> Expected<ast::Members, ParserDiagnostic> {
+    ast::Members members;
+    while (!peek_token_is(syntax::TokenType::RBRACE) && !peek_token_is(syntax::TokenType::END)) {
+        advance();
+        auto member = TRY(parse_statement());
+        if (!member->is<ast::DeclStatement>()) {
+            return make_parser_unexpected(syntax::ParserError::INVALID_MEMBER, member->get_token());
+        }
+
+        // Check the decl against the validator if provided
+        if (validator && !validator(ast::Node::as<ast::DeclStatement>(*member))) {
+            return make_parser_unexpected(syntax::ParserError::INVALID_MEMBER, member->get_token());
+        }
+        members.emplace_back(ast::Node::downcast<ast::DeclStatement>(std::move(member)));
+    }
+    return members;
 }
 
 using PrefixPair          = std::pair<TokenType, Parser::PrefixFn>;

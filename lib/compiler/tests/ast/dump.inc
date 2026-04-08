@@ -252,14 +252,15 @@ ExpressionStatement
     └─ Operand: IdentifierExpression: a
 ExpressionStatement
 └─ Expr: UnionExpression
-    ├─ Field:
-    │   ├─ Tag: IdentifierExpression: a
-    │   └─ Type: ExplicitType (modifier: BASE)
-    │       └─ IdentifierExpression: i32 (primitive)
-    └─ Field:
-        ├─ Tag: IdentifierExpression: b
-        └─ Type: ExplicitType (modifier: MUT_REF)
-            └─ IdentifierExpression: T
+    └─ Fields:
+        ├─ Field:
+        │   ├─ Tag: IdentifierExpression: a
+        │   └─ Type: ExplicitType (modifier: BASE)
+        │       └─ IdentifierExpression: i32 (primitive)
+        └─ Field:
+            ├─ Tag: IdentifierExpression: b
+            └─ Type: ExplicitType (modifier: MUT_REF)
+                └─ IdentifierExpression: T
 ExpressionStatement
 └─ Expr: DoWhileLoopExpression
     ├─ Body: BlockStatement
@@ -326,4 +327,59 @@ ExpressionStatement
             ├─ Member: ImplicitAccessExpression (DOT)
             │   └─ Operand: IdentifierExpression: adfasf
             └─ Value: IdentifierExpression: a
+ExpressionStatement
+└─ Expr: Initializer Expression:
+    └─ Object Type: <inferred>
+ExpressionStatement
+└─ Expr: UnionExpression
+    ├─ Fields:
+    │   └─ Field:
+    │       ├─ Tag: IdentifierExpression: a
+    │       └─ Type: ExplicitType (modifier: PTR)
+    │           └─ StructExpression
+    │               └─ DeclStatement (b)
+    │                   ├─ Modifiers: VARIABLE
+    │                   ├─ Type: ExplicitType (modifier: BASE)
+    │                   │   └─ IdentifierExpression: Foo
+    │                   └─ Value: IdentifierExpression: bar
+    └─ Members:
+        └─ DeclStatement (b)
+            ├─ Modifiers: CONSTANT
+            ├─ Type: (inferred)
+            └─ Value: FunctionExpression
+                ├─ Self: self (modifier: REF)
+                ├─ Parameters:
+                │   └─ Param:
+                │       ├─ Name: IdentifierExpression: a
+                │       └─ Type: ExplicitType (modifier: BASE)
+                │           └─ IdentifierExpression: A
+                ├─ Variadic: false
+                ├─ Returns: ExplicitType (modifier: BASE)
+                │   └─ IdentifierExpression: C
+                └─ Body: BlockStatement
+                    └─ ExpressionStatement
+                        └─ Expr: IdentifierExpression: c
+ExpressionStatement
+└─ Expr: EnumExpression
+    ├─ Underlying: IdentifierExpression: i64 (primitive)
+    ├─ Enumerations:
+    │   └─ Name: IdentifierExpression: A
+    │       └─ Default: I64Expression: 2
+    └─ Members:
+        └─ DeclStatement (b)
+            ├─ Modifiers: CONSTANT
+            ├─ Type: (inferred)
+            └─ Value: FunctionExpression
+                ├─ Self: self (modifier: REF)
+                ├─ Parameters:
+                │   └─ Param:
+                │       ├─ Name: IdentifierExpression: a
+                │       └─ Type: ExplicitType (modifier: BASE)
+                │           └─ IdentifierExpression: A
+                ├─ Variadic: false
+                ├─ Returns: ExplicitType (modifier: BASE)
+                │   └─ IdentifierExpression: C
+                └─ Body: BlockStatement
+                    └─ ExpressionStatement
+                        └─ Expr: IdentifierExpression: c
 )"

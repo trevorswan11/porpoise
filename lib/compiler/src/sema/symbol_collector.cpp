@@ -53,8 +53,10 @@ namespace porpoise::sema {
 MAKE_COLLECTOR_NOOPS(GENERATE_COLLECTOR_NOOP)
 
 auto SymbolCollector::visit(const ast::EnumExpression& enum_expr) -> void {
-    const auto scope_idx =
-        visit_scope(enum_expr, TypeKind::ENUM, [this](const auto& field) { visit(field); });
+    const auto scope_idx = visit_scope(
+        TypeKind::ENUM,
+        IterPair{enum_expr.get_enumerations(), [this](const auto& field) { visit(field); }},
+        IterPair{enum_expr.get_members(), [this](const auto& decl) { visit(*decl); }});
     last_type_->set_symbol_table(scope_idx);
 }
 
@@ -93,7 +95,9 @@ auto SymbolCollector::visit(const ast::StructExpression& struct_expr) -> void {
 
 auto SymbolCollector::visit(const ast::UnionExpression& union_expr) -> void {
     const auto scope_idx =
-        visit_scope(union_expr, TypeKind::UNION, [this](const auto& field) { visit(field); });
+        visit_scope(TypeKind::UNION,
+                    IterPair{union_expr.get_fields(), [this](const auto& field) { visit(field); }},
+                    IterPair{union_expr.get_members(), [this](const auto& decl) { visit(*decl); }});
     last_type_->set_symbol_table(scope_idx);
 }
 
@@ -102,7 +106,7 @@ auto SymbolCollector::visit(const ast::UnionField& field) -> void {
     try_declare(field.get_ident().get_name(), &field);
 }
 
-auto SymbolCollector ::visit(const ast::BlockStatement& block) -> void {
+auto SymbolCollector::visit(const ast::BlockStatement& block) -> void {
     if (table_idx_ == 0) {
         diagnostics_.emplace_back("Cannot have block at the top level",
                                   Error::ILLEGAL_TOP_LEVEL_STATEMENT,

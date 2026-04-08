@@ -17,14 +17,15 @@ TEST_CASE("Expression returns") {
                        ast::JumpStatement{syntax::Token{keywords::RETURN},
                                           helpers::make_number<ast::I32Expression>("4")});
 
-    std::vector<ast::Enumeration> enumerations;
-    enumerations.emplace_back(ast::Enumeration{helpers::make_ident("RED"), std::nullopt});
     helpers::test_stmt(
         "return enum { RED };",
         ast::JumpStatement{syntax::Token{keywords::RETURN},
-                           mem::make_box<ast::EnumExpression>(syntax::Token{keywords::ENUM},
-                                                              std::nullopt,
-                                                              std::move(enumerations))});
+                           mem::make_box<ast::EnumExpression>(
+                               syntax::Token{keywords::ENUM},
+                               std::nullopt,
+                               helpers::make_vector<ast::Enumeration>(
+                                   ast::Enumeration{helpers::make_ident("RED"), std::nullopt}),
+                               helpers::make_decls())});
 }
 
 TEST_CASE("Incorrectly terminated jumps") {

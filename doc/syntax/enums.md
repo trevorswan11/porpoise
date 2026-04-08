@@ -21,3 +21,5 @@ const a: Colors = .red; // Equivalent
     - These can be member functions, static functions, or static variables only
         - Member functions have a first argument which is an instance of the enum as explained in the struct documentation
     - Attempting to emplace an instance variable in an enum is not supported
+        - This means that all non-function declarations must be explicitly marked `static`
+    - These members must appear after all enumeration values 

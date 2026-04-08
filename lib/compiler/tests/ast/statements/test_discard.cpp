@@ -12,14 +12,15 @@ TEST_CASE("Discard statements") {
         "_ = 4;",
         ast::DiscardStatement{start_token, helpers::make_number<ast::I32Expression>("4")});
 
-    std::vector<ast::Enumeration> enumerations;
-    enumerations.emplace_back(ast::Enumeration{helpers::make_ident("RED"), std::nullopt});
     helpers::test_stmt(
         "_ = enum { RED };",
         ast::DiscardStatement{start_token,
-                              mem::make_box<ast::EnumExpression>(syntax::Token{keywords::ENUM},
-                                                                 std::nullopt,
-                                                                 std::move(enumerations))});
+                              mem::make_box<ast::EnumExpression>(
+                                  syntax::Token{keywords::ENUM},
+                                  std::nullopt,
+                                  helpers::make_vector<ast::Enumeration>(
+                                      ast::Enumeration{helpers::make_ident("RED"), std::nullopt}),
+                                  helpers::make_decls())});
 }
 
 TEST_CASE("Malformed discardees") {

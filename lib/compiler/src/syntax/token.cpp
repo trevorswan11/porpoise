@@ -140,6 +140,19 @@ auto Token::is_builtin() const noexcept -> bool {
     return std::ranges::contains(ALL_BUILTINS, type, &Keyword::second);
 }
 
+auto Token::is_decl_token() const noexcept -> bool {
+    switch (type) {
+    case TokenType::VAR:
+    case TokenType::CONST:
+    case TokenType::CONSTEXPR:
+    case TokenType::PUBLIC:
+    case TokenType::EXTERN:
+    case TokenType::STATIC:
+    case TokenType::EXPORT:    return true;
+    default:                   return false;
+    }
+}
+
 auto Token::is_valid_ident() const noexcept -> bool {
     return type == TokenType::IDENT || type == TokenType::NORETURN ||
            type == TokenType::TYPE_TYPE || is_primitive() || is_builtin();

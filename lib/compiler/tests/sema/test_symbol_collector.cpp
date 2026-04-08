@@ -148,7 +148,8 @@ TEST_CASE("Enum hollow types") {
                 mem::make_box<ast::EnumExpression>(
                     syntax::Token{keywords::ENUM},
                     std::nullopt,
-                    helpers::make_vector<ast::Enumeration>(enumeration())),
+                    helpers::make_vector<ast::Enumeration>(enumeration()),
+                    helpers::make_decls()),
                 ast::DeclModifiers::CONSTANT,
             },
             sema::types::Key{sema::TypeKind::ENUM, false, 1}});
@@ -171,7 +172,8 @@ TEST_CASE("Union hollow types") {
                 helpers::make_ident("a"),
                 mem::make_box<ast::TypeExpression>(syntax::Token{operators::WALRUS}, std::nullopt),
                 mem::make_box<ast::UnionExpression>(syntax::Token{keywords::UNION},
-                                                    helpers::make_vector<ast::UnionField>(field())),
+                                                    helpers::make_vector<ast::UnionField>(field()),
+                                                    helpers::make_decls()),
                 ast::DeclModifiers::CONSTANT,
             },
             sema::types::Key{sema::TypeKind::UNION, false, 1}});

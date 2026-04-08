@@ -176,7 +176,8 @@ TEST_CASE("Union inline types") {
                     ast::UnionField{helpers::make_ident("a"),
                                     ast::ExplicitType{mods::BASE, helpers::make_ident("i32")}},
                     ast::UnionField{helpers::make_ident("b"),
-                                    ast::ExplicitType{mods::MUT_REF, helpers::make_ident("T")}}))});
+                                    ast::ExplicitType{mods::MUT_REF, helpers::make_ident("T")}}),
+                helpers::make_decls())});
 }
 
 TEST_CASE("Struct inline types") {
@@ -209,7 +210,8 @@ TEST_CASE("Enum inline types") {
                               helpers::make_vector<ast::Enumeration>(
                                   ast::Enumeration{helpers::make_ident("RED"),
                                                    helpers::make_number<ast::U32Expression>("3u")},
-                                  ast::Enumeration{helpers::make_ident("B"), {}}))});
+                                  ast::Enumeration{helpers::make_ident("B"), {}}),
+                              helpers::make_decls())});
 }
 
 } // namespace porpoise::tests

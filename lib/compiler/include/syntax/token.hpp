@@ -313,8 +313,9 @@ struct Token {
 
     [[nodiscard]] auto is_at_start() const noexcept -> bool { return line == 0 && column == 0; }
     [[nodiscard]] auto promote() const -> Expected<std::string, TokenDiagnostic>;
-    auto               is_primitive() const noexcept -> bool;
-    auto               is_builtin() const noexcept -> bool;
+    [[nodiscard]] auto is_primitive() const noexcept -> bool;
+    [[nodiscard]] auto is_builtin() const noexcept -> bool;
+    [[nodiscard]] auto is_decl_token() const noexcept -> bool;
 
     // Check whether the token is an ident, primitive type, or builtin function.
     auto is_valid_ident() const noexcept -> bool;

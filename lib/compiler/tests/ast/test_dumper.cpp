@@ -49,6 +49,9 @@ constexpr std::string_view input{R"(
     defer 3;
     .{.a = 3};
     TT{.adfasf = a};
+    .{};
+    union { a: *struct { var b: Foo = bar; }, const b := fn(&self, a: A): C { c; }; };
+    enum : i64 { A = 2l, const b := fn(&self, a: A): C { c; }; };
 )"};
 
 constexpr std::string_view expected{

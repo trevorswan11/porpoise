@@ -126,17 +126,17 @@ class Node {
         return static_cast<const T&>(n);
     }
 
-  protected:
-    Node(const syntax::Token& tok, NodeKind kind) noexcept : start_token_{tok}, kind_{kind} {}
-
-    virtual auto is_equal(const Node& other) const noexcept -> bool = 0;
-
     // Transfers ownership and downcasts a boxed node into the requested type.
     template <LeafNode To, NodeSubtype From>
     static auto downcast(mem::Box<From>&& from) -> mem::Box<To> {
         assert(from && from->template is<To>());
         return mem::box_into<To>(std::move(from));
     }
+
+  protected:
+    Node(const syntax::Token& tok, NodeKind kind) noexcept : start_token_{tok}, kind_{kind} {}
+
+    virtual auto is_equal(const Node& other) const noexcept -> bool = 0;
 
   protected:
     const syntax::Token           start_token_;
@@ -178,6 +178,11 @@ template <typename Derived> class StmtBase : public NodeBase<Derived, Statement>
   protected:
     using NodeBase<Derived, Statement>::NodeBase;
 };
+
+class DeclStatement;
+using Members         = std::vector<mem::Box<DeclStatement>>;
+using MembersView     = std::span<const mem::Box<DeclStatement>>;
+using MemberValidator = bool(const DeclStatement&);
 
 } // namespace ast
 

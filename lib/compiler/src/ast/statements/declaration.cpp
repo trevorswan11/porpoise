@@ -74,4 +74,9 @@ auto DeclStatement::is_equal(const Node& other) const noexcept -> bool {
            modifiers_ == casted.modifiers_;
 }
 
+auto validate_non_struct_member(const DeclStatement& decl) noexcept -> bool {
+    if (decl.get_value().is<ast::FunctionExpression>()) { return true; }
+    return decl.has_modifier(DeclModifiers::STATIC);
+}
+
 } // namespace porpoise::ast

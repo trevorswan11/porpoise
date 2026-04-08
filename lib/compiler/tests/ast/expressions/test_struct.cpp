@@ -56,9 +56,8 @@ TEST_CASE("Struct flavors") {
 }
 
 TEST_CASE("Illegal struct member") {
-    helpers::test_parser_fail(
-        "struct { import std; };",
-        syntax::ParserDiagnostic{syntax::ParserError::INVALID_STRUCT_MEMBER, 1, 10});
+    helpers::test_parser_fail("struct { import std; };",
+                              syntax::ParserDiagnostic{syntax::ParserError::INVALID_MEMBER, 1, 10});
 }
 
 TEST_CASE("Empty struct body") {

@@ -119,6 +119,9 @@ class DeclStatement : public StmtBase<DeclStatement> {
     DeclModifiers                  modifiers_;
 };
 
+// Validates a declaration inside of non-struct user defined types (i.e. enums & unions)
+[[nodiscard]] auto validate_non_struct_member(const DeclStatement& decl) noexcept -> bool;
+
 } // namespace porpoise::ast
 
 template <> struct magic_enum::customize::enum_range<porpoise::ast::DeclModifiers> {

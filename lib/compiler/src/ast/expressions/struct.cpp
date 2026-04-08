@@ -2,7 +2,7 @@
 
 #include "ast/expressions/struct.hpp"
 
-#include "ast/statements/declaration.hpp"
+#include "ast/statements/declaration.hpp" // IWYU pragma: keep
 #include "ast/visitor.hpp"
 
 namespace porpoise::ast {
@@ -23,20 +23,8 @@ auto StructExpression::parse(syntax::Parser& parser)
                                       start_token);
     }
 
-    Members members;
     TRY(parser.expect_peek(syntax::TokenType::LBRACE));
-    while (!parser.peek_token_is(syntax::TokenType::RBRACE) &&
-           !parser.peek_token_is(syntax::TokenType::END)) {
-        parser.advance();
-        auto member = TRY(parser.parse_statement());
-        if (!member->is<DeclStatement>()) {
-            return make_parser_unexpected(syntax::ParserError::INVALID_STRUCT_MEMBER,
-                                          member->get_token());
-        }
-
-        members.emplace_back(downcast<DeclStatement>(std::move(member)));
-    }
-
+    auto members = TRY(parser.parse_member_decls());
     TRY(parser.expect_peek(syntax::TokenType::RBRACE));
     if (members.empty()) {
         return make_parser_unexpected(syntax::ParserError::EMPTY_STRUCT, start_token);
