@@ -217,6 +217,20 @@ class BoolExpression : public PrimitiveExpression<BoolExpression, bool> {
 };
 template <> struct disable_default_parse<BoolExpression> : std::true_type {};
 
+class VoidExpression : public PrimitiveExpression<VoidExpression, std::monostate> {
+  public:
+    static constexpr auto KIND = NodeKind::VOID_EXPRESSION;
+
+  public:
+    using PrimitiveExpression::PrimitiveExpression;
+    MAKE_MOVE_CONSTRUCTABLE_ONLY(VoidExpression)
+
+    auto                      accept(Visitor& v) const -> void override;
+    [[nodiscard]] static auto parse(syntax::Parser& parser)
+        -> Expected<mem::Box<Expression>, syntax::ParserDiagnostic>;
+};
+template <> struct disable_default_parse<VoidExpression> : std::true_type {};
+
 // cppcheck-suppress-end [constParameterReference, duplInheritedMember]
 
 } // namespace porpoise::ast

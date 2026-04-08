@@ -15,7 +15,7 @@ TEST_CASE("Expressionless jumps") {
 TEST_CASE("Expression returns") {
     helpers::test_stmt("return 4;",
                        ast::JumpStatement{syntax::Token{keywords::RETURN},
-                                          helpers::make_number<ast::I32Expression>("4")});
+                                          helpers::make_primitive<ast::I32Expression>("4")});
 
     helpers::test_stmt(
         "return enum { RED };",

@@ -189,4 +189,14 @@ TEST_CASE("Bool parsing") {
     helpers::test_primitive<N>("false;", syntax::TokenType::FALSE, false);
 }
 
+TEST_CASE("Void parsing") {
+    helpers::test_expr_stmt("a = {};",
+                            ast::AssignmentExpression{
+                                syntax::Token{syntax::TokenType::IDENT, "a"},
+                                helpers::make_ident("a"),
+                                syntax::operators::ASSIGN.second,
+                                helpers::make_primitive<ast::VoidExpression>(),
+                            });
+}
+
 } // namespace porpoise::tests

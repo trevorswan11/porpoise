@@ -376,6 +376,8 @@ MAKE_LEAF_DUMP(F32Expression)
 MAKE_LEAF_DUMP(F64Expression)
 MAKE_LEAF_DUMP(BoolExpression)
 
+auto ASTDumper::visit(const VoidExpression&) -> void { fmt::println(out_, "VoidExpression"); }
+
 auto ASTDumper::visit(const ScopeResolutionExpression& scope_resolve) -> void {
     fmt::println(out_, "ScopeResolutionExpression");
     {

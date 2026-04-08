@@ -382,4 +382,8 @@ ExpressionStatement
                 └─ Body: BlockStatement
                     └─ ExpressionStatement
                         └─ Expr: IdentifierExpression: c
+DeclStatement (a)
+├─ Modifiers: CONSTANT
+├─ Type: (inferred)
+└─ Value: VoidExpression
 )"

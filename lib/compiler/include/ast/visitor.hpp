@@ -41,6 +41,7 @@ namespace porpoise::ast {
     X(F32Expression)             \
     X(F64Expression)             \
     X(BoolExpression)            \
+    X(VoidExpression)            \
     X(ScopeResolutionExpression) \
     X(StructExpression)          \
     X(ExplicitType)              \

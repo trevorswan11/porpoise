@@ -80,7 +80,7 @@ TEST_CASE("Holistic language examples") {
                                                            mods::BASE,
                                                            helpers::make_ident("Integer"),
                                                        }),
-                    helpers::make_number<ast::I32Expression>("1"),
+                    helpers::make_primitive<ast::I32Expression>("1"),
                     ast::DeclModifiers::CONSTANT,
                 }});
     };
@@ -103,7 +103,7 @@ TEST_CASE("Import aliases correctly used") {
                 syntax::Token{keywords::CONST},
                 helpers::make_ident("a"),
                 mem::make_box<ast::TypeExpression>(syntax::Token{operators::WALRUS}, std::nullopt),
-                helpers::make_number<ast::I32Expression>("22"),
+                helpers::make_primitive<ast::I32Expression>("22"),
                 ast::DeclModifiers::CONSTANT,
             }});
 }
@@ -171,7 +171,7 @@ TEST_CASE("Enum hollow types with member") {
             syntax::Token{keywords::STATIC},
             helpers::make_ident("c"),
             mem::make_box<ast::TypeExpression>(syntax::Token{operators::WALRUS}, std::nullopt),
-            helpers::make_number<ast::I32Expression>("2"),
+            helpers::make_primitive<ast::I32Expression>("2"),
             ast::DeclModifiers::STATIC | ast::DeclModifiers::CONSTANT,
         };
     };
@@ -233,7 +233,7 @@ TEST_CASE("Union hollow types with member") {
             syntax::Token{keywords::STATIC},
             helpers::make_ident("c"),
             mem::make_box<ast::TypeExpression>(syntax::Token{operators::WALRUS}, std::nullopt),
-            helpers::make_number<ast::I32Expression>("2"),
+            helpers::make_primitive<ast::I32Expression>("2"),
             ast::DeclModifiers::STATIC | ast::DeclModifiers::CONSTANT,
         };
     };

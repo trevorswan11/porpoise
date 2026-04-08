@@ -11,7 +11,7 @@ TEST_CASE("Correct defers") {
     helpers::test_stmt(
         "defer 3;",
         ast::DeferStatement{
-            defer, helpers::make_expr_stmt(helpers::number_from<ast::I32Expression>("3"))});
+            defer, helpers::make_expr_stmt(helpers::primitive_from<ast::I32Expression>("3"))});
 
     helpers::test_stmt(
         "defer { a; };",

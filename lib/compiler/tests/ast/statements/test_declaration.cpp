@@ -25,7 +25,7 @@ TEST_CASE("Explicit primitive declaration") {
                                                    mods::BASE,
                                                    helpers::make_ident("i32"),
                                                }),
-            helpers::make_number<ast::I32Expression>("2"),
+            helpers::make_primitive<ast::I32Expression>("2"),
             ast::DeclModifiers::VARIABLE,
         });
 }
@@ -53,7 +53,7 @@ TEST_CASE("Constexpr declaration") {
             syntax::Token{keywords::CONSTEXPR},
             helpers::make_ident("SIZE"),
             mem::make_box<ast::TypeExpression>(syntax::Token{operators::WALRUS}, std::nullopt),
-            helpers::make_number<ast::USizeExpression>("2uz"),
+            helpers::make_primitive<ast::USizeExpression>("2uz"),
             ast::DeclModifiers::CONSTEXPR,
         });
 }
@@ -72,7 +72,7 @@ TEST_CASE("Correct declaration modifiers") {
                                    helpers::make_ident("a"),
                                    mem::make_box<ast::TypeExpression>(
                                        syntax::Token{operators::WALRUS}, std::nullopt),
-                                   helpers::make_number<ast::I32Expression>("2"),
+                                   helpers::make_primitive<ast::I32Expression>("2"),
                                    flags,
                                });
         } else {

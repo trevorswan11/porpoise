@@ -53,7 +53,7 @@ TEST_CASE("Complex union fields") {
                             helpers::make_ident("u64"),
                             helpers::make_vector<ast::Enumeration>(
                                 ast::Enumeration{helpers::make_ident("RED"),
-                                                 helpers::make_number<ast::U32Expression>("3u")},
+                                                 helpers::make_primitive<ast::U32Expression>("3u")},
                                 ast::Enumeration{helpers::make_ident("B"), {}}),
                             helpers::make_decls())}}),
             helpers::make_decls()});
@@ -103,7 +103,7 @@ TEST_CASE("Union with decls") {
                         helpers::make_ident("a"),
                         mem::make_box<ast::TypeExpression>(syntax::Token{operators::WALRUS},
                                                            std::nullopt),
-                        helpers::make_number<ast::I32Expression>("2"),
+                        helpers::make_primitive<ast::I32Expression>("2"),
                         ast::DeclModifiers::STATIC | ast::DeclModifiers::CONSTANT,
                     })});
     };

@@ -44,6 +44,7 @@ namespace porpoise::sema {
     X(F32Expression)             \
     X(F64Expression)             \
     X(BoolExpression)            \
+    X(VoidExpression)            \
     X(ScopeResolutionExpression) \
     X(ExplicitType)              \
     X(TypeExpression)            \

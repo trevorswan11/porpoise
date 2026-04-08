@@ -24,7 +24,7 @@ TEST_CASE("Non-empty implicit initializer list") {
                                    helpers::make_vector<ast::Initializer>(ast::Initializer{
                                        mem::make_box<ast::ImplicitAccessExpression>(
                                            syntax::Token{operators::DOT}, helpers::make_ident("a")),
-                                       helpers::make_number<ast::I32Expression>("2")})});
+                                       helpers::make_primitive<ast::I32Expression>("2")})});
 }
 
 TEST_CASE("Empty explicit initializer list") {
@@ -42,7 +42,7 @@ TEST_CASE("Non-empty explicit initializer list") {
                                    helpers::make_vector<ast::Initializer>(ast::Initializer{
                                        mem::make_box<ast::ImplicitAccessExpression>(
                                            syntax::Token{operators::DOT}, helpers::make_ident("a")),
-                                       helpers::make_number<ast::I32Expression>("2")})});
+                                       helpers::make_primitive<ast::I32Expression>("2")})});
 }
 
 TEST_CASE("Multiple initializer key-values") {
@@ -54,10 +54,10 @@ TEST_CASE("Multiple initializer key-values") {
             helpers::make_vector<ast::Initializer>(
                 ast::Initializer{mem::make_box<ast::ImplicitAccessExpression>(
                                      syntax::Token{operators::DOT}, helpers::make_ident("a")),
-                                 helpers::make_number<ast::I32Expression>("2")},
+                                 helpers::make_primitive<ast::I32Expression>("2")},
                 ast::Initializer{mem::make_box<ast::ImplicitAccessExpression>(
                                      syntax::Token{operators::DOT}, helpers::make_ident("b")),
-                                 helpers::make_number<ast::U32Expression>("3u")},
+                                 helpers::make_primitive<ast::U32Expression>("3u")},
                 ast::Initializer{mem::make_box<ast::ImplicitAccessExpression>(
                                      syntax::Token{operators::DOT}, helpers::make_ident("c")),
                                  helpers::make_ident("t")})});

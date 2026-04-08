@@ -39,11 +39,11 @@ TEST_CASE("Full for loop with else") {
         "for (0..4) |i| { a; } else return b;",
         ast::ForLoopExpression{
             syntax::Token{keywords::FOR},
-            helpers::make_vector<mem::Box<ast::Expression>>(
-                mem::make_box<ast::RangeExpression>(syntax::Token{syntax::TokenType::INT_10, "0"},
-                                                    helpers::make_number<ast::I32Expression>("0"),
-                                                    syntax::TokenType::DOT_DOT,
-                                                    helpers::make_number<ast::I32Expression>("4"))),
+            helpers::make_vector<mem::Box<ast::Expression>>(mem::make_box<ast::RangeExpression>(
+                syntax::Token{syntax::TokenType::INT_10, "0"},
+                helpers::make_primitive<ast::I32Expression>("0"),
+                syntax::TokenType::DOT_DOT,
+                helpers::make_primitive<ast::I32Expression>("4"))),
             helpers::make_vector<ast::ForLoopCapture>(
                 ast::ForLoopCapture::Valued{{}, helpers::make_ident("i")}),
             helpers::make_expr_block_stmt(helpers::ident_from("a")),
@@ -54,9 +54,9 @@ TEST_CASE("Full for loop with else") {
 TEST_CASE("Non-terminated iterables") {
     helpers::test_parser_fail(
         "for (0..4 |i| { a; } else return b;",
-        syntax::ParserDiagnostic{"No prefix parse function for LBRACE({) found",
-                                 syntax::ParserError::MISSING_PREFIX_PARSER,
-                                 std::pair{1uz, 15uz}},
+        syntax::ParserDiagnostic{"Expected token RBRACE, found IDENT",
+                                 syntax::ParserError::UNEXPECTED_TOKEN,
+                                 std::pair{1uz, 17uz}},
         syntax::ParserDiagnostic{"No prefix parse function for RBRACE(}) found",
                                  syntax::ParserError::MISSING_PREFIX_PARSER,
                                  std::pair{1uz, 20uz}});

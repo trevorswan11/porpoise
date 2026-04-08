@@ -14,6 +14,8 @@
 #include "syntax/keywords.hpp"
 #include "syntax/operators.hpp" // IWYU pragma: export
 
+#include "string.hpp"
+
 namespace porpoise::tests::helpers {
 
 // Thin wrapper around Node is/as pattern with test assertion.
@@ -140,7 +142,7 @@ auto make_decls(Ds&&... decls) -> std::vector<mem::Box<ast::DeclStatement>> {
     return make_vector<mem::Box<ast::DeclStatement>>(mem::make_box<Ds>(std::forward<Ds>(decls))...);
 }
 
-template <ast::PrimitiveNode N> auto number_from(std::string_view str) noexcept -> N {
+template <ast::PrimitiveNode N> auto primitive_from(std::string_view str) noexcept -> N {
     syntax::Lexer l{str};
     const auto    tok = l.advance();
 
@@ -150,8 +152,31 @@ template <ast::PrimitiveNode N> auto number_from(std::string_view str) noexcept 
     return N{syntax::Token{tok.type, str}, *value};
 }
 
-template <ast::PrimitiveNode Num> auto make_number(std::string_view str) noexcept -> mem::Box<Num> {
-    return mem::make_box<Num>(number_from<Num>(str));
+template <ast::PrimitiveNode Primitive>
+auto make_primitive(std::string_view str) noexcept -> mem::Box<Primitive> {
+    return mem::make_box<Primitive>(primitive_from<Primitive>(str));
+}
+
+template <ast::PrimitiveNode N>
+    requires(std::same_as<N, ast::VoidExpression>)
+auto make_primitive() noexcept -> mem::Box<ast::VoidExpression> {
+    return mem::make_box<ast::VoidExpression>(syntax::Token{syntax::TokenType::LBRACE, "{"},
+                                              std::monostate{});
+}
+
+template <ast::PrimitiveNode N>
+    requires(std::same_as<N, ast::BoolExpression>)
+auto make_primitive(bool value) noexcept -> mem::Box<ast::BoolExpression> {
+    const syntax::Token tok{value ? syntax::keywords::TRUE : syntax::keywords::FALSE};
+    return mem::make_box<ast::BoolExpression>(tok, value ? true : false);
+}
+
+// Include the surrounding quotes in the input if needed, multiline strings not supported here
+template <>
+inline auto make_primitive(std::string_view str) noexcept -> mem::Box<ast::StringExpression> {
+    const auto trimmed = string::trim(str, [](byte b) { return b == '"'; });
+    return mem::make_box<ast::StringExpression>(syntax::Token{syntax::TokenType::STRING, str},
+                                                std::string{trimmed});
 }
 
 namespace type_modifiers {

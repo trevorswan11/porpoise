@@ -9,7 +9,7 @@ TEST_CASE("Single-level index") {
     helpers::test_expr_stmt(
         "arr[3uz];",
         ast::IndexExpression{
-            arr, helpers::make_ident(arr), helpers::make_number<ast::USizeExpression>("3uz")});
+            arr, helpers::make_ident(arr), helpers::make_primitive<ast::USizeExpression>("3uz")});
 
     helpers::test_expr_stmt(
         "arr[i];", ast::IndexExpression{arr, helpers::make_ident(arr), helpers::make_ident("i")});
