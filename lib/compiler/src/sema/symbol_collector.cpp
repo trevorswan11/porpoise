@@ -212,6 +212,8 @@ auto SymbolCollector::visit(const ast::ModuleStatement& module_stmt) -> void {
     }
 }
 
+auto SymbolCollector::visit(const ast::TestStatement& test) -> void { TODO(test); }
+
 auto SymbolCollector::visit(const ast::UsingStatement& using_stmt) -> void {
     if (registry_.get(table_idx_).is_module()) { using_stmt.mark_public(); }
     try_declare(using_stmt.get_alias().get_name(), &using_stmt);

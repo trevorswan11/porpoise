@@ -70,6 +70,7 @@ enum class NodeKind : u8 {
     IMPORT_STATEMENT,
     JUMP_STATEMENT,
     MODULE_STATEMENT,
+    TEST_STATEMENT,
     USING_STATEMENT,
 };
 

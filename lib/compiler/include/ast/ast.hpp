@@ -35,6 +35,7 @@
 #include "ast/statements/import.hpp"
 #include "ast/statements/jump.hpp"
 #include "ast/statements/module.hpp"
+#include "ast/statements/test.hpp"
 #include "ast/statements/using.hpp"
 
 // IWYU pragma: end_exports

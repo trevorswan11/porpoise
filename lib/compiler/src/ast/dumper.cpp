@@ -585,6 +585,8 @@ auto ASTDumper::visit(const JumpStatement& jump) -> void {
 
 auto ASTDumper::visit(const ModuleStatement&) -> void { fmt::println(out_, "ModuleStatement"); }
 
+auto ASTDumper::visit(const TestStatement& test) -> void { TODO(test); }
+
 auto ASTDumper::visit(const UsingStatement& using_stmt) -> void {
     fmt::println(out_, "UsingStatement");
     {
