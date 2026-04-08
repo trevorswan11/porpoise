@@ -15,11 +15,35 @@ namespace porpoise::ast {
 
 // cppcheck-suppress-begin [constParameterReference, duplInheritedMember]
 
-template <typename T> struct disable_default_parse : std::false_type {};
-
 // A necessarily instantiable Node with an underlying primitive value type.
 template <typename N>
 concept PrimitiveNode = LeafNode<N> && requires { typename N::value_type; };
+
+template <typename ValueType, bool AssertLast = true>
+[[nodiscard]] auto parse_primitive_value(std::string_view slice, syntax::TokenType type) noexcept
+    -> Optional<ValueType> {
+    const auto  base  = syntax::token_type::to_base(type);
+    const auto* first = slice.cbegin() + (!base || *base == syntax::Base::DECIMAL ? 0 : 2);
+    const auto* last  = slice.cend() - syntax::token_type::suffix_length(type);
+
+    ValueType              v;
+    std::from_chars_result result;
+    if constexpr (std::is_same_v<ValueType, f64> || std::is_same_v<ValueType, f32>) {
+        result = std::from_chars(first, last, v);
+    } else {
+        result = std::from_chars(first, last, v, std::to_underlying(*base));
+    }
+
+    if constexpr (AssertLast) {
+        assert(result.ptr == last);
+        if (result.ec == std::errc{}) { return v; }
+    } else {
+        if (result.ec == std::errc{} && result.ptr == last) { return v; }
+    }
+
+    assert(result.ec == std::errc::result_out_of_range);
+    return std::nullopt;
+}
 
 template <typename Derived, typename T> class PrimitiveExpression : public ExprBase<Derived> {
   public:
@@ -34,25 +58,9 @@ template <typename Derived, typename T> class PrimitiveExpression : public ExprB
         requires(!disable_default_parse<Derived>::value)
     {
         const auto start_token = parser.current_token();
-        const auto base        = syntax::token_type::to_base(start_token.type);
+        auto       value = parse_primitive_value<value_type>(start_token.slice, start_token.type);
+        if (value) { return mem::make_box<Derived>(start_token, *value); }
 
-        const auto* first =
-            start_token.slice.cbegin() + (!base || *base == syntax::Base::DECIMAL ? 0 : 2);
-        const auto* last =
-            start_token.slice.cend() - syntax::token_type::suffix_length(start_token.type);
-
-        value_type             v;
-        std::from_chars_result result;
-        if constexpr (std::is_same_v<value_type, f64> || std::is_same_v<value_type, f32>) {
-            result = std::from_chars(first, last, v);
-        } else {
-            result = std::from_chars(first, last, v, std::to_underlying(*base));
-        }
-        if (result.ec == std::errc{} && result.ptr == last) {
-            return mem::make_box<Derived>(start_token, v);
-        }
-
-        assert(result.ec == std::errc::result_out_of_range);
         return make_parser_unexpected(std::is_same_v<value_type, f64>
                                           ? syntax::ParserError::DOUBLE_OVERFLOW
                                           : (std::is_same_v<value_type, f32>
@@ -109,13 +117,13 @@ class I64Expression : public PrimitiveExpression<I64Expression, i64> {
     auto accept(Visitor& v) const -> void override;
 };
 
-class ISizeIntegerExpression : public PrimitiveExpression<ISizeIntegerExpression, isize> {
+class ISizeExpression : public PrimitiveExpression<ISizeExpression, isize> {
   public:
-    static constexpr auto KIND = NodeKind::ISIZE_INTEGER_EXPRESSION;
+    static constexpr auto KIND = NodeKind::ISIZE_EXPRESSION;
 
   public:
     using PrimitiveExpression::PrimitiveExpression;
-    MAKE_MOVE_CONSTRUCTABLE_ONLY(ISizeIntegerExpression)
+    MAKE_MOVE_CONSTRUCTABLE_ONLY(ISizeExpression)
 
     auto accept(Visitor& v) const -> void override;
 };
@@ -142,13 +150,13 @@ class U64Expression : public PrimitiveExpression<U64Expression, u64> {
     auto accept(Visitor& v) const -> void override;
 };
 
-class USizeIntegerExpression : public PrimitiveExpression<USizeIntegerExpression, usize> {
+class USizeExpression : public PrimitiveExpression<USizeExpression, usize> {
   public:
-    static constexpr auto KIND = NodeKind::USIZE_INTEGER_EXPRESSION;
+    static constexpr auto KIND = NodeKind::USIZE_EXPRESSION;
 
   public:
     using PrimitiveExpression::PrimitiveExpression;
-    MAKE_MOVE_CONSTRUCTABLE_ONLY(USizeIntegerExpression)
+    MAKE_MOVE_CONSTRUCTABLE_ONLY(USizeExpression)
 
     auto accept(Visitor& v) const -> void override;
 };

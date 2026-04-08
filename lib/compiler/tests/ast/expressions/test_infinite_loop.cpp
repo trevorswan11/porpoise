@@ -2,8 +2,6 @@
 
 #include "helpers/ast.hpp"
 
-#include "ast/expressions/infinite_loop.hpp"
-
 namespace porpoise::tests {
 
 namespace keywords = syntax::keywords;

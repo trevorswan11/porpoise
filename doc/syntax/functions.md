@@ -65,7 +65,7 @@ _ = baz(&mut b);    // Illegal, cannot mutate const
 - Functions are called in three ways depending on the context
     - If calling a top-level, non-struct function, the syntax is simple (`func(args...)`)
     - If calling a member function, the syntax is similar to other languages (`instance.func(args...)`)
-        - This requires the function to have a self parameter, as discussed in the struct documentation
+        - This requires the function to have a self parameter, as discussed in the struct, enum, and union documentation
         - The callee must have mutability that matches the explicit self parameter
     - If calling a static struct function, the syntax uses the scope resolution operator (`Struct::func(args...)`)
 

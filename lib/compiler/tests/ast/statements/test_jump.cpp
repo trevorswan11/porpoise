@@ -2,10 +2,6 @@
 
 #include "helpers/ast.hpp"
 
-#include "ast/expressions/enum.hpp"
-#include "ast/expressions/primitive.hpp"
-#include "ast/statements/jump.hpp"
-
 namespace porpoise::tests {
 
 namespace keywords = syntax::keywords;
@@ -19,17 +15,17 @@ TEST_CASE("Expressionless jumps") {
 TEST_CASE("Expression returns") {
     helpers::test_stmt("return 4;",
                        ast::JumpStatement{syntax::Token{keywords::RETURN},
-                                          mem::make_box<ast::I32Expression>(
-                                              syntax::Token{syntax::TokenType::INT_10, "4"}, 4)});
+                                          helpers::make_number<ast::I32Expression>("4")});
 
-    std::vector<ast::Enumeration> enumerations;
-    enumerations.emplace_back(ast::Enumeration{helpers::make_ident("RED"), std::nullopt});
     helpers::test_stmt(
         "return enum { RED };",
         ast::JumpStatement{syntax::Token{keywords::RETURN},
-                           mem::make_box<ast::EnumExpression>(syntax::Token{keywords::ENUM},
-                                                              std::nullopt,
-                                                              std::move(enumerations))});
+                           mem::make_box<ast::EnumExpression>(
+                               syntax::Token{keywords::ENUM},
+                               std::nullopt,
+                               helpers::make_vector<ast::Enumeration>(
+                                   ast::Enumeration{helpers::make_ident("RED"), std::nullopt}),
+                               helpers::make_decls())});
 }
 
 TEST_CASE("Incorrectly terminated jumps") {

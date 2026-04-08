@@ -2,10 +2,6 @@
 
 #include "helpers/ast.hpp"
 
-#include "ast/expressions/prefix.hpp"
-
-#include "syntax/operators.hpp"
-
 namespace porpoise::tests {
 
 namespace operators = syntax::operators;
@@ -30,18 +26,25 @@ TEST_CASE("Dereference expression") {
     helpers::test_prefix_expr<ast::DereferenceExpression>(operators::STAR);
 }
 
+TEST_CASE("Implicit access expression") {
+    helpers::test_prefix_expr<ast::ImplicitAccessExpression>(operators::DOT);
+}
+
+TEST_CASE("Illegal implicit access operand") {
+    helpers::test_parser_fail(
+        ".a::b",
+        syntax::ParserDiagnostic{syntax::ParserError::ILLEGAL_IMPLICIT_ACCESS_OPERAND, 1, 2});
+}
+
 TEST_CASE("Reference expressions") {
     helpers::test_prefix_expr<ast::ReferenceExpression>(operators::BW_AND);
     helpers::test_prefix_expr<ast::ReferenceExpression>(operators::AND_MUT);
 }
 
-TEST_CASE("Implicit access expression") {
-    helpers::test_prefix_expr<ast::ImplicitAccessExpression>(operators::DOT);
-}
-
 TEST_CASE("Prefix without operand") {
     helpers::test_parser_fail(
-        "!", syntax::ParserDiagnostic{syntax::ParserError::PREFIX_MISSING_OPERAND, 1, 1});
+        ".", syntax::ParserDiagnostic{syntax::ParserError::PREFIX_MISSING_OPERAND, 1, 1});
+
     helpers::test_parser_fail(
         "!;",
         syntax::ParserDiagnostic{"No prefix parse function for SEMICOLON(;) found",

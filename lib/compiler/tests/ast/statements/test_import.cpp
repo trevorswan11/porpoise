@@ -2,10 +2,6 @@
 
 #include "helpers/ast.hpp"
 
-#include "ast/expressions/primitive.hpp"
-#include "ast/statements/import.hpp"
-#include "ast/statements/module.hpp"
-
 namespace porpoise::tests {
 
 namespace keywords = syntax::keywords;

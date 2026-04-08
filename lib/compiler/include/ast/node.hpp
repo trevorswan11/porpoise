@@ -37,6 +37,7 @@ enum class NodeKind : u8 {
     IF_EXPRESSION,
     INDEX_EXPRESSION,
     INFINITE_LOOP_EXPRESSION,
+    INITIALIZER_EXPRESSION,
     MATCH_EXPRESSION,
     UNARY_EXPRESSION,
     REFERENCE_EXPRESSION,
@@ -45,10 +46,10 @@ enum class NodeKind : u8 {
     STRING_EXPRESSION,
     I32_EXPRESSION,
     I64_EXPRESSION,
-    ISIZE_INTEGER_EXPRESSION,
+    ISIZE_EXPRESSION,
     U32_EXPRESSION,
     U64_EXPRESSION,
-    USIZE_INTEGER_EXPRESSION,
+    USIZE_EXPRESSION,
     U8_EXPRESSION,
     F32_EXPRESSION,
     F64_EXPRESSION,
@@ -87,6 +88,9 @@ template <typename T> struct is_leaf_node : std::false_type {};
 template <LeafNode T> struct is_leaf_node<T> : std::true_type {};
 template <typename T> constexpr bool is_leaf_node_v = is_leaf_node<T>::value;
 
+// Used for types who inherit from a CRTP class, avoid otherwise
+template <typename T> struct disable_default_parse : std::false_type {};
+
 class Node {
   public:
     Node()          = delete;
@@ -117,15 +121,10 @@ class Node {
     }
 
     // A 'safe' alternative to a raw static cast for nodes. Assertion > UB
-    template <LeafNode T> [[nodiscard]] static auto as(const Node& n) -> const T& {
+    template <LeafNode T> [[nodiscard]] static auto as(const Node& n) noexcept -> const T& {
         assert(n.is<T>());
         return static_cast<const T&>(n);
     }
-
-  protected:
-    Node(const syntax::Token& tok, NodeKind kind) noexcept : start_token_{tok}, kind_{kind} {}
-
-    virtual auto is_equal(const Node& other) const noexcept -> bool = 0;
 
     // Transfers ownership and downcasts a boxed node into the requested type.
     template <LeafNode To, NodeSubtype From>
@@ -133,6 +132,11 @@ class Node {
         assert(from && from->template is<To>());
         return mem::box_into<To>(std::move(from));
     }
+
+  protected:
+    Node(const syntax::Token& tok, NodeKind kind) noexcept : start_token_{tok}, kind_{kind} {}
+
+    virtual auto is_equal(const Node& other) const noexcept -> bool = 0;
 
   protected:
     const syntax::Token           start_token_;
@@ -174,6 +178,11 @@ template <typename Derived> class StmtBase : public NodeBase<Derived, Statement>
   protected:
     using NodeBase<Derived, Statement>::NodeBase;
 };
+
+class DeclStatement;
+using Members         = std::vector<mem::Box<DeclStatement>>;
+using MembersView     = std::span<const mem::Box<DeclStatement>>;
+using MemberValidator = bool(const DeclStatement&);
 
 } // namespace ast
 

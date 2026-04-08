@@ -12,6 +12,7 @@
 #include "syntax/token.hpp"
 
 #include "expected.hpp"
+#include "iterator.hpp"
 #include "optional.hpp"
 #include "utility.hpp"
 #include "variant.hpp"

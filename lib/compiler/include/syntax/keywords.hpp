@@ -138,8 +138,8 @@ constexpr auto ALL_PRIMITIVES = std::array{
 };
 
 constexpr auto ALL_BUILTINS = [] {
-    using namespace keywords;
-    auto all_builtins = std::array{
+    namespace builtins = keywords::builtins;
+    auto all_builtins  = std::array{
         builtins::TYPEOF,
         builtins::SIZEOF,
         builtins::ALIGNOF,

@@ -1,6 +1,5 @@
 #pragma once
 
-#include <span>
 #include <vector>
 
 #include "ast/expressions/type.hpp"
@@ -37,10 +36,10 @@ class UnionExpression : public ExprBase<UnionExpression> {
     static constexpr auto KIND = NodeKind::UNION_EXPRESSION;
 
   public:
-    MAKE_ITERATOR(Fields, std::vector<UnionField>, fields_)
+    using Fields = std::vector<UnionField>;
 
   public:
-    UnionExpression(const syntax::Token& start_token, Fields fields) noexcept;
+    UnionExpression(const syntax::Token& start_token, Fields fields, Members members) noexcept;
     ~UnionExpression() override;
 
     MAKE_MOVE_CONSTRUCTABLE_ONLY(UnionExpression)
@@ -50,12 +49,15 @@ class UnionExpression : public ExprBase<UnionExpression> {
         -> Expected<mem::Box<Expression>, syntax::ParserDiagnostic>;
 
     MAKE_GETTER(fields, std::span<const UnionField>)
+    [[nodiscard]] auto has_members() const noexcept -> bool { return !members_.empty(); }
+    MAKE_GETTER(members, MembersView)
 
   protected:
     auto is_equal(const Node& other) const noexcept -> bool override;
 
   private:
-    Fields fields_;
+    Fields  fields_;
+    Members members_;
 };
 
 } // namespace porpoise::ast

@@ -96,13 +96,8 @@ auto Parser::poll_peek_precedence() const noexcept -> std::pair<Precedence, Opti
 }
 
 auto Parser::parse_statement() -> Expected<mem::Box<ast::Statement>, ParserDiagnostic> {
+    if (current_token_.is_decl_token()) { return ast::DeclStatement::parse(*this); }
     switch (current_token_.type) {
-    case TokenType::VAR:
-    case TokenType::CONST:
-    case TokenType::CONSTEXPR:
-    case TokenType::PUBLIC:
-    case TokenType::EXTERN:
-    case TokenType::EXPORT:     return ast::DeclStatement::parse(*this);
     case TokenType::BREAK:
     case TokenType::RETURN:
     case TokenType::CONTINUE:   return ast::JumpStatement::parse(*this);
@@ -144,11 +139,10 @@ auto Parser::parse_expression(Precedence precedence)
 
 [[nodiscard]] auto Parser::parse_restricted_statement(ParserError error)
     -> Expected<mem::Box<ast::Statement>, ParserDiagnostic> {
-    using namespace ast;
     auto clause = TRY(parse_statement());
 
     // The clause can only be a jump, block, or expression statement
-    if (!clause->any<ExpressionStatement, JumpStatement, BlockStatement>()) {
+    if (!clause->any<ast::ExpressionStatement, ast::JumpStatement, ast::BlockStatement>()) {
         return make_parser_unexpected(error, clause->get_token());
     }
     return clause;
@@ -162,6 +156,25 @@ auto Parser::parse_expression(Precedence precedence)
         return TRY(parse_restricted_statement(error));
     }
     return std::nullopt;
+}
+
+auto Parser::parse_member_decls(ast::MemberValidator validator)
+    -> Expected<ast::Members, ParserDiagnostic> {
+    ast::Members members;
+    while (!peek_token_is(syntax::TokenType::RBRACE) && !peek_token_is(syntax::TokenType::END)) {
+        advance();
+        auto member = TRY(parse_statement());
+        if (!member->is<ast::DeclStatement>()) {
+            return make_parser_unexpected(syntax::ParserError::INVALID_MEMBER, member->get_token());
+        }
+
+        // Check the decl against the validator if provided
+        if (validator && !validator(ast::Node::as<ast::DeclStatement>(*member))) {
+            return make_parser_unexpected(syntax::ParserError::INVALID_MEMBER, member->get_token());
+        }
+        members.emplace_back(ast::Node::downcast<ast::DeclStatement>(std::move(member)));
+    }
+    return members;
 }
 
 using PrefixPair          = std::pair<TokenType, Parser::PrefixFn>;
@@ -206,8 +219,8 @@ constexpr auto PREFIX_FNS = [] {
          i <= std::to_underlying(TokenType::UZINT_16);
          ++i, ++cursor) {
         const auto tt = static_cast<TokenType>(i);
-        using namespace token_type;
-        switch (to_int_category(tt)) {
+        using token_type::IntegerCategory;
+        switch (token_type::to_int_category(tt)) {
         case IntegerCategory::SIGNED_BASE:
             int_prefixes[cursor] = {tt, ast::I32Expression::parse};
             break;
@@ -215,7 +228,7 @@ constexpr auto PREFIX_FNS = [] {
             int_prefixes[cursor] = {tt, ast::I64Expression::parse};
             break;
         case IntegerCategory::SIGNED_SIZE:
-            int_prefixes[cursor] = {tt, ast::ISizeIntegerExpression::parse};
+            int_prefixes[cursor] = {tt, ast::ISizeExpression::parse};
             break;
         case IntegerCategory::UNSIGNED_BASE:
             int_prefixes[cursor] = {tt, ast::U32Expression::parse};
@@ -224,7 +237,7 @@ constexpr auto PREFIX_FNS = [] {
             int_prefixes[cursor] = {tt, ast::U64Expression::parse};
             break;
         case IntegerCategory::UNSIGNED_SIZE:
-            int_prefixes[cursor] = {tt, ast::USizeIntegerExpression::parse};
+            int_prefixes[cursor] = {tt, ast::USizeExpression::parse};
             break;
         }
     }
@@ -283,6 +296,7 @@ constexpr auto INFIX_FNS = [] {
         {TokenType::DOT_DOT_EQ, ast::RangeExpression::parse},
         {TokenType::LPAREN, ast::CallExpression::parse},
         {TokenType::LBRACKET, ast::IndexExpression::parse},
+        {TokenType::LBRACE, ast::InitializerExpression::parse},
         {TokenType::ASSIGN, ast::AssignmentExpression::parse},
         {TokenType::PLUS_ASSIGN, ast::AssignmentExpression::parse},
         {TokenType::MINUS_ASSIGN, ast::AssignmentExpression::parse},

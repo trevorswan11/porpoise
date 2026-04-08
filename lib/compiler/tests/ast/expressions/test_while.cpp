@@ -2,11 +2,6 @@
 
 #include "helpers/ast.hpp"
 
-#include "ast/expressions/infix.hpp"
-#include "ast/expressions/primitive.hpp"
-#include "ast/expressions/while.hpp"
-#include "ast/statements/jump.hpp"
-
 namespace porpoise::tests {
 
 namespace keywords = syntax::keywords;
@@ -28,12 +23,10 @@ TEST_CASE("While with continuation") {
         ast::WhileLoopExpression{
             syntax::Token{keywords::WHILE},
             mem::make_box<ast::BoolExpression>(syntax::Token{keywords::TRUE}, true),
-            mem::make_box<ast::AssignmentExpression>(
-                syntax::Token{syntax::TokenType::IDENT, "i"},
-                helpers::make_ident("i"),
-                syntax::TokenType::PLUS_ASSIGN,
-                mem::make_box<ast::I32Expression>(syntax::Token{syntax::TokenType::INT_10, "1"},
-                                                  1)),
+            mem::make_box<ast::AssignmentExpression>(syntax::Token{syntax::TokenType::IDENT, "i"},
+                                                     helpers::make_ident("i"),
+                                                     syntax::TokenType::PLUS_ASSIGN,
+                                                     helpers::make_number<ast::I32Expression>("1")),
             helpers::make_expr_block_stmt(helpers::ident_from("a")),
             {}});
 }
@@ -56,12 +49,10 @@ TEST_CASE("Full while loop") {
         ast::WhileLoopExpression{
             syntax::Token{keywords::WHILE},
             mem::make_box<ast::BoolExpression>(syntax::Token{keywords::TRUE}, true),
-            mem::make_box<ast::AssignmentExpression>(
-                syntax::Token{syntax::TokenType::IDENT, "i"},
-                helpers::make_ident("i"),
-                syntax::TokenType::PLUS_ASSIGN,
-                mem::make_box<ast::I32Expression>(syntax::Token{syntax::TokenType::INT_10, "1"},
-                                                  1)),
+            mem::make_box<ast::AssignmentExpression>(syntax::Token{syntax::TokenType::IDENT, "i"},
+                                                     helpers::make_ident("i"),
+                                                     syntax::TokenType::PLUS_ASSIGN,
+                                                     helpers::make_number<ast::I32Expression>("1")),
             helpers::make_expr_block_stmt(helpers::ident_from("a")),
             mem::make_box<ast::JumpStatement>(syntax::Token{keywords::RETURN},
                                               helpers::make_ident("b"))});
@@ -73,12 +64,10 @@ TEST_CASE("Empty while with continuation") {
         ast::WhileLoopExpression{
             syntax::Token{keywords::WHILE},
             mem::make_box<ast::BoolExpression>(syntax::Token{keywords::TRUE}, true),
-            mem::make_box<ast::AssignmentExpression>(
-                syntax::Token{syntax::TokenType::IDENT, "i"},
-                helpers::make_ident("i"),
-                syntax::TokenType::PLUS_ASSIGN,
-                mem::make_box<ast::I32Expression>(syntax::Token{syntax::TokenType::INT_10, "1"},
-                                                  1)),
+            mem::make_box<ast::AssignmentExpression>(syntax::Token{syntax::TokenType::IDENT, "i"},
+                                                     helpers::make_ident("i"),
+                                                     syntax::TokenType::PLUS_ASSIGN,
+                                                     helpers::make_number<ast::I32Expression>("1")),
             helpers::make_block_stmt(),
             {}});
 }
@@ -106,10 +95,10 @@ TEST_CASE("Unclosed while body") {
 }
 
 TEST_CASE("Unclosed while condition") {
-    helpers::test_parser_fail(
-        "while (true {};",
-        syntax::ParserDiagnostic{
-            "Expected token RPAREN, found LBRACE", syntax::ParserError::UNEXPECTED_TOKEN, 1, 13});
+    helpers::test_parser_fail("while (true {};",
+                              syntax::ParserDiagnostic{"Expected token RPAREN, found SEMICOLON",
+                                                       syntax::ParserError::UNEXPECTED_TOKEN,
+                                                       std::pair{1uz, 15uz}});
 }
 
 TEST_CASE("Malformed while continuation") {
@@ -117,10 +106,10 @@ TEST_CASE("Malformed while continuation") {
         "while (true) : () {};",
         syntax::ParserDiagnostic{syntax::ParserError::EMPTY_WHILE_CONTINUATION, 1, 12});
 
-    helpers::test_parser_fail(
-        "while (true) : (i += 1 {};",
-        syntax::ParserDiagnostic{
-            "Expected token RPAREN, found LBRACE", syntax::ParserError::UNEXPECTED_TOKEN, 1, 24});
+    helpers::test_parser_fail("while (true) : (i += 1 {};",
+                              syntax::ParserDiagnostic{"Expected token RPAREN, found SEMICOLON",
+                                                       syntax::ParserError::UNEXPECTED_TOKEN,
+                                                       std::pair{1uz, 26uz}});
 }
 
 TEST_CASE("Illegal while-else clause") {

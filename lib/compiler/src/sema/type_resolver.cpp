@@ -45,6 +45,10 @@ auto TypeResolver::visit(const ast::DotExpression&) -> void {}
 
 auto TypeResolver::visit(const ast::RangeExpression&) -> void {}
 
+auto TypeResolver::visit(const ast::Initializer&) -> void {}
+
+auto TypeResolver::visit(const ast::InitializerExpression&) -> void {}
+
 auto TypeResolver::visit(const ast::MatchArm&) -> void {}
 
 auto TypeResolver::visit(const ast::MatchExpression&) -> void {}
@@ -53,9 +57,9 @@ auto TypeResolver::visit(const ast::ReferenceExpression&) -> void {}
 
 auto TypeResolver::visit(const ast::DereferenceExpression&) -> void {}
 
-auto TypeResolver::visit(const ast::ImplicitAccessExpression&) -> void {}
-
 auto TypeResolver::visit(const ast::UnaryExpression&) -> void {}
+
+auto TypeResolver::visit(const ast::ImplicitAccessExpression&) -> void {}
 
 auto TypeResolver::visit(const ast::StringExpression&) -> void {}
 
@@ -66,10 +70,10 @@ auto TypeResolver::visit(const ast::StringExpression&) -> void {}
 
 MAKE_BUILTIN_RESOLVER(I32Expression, INT)
 MAKE_BUILTIN_RESOLVER(I64Expression, LONG)
-MAKE_BUILTIN_RESOLVER(ISizeIntegerExpression, SIZE)
+MAKE_BUILTIN_RESOLVER(ISizeExpression, SIZE)
 MAKE_BUILTIN_RESOLVER(U32Expression, UINT)
 MAKE_BUILTIN_RESOLVER(U64Expression, ULONG)
-MAKE_BUILTIN_RESOLVER(USizeIntegerExpression, USIZE)
+MAKE_BUILTIN_RESOLVER(USizeExpression, USIZE)
 MAKE_BUILTIN_RESOLVER(U8Expression, BYTE)
 MAKE_BUILTIN_RESOLVER(BoolExpression, BOOL)
 MAKE_BUILTIN_RESOLVER(F32Expression, FLOAT)

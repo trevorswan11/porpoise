@@ -3,6 +3,7 @@
 #include "ast/expressions/enum.hpp"
 
 #include "ast/expressions/identifier.hpp"
+#include "ast/statements/declaration.hpp"
 #include "ast/visitor.hpp"
 
 namespace porpoise::ast {
@@ -24,9 +25,10 @@ auto Enumeration::is_equal(const Enumeration& other) const noexcept -> bool {
 
 EnumExpression::EnumExpression(const syntax::Token&                     start_token,
                                Optional<mem::Box<IdentifierExpression>> underlying,
-                               Enumerations                             enumerations) noexcept
+                               Enumerations                             enumerations,
+                               Members                                  members) noexcept
     : ExprBase{start_token}, underlying_{std::move(underlying)},
-      enumerations_{std::move(enumerations)} {}
+      enumerations_{std::move(enumerations)}, members_{std::move(members)} {}
 EnumExpression::~EnumExpression() = default;
 
 auto EnumExpression::accept(Visitor& v) const -> void { v.visit(*this); }
@@ -41,17 +43,13 @@ auto EnumExpression::parse(syntax::Parser& parser)
         underlying.emplace(
             downcast<IdentifierExpression>(TRY(IdentifierExpression::parse(parser))));
     }
-
     TRY(parser.expect_peek(syntax::TokenType::LBRACE));
-    if (parser.peek_token_is(syntax::TokenType::RBRACE)) {
-        const auto opening = parser.current_token();
-        parser.advance();
-        return make_parser_unexpected(syntax::ParserError::ENUM_MISSING_VARIANTS, opening);
-    }
 
-    Enumerations enumeration;
+    Enumerations enumerations;
     while (!parser.peek_token_is(syntax::TokenType::RBRACE) &&
            !parser.peek_token_is(syntax::TokenType::END)) {
+        if (parser.peek_token().is_decl_token()) { break; }
+
         TRY(parser.expect_peek(syntax::TokenType::IDENT));
         auto ident = downcast<IdentifierExpression>(TRY(IdentifierExpression::parse(parser)));
 
@@ -60,22 +58,31 @@ auto EnumExpression::parse(syntax::Parser& parser)
             parser.advance(2);
             value.emplace(TRY(parser.parse_expression()));
         }
-        enumeration.emplace_back(std::move(ident), std::move(value));
+        enumerations.emplace_back(std::move(ident), std::move(value));
 
-        if (!parser.peek_token_is(syntax::TokenType::RBRACE)) {
-            TRY(parser.expect_peek(syntax::TokenType::COMMA));
-        }
+        // No comma means that its the end or that there is a decl list starting
+        if (!parser.peek_token_is(syntax::TokenType::COMMA)) { break; }
+        parser.advance();
     }
 
+    auto members = TRY(parser.parse_member_decls(validate_non_struct_member));
     TRY(parser.expect_peek(syntax::TokenType::RBRACE));
+
+    // Validate here so that there aren't 3 errors spawning from an empty enum with decls
+    if (enumerations.empty()) {
+        return make_parser_unexpected(syntax::ParserError::EMPTY_ENUM, start_token);
+    }
     return mem::make_box<EnumExpression>(
-        start_token, std::move(underlying), std::move(enumeration));
+        start_token, std::move(underlying), std::move(enumerations), std::move(members));
 }
 
 auto EnumExpression::is_equal(const Node& other) const noexcept -> bool {
-    const auto& casted = as<EnumExpression>(other);
+    const auto& casted          = as<EnumExpression>(other);
+    const auto  enumerations_eq = std::ranges::equal(enumerations_, casted.enumerations_);
+    const auto  members_eq      = std::ranges::equal(
+        members_, casted.members_, [](const auto& a, const auto& b) { return *a == *b; });
     return optional::unsafe_eq<IdentifierExpression>(underlying_, casted.underlying_) &&
-           std::ranges::equal(enumerations_, casted.enumerations_);
+           enumerations_eq && members_eq;
 }
 
 } // namespace porpoise::ast

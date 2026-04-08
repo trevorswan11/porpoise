@@ -2,9 +2,12 @@
 
 #include "ast/expressions/array.hpp"
 
+#include "ast/expressions/enum.hpp"
 #include "ast/expressions/function.hpp"
 #include "ast/expressions/identifier.hpp"
 #include "ast/expressions/primitive.hpp"
+#include "ast/expressions/struct.hpp" // IWYU pragma: keep
+#include "ast/expressions/union.hpp"
 #include "ast/visitor.hpp"
 
 namespace porpoise::ast {
@@ -53,8 +56,8 @@ auto ArrayExpression::parse(syntax::Parser& parser)
     TRY(parser.expect_peek(syntax::TokenType::RBRACE));
     if (size) {
         const auto& size_expr = *(*size);
-        if (size_expr.is<USizeIntegerExpression>()) {
-            const auto& explicit_size = as<USizeIntegerExpression>(size_expr);
+        if (size_expr.is<USizeExpression>()) {
+            const auto& explicit_size = as<USizeExpression>(size_expr);
             const auto& size_token    = size_expr.get_token();
 
             // Enforce full initialization

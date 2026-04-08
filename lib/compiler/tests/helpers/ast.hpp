@@ -9,13 +9,10 @@
 
 #include "helpers/common.hpp"
 
-#include "ast/expressions/function.hpp"
-#include "ast/expressions/identifier.hpp"
-#include "ast/statements/block.hpp"
-#include "ast/statements/declaration.hpp"
-#include "ast/statements/expression.hpp"
+#include "ast/ast.hpp"
 
 #include "syntax/keywords.hpp"
+#include "syntax/operators.hpp" // IWYU pragma: export
 
 namespace porpoise::tests::helpers {
 
@@ -141,6 +138,20 @@ template <typename... Ds>
     requires(std::same_as<Ds, ast::DeclStatement> && ...)
 auto make_decls(Ds&&... decls) -> std::vector<mem::Box<ast::DeclStatement>> {
     return make_vector<mem::Box<ast::DeclStatement>>(mem::make_box<Ds>(std::forward<Ds>(decls))...);
+}
+
+template <ast::PrimitiveNode N> auto number_from(std::string_view str) noexcept -> N {
+    syntax::Lexer l{str};
+    const auto    tok = l.advance();
+
+    CHECK(syntax::token_type::is_number(tok.type));
+    auto value = ast::parse_primitive_value<typename N::value_type, false>(str, tok.type);
+    CHECK(value);
+    return N{syntax::Token{tok.type, str}, *value};
+}
+
+template <ast::PrimitiveNode Num> auto make_number(std::string_view str) noexcept -> mem::Box<Num> {
+    return mem::make_box<Num>(number_from<Num>(str));
 }
 
 namespace type_modifiers {

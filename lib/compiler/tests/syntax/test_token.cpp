@@ -8,15 +8,16 @@
 
 namespace porpoise::tests {
 
-using namespace syntax;
+using syntax::TokenError;
+using syntax::TokenType;
 
 namespace helpers {
 
 auto test_token_promotion(std::string_view                           input,
                           TokenType                                  type,
                           std::variant<std::string_view, TokenError> expected) -> void {
-    const Token tok{type, input, 0, 0};
-    const auto  promoted = tok.promote();
+    const syntax::Token tok{type, input, 0, 0};
+    const auto          promoted = tok.promote();
 
     std::visit(Overloaded{[&promoted](const std::string_view& string) {
                               CHECK(promoted);
@@ -24,7 +25,7 @@ auto test_token_promotion(std::string_view                           input,
                           },
                           [&promoted](const TokenError& error) {
                               CHECK_FALSE(promoted);
-                              CHECK(promoted.error() == TokenDiagnostic{error, 0, 0});
+                              CHECK(promoted.error() == syntax::TokenDiagnostic{error, 0, 0});
                           }},
                expected);
 }
@@ -61,7 +62,8 @@ TEST_CASE("Promotion of multiline literals") {
 
 TEST_CASE("Token formatting") {
     const auto expected{R"(STRING("Hello, World!") [1, 24])"};
-    const auto actual = fmt::format("{}", Token{TokenType::STRING, R"("Hello, World!")", 1, 24});
+    const auto actual =
+        fmt::format("{}", syntax::Token{TokenType::STRING, R"("Hello, World!")", 1, 24});
     CHECK(expected == actual);
 }
 

@@ -2,9 +2,6 @@
 
 #include "helpers/ast.hpp"
 
-#include "ast/expressions/primitive.hpp"
-#include "ast/statements/using.hpp"
-
 namespace porpoise::tests {
 
 namespace keywords = syntax::keywords;
@@ -19,8 +16,7 @@ TEST_CASE("Well formed using statement") {
             ast::ExplicitType{
                 mods::REF,
                 ast::ExplicitArrayType{
-                    mem::make_box<ast::USizeIntegerExpression>(
-                        syntax::Token{syntax::TokenType::UZINT_16, "0x2uz"}, 0x2uz),
+                    helpers::make_number<ast::USizeExpression>("0x2uz"),
                     false,
                     mem::make_box<ast::ExplicitType>(
                         mods::BASE,
@@ -28,6 +24,29 @@ TEST_CASE("Well formed using statement") {
                                                false,
                                                mem::make_box<ast::ExplicitType>(
                                                    mods::PTR, helpers::make_ident("E"))})}}});
+}
+
+TEST_CASE("User defined type alias") {
+    helpers::test_stmt(
+        "using U = union { a: enum { A } };",
+        ast::UsingStatement{
+            syntax::Token{keywords::USING},
+            helpers::make_ident("U"),
+
+            ast::ExplicitType{
+                mods::BASE,
+                mem::make_box<ast::UnionExpression>(
+                    syntax::Token{keywords::UNION},
+                    helpers::make_vector<ast::UnionField>(ast::UnionField{
+                        helpers::make_ident("a"),
+                        ast::ExplicitType{mods::BASE,
+                                          mem::make_box<ast::EnumExpression>(
+                                              syntax::Token{keywords::ENUM},
+                                              std::nullopt,
+                                              helpers::make_vector<ast::Enumeration>(
+                                                  ast::Enumeration{helpers::make_ident("A"), {}}),
+                                              helpers::make_decls())}}),
+                    helpers::make_decls())}});
 }
 
 TEST_CASE("Missing alias") {

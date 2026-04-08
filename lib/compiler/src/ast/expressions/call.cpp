@@ -2,9 +2,12 @@
 
 #include "ast/expressions/call.hpp"
 
+#include "ast/expressions/enum.hpp" // IWYU pragma: keep
 #include "ast/expressions/function.hpp"
 #include "ast/expressions/identifier.hpp" // IWYU pragma: keep
+#include "ast/expressions/struct.hpp"     // IWYU pragma: keep
 #include "ast/expressions/type.hpp"
+#include "ast/expressions/union.hpp" // IWYU pragma: keep
 #include "ast/visitor.hpp"
 
 namespace porpoise::ast {

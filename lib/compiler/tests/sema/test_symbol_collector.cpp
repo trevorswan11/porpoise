@@ -3,11 +3,6 @@
 #include "helpers/ast.hpp"
 #include "helpers/sema.hpp"
 
-#include "syntax/keywords.hpp"
-#include "syntax/operators.hpp"
-
-#include "ast/ast.hpp"
-
 namespace porpoise::tests {
 
 namespace keywords  = syntax::keywords;
@@ -24,15 +19,23 @@ auto test_illegal_top_level_stmt(std::string_view input, std::string_view string
                          std::pair{1uz, 1uz}});
 }
 
-template <typename SymbolicMaker>
-auto test_hollow_symbol(sema::Analyzer& analyzer, SymbolicMaker&& maker) -> void {
+template <typename SymbolicMaker> struct HollowSymbol {
+    std::string_view name;
+    SymbolicMaker    maker;
+};
+
+// Shallowly checks the symbols in the inner scope of a statement
+template <typename... HollowSymbols>
+auto test_hollow_symbols(sema::Analyzer& analyzer, HollowSymbols&&... symbol) -> void {
     auto& registry = analyzer.get_registry();
     CHECK(registry.size() == 2);
-    CHECK(registry.get(1).size() == 1);
+    CHECK(registry.get(1).size() == sizeof...(symbol));
 
-    const auto         expected_decl = maker();
-    const sema::Symbol expected{"b", &expected_decl};
-    CHECK(expected == registry.get_from(1, "b"));
+    (..., [&] {
+        const auto         expected_decl = symbol.maker();
+        const sema::Symbol expected{symbol.name, &expected_decl};
+        CHECK(expected == registry.get_from(1, symbol.name));
+    }());
 }
 
 } // namespace helpers
@@ -77,8 +80,7 @@ TEST_CASE("Holistic language examples") {
                                                            mods::BASE,
                                                            helpers::make_ident("Integer"),
                                                        }),
-                    mem::make_box<ast::I32Expression>(syntax::Token{syntax::TokenType::INT_10, "1"},
-                                                      1),
+                    helpers::make_number<ast::I32Expression>("1"),
                     ast::DeclModifiers::CONSTANT,
                 }});
     };
@@ -101,8 +103,7 @@ TEST_CASE("Import aliases correctly used") {
                 syntax::Token{keywords::CONST},
                 helpers::make_ident("a"),
                 mem::make_box<ast::TypeExpression>(syntax::Token{operators::WALRUS}, std::nullopt),
-                mem::make_box<ast::I32Expression>(syntax::Token{syntax::TokenType::INT_10, "22"},
-                                                  22),
+                helpers::make_number<ast::I32Expression>("22"),
                 ast::DeclModifiers::CONSTANT,
             }});
 }
@@ -137,7 +138,7 @@ TEST_CASE("Struct hollow types") {
             },
             sema::types::Key{sema::TypeKind::STRUCT, false, 1}});
 
-    helpers::test_hollow_symbol(analyzer, struct_decl);
+    helpers::test_hollow_symbols(analyzer, helpers::HollowSymbol{"b", struct_decl});
 }
 
 TEST_CASE("Enum hollow types") {
@@ -155,11 +156,46 @@ TEST_CASE("Enum hollow types") {
                 mem::make_box<ast::EnumExpression>(
                     syntax::Token{keywords::ENUM},
                     std::nullopt,
-                    helpers::make_vector<ast::Enumeration>(enumeration())),
+                    helpers::make_vector<ast::Enumeration>(enumeration()),
+                    helpers::make_decls()),
                 ast::DeclModifiers::CONSTANT,
             },
             sema::types::Key{sema::TypeKind::ENUM, false, 1}});
-    helpers::test_hollow_symbol(analyzer, enumeration);
+    helpers::test_hollow_symbols(analyzer, helpers::HollowSymbol{"b", enumeration});
+}
+
+TEST_CASE("Enum hollow types with member") {
+    const auto enumeration = [] { return ast::Enumeration{helpers::make_ident("b"), {}}; };
+    const auto member      = [] {
+        return ast::DeclStatement{
+            syntax::Token{keywords::STATIC},
+            helpers::make_ident("c"),
+            mem::make_box<ast::TypeExpression>(syntax::Token{operators::WALRUS}, std::nullopt),
+            helpers::make_number<ast::I32Expression>("2"),
+            ast::DeclModifiers::STATIC | ast::DeclModifiers::CONSTANT,
+        };
+    };
+
+    auto analyzer = helpers::test_collector(
+        "const a := enum {b, static const c := 2; };",
+        false,
+        std::tuple{
+            "a",
+            ast::DeclStatement{
+                syntax::Token{keywords::CONST},
+                helpers::make_ident("a"),
+                mem::make_box<ast::TypeExpression>(syntax::Token{operators::WALRUS}, std::nullopt),
+                mem::make_box<ast::EnumExpression>(
+                    syntax::Token{keywords::ENUM},
+                    std::nullopt,
+                    helpers::make_vector<ast::Enumeration>(enumeration()),
+                    helpers::make_decls(member())),
+                ast::DeclModifiers::CONSTANT,
+            },
+            sema::types::Key{sema::TypeKind::ENUM, false, 1}});
+
+    helpers::test_hollow_symbols(
+        analyzer, helpers::HollowSymbol{"b", enumeration}, helpers::HollowSymbol{"c", member});
 }
 
 TEST_CASE("Union hollow types") {
@@ -178,11 +214,48 @@ TEST_CASE("Union hollow types") {
                 helpers::make_ident("a"),
                 mem::make_box<ast::TypeExpression>(syntax::Token{operators::WALRUS}, std::nullopt),
                 mem::make_box<ast::UnionExpression>(syntax::Token{keywords::UNION},
-                                                    helpers::make_vector<ast::UnionField>(field())),
+                                                    helpers::make_vector<ast::UnionField>(field()),
+                                                    helpers::make_decls()),
                 ast::DeclModifiers::CONSTANT,
             },
             sema::types::Key{sema::TypeKind::UNION, false, 1}});
-    helpers::test_hollow_symbol(analyzer, field);
+    helpers::test_hollow_symbols(analyzer, helpers::HollowSymbol{"b", field});
+}
+
+TEST_CASE("Union hollow types with member") {
+    const auto field = [] {
+        return ast::UnionField{helpers::make_ident("b"),
+                               ast::ExplicitType{mods::BASE, helpers::make_ident("i32")}};
+    };
+
+    const auto member = [] {
+        return ast::DeclStatement{
+            syntax::Token{keywords::STATIC},
+            helpers::make_ident("c"),
+            mem::make_box<ast::TypeExpression>(syntax::Token{operators::WALRUS}, std::nullopt),
+            helpers::make_number<ast::I32Expression>("2"),
+            ast::DeclModifiers::STATIC | ast::DeclModifiers::CONSTANT,
+        };
+    };
+
+    auto analyzer = helpers::test_collector(
+        "const a := union { b: i32, static const c := 2; };",
+        false,
+        std::tuple{
+            "a",
+            ast::DeclStatement{
+                syntax::Token{keywords::CONST},
+                helpers::make_ident("a"),
+                mem::make_box<ast::TypeExpression>(syntax::Token{operators::WALRUS}, std::nullopt),
+                mem::make_box<ast::UnionExpression>(syntax::Token{keywords::UNION},
+                                                    helpers::make_vector<ast::UnionField>(field()),
+                                                    helpers::make_decls(member())),
+                ast::DeclModifiers::CONSTANT,
+            },
+            sema::types::Key{sema::TypeKind::UNION, false, 1}});
+
+    helpers::test_hollow_symbols(
+        analyzer, helpers::HollowSymbol{"b", field}, helpers::HollowSymbol{"c", member});
 }
 
 TEST_CASE("Function hollow types") {
@@ -220,7 +293,7 @@ TEST_CASE("Function hollow types") {
         std::tuple{"c",
                    ast::FunctionParameter{helpers::make_ident("c"),
                                           {mods::BASE, helpers::make_ident("type")}}});
-    helpers::test_hollow_symbol(analyzer, function_block_decl);
+    helpers::test_hollow_symbols(analyzer, helpers::HollowSymbol{"b", function_block_decl});
 }
 
 TEST_CASE("Duplicate module declaration") {
@@ -268,10 +341,22 @@ TEST_CASE("Shadowing declarations") {
                          std::pair{1uz, 18uz}});
 
     helpers::test_collector_fail(
+        "const a := enum {b static const a := 2; };",
+        sema::Diagnostic{"Attempt to shadow identifier 'a'. Previous declaration here: [1, 1]",
+                         sema::Error::SHADOWING_DECLARATION,
+                         std::pair{1uz, 20uz}});
+
+    helpers::test_collector_fail(
         "const a := union { a: i32 };",
         sema::Diagnostic{"Attempt to shadow identifier 'a'. Previous declaration here: [1, 1]",
                          sema::Error::SHADOWING_DECLARATION,
                          std::pair{1uz, 20uz}});
+
+    helpers::test_collector_fail(
+        "const a := union { b: i32 static const a := 2; };",
+        sema::Diagnostic{"Attempt to shadow identifier 'a'. Previous declaration here: [1, 1]",
+                         sema::Error::SHADOWING_DECLARATION,
+                         std::pair{1uz, 27uz}});
 }
 
 namespace {

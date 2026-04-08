@@ -2,19 +2,16 @@
 
 #include "helpers/ast.hpp"
 
-#include "ast/expressions/primitive.hpp"
-#include "ast/statements/defer.hpp"
-
 namespace porpoise::tests {
 
 namespace keywords = syntax::keywords;
 
 TEST_CASE("Correct defers") {
     const syntax::Token defer{keywords::DEFER};
-    helpers::test_stmt("defer 3;",
-                       ast::DeferStatement{defer,
-                                           helpers::make_expr_stmt(ast::I32Expression{
-                                               syntax::Token{syntax::TokenType::INT_10, "3"}, 3})});
+    helpers::test_stmt(
+        "defer 3;",
+        ast::DeferStatement{
+            defer, helpers::make_expr_stmt(helpers::number_from<ast::I32Expression>("3"))});
 
     helpers::test_stmt(
         "defer { a; };",

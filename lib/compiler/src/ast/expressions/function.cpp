@@ -2,9 +2,12 @@
 
 #include "ast/expressions/function.hpp"
 
+#include "ast/expressions/enum.hpp"
 #include "ast/expressions/identifier.hpp"
 #include "ast/expressions/primitive.hpp" // IWYU pragma: keep
+#include "ast/expressions/struct.hpp"
 #include "ast/expressions/type.hpp"
+#include "ast/expressions/union.hpp"
 #include "ast/statements/block.hpp"
 #include "ast/visitor.hpp"
 
@@ -148,12 +151,8 @@ auto FunctionExpression::parse(syntax::Parser& parser)
 
     // If there is opening brace then just return without a body
     if (!parser.peek_token_is(syntax::TokenType::LBRACE)) {
-        return mem::make_box<FunctionExpression>(start_token,
-                                                 std::move(self),
-                                                 std::move(parameters),
-                                                 variadic,
-                                                 std::move(return_type),
-                                                 std::nullopt);
+        return make_parser_unexpected(syntax::ParserError::FN_DECLARATION_WITHOUT_BODY,
+                                      start_token);
     }
 
     // Otherwise there must be a well-formed block

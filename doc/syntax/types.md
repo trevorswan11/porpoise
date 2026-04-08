@@ -63,6 +63,26 @@ a.b;   // Syntactic sugar
 - You can get the size of a type (in bytes) by using the `@sizeOf` builtin
 - You can get the align of a type by using the `@alignOf` builtin
 
+## User-Defined Types
+- User defined types (enums, unions, and structs) can be declared inline (as an explicit type) or out of line (as an expression)
+- It may be helpful to return a user-defined type from a function (e.g. a generic type like an array list)
+    - In this case, the return type should be of type `type`
+- Generated types are done at compile time and functions which wish to return a type must have compile-time known parameters like types or integral constants
+```porpoise
+const Hand := union {
+    card: bool,
+    pen: i32,
+    shoe: void,
+    deck: struct {
+        var hearts: [12uz]Card;
+        var diamonds: [12uz]Card;
+        var clubs: [12uz]Card;
+        var spades: [12uz]Card;
+        var has_jokers: bool;
+    },
+};
+```
+
 ## Primitive Types
 - `i32`: A 32-bit signed integer, represented by a standalone number
 - `i64`: A 64-bit signed integer, represented by a `l` suffixed number

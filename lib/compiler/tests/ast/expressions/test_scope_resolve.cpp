@@ -2,8 +2,6 @@
 
 #include "helpers/ast.hpp"
 
-#include "ast/expressions/scope_resolve.hpp"
-
 namespace porpoise::tests {
 
 TEST_CASE("Basic scope") {

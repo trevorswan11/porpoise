@@ -9,6 +9,7 @@
 namespace porpoise::ast {
 
 class IdentifierExpression;
+class DeclStatement;
 
 class Enumeration {
   public:
@@ -36,12 +37,13 @@ class EnumExpression : public ExprBase<EnumExpression> {
     static constexpr auto KIND = NodeKind::ENUM_EXPRESSION;
 
   public:
-    MAKE_ITERATOR(Enumerations, std::vector<Enumeration>, enumerations_)
+    using Enumerations = std::vector<Enumeration>;
 
   public:
     EnumExpression(const syntax::Token&                     start_token,
                    Optional<mem::Box<IdentifierExpression>> underlying,
-                   Enumerations                             enumerations) noexcept;
+                   Enumerations                             enumerations,
+                   Members                                  members) noexcept;
     ~EnumExpression() override;
 
     MAKE_MOVE_CONSTRUCTABLE_ONLY(EnumExpression)
@@ -52,6 +54,8 @@ class EnumExpression : public ExprBase<EnumExpression> {
 
     MAKE_OPTIONAL_UNPACKER(underlying, IdentifierExpression, underlying_, **)
     MAKE_GETTER(enumerations, std::span<const Enumeration>)
+    [[nodiscard]] auto has_members() const noexcept -> bool { return !members_.empty(); }
+    MAKE_GETTER(members, MembersView)
 
   protected:
     auto is_equal(const Node& other) const noexcept -> bool override;
@@ -59,6 +63,7 @@ class EnumExpression : public ExprBase<EnumExpression> {
   private:
     Optional<mem::Box<IdentifierExpression>> underlying_;
     Enumerations                             enumerations_;
+    Members                                  members_;
 };
 
 } // namespace porpoise::ast

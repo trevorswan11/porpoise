@@ -285,6 +285,10 @@ constexpr auto is_int(TokenType tt) noexcept -> bool {
     return TokenType::INT_2 <= tt && tt <= TokenType::UZINT_16;
 }
 
+constexpr auto is_number(TokenType tt) noexcept -> bool {
+    return is_int(tt) || tt == TokenType::F32 || tt == TokenType::F64;
+}
+
 auto suffix_length(TokenType tt) noexcept -> usize;
 
 } // namespace token_type
@@ -309,8 +313,9 @@ struct Token {
 
     [[nodiscard]] auto is_at_start() const noexcept -> bool { return line == 0 && column == 0; }
     [[nodiscard]] auto promote() const -> Expected<std::string, TokenDiagnostic>;
-    auto               is_primitive() const noexcept -> bool;
-    auto               is_builtin() const noexcept -> bool;
+    [[nodiscard]] auto is_primitive() const noexcept -> bool;
+    [[nodiscard]] auto is_builtin() const noexcept -> bool;
+    [[nodiscard]] auto is_decl_token() const noexcept -> bool;
 
     // Check whether the token is an ident, primitive type, or builtin function.
     auto is_valid_ident() const noexcept -> bool;

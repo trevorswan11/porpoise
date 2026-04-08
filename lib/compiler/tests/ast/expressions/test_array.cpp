@@ -2,11 +2,6 @@
 
 #include "helpers/ast.hpp"
 
-#include "ast/expressions/array.hpp"
-#include "ast/expressions/function.hpp"
-#include "ast/expressions/primitive.hpp"
-#include "ast/expressions/type.hpp"
-
 namespace porpoise::tests {
 
 using Items = std::vector<mem::Box<ast::Expression>>;
@@ -27,18 +22,15 @@ TEST_CASE("Explicitly sized arrays") {
     helpers::test_expr_stmt(
         "[1uz]i32{2};",
         ast::ArrayExpression{rbracket,
-                             mem::make_box<ast::USizeIntegerExpression>(
-                                 syntax::Token{syntax::TokenType::UZINT_10, "1uz"}, 1),
+                             helpers::make_number<ast::USizeExpression>("1uz"),
                              ast::ExplicitType{mods::BASE, helpers::make_ident("i32")},
-                             helpers::make_items(ast::I32Expression{
-                                 syntax::Token{syntax::TokenType::INT_10, "2"}, 2})});
+                             helpers::make_items(helpers::number_from<ast::I32Expression>("2"))});
 
     helpers::test_expr_stmt(
         "[2uz]i32{A, B, };",
         ast::ArrayExpression{
             rbracket,
-            mem::make_box<ast::USizeIntegerExpression>(
-                syntax::Token{syntax::TokenType::UZINT_10, "2uz"}, 2),
+            helpers::make_number<ast::USizeExpression>("2uz"),
             ast::ExplicitType{mods::BASE, helpers::make_ident("i32")},
             helpers::make_items(helpers::ident_from("A"), helpers::ident_from("B"))});
 }

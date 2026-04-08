@@ -22,19 +22,21 @@ namespace porpoise::ast {
     X(BinaryExpression)          \
     X(DotExpression)             \
     X(RangeExpression)           \
+    X(Initializer)               \
+    X(InitializerExpression)     \
     X(MatchArm)                  \
     X(MatchExpression)           \
     X(ReferenceExpression)       \
     X(DereferenceExpression)     \
-    X(ImplicitAccessExpression)  \
     X(UnaryExpression)           \
+    X(ImplicitAccessExpression)  \
     X(StringExpression)          \
     X(I32Expression)             \
     X(I64Expression)             \
-    X(ISizeIntegerExpression)    \
+    X(ISizeExpression)           \
     X(U32Expression)             \
     X(U64Expression)             \
-    X(USizeIntegerExpression)    \
+    X(USizeExpression)           \
     X(U8Expression)              \
     X(F32Expression)             \
     X(F64Expression)             \

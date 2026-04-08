@@ -9,6 +9,8 @@
 
 namespace porpoise::ast {
 
+// cppcheck-suppress-begin duplInheritedMember
+
 template <typename Derived> class PrefixExpression : public ExprBase<Derived> {
   public:
     PrefixExpression(const syntax::Token& start_token, mem::Box<Expression> rhs) noexcept
@@ -17,7 +19,9 @@ template <typename Derived> class PrefixExpression : public ExprBase<Derived> {
     auto accept(Visitor& v) const noexcept -> void override { v.visit(Node::as<Derived>(*this)); }
 
     [[nodiscard]] static auto parse(syntax::Parser& parser)
-        -> Expected<mem::Box<Expression>, syntax::ParserDiagnostic> {
+        -> Expected<mem::Box<Expression>, syntax::ParserDiagnostic>
+        requires(!disable_default_parse<Derived>::value)
+    {
         const auto prefix_token = parser.current_token();
         if (parser.peek_token_is(syntax::TokenType::END)) {
             return make_parser_unexpected(syntax::ParserError::PREFIX_MISSING_OPERAND,
@@ -59,8 +63,23 @@ template <typename Derived> class PrefixExpression : public ExprBase<Derived> {
 DECLARE_PREFIX_EXPRESSION(UnaryExpression, NodeKind::UNARY_EXPRESSION)
 DECLARE_PREFIX_EXPRESSION(ReferenceExpression, NodeKind::REFERENCE_EXPRESSION)
 DECLARE_PREFIX_EXPRESSION(DereferenceExpression, NodeKind::DEREFERENCE_EXPRESSION)
-DECLARE_PREFIX_EXPRESSION(ImplicitAccessExpression, NodeKind::IMPLICIT_ACCESS_EXPRESSION)
 
 #undef DECLARE_PREFIX_EXPRESSION
+
+class ImplicitAccessExpression : public PrefixExpression<ImplicitAccessExpression> {
+  public:
+    static constexpr auto KIND = NodeKind::IMPLICIT_ACCESS_EXPRESSION;
+
+  public:
+    using PrefixExpression::PrefixExpression;
+
+    MAKE_MOVE_CONSTRUCTABLE_ONLY(ImplicitAccessExpression)
+
+    [[nodiscard]] static auto parse(syntax::Parser& parser)
+        -> Expected<mem::Box<Expression>, syntax::ParserDiagnostic>;
+};
+template <> struct disable_default_parse<ImplicitAccessExpression> : std::true_type {};
+
+// cppcheck-suppress-end duplInheritedMember
 
 } // namespace porpoise::ast

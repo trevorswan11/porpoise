@@ -23,10 +23,10 @@ auto StringExpression::parse(syntax::Parser& parser)
 
 auto I32Expression::accept(Visitor& v) const -> void { v.visit(*this); }
 auto I64Expression::accept(Visitor& v) const -> void { v.visit(*this); }
-auto ISizeIntegerExpression::accept(Visitor& v) const -> void { v.visit(*this); }
+auto ISizeExpression::accept(Visitor& v) const -> void { v.visit(*this); }
 auto U32Expression::accept(Visitor& v) const -> void { v.visit(*this); }
 auto U64Expression::accept(Visitor& v) const -> void { v.visit(*this); }
-auto USizeIntegerExpression::accept(Visitor& v) const -> void { v.visit(*this); }
+auto USizeExpression::accept(Visitor& v) const -> void { v.visit(*this); }
 
 auto U8Expression::accept(Visitor& v) const -> void { v.visit(*this); }
 

@@ -27,7 +27,7 @@ ExpressionStatement
     └─ RHS: BinaryExpression (EQ)
         ├─ LHS: IndexExpression
         │   ├─ Object: IdentifierExpression: b
-        │   └─ Index: USizeIntegerExpression: 3
+        │   └─ Index: USizeExpression: 3
         └─ RHS: UnaryExpression (BANG)
             └─ Operand: IdentifierExpression: c
 JumpStatement (CONTINUE)
@@ -47,7 +47,7 @@ DiscardStatement
 DeclStatement (SIZE)
 ├─ Modifiers: CONSTEXPR
 ├─ Type: (inferred)
-└─ Value: USizeIntegerExpression: 2
+└─ Value: USizeExpression: 2
 BlockStatement
 ├─ ExpressionStatement
 │   └─ Expr: IdentifierExpression: a
@@ -82,7 +82,7 @@ DeclStatement (f_ptr)
         ├─ Variadic: true
         └─ Returns: ExplicitType (modifier: REF)
             └─ ArrayType
-                ├─ Dimensions: USizeIntegerExpression: 2
+                ├─ Dimensions: USizeExpression: 2
                 ├─ Null terminated: false
                 └─ ExplicitType (modifier: BASE)
                     └─ ArrayType
@@ -229,7 +229,7 @@ ExpressionStatement
     ├─ Callee: IdentifierExpression: @ptrAdd (builtin)
     └─ Arguments:
         ├─ IdentifierExpression: a
-        └─ USizeIntegerExpression: 4
+        └─ USizeExpression: 4
 UsingStatement
 ├─ Alias: IdentifierExpression: T
 └─ Type: ExplicitType (modifier: BASE)
@@ -252,14 +252,15 @@ ExpressionStatement
     └─ Operand: IdentifierExpression: a
 ExpressionStatement
 └─ Expr: UnionExpression
-    ├─ Field:
-    │   ├─ Tag: IdentifierExpression: a
-    │   └─ Type: ExplicitType (modifier: BASE)
-    │       └─ IdentifierExpression: i32 (primitive)
-    └─ Field:
-        ├─ Tag: IdentifierExpression: b
-        └─ Type: ExplicitType (modifier: MUT_REF)
-            └─ IdentifierExpression: T
+    └─ Fields:
+        ├─ Field:
+        │   ├─ Tag: IdentifierExpression: a
+        │   └─ Type: ExplicitType (modifier: BASE)
+        │       └─ IdentifierExpression: i32 (primitive)
+        └─ Field:
+            ├─ Tag: IdentifierExpression: b
+            └─ Type: ExplicitType (modifier: MUT_REF)
+                └─ IdentifierExpression: T
 ExpressionStatement
 └─ Expr: DoWhileLoopExpression
     ├─ Body: BlockStatement
@@ -269,7 +270,7 @@ ExpressionStatement
 ExpressionStatement
 └─ Expr: I64Expression: 1
 ExpressionStatement
-└─ Expr: ISizeIntegerExpression: 2
+└─ Expr: ISizeExpression: 2
 ExpressionStatement
 └─ Expr: U32Expression: 3
 ExpressionStatement
@@ -280,7 +281,7 @@ ExpressionStatement
 └─ Expr: F64Expression: 2.3
 ExpressionStatement
 └─ Expr: ArrayExpression
-    ├─ Size: USizeIntegerExpression: 1
+    ├─ Size: USizeExpression: 1
     ├─ Type: ExplicitType (modifier: BASE)
     │   └─ IdentifierExpression: A
     └─ Items:
@@ -310,4 +311,75 @@ BlockStatement
 DeferStatement
 └─ Deferred: ExpressionStatement
     └─ Expr: I32Expression: 3
+ExpressionStatement
+└─ Expr: Initializer Expression:
+    ├─ Object Type: <inferred>
+    └─ Initializers:
+        └─ Initializer:
+            ├─ Member: ImplicitAccessExpression (DOT)
+            │   └─ Operand: IdentifierExpression: a
+            └─ Value: I32Expression: 3
+ExpressionStatement
+└─ Expr: Initializer Expression:
+    ├─ Object Type: IdentifierExpression: TT
+    └─ Initializers:
+        └─ Initializer:
+            ├─ Member: ImplicitAccessExpression (DOT)
+            │   └─ Operand: IdentifierExpression: adfasf
+            └─ Value: IdentifierExpression: a
+ExpressionStatement
+└─ Expr: Initializer Expression:
+    └─ Object Type: <inferred>
+ExpressionStatement
+└─ Expr: UnionExpression
+    ├─ Fields:
+    │   └─ Field:
+    │       ├─ Tag: IdentifierExpression: a
+    │       └─ Type: ExplicitType (modifier: PTR)
+    │           └─ StructExpression
+    │               └─ DeclStatement (b)
+    │                   ├─ Modifiers: VARIABLE
+    │                   ├─ Type: ExplicitType (modifier: BASE)
+    │                   │   └─ IdentifierExpression: Foo
+    │                   └─ Value: IdentifierExpression: bar
+    └─ Members:
+        └─ DeclStatement (b)
+            ├─ Modifiers: CONSTANT
+            ├─ Type: (inferred)
+            └─ Value: FunctionExpression
+                ├─ Self: self (modifier: REF)
+                ├─ Parameters:
+                │   └─ Param:
+                │       ├─ Name: IdentifierExpression: a
+                │       └─ Type: ExplicitType (modifier: BASE)
+                │           └─ IdentifierExpression: A
+                ├─ Variadic: false
+                ├─ Returns: ExplicitType (modifier: BASE)
+                │   └─ IdentifierExpression: C
+                └─ Body: BlockStatement
+                    └─ ExpressionStatement
+                        └─ Expr: IdentifierExpression: c
+ExpressionStatement
+└─ Expr: EnumExpression
+    ├─ Underlying: IdentifierExpression: i64 (primitive)
+    ├─ Enumerations:
+    │   └─ Name: IdentifierExpression: A
+    │       └─ Default: I64Expression: 2
+    └─ Members:
+        └─ DeclStatement (b)
+            ├─ Modifiers: CONSTANT
+            ├─ Type: (inferred)
+            └─ Value: FunctionExpression
+                ├─ Self: self (modifier: REF)
+                ├─ Parameters:
+                │   └─ Param:
+                │       ├─ Name: IdentifierExpression: a
+                │       └─ Type: ExplicitType (modifier: BASE)
+                │           └─ IdentifierExpression: A
+                ├─ Variadic: false
+                ├─ Returns: ExplicitType (modifier: BASE)
+                │   └─ IdentifierExpression: C
+                └─ Body: BlockStatement
+                    └─ ExpressionStatement
+                        └─ Expr: IdentifierExpression: c
 )"

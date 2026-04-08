@@ -23,6 +23,7 @@ enum class Precedence : u8 {
     RANGE            = 90,
     SCOPE_RESOLUTION = 100,
     GROUP_CALL_IDX   = 110,
+    INITIALIZATION   = 120,
 };
 
 struct Binding {
@@ -69,6 +70,7 @@ constexpr auto ALL_BINDINGS = [] {
         {TokenType::XOR_ASSIGN, Precedence::ASSIGNMENT, true},
         {TokenType::DOT, Precedence::SCOPE_RESOLUTION},
         {TokenType::COLON_COLON, Precedence::SCOPE_RESOLUTION},
+        {TokenType::LBRACE, Precedence::INITIALIZATION},
     });
 
     std::ranges::sort(all_bindings, {}, &Binding::type);

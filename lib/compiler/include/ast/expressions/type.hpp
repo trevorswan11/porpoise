@@ -14,7 +14,10 @@ namespace porpoise::ast {
 class IdentifierExpression;
 class TypeExpression;
 class FunctionExpression;
-class USizeIntegerExpression;
+class USizeExpression;
+class StructExpression;
+class EnumExpression;
+class UnionExpression;
 
 class ExplicitType;
 
@@ -45,9 +48,17 @@ class ExplicitType {
     using ExplicitIdentType     = mem::Box<IdentifierExpression>;
     using ExplicitFunctionType  = mem::Box<FunctionExpression>;
     using ExplicitRecursiveType = mem::Box<ExplicitType>;
+    using ExplicitStructType    = mem::Box<StructExpression>;
+    using ExplicitEnumType      = mem::Box<EnumExpression>;
+    using ExplicitUnionType     = mem::Box<UnionExpression>;
 
-    using ExplicitTypeVariant = std::
-        variant<ExplicitIdentType, ExplicitFunctionType, ExplicitArrayType, ExplicitRecursiveType>;
+    using ExplicitTypeVariant = std::variant<ExplicitIdentType,
+                                             ExplicitFunctionType,
+                                             ExplicitArrayType,
+                                             ExplicitRecursiveType,
+                                             ExplicitStructType,
+                                             ExplicitEnumType,
+                                             ExplicitUnionType>;
 
   public:
     ExplicitType(TypeModifier modifier, ExplicitTypeVariant type) noexcept;
@@ -66,6 +77,9 @@ class ExplicitType {
     MAKE_VARIANT_UNPACKER(array_type, ExplicitArrayType, ExplicitArrayType, type_, std::get)
     MAKE_VARIANT_UNPACKER(
         recursive_type, ExplicitRecursiveType, ExplicitRecursiveType, type_, std::get)
+    MAKE_VARIANT_UNPACKER(struct_type, StructExpression, ExplicitStructType, type_, *std::get)
+    MAKE_VARIANT_UNPACKER(enum_type, EnumExpression, ExplicitEnumType, type_, *std::get)
+    MAKE_VARIANT_UNPACKER(union_type, UnionExpression, ExplicitUnionType, type_, *std::get)
     MAKE_VARIANT_MATCHER(type_)
     [[nodiscard]] auto get_token() const noexcept -> const syntax::Token&;
 

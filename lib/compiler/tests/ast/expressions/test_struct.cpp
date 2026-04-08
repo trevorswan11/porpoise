@@ -2,13 +2,6 @@
 
 #include "helpers/ast.hpp"
 
-#include "ast/expressions/function.hpp"
-#include "ast/expressions/struct.hpp"
-#include "ast/expressions/type.hpp"
-#include "ast/statements/declaration.hpp"
-
-#include "syntax/operators.hpp"
-
 namespace porpoise::tests {
 
 namespace keywords  = syntax::keywords;
@@ -63,9 +56,8 @@ TEST_CASE("Struct flavors") {
 }
 
 TEST_CASE("Illegal struct member") {
-    helpers::test_parser_fail(
-        "struct { import std; };",
-        syntax::ParserDiagnostic{syntax::ParserError::INVALID_STRUCT_MEMBER, 1, 10});
+    helpers::test_parser_fail("struct { import std; };",
+                              syntax::ParserDiagnostic{syntax::ParserError::INVALID_MEMBER, 1, 10});
 }
 
 TEST_CASE("Empty struct body") {
