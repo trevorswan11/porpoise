@@ -13,6 +13,16 @@ TEST_CASE("Call with no arguments") {
     helpers::test_expr_stmt("func();", ast::CallExpression{func, helpers::make_ident(func), {}});
 }
 
+TEST_CASE("Call with void expression") {
+    const syntax::Token func{syntax::TokenType::IDENT, "func"};
+    helpers::test_expr_stmt(
+        "func({});",
+        ast::CallExpression{func,
+                            helpers::make_ident(func),
+                            helpers::make_vector<ast::CallArgument>(
+                                helpers::make_primitive<ast::VoidExpression>())});
+}
+
 TEST_CASE("Trailing comma") {
     const syntax::Token func{keywords::builtins::SIN};
     helpers::test_expr_stmt(
@@ -20,7 +30,7 @@ TEST_CASE("Trailing comma") {
         ast::CallExpression{func,
                             helpers::make_ident(func),
                             helpers::make_vector<ast::CallArgument>(
-                                helpers::make_number<ast::F64Expression>("23.6"))});
+                                helpers::make_primitive<ast::F64Expression>("23.6"))});
 }
 
 TEST_CASE("Builtin with multiple arguments") {
@@ -31,7 +41,7 @@ TEST_CASE("Builtin with multiple arguments") {
             func,
             helpers::make_ident(func),
             helpers::make_vector<ast::CallArgument>(
-                helpers::make_ident("a"), helpers::make_number<ast::USizeExpression>("4uz"))});
+                helpers::make_ident("a"), helpers::make_primitive<ast::USizeExpression>("4uz"))});
 }
 
 TEST_CASE("Type arguments in call") {

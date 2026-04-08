@@ -301,7 +301,7 @@ TEST_CASE("Index precedence") {
         ast::BinaryExpression{
             b,
             mem::make_box<ast::IndexExpression>(
-                b, helpers::make_ident(b), helpers::make_number<ast::USizeExpression>("3uz")),
+                b, helpers::make_ident(b), helpers::make_primitive<ast::USizeExpression>("3uz")),
             syntax::TokenType::EQ,
             mem::make_box<ast::UnaryExpression>(syntax::Token{operators::BANG},
                                                 helpers::make_ident(c))});

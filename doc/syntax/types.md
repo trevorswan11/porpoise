@@ -90,9 +90,9 @@ const Hand := union {
 - `u32`: A 32-bit unsigned integer, represented by a `u` suffixed number
 - `u64`: A 64-bit unsigned integer, represented by a `ul` suffixed number
 - `usize`: A platform specific unsigned integer equivalent to size_t (64-bit on 64-bit systems), represented by a `uz` suffixed number
-- `f32`: A 32-bit floating point, represented by a `f` suffixed number, decimal, or scientific notation
+- `f32`: A 32-bit floating point, represented by a `f` suffixed number (base-10), decimal, or scientific notation
 - `f64`: A 64-bit floating point, represented by a standalone decimal or scientific notation
 - `u8`: An unsigned 8-bit value, typically used for characters (i.e. `'a'`) or ascii values
     - There is no string type in porpoise. Instead you must use an array or slice of bytes (i.e. `[]u8` or `[N]u8`)
 - `bool`: True (`true`) or false (`false`)
-- `void`: The unit type
+- `void`: The unit type, this can be declared using empty curly braces `{}`

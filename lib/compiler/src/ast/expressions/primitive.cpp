@@ -81,6 +81,15 @@ auto BoolExpression::parse(syntax::Parser& parser)
     return mem::make_box<BoolExpression>(start_token, start_token.type == syntax::TokenType::TRUE);
 }
 
+auto VoidExpression::accept(Visitor& v) const -> void { v.visit(*this); }
+
+auto VoidExpression::parse(syntax::Parser& parser)
+    -> Expected<mem::Box<Expression>, syntax::ParserDiagnostic> {
+    const auto start_token = parser.current_token();
+    TRY(parser.expect_peek(syntax::TokenType::RBRACE));
+    return mem::make_box<VoidExpression>(start_token, std::monostate{});
+}
+
 // cppcheck-suppress-end [constParameterReference, duplInheritedMember]
 
 } // namespace porpoise::ast

@@ -21,16 +21,17 @@ const syntax::Token rbracket{syntax::TokenType::LBRACKET, "["};
 TEST_CASE("Explicitly sized arrays") {
     helpers::test_expr_stmt(
         "[1uz]i32{2};",
-        ast::ArrayExpression{rbracket,
-                             helpers::make_number<ast::USizeExpression>("1uz"),
-                             ast::ExplicitType{mods::BASE, helpers::make_ident("i32")},
-                             helpers::make_items(helpers::number_from<ast::I32Expression>("2"))});
+        ast::ArrayExpression{
+            rbracket,
+            helpers::make_primitive<ast::USizeExpression>("1uz"),
+            ast::ExplicitType{mods::BASE, helpers::make_ident("i32")},
+            helpers::make_items(helpers::primitive_from<ast::I32Expression>("2"))});
 
     helpers::test_expr_stmt(
         "[2uz]i32{A, B, };",
         ast::ArrayExpression{
             rbracket,
-            helpers::make_number<ast::USizeExpression>("2uz"),
+            helpers::make_primitive<ast::USizeExpression>("2uz"),
             ast::ExplicitType{mods::BASE, helpers::make_ident("i32")},
             helpers::make_items(helpers::ident_from("A"), helpers::ident_from("B"))});
 }

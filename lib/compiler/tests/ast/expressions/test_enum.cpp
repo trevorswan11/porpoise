@@ -25,7 +25,7 @@ TEST_CASE("Basic enums") {
             {},
             helpers::make_vector<ast::Enumeration>(
                 ast::Enumeration{helpers::make_ident("A"),
-                                 helpers::make_number<ast::I32Expression>("1")},
+                                 helpers::make_primitive<ast::I32Expression>("1")},
                 ast::Enumeration{helpers::make_ident("B"), helpers::make_ident("T")}),
             helpers::make_decls()});
 }
@@ -37,7 +37,7 @@ TEST_CASE("Underlying type") {
                             helpers::make_ident("u64"),
                             helpers::make_vector<ast::Enumeration>(
                                 ast::Enumeration{helpers::make_ident("RED"),
-                                                 helpers::make_number<ast::U32Expression>("3u")},
+                                                 helpers::make_primitive<ast::U32Expression>("3u")},
                                 ast::Enumeration{helpers::make_ident("B"), {}}),
                             helpers::make_decls()});
 
@@ -47,7 +47,7 @@ TEST_CASE("Underlying type") {
             syntax::Token{keywords::ENUM},
             helpers::make_ident("U"),
             helpers::make_vector<ast::Enumeration>(ast::Enumeration{
-                helpers::make_ident("A"), helpers::make_number<ast::USizeExpression>("0x4uz")}),
+                helpers::make_ident("A"), helpers::make_primitive<ast::USizeExpression>("0x4uz")}),
             helpers::make_decls()});
 }
 
@@ -59,7 +59,7 @@ TEST_CASE("Enum with decls") {
                 syntax::Token{keywords::ENUM},
                 helpers::make_ident("i64"),
                 helpers::make_vector<ast::Enumeration>(ast::Enumeration{
-                    helpers::make_ident("A"), helpers::make_number<ast::I64Expression>("2l")}),
+                    helpers::make_ident("A"), helpers::make_primitive<ast::I64Expression>("2l")}),
                 helpers::make_decls(
                     ast::DeclStatement{
                         syntax::Token{keywords::CONST},
@@ -81,7 +81,7 @@ TEST_CASE("Enum with decls") {
                         helpers::make_ident("a"),
                         mem::make_box<ast::TypeExpression>(syntax::Token{operators::WALRUS},
                                                            std::nullopt),
-                        helpers::make_number<ast::I32Expression>("2"),
+                        helpers::make_primitive<ast::I32Expression>("2"),
                         ast::DeclModifiers::STATIC | ast::DeclModifiers::CONSTANT,
                     })});
     };

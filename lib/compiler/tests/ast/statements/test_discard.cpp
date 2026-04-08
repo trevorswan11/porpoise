@@ -10,7 +10,7 @@ TEST_CASE("Discard statements") {
     const syntax::Token start_token{syntax::TokenType::UNDERSCORE, "_"};
     helpers::test_stmt(
         "_ = 4;",
-        ast::DiscardStatement{start_token, helpers::make_number<ast::I32Expression>("4")});
+        ast::DiscardStatement{start_token, helpers::make_primitive<ast::I32Expression>("4")});
 
     helpers::test_stmt(
         "_ = enum { RED };",
