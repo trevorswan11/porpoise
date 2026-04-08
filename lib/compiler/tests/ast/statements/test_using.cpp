@@ -26,6 +26,29 @@ TEST_CASE("Well formed using statement") {
                                                    mods::PTR, helpers::make_ident("E"))})}}});
 }
 
+TEST_CASE("User defined type alias") {
+    helpers::test_stmt(
+        "using U = union { a: enum { A } };",
+        ast::UsingStatement{
+            syntax::Token{keywords::USING},
+            helpers::make_ident("U"),
+
+            ast::ExplicitType{
+                mods::BASE,
+                mem::make_box<ast::UnionExpression>(
+                    syntax::Token{keywords::UNION},
+                    helpers::make_vector<ast::UnionField>(ast::UnionField{
+                        helpers::make_ident("a"),
+                        ast::ExplicitType{mods::BASE,
+                                          mem::make_box<ast::EnumExpression>(
+                                              syntax::Token{keywords::ENUM},
+                                              std::nullopt,
+                                              helpers::make_vector<ast::Enumeration>(
+                                                  ast::Enumeration{helpers::make_ident("A"), {}}),
+                                              helpers::make_decls())}}),
+                    helpers::make_decls())}});
+}
+
 TEST_CASE("Missing alias") {
     helpers::test_parser_fail(
         "using &[0x2uz][N]*E;",
