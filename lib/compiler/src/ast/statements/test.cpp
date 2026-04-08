@@ -22,11 +22,19 @@ auto TestStatement::parse(syntax::Parser& parser)
     if (parser.peek_token_is(syntax::TokenType::STRING)) {
         parser.advance();
         description.emplace(downcast<StringExpression>(TRY(StringExpression::parse(parser))));
+
+        // Empty strings aren't supported since one should just use no description
+        if ((*description)->get_value().empty()) {
+            return make_parser_unexpected(syntax::ParserError::EMPTY_TEST_DESCRIPTION,
+                                          (*description)->get_token());
+        }
     }
 
     TRY(parser.expect_peek(syntax::TokenType::LBRACE));
-    auto block = downcast<BlockStatement>(TRY(BlockStatement::parse(parser)));
-    return mem::make_box<TestStatement>(start_token, std::move(description), std::move(block));
+    return mem::make_box<TestStatement>(
+        start_token,
+        std::move(description),
+        downcast<BlockStatement>(TRY(BlockStatement::parse(parser, true))));
 }
 
 auto TestStatement::is_equal(const Node& other) const noexcept -> bool {

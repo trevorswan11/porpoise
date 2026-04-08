@@ -436,4 +436,19 @@ TEST_CASE("Function block shadowing") {
                          std::pair{1uz, 25uz}});
 }
 
+TEST_CASE("Test shadowing") {
+    helpers::test_collector_fail(
+        R"(const a := 2; test "foo" { const a := 3; })",
+        sema::Diagnostic{"Attempt to shadow identifier 'a'. Previous declaration here: [1, 1]",
+                         sema::Error::SHADOWING_DECLARATION,
+                         std::pair{1uz, 28uz}});
+}
+
+TEST_CASE("Illegal test location") {
+    helpers::test_collector_fail("const a := fn(&self): void { test {} };",
+                                 sema::Diagnostic{"Tests must be at the topmost level of a file",
+                                                  sema::Error::ILLEGAL_TEST_LOCATION,
+                                                  std::pair{1uz, 30uz}});
+}
+
 } // namespace porpoise::tests
