@@ -6,6 +6,7 @@ namespace porpoise::tests {
 
 namespace helpers {
 
+// This is so verbose only bc we cannot rely on `parse_primitive_value`, it's being tested here!
 template <ast::PrimitiveNode N>
 auto test_primitive(std::string_view                                               input,
                     std::string_view                                               node_token_slice,
@@ -92,7 +93,7 @@ TEST_CASE("i64") {
 }
 
 TEST_CASE("isize parsing") {
-    using N = ast::ISizeIntegerExpression;
+    using N = ast::ISizeExpression;
     helpers::test_primitive<N>("0z;", syntax::TokenType::ZINT_10, 0Z);
     helpers::test_primitive<N>("0b10011101101z;", syntax::TokenType::ZINT_2, 0b10011101101Z);
     helpers::test_primitive<N>("0o1234567z;", syntax::TokenType::ZINT_8, 342'391Z);
@@ -131,7 +132,7 @@ TEST_CASE("u64 parsing") {
 }
 
 TEST_CASE("usize parsing") {
-    using N = ast::USizeIntegerExpression;
+    using N = ast::USizeExpression;
     helpers::test_primitive<N>("0uz;", syntax::TokenType::UZINT_10, 0UZ);
     helpers::test_primitive<N>("0b10011101101uz;", syntax::TokenType::UZINT_2, 0b10011101101UZ);
     helpers::test_primitive<N>("0o1234567uz;", syntax::TokenType::UZINT_8, 342'391UZ);

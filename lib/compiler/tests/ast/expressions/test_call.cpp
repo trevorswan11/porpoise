@@ -17,23 +17,21 @@ TEST_CASE("Trailing comma") {
     const syntax::Token func{keywords::builtins::SIN};
     helpers::test_expr_stmt(
         "@sin(23.6, );",
-        ast::CallExpression{
-            func,
-            helpers::make_ident(func),
-            helpers::make_vector<ast::CallArgument>(mem::make_box<ast::F64Expression>(
-                syntax::Token{syntax::TokenType::F64, "23.6"}, 23.6))});
+        ast::CallExpression{func,
+                            helpers::make_ident(func),
+                            helpers::make_vector<ast::CallArgument>(
+                                helpers::make_number<ast::F64Expression>("23.6"))});
 }
 
 TEST_CASE("Builtin with multiple arguments") {
     const syntax::Token func{keywords::builtins::PTR_ADD};
     helpers::test_expr_stmt(
         "@ptrAdd(a, 4uz);",
-        ast::CallExpression{func,
-                            helpers::make_ident(func),
-                            helpers::make_vector<ast::CallArgument>(
-                                helpers::make_ident("a"),
-                                mem::make_box<ast::USizeIntegerExpression>(
-                                    syntax::Token{syntax::TokenType::UZINT_10, "4uz"}, 4uz))});
+        ast::CallExpression{
+            func,
+            helpers::make_ident(func),
+            helpers::make_vector<ast::CallArgument>(
+                helpers::make_ident("a"), helpers::make_number<ast::USizeExpression>("4uz"))});
 }
 
 TEST_CASE("Type arguments in call") {

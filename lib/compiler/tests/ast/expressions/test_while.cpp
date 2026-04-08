@@ -23,12 +23,10 @@ TEST_CASE("While with continuation") {
         ast::WhileLoopExpression{
             syntax::Token{keywords::WHILE},
             mem::make_box<ast::BoolExpression>(syntax::Token{keywords::TRUE}, true),
-            mem::make_box<ast::AssignmentExpression>(
-                syntax::Token{syntax::TokenType::IDENT, "i"},
-                helpers::make_ident("i"),
-                syntax::TokenType::PLUS_ASSIGN,
-                mem::make_box<ast::I32Expression>(syntax::Token{syntax::TokenType::INT_10, "1"},
-                                                  1)),
+            mem::make_box<ast::AssignmentExpression>(syntax::Token{syntax::TokenType::IDENT, "i"},
+                                                     helpers::make_ident("i"),
+                                                     syntax::TokenType::PLUS_ASSIGN,
+                                                     helpers::make_number<ast::I32Expression>("1")),
             helpers::make_expr_block_stmt(helpers::ident_from("a")),
             {}});
 }
@@ -51,12 +49,10 @@ TEST_CASE("Full while loop") {
         ast::WhileLoopExpression{
             syntax::Token{keywords::WHILE},
             mem::make_box<ast::BoolExpression>(syntax::Token{keywords::TRUE}, true),
-            mem::make_box<ast::AssignmentExpression>(
-                syntax::Token{syntax::TokenType::IDENT, "i"},
-                helpers::make_ident("i"),
-                syntax::TokenType::PLUS_ASSIGN,
-                mem::make_box<ast::I32Expression>(syntax::Token{syntax::TokenType::INT_10, "1"},
-                                                  1)),
+            mem::make_box<ast::AssignmentExpression>(syntax::Token{syntax::TokenType::IDENT, "i"},
+                                                     helpers::make_ident("i"),
+                                                     syntax::TokenType::PLUS_ASSIGN,
+                                                     helpers::make_number<ast::I32Expression>("1")),
             helpers::make_expr_block_stmt(helpers::ident_from("a")),
             mem::make_box<ast::JumpStatement>(syntax::Token{keywords::RETURN},
                                               helpers::make_ident("b"))});
@@ -68,12 +64,10 @@ TEST_CASE("Empty while with continuation") {
         ast::WhileLoopExpression{
             syntax::Token{keywords::WHILE},
             mem::make_box<ast::BoolExpression>(syntax::Token{keywords::TRUE}, true),
-            mem::make_box<ast::AssignmentExpression>(
-                syntax::Token{syntax::TokenType::IDENT, "i"},
-                helpers::make_ident("i"),
-                syntax::TokenType::PLUS_ASSIGN,
-                mem::make_box<ast::I32Expression>(syntax::Token{syntax::TokenType::INT_10, "1"},
-                                                  1)),
+            mem::make_box<ast::AssignmentExpression>(syntax::Token{syntax::TokenType::IDENT, "i"},
+                                                     helpers::make_ident("i"),
+                                                     syntax::TokenType::PLUS_ASSIGN,
+                                                     helpers::make_number<ast::I32Expression>("1")),
             helpers::make_block_stmt(),
             {}});
 }

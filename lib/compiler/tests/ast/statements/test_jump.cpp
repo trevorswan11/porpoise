@@ -15,8 +15,7 @@ TEST_CASE("Expressionless jumps") {
 TEST_CASE("Expression returns") {
     helpers::test_stmt("return 4;",
                        ast::JumpStatement{syntax::Token{keywords::RETURN},
-                                          mem::make_box<ast::I32Expression>(
-                                              syntax::Token{syntax::TokenType::INT_10, "4"}, 4)});
+                                          helpers::make_number<ast::I32Expression>("4")});
 
     std::vector<ast::Enumeration> enumerations;
     enumerations.emplace_back(ast::Enumeration{helpers::make_ident("RED"), std::nullopt});

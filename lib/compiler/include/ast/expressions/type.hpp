@@ -14,7 +14,7 @@ namespace porpoise::ast {
 class IdentifierExpression;
 class TypeExpression;
 class FunctionExpression;
-class USizeIntegerExpression;
+class USizeExpression;
 class StructExpression;
 class EnumExpression;
 class UnionExpression;

@@ -214,7 +214,7 @@ constexpr auto PREFIX_FNS = [] {
             int_prefixes[cursor] = {tt, ast::I64Expression::parse};
             break;
         case IntegerCategory::SIGNED_SIZE:
-            int_prefixes[cursor] = {tt, ast::ISizeIntegerExpression::parse};
+            int_prefixes[cursor] = {tt, ast::ISizeExpression::parse};
             break;
         case IntegerCategory::UNSIGNED_BASE:
             int_prefixes[cursor] = {tt, ast::U32Expression::parse};
@@ -223,7 +223,7 @@ constexpr auto PREFIX_FNS = [] {
             int_prefixes[cursor] = {tt, ast::U64Expression::parse};
             break;
         case IntegerCategory::UNSIGNED_SIZE:
-            int_prefixes[cursor] = {tt, ast::USizeIntegerExpression::parse};
+            int_prefixes[cursor] = {tt, ast::USizeExpression::parse};
             break;
         }
     }

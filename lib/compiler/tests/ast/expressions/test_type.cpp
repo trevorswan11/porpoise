@@ -59,13 +59,11 @@ TEST_CASE("Function types") {
 TEST_CASE("Array type") {
     helpers::test_type_expr(
         "[5uz]*u64",
-        ast::ExplicitType{
-            mods::BASE,
-            ast::ExplicitArrayType{
-                mem::make_box<ast::USizeIntegerExpression>(
-                    syntax::Token{syntax::TokenType::UZINT_10, "5uz"}, 5uz),
-                false,
-                mem::make_box<ast::ExplicitType>(mods::PTR, helpers::make_ident("u64"))}});
+        ast::ExplicitType{mods::BASE,
+                          ast::ExplicitArrayType{helpers::make_number<ast::USizeExpression>("5uz"),
+                                                 false,
+                                                 mem::make_box<ast::ExplicitType>(
+                                                     mods::PTR, helpers::make_ident("u64"))}});
 }
 
 TEST_CASE("Slice type") {
@@ -106,8 +104,7 @@ TEST_CASE("Complex function type (holistic)") {
                 ast::ExplicitType{
                     mods::REF,
                     ast::ExplicitArrayType{
-                        mem::make_box<ast::USizeIntegerExpression>(
-                            syntax::Token{syntax::TokenType::UZINT_16, "0x2uz"}, 0x2uz),
+                        helpers::make_number<ast::USizeExpression>("0x2uz"),
                         false,
                         mem::make_box<ast::ExplicitType>(
                             mods::BASE,
@@ -205,16 +202,14 @@ TEST_CASE("Struct inline types") {
 TEST_CASE("Enum inline types") {
     helpers::test_type_expr(
         "enum : u64 {RED = 3u, B, };",
-        ast::ExplicitType{
-            mods::BASE,
-            mem::make_box<ast::EnumExpression>(
-                syntax::Token{keywords::ENUM},
-                helpers::make_ident("u64"),
-                helpers::make_vector<ast::Enumeration>(
-                    ast::Enumeration{helpers::make_ident("RED"),
-                                     mem::make_box<ast::U32Expression>(
-                                         syntax::Token{syntax::TokenType::UINT_10, "3u"}, 3u)},
-                    ast::Enumeration{helpers::make_ident("B"), {}}))});
+        ast::ExplicitType{mods::BASE,
+                          mem::make_box<ast::EnumExpression>(
+                              syntax::Token{keywords::ENUM},
+                              helpers::make_ident("u64"),
+                              helpers::make_vector<ast::Enumeration>(
+                                  ast::Enumeration{helpers::make_ident("RED"),
+                                                   helpers::make_number<ast::U32Expression>("3u")},
+                                  ast::Enumeration{helpers::make_ident("B"), {}}))});
 }
 
 } // namespace porpoise::tests

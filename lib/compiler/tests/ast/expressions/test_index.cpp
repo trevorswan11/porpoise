@@ -8,10 +8,8 @@ TEST_CASE("Single-level index") {
     const syntax::Token arr{syntax::TokenType::IDENT, "arr"};
     helpers::test_expr_stmt(
         "arr[3uz];",
-        ast::IndexExpression{arr,
-                             helpers::make_ident(arr),
-                             mem::make_box<ast::USizeIntegerExpression>(
-                                 syntax::Token{syntax::TokenType::UZINT_10, "3uz"}, 3uz)});
+        ast::IndexExpression{
+            arr, helpers::make_ident(arr), helpers::make_number<ast::USizeExpression>("3uz")});
 
     helpers::test_expr_stmt(
         "arr[i];", ast::IndexExpression{arr, helpers::make_ident(arr), helpers::make_ident("i")});

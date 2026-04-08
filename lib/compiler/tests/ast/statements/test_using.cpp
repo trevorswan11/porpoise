@@ -16,8 +16,7 @@ TEST_CASE("Well formed using statement") {
             ast::ExplicitType{
                 mods::REF,
                 ast::ExplicitArrayType{
-                    mem::make_box<ast::USizeIntegerExpression>(
-                        syntax::Token{syntax::TokenType::UZINT_16, "0x2uz"}, 0x2uz),
+                    helpers::make_number<ast::USizeExpression>("0x2uz"),
                     false,
                     mem::make_box<ast::ExplicitType>(
                         mods::BASE,

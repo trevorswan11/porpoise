@@ -50,10 +50,8 @@ TEST_CASE("Complex union fields") {
                             syntax::Token{keywords::ENUM},
                             helpers::make_ident("u64"),
                             helpers::make_vector<ast::Enumeration>(
-                                ast::Enumeration{
-                                    helpers::make_ident("RED"),
-                                    mem::make_box<ast::U32Expression>(
-                                        syntax::Token{syntax::TokenType::UINT_10, "3u"}, 3u)},
+                                ast::Enumeration{helpers::make_ident("RED"),
+                                                 helpers::make_number<ast::U32Expression>("3u")},
                                 ast::Enumeration{helpers::make_ident("B"), {}}))}})});
 }
 

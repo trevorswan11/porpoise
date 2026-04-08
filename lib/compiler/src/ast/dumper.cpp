@@ -260,19 +260,50 @@ MAKE_INFIX_DUMP(BinaryExpression, LHS, RHS)
 MAKE_INFIX_DUMP(DotExpression, Object, Member)
 MAKE_INFIX_DUMP(RangeExpression, Lower, Upper)
 
-auto ASTDumper::visit(const Initializer& init) -> void { TODO(init); }
-auto ASTDumper::visit(const InitializerExpression& init) -> void { TODO(init); }
+auto ASTDumper::visit(const Initializer& init) -> void {
+    fmt::println(out_, "Initializer:");
+    {
+        const Indent::Guard g{indent_, false};
+        fmt::print(out_, "{}Member: ", indent_.current_branch());
+        init.get_member().accept(*this);
+    }
+
+    {
+        const Indent::Guard g{indent_, true};
+        fmt::print(out_, "{}Value: ", indent_.current_branch());
+        init.get_value().accept(*this);
+    }
+}
+
+auto ASTDumper::visit(const InitializerExpression& init) -> void {
+    fmt::println(out_, "Initializer Expression:");
+    {
+        const Indent::Guard g{indent_, false};
+        fmt::print(out_, "{}Object Type: ", indent_.current_branch());
+        if (init.has_object_type()) {
+            init.get_object_type().accept(*this);
+        } else {
+            fmt::println(out_, "<inferred>");
+        }
+    }
+
+    {
+        const Indent::Guard g{indent_, true};
+        fmt::println(out_, "{}Initializers:", indent_.current_branch());
+        dump_node_list(init.get_initializers());
+    }
+}
 
 auto ASTDumper::visit(const MatchArm& arm) -> void {
     fmt::println(out_, "Arm:");
     {
-        const Indent::Guard g_pattern{indent_, false};
+        const Indent::Guard g{indent_, false};
         fmt::print(out_, "{}Pattern: ", indent_.current_branch());
         arm.get_pattern().accept(*this);
     }
 
     if (arm.has_capture_clause()) {
-        const Indent::Guard g_pattern{indent_, false};
+        const Indent::Guard g{indent_, false};
         fmt::print(out_, "{}Capture: ", indent_.current_branch());
         if (arm.is_explicit_capture()) {
             arm.get_explicit_capture().accept(*this);
@@ -282,7 +313,7 @@ auto ASTDumper::visit(const MatchArm& arm) -> void {
     }
 
     {
-        const Indent::Guard g_result{indent_, true};
+        const Indent::Guard g{indent_, true};
         fmt::print(out_, "{}Dispatch: ", indent_.current_branch());
         arm.get_dispatch().accept(*this);
     }
@@ -330,10 +361,10 @@ MAKE_PREFIX_DUMP(ImplicitAccessExpression)
 MAKE_LEAF_DUMP(StringExpression)
 MAKE_LEAF_DUMP(I32Expression)
 MAKE_LEAF_DUMP(I64Expression)
-MAKE_LEAF_DUMP(ISizeIntegerExpression)
+MAKE_LEAF_DUMP(ISizeExpression)
 MAKE_LEAF_DUMP(U32Expression)
 MAKE_LEAF_DUMP(U64Expression)
-MAKE_LEAF_DUMP(USizeIntegerExpression)
+MAKE_LEAF_DUMP(USizeExpression)
 MAKE_LEAF_DUMP(U8Expression)
 MAKE_LEAF_DUMP(F32Expression)
 MAKE_LEAF_DUMP(F64Expression)

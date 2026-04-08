@@ -285,6 +285,10 @@ constexpr auto is_int(TokenType tt) noexcept -> bool {
     return TokenType::INT_2 <= tt && tt <= TokenType::UZINT_16;
 }
 
+constexpr auto is_number(TokenType tt) noexcept -> bool {
+    return is_int(tt) || tt == TokenType::F32 || tt == TokenType::F64;
+}
+
 auto suffix_length(TokenType tt) noexcept -> usize;
 
 } // namespace token_type

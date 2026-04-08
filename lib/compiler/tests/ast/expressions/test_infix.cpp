@@ -298,15 +298,13 @@ TEST_CASE("Index precedence") {
         "a or b[3uz] == !c;",
         helpers::ident_from(a),
         syntax::TokenType::BOOLEAN_OR,
-        ast::BinaryExpression{b,
-                              mem::make_box<ast::IndexExpression>(
-                                  b,
-                                  helpers::make_ident(b),
-                                  mem::make_box<ast::USizeIntegerExpression>(
-                                      syntax::Token{syntax::TokenType::UZINT_10, "3uz"}, 3uz)),
-                              syntax::TokenType::EQ,
-                              mem::make_box<ast::UnaryExpression>(syntax::Token{operators::BANG},
-                                                                  helpers::make_ident(c))});
+        ast::BinaryExpression{
+            b,
+            mem::make_box<ast::IndexExpression>(
+                b, helpers::make_ident(b), helpers::make_number<ast::USizeExpression>("3uz")),
+            syntax::TokenType::EQ,
+            mem::make_box<ast::UnaryExpression>(syntax::Token{operators::BANG},
+                                                helpers::make_ident(c))});
 }
 
 TEST_CASE("Scope resolution precedence") {

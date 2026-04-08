@@ -23,31 +23,27 @@ TEST_CASE("Basic enums") {
             {},
             helpers::make_vector<ast::Enumeration>(
                 ast::Enumeration{helpers::make_ident("A"),
-                                 mem::make_box<ast::I32Expression>(
-                                     syntax::Token{syntax::TokenType::INT_10, "1"}, 1)},
+                                 helpers::make_number<ast::I32Expression>("1")},
                 ast::Enumeration{helpers::make_ident("B"), helpers::make_ident("T")})});
 }
 
 TEST_CASE("Underlying type") {
     helpers::test_expr_stmt(
         "enum : u64 {RED = 3u, B, };",
-        ast::EnumExpression{
-            syntax::Token{keywords::ENUM},
-            helpers::make_ident("u64"),
-            helpers::make_vector<ast::Enumeration>(
-                ast::Enumeration{helpers::make_ident("RED"),
-                                 mem::make_box<ast::U32Expression>(
-                                     syntax::Token{syntax::TokenType::UINT_10, "3u"}, 3u)},
-                ast::Enumeration{helpers::make_ident("B"), {}})});
+        ast::EnumExpression{syntax::Token{keywords::ENUM},
+                            helpers::make_ident("u64"),
+                            helpers::make_vector<ast::Enumeration>(
+                                ast::Enumeration{helpers::make_ident("RED"),
+                                                 helpers::make_number<ast::U32Expression>("3u")},
+                                ast::Enumeration{helpers::make_ident("B"), {}})});
 
     helpers::test_expr_stmt(
         "enum : U {A = 0x4uz};",
-        ast::EnumExpression{syntax::Token{keywords::ENUM},
-                            helpers::make_ident("U"),
-                            helpers::make_vector<ast::Enumeration>(ast::Enumeration{
-                                helpers::make_ident("A"),
-                                mem::make_box<ast::USizeIntegerExpression>(
-                                    syntax::Token{syntax::TokenType::UZINT_16, "0x4uz"}, 0x4uz)})});
+        ast::EnumExpression{
+            syntax::Token{keywords::ENUM},
+            helpers::make_ident("U"),
+            helpers::make_vector<ast::Enumeration>(ast::Enumeration{
+                helpers::make_ident("A"), helpers::make_number<ast::USizeExpression>("0x4uz")})});
 }
 
 TEST_CASE("Empty enum") {

@@ -72,8 +72,7 @@ TEST_CASE("Holistic language examples") {
                                                            mods::BASE,
                                                            helpers::make_ident("Integer"),
                                                        }),
-                    mem::make_box<ast::I32Expression>(syntax::Token{syntax::TokenType::INT_10, "1"},
-                                                      1),
+                    helpers::make_number<ast::I32Expression>("1"),
                     ast::DeclModifiers::CONSTANT,
                 }});
     };
@@ -96,8 +95,7 @@ TEST_CASE("Import aliases correctly used") {
                 syntax::Token{keywords::CONST},
                 helpers::make_ident("a"),
                 mem::make_box<ast::TypeExpression>(syntax::Token{operators::WALRUS}, std::nullopt),
-                mem::make_box<ast::I32Expression>(syntax::Token{syntax::TokenType::INT_10, "22"},
-                                                  22),
+                helpers::make_number<ast::I32Expression>("22"),
                 ast::DeclModifiers::CONSTANT,
             }});
 }

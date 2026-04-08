@@ -47,6 +47,8 @@ constexpr std::string_view input{R"(
     var a: []i32;
     {};
     defer 3;
+    .{.a = 3};
+    TT{.adfasf = a};
 )"};
 
 constexpr std::string_view expected{

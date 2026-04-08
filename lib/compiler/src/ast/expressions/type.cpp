@@ -52,7 +52,7 @@ auto ExplicitType::accept(Visitor& v) const -> void { v.visit(*this); }
         } else if (!parser.peek_token_is(syntax::TokenType::RBRACKET)) {
             parser.advance();
             dimension.emplace(TRY(parser.parse_expression()));
-            if (!(*dimension)->any<USizeIntegerExpression, IdentifierExpression>()) {
+            if (!(*dimension)->any<USizeExpression, IdentifierExpression>()) {
                 return make_parser_unexpected(syntax::ParserError::ILLEGAL_ARRAY_SIZE_TYPE,
                                               (*dimension)->get_token());
             }

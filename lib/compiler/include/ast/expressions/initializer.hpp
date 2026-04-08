@@ -35,7 +35,7 @@ class InitializerExpression : public ExprBase<InitializerExpression> {
 
   public:
     InitializerExpression(const syntax::Token&           start_token,
-                          Optional<mem::Box<Expression>> object,
+                          Optional<mem::Box<Expression>> object_type,
                           std::vector<Initializer>       initializers) noexcept;
     ~InitializerExpression() override;
 
@@ -50,14 +50,14 @@ class InitializerExpression : public ExprBase<InitializerExpression> {
     [[nodiscard]] static auto parse(syntax::Parser& parser, mem::Box<Expression> object)
         -> Expected<mem::Box<Expression>, syntax::ParserDiagnostic>;
 
-    MAKE_OPTIONAL_UNPACKER(object, Expression, object_, **)
+    MAKE_OPTIONAL_UNPACKER(object_type, Expression, object_type_, **)
     MAKE_GETTER(initializers, std::span<const Initializer>, )
 
   protected:
     auto is_equal(const Node& other) const noexcept -> bool override;
 
   private:
-    Optional<mem::Box<Expression>> object_;
+    Optional<mem::Box<Expression>> object_type_;
     std::vector<Initializer>       initializers_;
 };
 
