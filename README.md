@@ -52,9 +52,10 @@ Many build functions heavily reference [allyourcodebase](https://github.com/ally
 - Learn for the sake of learning
 - Experiment freely
 - KISS & DRY
-- All code pushed should be deeply understood. Development speed is _not_ and _will never be_ a core principle of porpoise.
 
-### Usage Example
+Development speed is _not_ and _will never be_ a core principle of porpoise.
+
+### Hello, World!
 ```porpoise
 import std;
 
