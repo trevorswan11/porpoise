@@ -110,6 +110,8 @@ auto TypeResolver::visit(const ast::JumpStatement&) -> void {}
 
 auto TypeResolver::visit(const ast::ModuleStatement&) -> void {}
 
+auto TypeResolver::visit(const ast::TestStatement&) -> void {}
+
 auto TypeResolver::visit(const ast::UsingStatement&) -> void {}
 
 } // namespace porpoise::sema

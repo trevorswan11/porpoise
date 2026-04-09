@@ -36,6 +36,7 @@ enum class TypeKind : u8 {
     STRUCT,
     UNION,
     FUNCTION,
+    TEST_BLOCK,
 };
 
 class Type;

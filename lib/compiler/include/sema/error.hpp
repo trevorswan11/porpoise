@@ -19,6 +19,7 @@ enum class Error : u8 {
     INVALID_TABLE_IDX,
     SHADOWING_DECLARATION,
     CIRCULAR_DEPENDENCY,
+    ILLEGAL_TEST_LOCATION,
 };
 
 using Diagnostic  = Diagnostic<Error>;

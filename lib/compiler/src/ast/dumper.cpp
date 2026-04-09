@@ -585,6 +585,20 @@ auto ASTDumper::visit(const JumpStatement& jump) -> void {
 
 auto ASTDumper::visit(const ModuleStatement&) -> void { fmt::println(out_, "ModuleStatement"); }
 
+auto ASTDumper::visit(const TestStatement& test) -> void {
+    fmt::println(out_, "TestStatement");
+    if (test.has_description()) {
+        const Indent::Guard g{indent_, false};
+        fmt::println(out_, "{}Description: {}", indent_.current_branch(), test.get_description());
+    }
+
+    {
+        const Indent::Guard g{indent_, true};
+        fmt::print(out_, "{}Block: ", indent_.current_branch());
+        test.get_block().accept(*this);
+    }
+}
+
 auto ASTDumper::visit(const UsingStatement& using_stmt) -> void {
     fmt::println(out_, "UsingStatement");
     {

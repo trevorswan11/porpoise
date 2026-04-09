@@ -386,4 +386,20 @@ DeclStatement (a)
 ├─ Modifiers: CONSTANT
 ├─ Type: (inferred)
 └─ Value: VoidExpression
+TestStatement
+├─ Description: dump
+└─ Block: BlockStatement
+    ├─ ImportStatement
+    │   └─ Library: IdentifierExpression: other
+    └─ ExpressionStatement
+        └─ Expr: CallExpression
+            ├─ Callee: ScopeResolutionExpression
+            │   ├─ Outer: ScopeResolutionExpression
+            │   │   ├─ Outer: IdentifierExpression: std
+            │   │   └─ Inner: IdentifierExpression: testing
+            │   └─ Inner: IdentifierExpression: expect
+            └─ Arguments:
+                └─ BinaryExpression (EQ)
+                    ├─ LHS: IdentifierExpression: a
+                    └─ RHS: BoolExpression: true
 )"

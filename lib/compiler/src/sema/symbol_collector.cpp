@@ -183,7 +183,6 @@ ILLEGAL_COLLECTOR_TOP_LEVEL(ast::DiscardStatement, "discard")
 ILLEGAL_COLLECTOR_TOP_LEVEL(ast::ExpressionStatement, "expression")
 
 auto SymbolCollector::visit(const ast::ImportStatement& import_stmt) -> void {
-    assert(table_stack_.size() == 1 && "Import not at top level");
     if (registry_.get(table_idx_).is_module()) { import_stmt.mark_public(); }
     const auto name = import_stmt.match(Overloaded{
         [](const ast::LibraryImport& module) {
@@ -210,6 +209,21 @@ auto SymbolCollector::visit(const ast::ModuleStatement& module_stmt) -> void {
                                   Error::ILLEGAL_MODULE_STATEMENT_LOCATION,
                                   module_stmt.get_token());
     }
+}
+
+auto SymbolCollector::visit(const ast::TestStatement& test) -> void {
+    if (table_idx_ != 0) {
+        diagnostics_.emplace_back("Tests must be at the topmost level of a file",
+                                  Error::ILLEGAL_TEST_LOCATION,
+                                  test.get_token());
+        return;
+    }
+
+    // Not a symbol so don't push to the table, track in node instead
+    const auto scope_idx = visit_scope(
+        test.get_block(), TypeKind::TEST_BLOCK, [this](const auto& decl) { decl->accept(*this); });
+    last_type_->set_symbol_table(scope_idx);
+    test.set_sema_type(*last_type_.take());
 }
 
 auto SymbolCollector::visit(const ast::UsingStatement& using_stmt) -> void {

@@ -107,6 +107,7 @@ auto Parser::parse_statement() -> Expected<mem::Box<ast::Statement>, ParserDiagn
     case TokenType::UNDERSCORE: return ast::DiscardStatement::parse(*this);
     case TokenType::MODULE:     return ast::ModuleStatement::parse(*this);
     case TokenType::USING:      return ast::UsingStatement::parse(*this);
+    case TokenType::TEST:       return ast::TestStatement::parse(*this);
     default:                    return ast::ExpressionStatement::parse(*this);
     }
 }

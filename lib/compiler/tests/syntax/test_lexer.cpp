@@ -199,7 +199,7 @@ TEST_CASE("Lexing int bit-width variants") {
 
 TEST_CASE("Lexing keywords") {
     helpers::test_lexer("and or pub extern export packed volatile static "
-                        "i32 i64 isize u32 u64 usize f32 f64 u8 bool void type",
+                        "i32 i64 isize u32 u64 usize f32 f64 u8 bool void type test",
                         {
                             {TokenType::BOOLEAN_AND, "and"},   {TokenType::BOOLEAN_OR, "or"},
                             {TokenType::PUBLIC, "pub"},        {TokenType::EXTERN, "extern"},
@@ -211,6 +211,7 @@ TEST_CASE("Lexing keywords") {
                             {TokenType::F32_TYPE, "f32"},      {TokenType::F64_TYPE, "f64"},
                             {TokenType::U8_TYPE, "u8"},        {TokenType::BOOL_TYPE, "bool"},
                             {TokenType::VOID_TYPE, "void"},    {TokenType::TYPE_TYPE, "type"},
+                            {TokenType::TEST, "test"},
                         });
 }
 

@@ -59,6 +59,7 @@ namespace porpoise::ast {
     X(ImportStatement)      \
     X(JumpStatement)        \
     X(ModuleStatement)      \
+    X(TestStatement)        \
     X(UsingStatement)
 
 #define FOREACH_AST_NODE(X) \

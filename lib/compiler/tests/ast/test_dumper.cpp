@@ -53,6 +53,7 @@ constexpr std::string_view input{R"(
     union { a: *struct { var b: Foo = bar; }, const b := fn(&self, a: A): C { c; }; };
     enum : i64 { A = 2l, const b := fn(&self, a: A): C { c; }; };
     const a := {};
+    test "dump" { import other; std::testing::expect(a == true); }
 )"};
 
 constexpr std::string_view expected{
