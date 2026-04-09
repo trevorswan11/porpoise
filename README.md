@@ -52,8 +52,7 @@ Many build functions heavily reference [allyourcodebase](https://github.com/ally
 - Learn for the sake of learning
 - Experiment freely
 - KISS & DRY
-
-Using AI for the development of porpoise should be seen as a last resort. All code pushed should be deeply understood. Development speed is _not_ and _will never be_ a core principle of porpoise.
+- All code pushed should be deeply understood. Development speed is _not_ and _will never be_ a core principle of porpoise.
 
 ### Usage Example
 ```porpoise
