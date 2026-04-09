@@ -63,7 +63,7 @@ class ForLoopExpression : public ExprBase<ForLoopExpression> {
                       std::vector<mem::Box<Expression>> iterables,
                       std::vector<ForLoopCapture>       captures,
                       mem::Box<BlockStatement>          block,
-                      Optional<mem::Box<Statement>>     non_break) noexcept;
+                      mem::NullableBox<Statement>       non_break) noexcept;
     ~ForLoopExpression() override;
 
     MAKE_MOVE_CONSTRUCTABLE_ONLY(ForLoopExpression)
@@ -75,7 +75,7 @@ class ForLoopExpression : public ExprBase<ForLoopExpression> {
     MAKE_GETTER(iterables, std::span<const mem::Box<Expression>>)
     MAKE_GETTER(captures, std::span<const ForLoopCapture>)
     MAKE_GETTER(block, const BlockStatement&, *)
-    MAKE_OPTIONAL_UNPACKER(non_break, Statement, non_break_, **)
+    MAKE_NULLABLE_BOX_UNPACKER(non_break, Statement, non_break_, *)
 
   protected:
     auto is_equal(const Node& other) const noexcept -> bool override;
@@ -84,7 +84,7 @@ class ForLoopExpression : public ExprBase<ForLoopExpression> {
     std::vector<mem::Box<Expression>> iterables_;
     std::vector<ForLoopCapture>       captures_;
     mem::Box<BlockStatement>          block_;
-    Optional<mem::Box<Statement>>     non_break_;
+    mem::NullableBox<Statement>       non_break_;
 };
 
 } // namespace porpoise::ast

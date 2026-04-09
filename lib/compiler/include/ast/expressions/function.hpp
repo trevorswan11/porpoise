@@ -43,15 +43,15 @@ class FunctionParameter {
 
     auto accept(Visitor& v) const -> void;
 
-    MAKE_OPTIONAL_UNPACKER(ident, IdentifierExpression, ident_, **)
+    MAKE_NULLABLE_BOX_UNPACKER(ident, IdentifierExpression, ident_, *)
     MAKE_GETTER(type, const ExplicitType&)
     [[nodiscard]] auto get_token() const noexcept -> const syntax::Token&;
 
     MAKE_EQ_DELEGATION(FunctionParameter)
 
   private:
-    Optional<mem::Box<IdentifierExpression>> ident_;
-    ExplicitType                             type_;
+    mem::NullableBox<IdentifierExpression> ident_;
+    ExplicitType                           type_;
 };
 
 class FunctionExpression : public ExprBase<FunctionExpression> {
@@ -59,12 +59,12 @@ class FunctionExpression : public ExprBase<FunctionExpression> {
     static constexpr auto KIND = NodeKind::FUNCTION_EXPRESSION;
 
   public:
-    FunctionExpression(const syntax::Token&               start_token,
-                       Optional<SelfParameter>            self,
-                       std::vector<FunctionParameter>     parameters,
-                       bool                               variadic,
-                       ExplicitType&&                     return_type,
-                       Optional<mem::Box<BlockStatement>> body) noexcept;
+    FunctionExpression(const syntax::Token&             start_token,
+                       Optional<SelfParameter>          self,
+                       std::vector<FunctionParameter>   parameters,
+                       bool                             variadic,
+                       ExplicitType&&                   return_type,
+                       mem::NullableBox<BlockStatement> body) noexcept;
     ~FunctionExpression() override;
 
     MAKE_MOVE_CONSTRUCTABLE_ONLY(FunctionExpression)
@@ -82,17 +82,17 @@ class FunctionExpression : public ExprBase<FunctionExpression> {
     [[nodiscard]] auto has_parameters() const noexcept -> bool { return !parameters_.empty(); }
     [[nodiscard]] auto is_variadic() const noexcept -> bool { return variadic_; }
     MAKE_GETTER(return_type, const ExplicitType&)
-    MAKE_OPTIONAL_UNPACKER(body, BlockStatement, body_, **)
+    MAKE_NULLABLE_BOX_UNPACKER(body, BlockStatement, body_, *)
 
   protected:
     auto is_equal(const Node& other) const noexcept -> bool override;
 
   private:
-    Optional<SelfParameter>            self_;
-    std::vector<FunctionParameter>     parameters_;
-    bool                               variadic_;
-    ExplicitType                       return_type_;
-    Optional<mem::Box<BlockStatement>> body_;
+    Optional<SelfParameter>          self_;
+    std::vector<FunctionParameter>   parameters_;
+    bool                             variadic_;
+    ExplicitType                     return_type_;
+    mem::NullableBox<BlockStatement> body_;
 };
 
 } // namespace porpoise::ast

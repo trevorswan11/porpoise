@@ -10,10 +10,10 @@ using Parameters = std::vector<ast::FunctionParameter>;
 
 namespace helpers {
 
-auto function_expr_from(Optional<ast::SelfParameter>&&          self,
-                        Parameters&&                            parameters,
-                        ast::ExplicitType&&                     return_type,
-                        Optional<mem::Box<ast::BlockStatement>> block = std::nullopt,
+auto function_expr_from(Optional<ast::SelfParameter>&&        self,
+                        Parameters&&                          parameters,
+                        ast::ExplicitType&&                   return_type,
+                        mem::NullableBox<ast::BlockStatement> block = nullptr,
                         bool variadic = false) -> ast::FunctionExpression {
     return ast::FunctionExpression{syntax::Token{keywords::FN},
                                    std::move(self),
@@ -23,23 +23,23 @@ auto function_expr_from(Optional<ast::SelfParameter>&&          self,
                                    std::move(block)};
 }
 
-auto function_expr_from(Optional<ast::SelfParameter>&&          self,
-                        ast::ExplicitType&&                     return_type,
-                        Optional<mem::Box<ast::BlockStatement>> block = std::nullopt)
+auto function_expr_from(Optional<ast::SelfParameter>&&        self,
+                        ast::ExplicitType&&                   return_type,
+                        mem::NullableBox<ast::BlockStatement> block = nullptr)
     -> ast::FunctionExpression {
     return function_expr_from(std::move(self), {}, std::move(return_type), std::move(block));
 }
 
-auto function_expr_from(Parameters&&                            parameters,
-                        ast::ExplicitType&&                     return_type,
-                        Optional<mem::Box<ast::BlockStatement>> block = std::nullopt)
+auto function_expr_from(Parameters&&                          parameters,
+                        ast::ExplicitType&&                   return_type,
+                        mem::NullableBox<ast::BlockStatement> block = nullptr)
     -> ast::FunctionExpression {
     return function_expr_from(
         std::nullopt, std::move(parameters), std::move(return_type), std::move(block));
 }
 
-auto function_expr_from(ast::ExplicitType&&                     return_type,
-                        Optional<mem::Box<ast::BlockStatement>> block = std::nullopt)
+auto function_expr_from(ast::ExplicitType&&                   return_type,
+                        mem::NullableBox<ast::BlockStatement> block = nullptr)
     -> ast::FunctionExpression {
     return function_expr_from(std::nullopt, {}, std::move(return_type), std::move(block));
 }
@@ -52,7 +52,7 @@ TEST_CASE("Function without self or parameters") {
     helpers::test_expr_stmt(
         "fn(): i32 {};",
         helpers::function_expr_from(ast::ExplicitType{mods::BASE, helpers::make_ident("i32")},
-                                    helpers::make_block_stmt()));
+                                    helpers::make_block_stmt<true>()));
 }
 
 TEST_CASE("Function with self but no parameters") {
@@ -60,7 +60,7 @@ TEST_CASE("Function with self but no parameters") {
         "fn(&self): i32 {};",
         helpers::function_expr_from(ast::SelfParameter{mods::REF, helpers::make_ident("self")},
                                     ast::ExplicitType{mods::BASE, helpers::make_ident("i32")},
-                                    helpers::make_block_stmt()));
+                                    helpers::make_block_stmt<true>()));
 }
 
 TEST_CASE("Function with parameters but no self") {
@@ -72,7 +72,7 @@ TEST_CASE("Function with parameters but no self") {
                                      ast::FunctionParameter{helpers::make_ident("b"),
                                                             {mods::PTR, helpers::make_ident("B")}}),
             ast::ExplicitType{mods::BASE, helpers::make_ident("i32")},
-            helpers::make_block_stmt()));
+            helpers::make_block_stmt<true>()));
 }
 
 TEST_CASE("Function with self & parameters") {
@@ -85,7 +85,7 @@ TEST_CASE("Function with self & parameters") {
                                      ast::FunctionParameter{helpers::make_ident("b"),
                                                             {mods::PTR, helpers::make_ident("B")}}),
             ast::ExplicitType{mods::BASE, helpers::make_ident("i32")},
-            helpers::make_block_stmt()));
+            helpers::make_block_stmt<true>()));
 }
 
 TEST_CASE("Functions with variadic parameter") {
@@ -95,7 +95,7 @@ TEST_CASE("Functions with variadic parameter") {
             helpers::function_expr_from(std::nullopt,
                                         Parameters{},
                                         ast::ExplicitType{mods::BASE, helpers::make_ident("i32")},
-                                        helpers::make_block_stmt(),
+                                        helpers::make_block_stmt<true>(),
                                         true));
     }
 
@@ -105,7 +105,7 @@ TEST_CASE("Functions with variadic parameter") {
                                     ast::SelfParameter{mods::MUT_REF, helpers::make_ident("this")},
                                     Parameters{},
                                     ast::ExplicitType{mods::BASE, helpers::make_ident("i32")},
-                                    helpers::make_block_stmt(),
+                                    helpers::make_block_stmt<true>(),
                                     true));
     }
 
@@ -117,7 +117,7 @@ TEST_CASE("Functions with variadic parameter") {
                 helpers::make_parameters(ast::FunctionParameter{
                     helpers::make_ident("a"), {mods::BASE, helpers::make_ident("A")}}),
                 ast::ExplicitType{mods::BASE, helpers::make_ident("i32")},
-                helpers::make_block_stmt(),
+                helpers::make_block_stmt<true>(),
                 true));
     }
 }
@@ -130,7 +130,7 @@ TEST_CASE("Full function signature") {
             helpers::make_parameters(ast::FunctionParameter{
                 helpers::make_ident("a"), {mods::BASE, helpers::make_ident("A")}}),
             ast::ExplicitType{mods::PTR, helpers::make_ident("i32")},
-            helpers::make_block_stmt(),
+            helpers::make_block_stmt<true>(),
             true));
 }
 
@@ -142,7 +142,7 @@ TEST_CASE("Function with type types") {
                                     helpers::make_ident("A"),
                                     ast::ExplicitType{mods::BASE, helpers::make_ident("type")}}),
                                 ast::ExplicitType{mods::BASE, helpers::make_ident("type")},
-                                helpers::make_block_stmt()));
+                                helpers::make_block_stmt<true>()));
 }
 
 TEST_CASE("Full function expression") {
@@ -156,7 +156,7 @@ TEST_CASE("Full function expression") {
                 ast::FunctionParameter{helpers::make_ident("b"),
                                        ast::ExplicitType{mods::PTR, helpers::make_ident("B")}}),
             ast::ExplicitType{mods::BASE, helpers::make_ident("i32")},
-            helpers::make_expr_block_stmt(helpers::ident_from("c"))));
+            helpers::make_expr_block_stmt<true>(helpers::ident_from("c"))));
 }
 
 TEST_CASE("Function missing return type") {

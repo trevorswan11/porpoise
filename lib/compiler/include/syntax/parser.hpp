@@ -166,7 +166,7 @@ class Parser {
 
     // Parses a restricted statement only if an else token is currently looked at.
     [[nodiscard]] auto try_parse_restricted_alternate(ParserError error)
-        -> Expected<Optional<mem::Box<ast::Statement>>, ParserDiagnostic>;
+        -> Expected<mem::NullableBox<ast::Statement>, ParserDiagnostic>;
 
     // Parses a member declaration list for user-defined types
     [[nodiscard]] auto parse_member_decls(ast::MemberValidator validator = nullptr)

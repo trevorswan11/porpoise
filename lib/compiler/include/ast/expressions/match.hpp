@@ -54,10 +54,10 @@ class MatchExpression : public ExprBase<MatchExpression> {
     static constexpr auto KIND = NodeKind::MATCH_EXPRESSION;
 
   public:
-    MatchExpression(const syntax::Token&          start_token,
-                    mem::Box<Expression>          matcher,
-                    std::vector<MatchArm>         arms,
-                    Optional<mem::Box<Statement>> catch_all) noexcept;
+    MatchExpression(const syntax::Token&        start_token,
+                    mem::Box<Expression>        matcher,
+                    std::vector<MatchArm>       arms,
+                    mem::NullableBox<Statement> catch_all) noexcept;
     ~MatchExpression() override;
 
     MAKE_MOVE_CONSTRUCTABLE_ONLY(MatchExpression)
@@ -68,15 +68,15 @@ class MatchExpression : public ExprBase<MatchExpression> {
 
     MAKE_GETTER(matcher, const Expression&, *)
     MAKE_GETTER(arms, std::span<const MatchArm>)
-    MAKE_OPTIONAL_UNPACKER(catch_all, Statement, catch_all_, **)
+    MAKE_NULLABLE_BOX_UNPACKER(catch_all, Statement, catch_all_, *)
 
   protected:
     auto is_equal(const Node& other) const noexcept -> bool override;
 
   private:
-    mem::Box<Expression>          matcher_;
-    std::vector<MatchArm>         arms_;
-    Optional<mem::Box<Statement>> catch_all_;
+    mem::Box<Expression>        matcher_;
+    std::vector<MatchArm>       arms_;
+    mem::NullableBox<Statement> catch_all_;
 };
 
 } // namespace porpoise::ast

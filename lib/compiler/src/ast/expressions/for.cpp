@@ -31,7 +31,7 @@ ForLoopExpression::ForLoopExpression(const syntax::Token&              start_tok
                                      std::vector<mem::Box<Expression>> iterables,
                                      std::vector<ForLoopCapture>       captures,
                                      mem::Box<BlockStatement>          block,
-                                     Optional<mem::Box<Statement>>     non_break) noexcept
+                                     mem::NullableBox<Statement>       non_break) noexcept
     : ExprBase{start_token}, iterables_{std::move(iterables)}, captures_{std::move(captures)},
       block_{std::move(block)}, non_break_{std::move(non_break)} {}
 
@@ -116,7 +116,7 @@ auto ForLoopExpression::is_equal(const Node& other) const noexcept -> bool {
         iterables_, casted.iterables_, [](const auto& a, const auto& b) { return *a == *b; });
     const auto captures_eq = std::ranges::equal(captures_, casted.captures_);
     return iterables_eq && captures_eq && *block_ == *casted.block_ &&
-           optional::unsafe_eq<Statement>(non_break_, casted.non_break_);
+           mem::nullable_boxes_eq(non_break_, casted.non_break_);
 }
 
 } // namespace porpoise::ast

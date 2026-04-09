@@ -16,7 +16,7 @@ TEST_CASE("Library imports") {
     helpers::test_stmt("import std as stud;",
                        ast::ImportStatement{syntax::Token{keywords::IMPORT},
                                             ast::LibraryImport{helpers::make_ident("std"),
-                                                               helpers::make_ident("stud")}});
+                                                               helpers::make_ident<true>("stud")}});
 }
 
 TEST_CASE("File imports") {

@@ -13,8 +13,7 @@ class DeclStatement;
 
 class Enumeration {
   public:
-    Enumeration(mem::Box<IdentifierExpression> ident,
-                Optional<mem::Box<Expression>> value) noexcept;
+    Enumeration(mem::Box<IdentifierExpression> ident, mem::NullableBox<Expression> value) noexcept;
     ~Enumeration();
 
     MAKE_MOVE_CONSTRUCTABLE_ONLY(Enumeration)
@@ -22,14 +21,14 @@ class Enumeration {
     auto accept(Visitor& v) const -> void;
 
     MAKE_GETTER(ident, const IdentifierExpression&, *)
-    MAKE_OPTIONAL_UNPACKER(default_value, Expression, value_, **)
+    MAKE_NULLABLE_BOX_UNPACKER(default_value, Expression, value_, *)
     [[nodiscard]] auto get_token() const noexcept -> const syntax::Token&;
 
     MAKE_EQ_DELEGATION(Enumeration)
 
   private:
     mem::Box<IdentifierExpression> ident_;
-    Optional<mem::Box<Expression>> value_;
+    mem::NullableBox<Expression>   value_;
 };
 
 class EnumExpression : public ExprBase<EnumExpression> {
@@ -40,10 +39,10 @@ class EnumExpression : public ExprBase<EnumExpression> {
     using Enumerations = std::vector<Enumeration>;
 
   public:
-    EnumExpression(const syntax::Token&                     start_token,
-                   Optional<mem::Box<IdentifierExpression>> underlying,
-                   Enumerations                             enumerations,
-                   Members                                  members) noexcept;
+    EnumExpression(const syntax::Token&                   start_token,
+                   mem::NullableBox<IdentifierExpression> underlying,
+                   Enumerations                           enumerations,
+                   Members                                members) noexcept;
     ~EnumExpression() override;
 
     MAKE_MOVE_CONSTRUCTABLE_ONLY(EnumExpression)
@@ -52,7 +51,7 @@ class EnumExpression : public ExprBase<EnumExpression> {
     [[nodiscard]] static auto parse(syntax::Parser& parser)
         -> Expected<mem::Box<Expression>, syntax::ParserDiagnostic>;
 
-    MAKE_OPTIONAL_UNPACKER(underlying, IdentifierExpression, underlying_, **)
+    MAKE_NULLABLE_BOX_UNPACKER(underlying, IdentifierExpression, underlying_, *)
     MAKE_GETTER(enumerations, std::span<const Enumeration>)
     [[nodiscard]] auto has_members() const noexcept -> bool { return !members_.empty(); }
     MAKE_GETTER(members, MembersView)
@@ -61,9 +60,9 @@ class EnumExpression : public ExprBase<EnumExpression> {
     auto is_equal(const Node& other) const noexcept -> bool override;
 
   private:
-    Optional<mem::Box<IdentifierExpression>> underlying_;
-    Enumerations                             enumerations_;
-    Members                                  members_;
+    mem::NullableBox<IdentifierExpression> underlying_;
+    Enumerations                           enumerations_;
+    Members                                members_;
 };
 
 } // namespace porpoise::ast

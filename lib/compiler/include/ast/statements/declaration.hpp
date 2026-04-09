@@ -50,7 +50,7 @@ class DeclStatement : public StmtBase<DeclStatement> {
     DeclStatement(const syntax::Token&           start_token,
                   mem::Box<IdentifierExpression> ident,
                   mem::Box<TypeExpression>       type,
-                  Optional<mem::Box<Expression>> value,
+                  mem::NullableBox<Expression>   value,
                   DeclModifiers                  modifiers) noexcept;
     ~DeclStatement() override;
 
@@ -62,7 +62,7 @@ class DeclStatement : public StmtBase<DeclStatement> {
 
     MAKE_GETTER(ident, const IdentifierExpression&, *)
     MAKE_GETTER(type, const TypeExpression&, *)
-    MAKE_OPTIONAL_UNPACKER(value, Expression, value_, **)
+    MAKE_NULLABLE_BOX_UNPACKER(value, Expression, value_, *)
     MAKE_GETTER(modifiers, const DeclModifiers&)
 
     [[nodiscard]] auto has_modifier(DeclModifiers flag) const noexcept -> bool {
@@ -115,7 +115,7 @@ class DeclStatement : public StmtBase<DeclStatement> {
   private:
     mem::Box<IdentifierExpression> ident_;
     mem::Box<TypeExpression>       type_;
-    Optional<mem::Box<Expression>> value_;
+    mem::NullableBox<Expression>   value_;
     DeclModifiers                  modifiers_;
 };
 

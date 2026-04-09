@@ -17,9 +17,9 @@ TEST_CASE("Discard statements") {
         ast::DiscardStatement{start_token,
                               mem::make_box<ast::EnumExpression>(
                                   syntax::Token{keywords::ENUM},
-                                  std::nullopt,
+                                  nullptr,
                                   helpers::make_vector<ast::Enumeration>(
-                                      ast::Enumeration{helpers::make_ident("RED"), std::nullopt}),
+                                      ast::Enumeration{helpers::make_ident("RED"), {}}),
                                   helpers::make_decls())});
 }
 

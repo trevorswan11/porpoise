@@ -13,11 +13,11 @@ class IfExpression : public ExprBase<IfExpression> {
     static constexpr auto KIND = NodeKind::IF_EXPRESSION;
 
   public:
-    IfExpression(const syntax::Token&          start_token,
-                 bool                          constexpr_condition,
-                 mem::Box<Expression>          condition,
-                 mem::Box<Statement>           consequence,
-                 Optional<mem::Box<Statement>> alternate) noexcept
+    IfExpression(const syntax::Token&        start_token,
+                 bool                        constexpr_condition,
+                 mem::Box<Expression>        condition,
+                 mem::Box<Statement>         consequence,
+                 mem::NullableBox<Statement> alternate) noexcept
         : ExprBase{start_token}, constexpr_condition_{constexpr_condition},
           condition_{std::move(condition)}, consequence_{std::move(consequence)},
           alternate_{std::move(alternate)} {}
@@ -31,7 +31,7 @@ class IfExpression : public ExprBase<IfExpression> {
     [[nodiscard]] auto is_constexpr() const noexcept -> bool { return constexpr_condition_; }
     MAKE_GETTER(condition, const Expression&, *)
     MAKE_GETTER(consequence, const Statement&, *)
-    MAKE_OPTIONAL_UNPACKER(alternate, Statement, alternate_, **)
+    MAKE_NULLABLE_BOX_UNPACKER(alternate, Statement, alternate_, *)
 
   protected:
     auto is_equal(const Node& other) const noexcept -> bool override {
@@ -39,14 +39,14 @@ class IfExpression : public ExprBase<IfExpression> {
         const auto  constexpr_eq = constexpr_condition_ == casted.constexpr_condition_;
         return constexpr_eq && *condition_ == *casted.condition_ &&
                *consequence_ == *casted.consequence_ &&
-               optional::unsafe_eq<Statement>(alternate_, casted.alternate_);
+               mem::nullable_boxes_eq(alternate_, casted.alternate_);
     }
 
   private:
-    bool                          constexpr_condition_;
-    mem::Box<Expression>          condition_;
-    mem::Box<Statement>           consequence_;
-    Optional<mem::Box<Statement>> alternate_;
+    bool                        constexpr_condition_;
+    mem::Box<Expression>        condition_;
+    mem::Box<Statement>         consequence_;
+    mem::NullableBox<Statement> alternate_;
 };
 
 } // namespace porpoise::ast

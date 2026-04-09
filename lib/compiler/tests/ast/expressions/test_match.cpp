@@ -51,13 +51,14 @@ TEST_CASE("Match with arm capture") {
 TEST_CASE("Match with alternate") {
     helpers::test_expr_stmt(
         "match (a) { b => { c; } } else d;",
-        ast::MatchExpression{syntax::Token{keywords::MATCH},
-                             helpers::make_ident("a"),
-                             helpers::make_vector<ast::MatchArm>(ast::MatchArm{
-                                 helpers::make_ident("b"),
-                                 {},
-                                 helpers::make_expr_block_stmt(helpers::ident_from("c"))}),
-                             helpers::make_expr_stmt(helpers::ident_from("d"))});
+        ast::MatchExpression{
+            syntax::Token{keywords::MATCH},
+            helpers::make_ident("a"),
+            helpers::make_vector<ast::MatchArm>(
+                ast::MatchArm{helpers::make_ident("b"),
+                              {},
+                              helpers::make_expr_block_stmt(helpers::ident_from("c"))}),
+            helpers::make_expr_stmt<ast::IdentifierExpression, true>(helpers::ident_from("d"))});
 }
 
 TEST_CASE("Match without condition") {

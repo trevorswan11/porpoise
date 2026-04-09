@@ -33,10 +33,10 @@ auto MatchArm::is_equal(const MatchArm& other) const noexcept -> bool {
            *dispatch_ == *other.dispatch_;
 }
 
-MatchExpression::MatchExpression(const syntax::Token&          start_token,
-                                 mem::Box<Expression>          matcher,
-                                 std::vector<MatchArm>         arms,
-                                 Optional<mem::Box<Statement>> catch_all) noexcept
+MatchExpression::MatchExpression(const syntax::Token&        start_token,
+                                 mem::Box<Expression>        matcher,
+                                 std::vector<MatchArm>       arms,
+                                 mem::NullableBox<Statement> catch_all) noexcept
     : ExprBase{start_token}, matcher_{std::move(matcher)}, arms_{std::move(arms)},
       catch_all_{std::move(catch_all)} {}
 MatchExpression::~MatchExpression() = default;
@@ -55,7 +55,7 @@ auto MatchExpression::parse(syntax::Parser& parser)
                                       start_token);
     }
 
-    auto condition = TRY(parser.parse_expression());
+    auto matcher = TRY(parser.parse_expression());
     TRY(parser.expect_peek(syntax::TokenType::RPAREN));
 
     TRY(parser.expect_peek(syntax::TokenType::LBRACE));
@@ -101,14 +101,14 @@ auto MatchExpression::parse(syntax::Parser& parser)
         TRY(parser.try_parse_restricted_alternate(syntax::ParserError::ILLEGAL_MATCH_CATCH_ALL));
 
     return mem::make_box<MatchExpression>(
-        start_token, std::move(condition), std::move(arms), std::move(catch_all));
+        start_token, std::move(matcher), std::move(arms), std::move(catch_all));
 }
 
 auto MatchExpression::is_equal(const Node& other) const noexcept -> bool {
     const auto& casted  = as<MatchExpression>(other);
     const auto  arms_eq = std::ranges::equal(arms_, casted.arms_);
     return *matcher_ == *casted.matcher_ && arms_eq &&
-           optional::unsafe_eq<Statement>(catch_all_, casted.catch_all_);
+           mem::nullable_boxes_eq(catch_all_, casted.catch_all_);
 }
 
 } // namespace porpoise::ast

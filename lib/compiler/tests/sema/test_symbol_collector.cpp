@@ -80,7 +80,7 @@ TEST_CASE("Holistic language examples") {
                                                            mods::BASE,
                                                            helpers::make_ident("Integer"),
                                                        }),
-                    helpers::make_primitive<ast::I32Expression>("1"),
+                    helpers::make_primitive<ast::I32Expression, true>("1"),
                     ast::DeclModifiers::CONSTANT,
                 }});
     };
@@ -94,16 +94,16 @@ TEST_CASE("Import aliases correctly used") {
         "import a as A; const a := 22;",
         false,
         std::pair{"A",
-                  ast::ImportStatement{
-                      syntax::Token{keywords::IMPORT},
-                      ast::LibraryImport{helpers::make_ident("a"), helpers::make_ident("A")}}},
+                  ast::ImportStatement{syntax::Token{keywords::IMPORT},
+                                       ast::LibraryImport{helpers::make_ident("a"),
+                                                          helpers::make_ident<true>("A")}}},
         std::pair{
             "a",
             ast::DeclStatement{
                 syntax::Token{keywords::CONST},
                 helpers::make_ident("a"),
                 mem::make_box<ast::TypeExpression>(syntax::Token{operators::WALRUS}, std::nullopt),
-                helpers::make_primitive<ast::I32Expression>("22"),
+                helpers::make_primitive<ast::I32Expression, true>("22"),
                 ast::DeclModifiers::CONSTANT,
             }});
 }
@@ -118,7 +118,7 @@ TEST_CASE("Struct hollow types") {
                                                    mods::BASE,
                                                    helpers::make_ident("Foo"),
                                                }),
-            helpers::make_ident("bar"),
+            helpers::make_ident<true>("bar"),
             ast::DeclModifiers::VARIABLE,
         };
     };
@@ -132,8 +132,8 @@ TEST_CASE("Struct hollow types") {
                 syntax::Token{keywords::CONST},
                 helpers::make_ident("a"),
                 mem::make_box<ast::TypeExpression>(syntax::Token{operators::WALRUS}, std::nullopt),
-                mem::make_box<ast::StructExpression>(syntax::Token{keywords::STRUCT},
-                                                     helpers::make_decls(struct_decl())),
+                mem::make_nullable_box<ast::StructExpression>(syntax::Token{keywords::STRUCT},
+                                                              helpers::make_decls(struct_decl())),
                 ast::DeclModifiers::CONSTANT,
             },
             sema::types::Key{sema::TypeKind::STRUCT, false, 1}});
@@ -153,9 +153,9 @@ TEST_CASE("Enum hollow types") {
                 syntax::Token{keywords::CONST},
                 helpers::make_ident("a"),
                 mem::make_box<ast::TypeExpression>(syntax::Token{operators::WALRUS}, std::nullopt),
-                mem::make_box<ast::EnumExpression>(
+                mem::make_nullable_box<ast::EnumExpression>(
                     syntax::Token{keywords::ENUM},
-                    std::nullopt,
+                    nullptr,
                     helpers::make_vector<ast::Enumeration>(enumeration()),
                     helpers::make_decls()),
                 ast::DeclModifiers::CONSTANT,
@@ -171,7 +171,7 @@ TEST_CASE("Enum hollow types with member") {
             syntax::Token{keywords::STATIC},
             helpers::make_ident("c"),
             mem::make_box<ast::TypeExpression>(syntax::Token{operators::WALRUS}, std::nullopt),
-            helpers::make_primitive<ast::I32Expression>("2"),
+            helpers::make_primitive<ast::I32Expression, true>("2"),
             ast::DeclModifiers::STATIC | ast::DeclModifiers::CONSTANT,
         };
     };
@@ -185,9 +185,9 @@ TEST_CASE("Enum hollow types with member") {
                 syntax::Token{keywords::CONST},
                 helpers::make_ident("a"),
                 mem::make_box<ast::TypeExpression>(syntax::Token{operators::WALRUS}, std::nullopt),
-                mem::make_box<ast::EnumExpression>(
+                mem::make_nullable_box<ast::EnumExpression>(
                     syntax::Token{keywords::ENUM},
-                    std::nullopt,
+                    nullptr,
                     helpers::make_vector<ast::Enumeration>(enumeration()),
                     helpers::make_decls(member())),
                 ast::DeclModifiers::CONSTANT,
@@ -213,9 +213,10 @@ TEST_CASE("Union hollow types") {
                 syntax::Token{keywords::CONST},
                 helpers::make_ident("a"),
                 mem::make_box<ast::TypeExpression>(syntax::Token{operators::WALRUS}, std::nullopt),
-                mem::make_box<ast::UnionExpression>(syntax::Token{keywords::UNION},
-                                                    helpers::make_vector<ast::UnionField>(field()),
-                                                    helpers::make_decls()),
+                mem::make_nullable_box<ast::UnionExpression>(
+                    syntax::Token{keywords::UNION},
+                    helpers::make_vector<ast::UnionField>(field()),
+                    helpers::make_decls()),
                 ast::DeclModifiers::CONSTANT,
             },
             sema::types::Key{sema::TypeKind::UNION, false, 1}});
@@ -233,7 +234,7 @@ TEST_CASE("Union hollow types with member") {
             syntax::Token{keywords::STATIC},
             helpers::make_ident("c"),
             mem::make_box<ast::TypeExpression>(syntax::Token{operators::WALRUS}, std::nullopt),
-            helpers::make_primitive<ast::I32Expression>("2"),
+            helpers::make_primitive<ast::I32Expression, true>("2"),
             ast::DeclModifiers::STATIC | ast::DeclModifiers::CONSTANT,
         };
     };
@@ -247,9 +248,10 @@ TEST_CASE("Union hollow types with member") {
                 syntax::Token{keywords::CONST},
                 helpers::make_ident("a"),
                 mem::make_box<ast::TypeExpression>(syntax::Token{operators::WALRUS}, std::nullopt),
-                mem::make_box<ast::UnionExpression>(syntax::Token{keywords::UNION},
-                                                    helpers::make_vector<ast::UnionField>(field()),
-                                                    helpers::make_decls(member())),
+                mem::make_nullable_box<ast::UnionExpression>(
+                    syntax::Token{keywords::UNION},
+                    helpers::make_vector<ast::UnionField>(field()),
+                    helpers::make_decls(member())),
                 ast::DeclModifiers::CONSTANT,
             },
             sema::types::Key{sema::TypeKind::UNION, false, 1}});
@@ -264,7 +266,7 @@ TEST_CASE("Function hollow types") {
             syntax::Token{keywords::CONST},
             helpers::make_ident("b"),
             mem::make_box<ast::TypeExpression>(syntax::Token{operators::WALRUS}, std::nullopt),
-            helpers::make_ident("bar"),
+            helpers::make_ident<true>("bar"),
             ast::DeclModifiers::CONSTANT,
         };
     };
@@ -278,14 +280,14 @@ TEST_CASE("Function hollow types") {
                 syntax::Token{keywords::CONST},
                 helpers::make_ident("a"),
                 mem::make_box<ast::TypeExpression>(syntax::Token{operators::WALRUS}, std::nullopt),
-                mem::make_box<ast::FunctionExpression>(
+                mem::make_nullable_box<ast::FunctionExpression>(
                     syntax::Token{keywords::FN},
                     ast::SelfParameter{mods::REF, helpers::make_ident("self")},
                     helpers::make_parameters(ast::FunctionParameter{
                         helpers::make_ident("c"), {mods::BASE, helpers::make_ident("type")}}),
                     false,
                     ast::ExplicitType{mods::BASE, helpers::make_ident("void")},
-                    helpers::make_block_stmt(function_block_decl())),
+                    helpers::make_block_stmt<true>(function_block_decl())),
                 ast::DeclModifiers::CONSTANT,
             },
             sema::types::Key{sema::TypeKind::FUNCTION, false, 1}},

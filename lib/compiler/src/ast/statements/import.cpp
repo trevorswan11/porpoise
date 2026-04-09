@@ -6,13 +6,13 @@
 
 namespace porpoise::ast {
 
-LibraryImport::LibraryImport(mem::Box<IdentifierExpression>           name,
-                             Optional<mem::Box<IdentifierExpression>> alias) noexcept
+LibraryImport::LibraryImport(mem::Box<IdentifierExpression>         name,
+                             mem::NullableBox<IdentifierExpression> alias) noexcept
     : name_{std::move(name)}, alias_{std::move(alias)} {}
 LibraryImport::~LibraryImport() = default;
 
 auto LibraryImport::is_equal(const LibraryImport& rhs) const noexcept -> bool {
-    return *name_ == *rhs.name_ && optional::unsafe_eq<IdentifierExpression>(alias_, rhs.alias_);
+    return *name_ == *rhs.name_ && mem::nullable_boxes_eq(alias_, rhs.alias_);
 }
 
 FileImport::FileImport(mem::Box<StringExpression>     file,
@@ -55,12 +55,13 @@ auto ImportStatement::parse(syntax::Parser& parser)
             }
         }()));
 
-    Optional<mem::Box<IdentifierExpression>> imported_alias;
+    mem::NullableBox<IdentifierExpression> imported_alias;
     if (parser.peek_token_is(syntax::TokenType::AS)) {
         parser.advance();
         TRY(parser.expect_peek(syntax::TokenType::IDENT));
 
-        imported_alias = downcast<IdentifierExpression>(TRY(IdentifierExpression::parse(parser)));
+        imported_alias = mem::nullable_box_from(
+            downcast<IdentifierExpression>(TRY(IdentifierExpression::parse(parser))));
     } else if (std::holds_alternative<mem::Box<StringExpression>>(imported_core)) {
         return make_parser_unexpected(syntax::ParserError::USER_IMPORT_MISSING_ALIAS, start_token);
     }
@@ -75,7 +76,8 @@ auto ImportStatement::parse(syntax::Parser& parser)
                                   return LibraryImport{std::move(ident), std::move(imported_alias)};
                               },
                               [&](mem::Box<StringExpression>& string) -> ImportVariant {
-                                  return FileImport{std::move(string), std::move(*imported_alias)};
+                                  return FileImport{std::move(string),
+                                                    mem::Box{std::move(imported_alias)}};
                               }},
                    imported_core));
 }

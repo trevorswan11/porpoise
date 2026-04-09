@@ -10,7 +10,7 @@ namespace porpoise::ast {
 DeclStatement::DeclStatement(const syntax::Token&           start_token,
                              mem::Box<IdentifierExpression> ident,
                              mem::Box<TypeExpression>       type,
-                             Optional<mem::Box<Expression>> value,
+                             mem::NullableBox<Expression>   value,
                              DeclModifiers                  modifiers) noexcept
     : StmtBase{start_token}, ident_{std::move(ident)}, type_{std::move(type)},
       value_{std::move(value)}, modifiers_{modifiers} {}
@@ -42,9 +42,10 @@ auto DeclStatement::parse(syntax::Parser& parser)
     auto [decl_type, value_initialized] = TRY(TypeExpression::parse(parser));
     auto decl_type_expr                 = downcast<TypeExpression>(std::move(decl_type));
 
-    Optional<mem::Box<Expression>> decl_value;
+    mem::NullableBox<Expression> decl_value;
     if (value_initialized) {
-        decl_value = TRY(parser.parse_expression());
+        decl_value = mem::nullable_box_from(TRY(parser.parse_expression()));
+
         // If there is a value, then there cannot be an extern keyword
         if (modifiers_has(modifiers, DeclModifiers::EXTERN)) {
             return make_parser_unexpected(syntax::ParserError::EXTERN_VALUE_INITIALIZED,
@@ -70,8 +71,7 @@ auto DeclStatement::parse(syntax::Parser& parser)
 auto DeclStatement::is_equal(const Node& other) const noexcept -> bool {
     const auto& casted = as<DeclStatement>(other);
     return *ident_ == *casted.ident_ && *type_ == *casted.type_ &&
-           optional::unsafe_eq<Expression>(value_, casted.value_) &&
-           modifiers_ == casted.modifiers_;
+           mem::nullable_boxes_eq(value_, casted.value_) && modifiers_ == casted.modifiers_;
 }
 
 auto validate_non_struct_member(const DeclStatement& decl) noexcept -> bool {

@@ -16,11 +16,11 @@ TEST_CASE("Well formed using statement") {
             ast::ExplicitType{
                 mods::REF,
                 ast::ExplicitArrayType{
-                    helpers::make_primitive<ast::USizeExpression>("0x2uz"),
+                    helpers::make_primitive<ast::USizeExpression, true>("0x2uz"),
                     false,
                     mem::make_box<ast::ExplicitType>(
                         mods::BASE,
-                        ast::ExplicitArrayType{helpers::make_ident("N"),
+                        ast::ExplicitArrayType{helpers::make_ident<true>("N"),
                                                false,
                                                mem::make_box<ast::ExplicitType>(
                                                    mods::PTR, helpers::make_ident("E"))})}}});
@@ -42,7 +42,7 @@ TEST_CASE("User defined type alias") {
                         ast::ExplicitType{mods::BASE,
                                           mem::make_box<ast::EnumExpression>(
                                               syntax::Token{keywords::ENUM},
-                                              std::nullopt,
+                                              nullptr,
                                               helpers::make_vector<ast::Enumeration>(
                                                   ast::Enumeration{helpers::make_ident("A"), {}}),
                                               helpers::make_decls())}}),

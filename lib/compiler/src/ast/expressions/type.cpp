@@ -7,13 +7,12 @@
 #include "ast/expressions/struct.hpp"
 #include "ast/expressions/union.hpp"
 #include "ast/visitor.hpp"
-#include <type_traits>
 
 namespace porpoise::ast {
 
-ExplicitArrayType::ExplicitArrayType(Optional<mem::Box<Expression>> dimension,
-                                     bool                           null_terminated,
-                                     mem::Box<ExplicitType>         inner_type) noexcept
+ExplicitArrayType::ExplicitArrayType(mem::NullableBox<Expression> dimension,
+                                     bool                         null_terminated,
+                                     mem::Box<ExplicitType>       inner_type) noexcept
     : dimension_{std::move(dimension)}, null_terminated_{null_terminated},
       inner_type_{std::move(inner_type)} {}
 ExplicitArrayType::~ExplicitArrayType() = default;
@@ -23,7 +22,7 @@ auto ExplicitArrayType::get_token() const noexcept -> const syntax::Token& {
 }
 
 auto ExplicitArrayType::is_equal(const ExplicitArrayType& other) const noexcept -> bool {
-    return optional::unsafe_eq<Expression>(dimension_, other.dimension_) &&
+    return mem::nullable_boxes_eq(dimension_, other.dimension_) &&
            *inner_type_ == *other.inner_type_;
 }
 
@@ -44,17 +43,17 @@ auto ExplicitType::accept(Visitor& v) const -> void { v.visit(*this); }
     if (parser.peek_token_is(syntax::TokenType::LBRACKET)) {
         parser.advance();
 
-        auto                           null_terminated = false;
-        Optional<mem::Box<Expression>> dimension;
+        auto                         null_terminated = false;
+        mem::NullableBox<Expression> dimension;
         if (parser.peek_token_is(syntax::TokenType::NULL_TERMINATED)) {
             parser.advance();
             null_terminated = true;
         } else if (!parser.peek_token_is(syntax::TokenType::RBRACKET)) {
             parser.advance();
-            dimension.emplace(TRY(parser.parse_expression()));
-            if (!(*dimension)->any<USizeExpression, IdentifierExpression>()) {
+            dimension = mem::nullable_box_from(TRY(parser.parse_expression()));
+            if (!dimension->any<USizeExpression, IdentifierExpression>()) {
                 return make_parser_unexpected(syntax::ParserError::ILLEGAL_ARRAY_SIZE_TYPE,
-                                              (*dimension)->get_token());
+                                              dimension->get_token());
             }
 
             // The null terminated marker comes after the size for explicitly sized types

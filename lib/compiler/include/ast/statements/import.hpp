@@ -13,20 +13,20 @@ class StringExpression;
 
 class LibraryImport {
   public:
-    LibraryImport(mem::Box<IdentifierExpression>           name,
-                  Optional<mem::Box<IdentifierExpression>> alias) noexcept;
+    LibraryImport(mem::Box<IdentifierExpression>         name,
+                  mem::NullableBox<IdentifierExpression> alias) noexcept;
     ~LibraryImport();
 
     MAKE_MOVE_CONSTRUCTABLE_ONLY(LibraryImport)
 
     MAKE_GETTER(name, const IdentifierExpression&, *)
-    MAKE_OPTIONAL_UNPACKER(alias, IdentifierExpression, alias_, **)
+    MAKE_NULLABLE_BOX_UNPACKER(alias, IdentifierExpression, alias_, *)
 
     MAKE_EQ_DELEGATION(LibraryImport)
 
   private:
-    mem::Box<IdentifierExpression>           name_;
-    Optional<mem::Box<IdentifierExpression>> alias_;
+    mem::Box<IdentifierExpression>         name_;
+    mem::NullableBox<IdentifierExpression> alias_;
 };
 
 class FileImport {

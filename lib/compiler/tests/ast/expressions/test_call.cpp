@@ -58,12 +58,12 @@ TEST_CASE("Type arguments in call") {
                 ast::ExplicitType{
                     mods::PTR,
                     ast::ExplicitArrayType{
-                        helpers::make_ident("N"),
+                        helpers::make_ident<true>("N"),
                         false,
                         mem::make_box<ast::ExplicitType>(mods::BASE, helpers::make_ident("i32"))}},
                 ast::ExplicitType{
                     mods::BASE,
-                    ast::ExplicitArrayType{{},
+                    ast::ExplicitArrayType{nullptr,
                                            true,
                                            mem::make_box<ast::ExplicitType>(
                                                mods::BASE, helpers::make_ident("u8"))}})});

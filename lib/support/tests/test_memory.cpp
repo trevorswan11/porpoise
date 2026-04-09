@@ -18,6 +18,30 @@ TEST_CASE("Nullable box template checks") {
     STATIC_CHECK(mem::is_nullable_box_v<CustomNullableBox>);
 }
 
+TEST_CASE("Safe nullable box default equality") {
+    const mem::NullableBox<i32> opt_a{mem::make_nullable_box<i32>(100)};
+    const mem::NullableBox<i32> opt_b{mem::make_nullable_box<i32>(100)};
+    const mem::NullableBox<i32> opt_c{mem::make_nullable_box<i32>(200)};
+    const mem::NullableBox<i32> opt_null;
+
+    CHECK(mem::nullable_boxes_eq<i32>(opt_a, opt_b));
+    CHECK_FALSE(mem::nullable_boxes_eq<i32>(opt_a, opt_c));
+    CHECK_FALSE(mem::nullable_boxes_eq<i32>(opt_a, opt_null));
+    CHECK(mem::nullable_boxes_eq<i32>(opt_null, opt_null));
+}
+
+TEST_CASE("Safe nullable box custom equality") {
+    struct Node {
+        usize            type_id;
+        std::string_view name;
+    };
+
+    const mem::NullableBox<Node> a = mem::make_nullable_box<Node>(1, "foo");
+    const mem::NullableBox<Node> b = mem::make_nullable_box<Node>(1, "bar");
+    CHECK(mem::nullable_boxes_eq<Node>(
+        a, b, [](const Node& an, const Node& bn) { return an.type_id == bn.type_id; }));
+}
+
 using OkBox     = mem::Box<bool>;
 using NotBox    = bool;
 using CustomBox = mem::Box<bool, void (*)(bool*)>;
@@ -53,30 +77,6 @@ TEST_CASE("Box template checks") {
     STATIC_CHECK(mem::is_box_v<OkBox>);
     STATIC_CHECK_FALSE(mem::is_box_v<NotBox>);
     STATIC_CHECK(mem::is_box_v<CustomBox>);
-}
-
-TEST_CASE("Unsafe optional default equality") {
-    const Optional<mem::Box<i32>> opt_a{mem::make_box<i32>(100)};
-    const Optional<mem::Box<i32>> opt_b{mem::make_box<i32>(100)};
-    const Optional<mem::Box<i32>> opt_c{mem::make_box<i32>(200)};
-    const Optional<mem::Box<i32>> opt_null;
-
-    CHECK(optional::unsafe_eq<i32>(opt_a, opt_b));
-    CHECK_FALSE(optional::unsafe_eq<i32>(opt_a, opt_c));
-    CHECK_FALSE(optional::unsafe_eq<i32>(opt_a, opt_null));
-    CHECK(optional::unsafe_eq<i32>(opt_null, opt_null));
-}
-
-TEST_CASE("Unsafe optional custom equality") {
-    struct Node {
-        usize            type_id;
-        std::string_view name;
-    };
-
-    const Optional<mem::Box<Node>> a = mem::make_box<Node>(1, "foo");
-    const Optional<mem::Box<Node>> b = mem::make_box<Node>(1, "bar");
-    CHECK(optional::unsafe_eq<Node>(
-        a, b, [](const Node& an, const Node& bn) { return an.type_id == bn.type_id; }));
 }
 
 } // namespace porpoise::tests

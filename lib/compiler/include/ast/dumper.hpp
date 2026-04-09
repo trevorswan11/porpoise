@@ -1,9 +1,9 @@
 #pragma once
 
 #include <ostream>
+#include <type_traits>
 
 #include <fmt/ostream.h>
-#include <type_traits>
 
 #include "ast/visitor.hpp"
 
@@ -30,9 +30,12 @@ class ASTDumper : public Visitor {
 
     template <typename T> void dump_node_list(const T& list) {
         dump_container(list, [this](const auto& node) {
+            using NodeType = std::remove_cvref_t<decltype(node)>;
             fmt::print(out_, "{}", indent_.current_branch());
-            if constexpr (mem::is_box_v<std::remove_cvref_t<decltype(node)>>) {
+            if constexpr (mem::is_box_v<NodeType>) {
                 node->accept(*this);
+            } else if constexpr (mem::is_nullable_box_v<NodeType>) {
+                if (node) { node->accept(*this); }
             } else {
                 node.accept(*this);
             }

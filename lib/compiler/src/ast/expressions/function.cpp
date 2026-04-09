@@ -29,27 +29,27 @@ auto SelfParameter::get_token() const noexcept -> const syntax::Token& {
 
 FunctionParameter::FunctionParameter(mem::Box<IdentifierExpression> ident,
                                      ExplicitType&&                 type) noexcept
-    : ident_{std::move(ident)}, type_{std::move(type)} {}
+    : ident_{mem::nullable_box_from(std::move(ident))}, type_{std::move(type)} {}
 FunctionParameter::FunctionParameter(ExplicitType&& type) noexcept : type_{std::move(type)} {}
 FunctionParameter::~FunctionParameter() = default;
 
 auto FunctionParameter::accept(Visitor& v) const -> void { v.visit(*this); }
 
 auto FunctionParameter::is_equal(const FunctionParameter& other) const noexcept -> bool {
-    return optional::unsafe_eq<IdentifierExpression>(ident_, other.ident_) && type_ == other.type_;
+    return mem::nullable_boxes_eq(ident_, other.ident_) && type_ == other.type_;
 }
 
 auto FunctionParameter::get_token() const noexcept -> const syntax::Token& {
-    if (ident_) { return (*ident_)->get_token(); }
+    if (ident_) { return ident_->get_token(); }
     return type_.get_token();
 }
 
-FunctionExpression::FunctionExpression(const syntax::Token&               start_token,
-                                       Optional<SelfParameter>            self,
-                                       std::vector<FunctionParameter>     parameters,
-                                       bool                               variadic,
-                                       ExplicitType&&                     return_type,
-                                       Optional<mem::Box<BlockStatement>> body) noexcept
+FunctionExpression::FunctionExpression(const syntax::Token&             start_token,
+                                       Optional<SelfParameter>          self,
+                                       std::vector<FunctionParameter>   parameters,
+                                       bool                             variadic,
+                                       ExplicitType&&                   return_type,
+                                       mem::NullableBox<BlockStatement> body) noexcept
     : ExprBase{start_token}, self_{std::move(self)}, parameters_{std::move(parameters)},
       variadic_{variadic}, return_type_{std::move(return_type)}, body_{std::move(body)} {}
 FunctionExpression::~FunctionExpression() = default;
@@ -163,7 +163,7 @@ auto FunctionExpression::parse(syntax::Parser& parser)
                                              std::move(parameters),
                                              variadic,
                                              std::move(return_type),
-                                             std::move(body));
+                                             mem::nullable_box_from(std::move(body)));
 }
 
 auto FunctionExpression::parse_type(syntax::Parser& parser)
@@ -213,7 +213,7 @@ auto FunctionExpression::parse_type(syntax::Parser& parser)
                                              std::move(parameters),
                                              variadic,
                                              std::move(return_type),
-                                             std::nullopt);
+                                             nullptr);
 }
 
 auto FunctionExpression::is_equal(const Node& other) const noexcept -> bool {
@@ -221,8 +221,7 @@ auto FunctionExpression::is_equal(const Node& other) const noexcept -> bool {
     const auto  self_matches  = optional::safe_eq<SelfParameter>(self_, casted.self_);
     const auto  parameters_eq = std::ranges::equal(parameters_, casted.parameters_);
     return self_matches && parameters_eq && variadic_ == casted.variadic_ &&
-           return_type_ == casted.return_type_ &&
-           optional::unsafe_eq<BlockStatement>(body_, casted.body_);
+           return_type_ == casted.return_type_ && mem::nullable_boxes_eq(body_, casted.body_);
 }
 
 } // namespace porpoise::ast

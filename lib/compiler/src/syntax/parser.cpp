@@ -150,13 +150,13 @@ auto Parser::parse_expression(Precedence precedence)
 }
 
 [[nodiscard]] auto Parser::try_parse_restricted_alternate(ParserError error)
-    -> Expected<Optional<mem::Box<ast::Statement>>, ParserDiagnostic> {
+    -> Expected<mem::NullableBox<ast::Statement>, ParserDiagnostic> {
     if (peek_token_is(TokenType::ELSE)) {
         // Advance twice to actually look at the statement's first token
         advance(2);
-        return TRY(parse_restricted_statement(error));
+        return mem::nullable_box_from(TRY(parse_restricted_statement(error)));
     }
-    return std::nullopt;
+    return nullptr;
 }
 
 auto Parser::parse_member_decls(ast::MemberValidator validator)

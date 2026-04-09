@@ -30,7 +30,7 @@ TEST_CASE("If with alternate") {
                           false,
                           helpers::make_ident("a"),
                           helpers::make_expr_block_stmt(helpers::ident_from("b")),
-                          helpers::make_expr_block_stmt(helpers::ident_from("c"))});
+                          helpers::make_expr_block_stmt<true>(helpers::ident_from("c"))});
 
     helpers::test_expr_stmt(
         "if (a) b; else { c; };",
@@ -38,7 +38,7 @@ TEST_CASE("If with alternate") {
                           false,
                           helpers::make_ident("a"),
                           helpers::make_expr_stmt(helpers::ident_from("b")),
-                          helpers::make_expr_block_stmt(helpers::ident_from("c"))});
+                          helpers::make_expr_block_stmt<true>(helpers::ident_from("c"))});
 }
 
 TEST_CASE("If without condition") {

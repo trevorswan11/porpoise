@@ -16,7 +16,7 @@ auto test_type_expr(std::string_view type_str, ast::ExplicitType&& expected) -> 
                            helpers::make_ident("a"),
                            mem::make_box<ast::TypeExpression>(
                                syntax::Token{syntax::TokenType::COLON, ":"}, std::move(expected)),
-                           std::nullopt,
+                           {},
                            ast::DeclModifiers::VARIABLE});
 }
 
@@ -41,7 +41,7 @@ TEST_CASE("Function types") {
                               Parameters{},
                               false,
                               ast::ExplicitType{mods::BASE, helpers::make_ident("noreturn")},
-                              std::nullopt)});
+                              nullptr)});
 
     helpers::test_type_expr(
         "fn(&self): *mut E",
@@ -53,7 +53,7 @@ TEST_CASE("Function types") {
                                   ast::FunctionParameter{{mods::REF, helpers::make_ident("self")}}),
                               false,
                               ast::ExplicitType{mods::MUT_PTR, helpers::make_ident("E")},
-                              std::nullopt)});
+                              nullptr)});
 }
 
 TEST_CASE("Array type") {
@@ -62,7 +62,7 @@ TEST_CASE("Array type") {
         ast::ExplicitType{
             mods::BASE,
             ast::ExplicitArrayType{
-                helpers::make_primitive<ast::USizeExpression>("5uz"),
+                helpers::make_primitive<ast::USizeExpression, true>("5uz"),
                 false,
                 mem::make_box<ast::ExplicitType>(mods::PTR, helpers::make_ident("u64"))}});
 }
@@ -83,7 +83,7 @@ TEST_CASE("Recursive types") {
         ast::ExplicitType{
             mods::REF,
             ast::ExplicitArrayType{
-                helpers::make_ident("S"),
+                helpers::make_ident<true>("S"),
                 false,
                 mem::make_box<ast::ExplicitType>(
                     mods::REF,
@@ -105,15 +105,65 @@ TEST_CASE("Complex function type (holistic)") {
                 ast::ExplicitType{
                     mods::REF,
                     ast::ExplicitArrayType{
-                        helpers::make_primitive<ast::USizeExpression>("0x2uz"),
+                        helpers::make_primitive<ast::USizeExpression, true>("0x2uz"),
                         false,
                         mem::make_box<ast::ExplicitType>(
                             mods::BASE,
-                            ast::ExplicitArrayType{helpers::make_ident("N"),
+                            ast::ExplicitArrayType{helpers::make_ident<true>("N"),
                                                    true,
                                                    mem::make_box<ast::ExplicitType>(
                                                        mods::PTR, helpers::make_ident("E"))})}},
-                std::nullopt)});
+                nullptr)});
+}
+
+TEST_CASE("Union inline types") {
+    helpers::test_type_expr(
+        "&union { a: i32, b: &mut T, };",
+        ast::ExplicitType{
+            mods::REF,
+            mem::make_box<ast::UnionExpression>(
+                syntax::Token{keywords::UNION},
+                helpers::make_vector<ast::UnionField>(
+                    ast::UnionField{helpers::make_ident("a"),
+                                    ast::ExplicitType{mods::BASE, helpers::make_ident("i32")}},
+                    ast::UnionField{helpers::make_ident("b"),
+                                    ast::ExplicitType{mods::MUT_REF, helpers::make_ident("T")}}),
+                helpers::make_decls())});
+}
+
+TEST_CASE("Struct inline types") {
+    helpers::test_type_expr(
+        "*struct { var b: Foo = bar; };",
+        ast::ExplicitType{
+            mods::PTR,
+            mem::make_box<ast::StructExpression>(
+                syntax::Token{keywords::STRUCT},
+                helpers::make_decls(ast::DeclStatement{
+                    syntax::Token{keywords::VAR},
+                    helpers::make_ident("b"),
+                    mem::make_box<ast::TypeExpression>(syntax::Token{syntax::TokenType::COLON, ":"},
+                                                       ast::ExplicitType{
+                                                           mods::BASE,
+                                                           helpers::make_ident("Foo"),
+                                                       }),
+                    helpers::make_ident<true>("bar"),
+                    ast::DeclModifiers::VARIABLE,
+                }))});
+}
+
+TEST_CASE("Enum inline types") {
+    helpers::test_type_expr(
+        "enum : u64 {RED = 3u, B, };",
+        ast::ExplicitType{
+            mods::BASE,
+            mem::make_box<ast::EnumExpression>(
+                syntax::Token{keywords::ENUM},
+                helpers::make_ident<true>("u64"),
+                helpers::make_vector<ast::Enumeration>(
+                    ast::Enumeration{helpers::make_ident("RED"),
+                                     helpers::make_primitive<ast::U32Expression, true>("3u")},
+                    ast::Enumeration{helpers::make_ident("B"), {}}),
+                helpers::make_decls())});
 }
 
 TEST_CASE("Volatile restricted to declarations") {
@@ -164,56 +214,6 @@ TEST_CASE("Function return type restrictions") {
     helpers::test_parser_fail(
         "var a: fn(): &noreturn;",
         syntax::ParserDiagnostic{syntax::ParserError::ILLEGAL_NORETURN_TYPE_MODIFIER, 1, 14});
-}
-
-TEST_CASE("Union inline types") {
-    helpers::test_type_expr(
-        "&union { a: i32, b: &mut T, };",
-        ast::ExplicitType{
-            mods::REF,
-            mem::make_box<ast::UnionExpression>(
-                syntax::Token{keywords::UNION},
-                helpers::make_vector<ast::UnionField>(
-                    ast::UnionField{helpers::make_ident("a"),
-                                    ast::ExplicitType{mods::BASE, helpers::make_ident("i32")}},
-                    ast::UnionField{helpers::make_ident("b"),
-                                    ast::ExplicitType{mods::MUT_REF, helpers::make_ident("T")}}),
-                helpers::make_decls())});
-}
-
-TEST_CASE("Struct inline types") {
-    helpers::test_type_expr(
-        "*struct { var b: Foo = bar; };",
-        ast::ExplicitType{
-            mods::PTR,
-            mem::make_box<ast::StructExpression>(
-                syntax::Token{keywords::STRUCT},
-                helpers::make_decls(ast::DeclStatement{
-                    syntax::Token{keywords::VAR},
-                    helpers::make_ident("b"),
-                    mem::make_box<ast::TypeExpression>(syntax::Token{syntax::TokenType::COLON, ":"},
-                                                       ast::ExplicitType{
-                                                           mods::BASE,
-                                                           helpers::make_ident("Foo"),
-                                                       }),
-                    helpers::make_ident("bar"),
-                    ast::DeclModifiers::VARIABLE,
-                }))});
-}
-
-TEST_CASE("Enum inline types") {
-    helpers::test_type_expr(
-        "enum : u64 {RED = 3u, B, };",
-        ast::ExplicitType{
-            mods::BASE,
-            mem::make_box<ast::EnumExpression>(
-                syntax::Token{keywords::ENUM},
-                helpers::make_ident("u64"),
-                helpers::make_vector<ast::Enumeration>(
-                    ast::Enumeration{helpers::make_ident("RED"),
-                                     helpers::make_primitive<ast::U32Expression>("3u")},
-                    ast::Enumeration{helpers::make_ident("B"), {}}),
-                helpers::make_decls())});
 }
 
 } // namespace porpoise::tests

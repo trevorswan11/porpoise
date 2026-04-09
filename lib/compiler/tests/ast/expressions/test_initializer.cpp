@@ -11,7 +11,7 @@ TEST_CASE("Empty implicit initializer list") {
         ".{};",
         syntax::Token{operators::DOT},
         ast::InitializerExpression{syntax::Token{syntax::TokenType::LBRACE, "{"},
-                                   std::nullopt,
+                                   {},
                                    helpers::make_vector<ast::Initializer>()});
 }
 
@@ -20,7 +20,7 @@ TEST_CASE("Non-empty implicit initializer list") {
         ".{ .a = 2, };",
         syntax::Token{operators::DOT},
         ast::InitializerExpression{syntax::Token{syntax::TokenType::LBRACE, "{"},
-                                   std::nullopt,
+                                   {},
                                    helpers::make_vector<ast::Initializer>(ast::Initializer{
                                        mem::make_box<ast::ImplicitAccessExpression>(
                                            syntax::Token{operators::DOT}, helpers::make_ident("a")),
@@ -30,7 +30,7 @@ TEST_CASE("Non-empty implicit initializer list") {
 TEST_CASE("Empty explicit initializer list") {
     helpers::test_expr_stmt("T{};",
                             ast::InitializerExpression{syntax::Token{syntax::TokenType::IDENT, "T"},
-                                                       helpers::make_ident("T"),
+                                                       helpers::make_ident<true>("T"),
                                                        helpers::make_vector<ast::Initializer>()});
 }
 
@@ -38,7 +38,7 @@ TEST_CASE("Non-empty explicit initializer list") {
     helpers::test_expr_stmt(
         "T{ .a = 2 };",
         ast::InitializerExpression{syntax::Token{syntax::TokenType::IDENT, "T"},
-                                   helpers::make_ident("T"),
+                                   helpers::make_ident<true>("T"),
                                    helpers::make_vector<ast::Initializer>(ast::Initializer{
                                        mem::make_box<ast::ImplicitAccessExpression>(
                                            syntax::Token{operators::DOT}, helpers::make_ident("a")),
@@ -50,7 +50,7 @@ TEST_CASE("Multiple initializer key-values") {
         "T{ .a = 2, .b = 3u, .c = t };",
         ast::InitializerExpression{
             syntax::Token{syntax::TokenType::IDENT, "T"},
-            helpers::make_ident("T"),
+            helpers::make_ident<true>("T"),
             helpers::make_vector<ast::Initializer>(
                 ast::Initializer{mem::make_box<ast::ImplicitAccessExpression>(
                                      syntax::Token{operators::DOT}, helpers::make_ident("a")),

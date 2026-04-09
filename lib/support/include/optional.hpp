@@ -87,12 +87,9 @@ class NonNull {
 
 namespace optional {
 
-template <typename T>
-using Comparator = bool (*)(const std::remove_reference_t<T>&, const std::remove_reference_t<T>&);
-
 // Compares two values, forwarding safety concerns to the comparator.
-template <typename T>
-auto safe_eq(const Optional<T>& a, const Optional<T>& b, Comparator<T> cmp) noexcept -> bool {
+template <typename T, typename Comparator>
+auto safe_eq(const Optional<T>& a, const Optional<T>& b, Comparator cmp) noexcept -> bool {
     if (a.has_value() != b.has_value()) { return false; }
     if (!a.has_value()) { return true; }
     return cmp(*a, *b);

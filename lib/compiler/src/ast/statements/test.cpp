@@ -6,9 +6,9 @@
 
 namespace porpoise::ast {
 
-TestStatement::TestStatement(const syntax::Token&                 start_token,
-                             Optional<mem::Box<StringExpression>> description,
-                             mem::Box<BlockStatement>             block) noexcept
+TestStatement::TestStatement(const syntax::Token&               start_token,
+                             mem::NullableBox<StringExpression> description,
+                             mem::Box<BlockStatement>           block) noexcept
     : StmtBase{start_token}, description_{std::move(description)}, block_{std::move(block)} {}
 TestStatement::~TestStatement() = default;
 
@@ -18,15 +18,16 @@ auto TestStatement::parse(syntax::Parser& parser)
     -> Expected<mem::Box<Statement>, syntax::ParserDiagnostic> {
     const auto start_token = parser.current_token();
 
-    Optional<mem::Box<StringExpression>> description;
+    mem::NullableBox<StringExpression> description;
     if (parser.peek_token_is(syntax::TokenType::STRING)) {
         parser.advance();
-        description.emplace(downcast<StringExpression>(TRY(StringExpression::parse(parser))));
+        description = mem::nullable_box_from(
+            downcast<StringExpression>(TRY(StringExpression::parse(parser))));
 
         // Empty strings aren't supported since one should just use no description
-        if ((*description)->get_value().empty()) {
+        if (description->get_value().empty()) {
             return make_parser_unexpected(syntax::ParserError::EMPTY_TEST_DESCRIPTION,
-                                          (*description)->get_token());
+                                          description->get_token());
         }
     }
 
@@ -39,8 +40,7 @@ auto TestStatement::parse(syntax::Parser& parser)
 
 auto TestStatement::is_equal(const Node& other) const noexcept -> bool {
     const auto& casted = as<TestStatement>(other);
-    return optional::unsafe_eq<StringExpression>(description_, casted.description_) &&
-           *block_ == *casted.block_;
+    return mem::nullable_boxes_eq(description_, casted.description_) && *block_ == *casted.block_;
 }
 
 } // namespace porpoise::ast

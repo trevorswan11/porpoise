@@ -31,7 +31,7 @@ TEST_CASE("Struct flavors") {
                                 mods::BASE,
                                 helpers::make_ident("Foo"),
                             }),
-                        helpers::make_ident("bar"),
+                        helpers::make_ident<true>("bar"),
                         ast::DeclModifiers::VARIABLE,
                     },
                     ast::DeclStatement{
@@ -39,7 +39,7 @@ TEST_CASE("Struct flavors") {
                         helpers::make_ident("b"),
                         mem::make_box<ast::TypeExpression>(syntax::Token{operators::WALRUS},
                                                            std::nullopt),
-                        mem::make_box<ast::FunctionExpression>(
+                        mem::make_nullable_box<ast::FunctionExpression>(
                             syntax::Token{keywords::FN},
                             ast::SelfParameter{mods::MUT_PTR, helpers::make_ident("this")},
                             helpers::make_parameters(
@@ -49,7 +49,7 @@ TEST_CASE("Struct flavors") {
                                                        {mods::PTR, helpers::make_ident("B")}}),
                             false,
                             ast::ExplicitType{mods::BASE, helpers::make_ident("C")},
-                            helpers::make_expr_block_stmt(helpers::ident_from("c"))),
+                            helpers::make_expr_block_stmt<true>(helpers::ident_from("c"))),
                         ast::DeclModifiers::CONSTANT,
                     })});
     }

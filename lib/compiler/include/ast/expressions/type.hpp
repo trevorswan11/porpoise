@@ -23,14 +23,14 @@ class ExplicitType;
 
 class ExplicitArrayType {
   public:
-    ExplicitArrayType(Optional<mem::Box<Expression>> dimension,
-                      bool                           null_terminated,
-                      mem::Box<ExplicitType>         inner_type) noexcept;
+    ExplicitArrayType(mem::NullableBox<Expression> dimension,
+                      bool                         null_terminated,
+                      mem::Box<ExplicitType>       inner_type) noexcept;
     ~ExplicitArrayType();
 
     MAKE_MOVE_CONSTRUCTABLE_ONLY(ExplicitArrayType)
 
-    MAKE_OPTIONAL_UNPACKER(dimension, Expression, dimension_, **)
+    MAKE_NULLABLE_BOX_UNPACKER(dimension, Expression, dimension_, *)
     [[nodiscard]] auto is_null_terminated() const noexcept -> bool { return null_terminated_; }
     MAKE_GETTER(inner_type, const ExplicitType&, *)
     [[nodiscard]] auto get_token() const noexcept -> const syntax::Token&;
@@ -38,9 +38,9 @@ class ExplicitArrayType {
     MAKE_EQ_DELEGATION(ExplicitArrayType)
 
   private:
-    Optional<mem::Box<Expression>> dimension_;
-    bool                           null_terminated_;
-    mem::Box<ExplicitType>         inner_type_;
+    mem::NullableBox<Expression> dimension_;
+    bool                         null_terminated_;
+    mem::Box<ExplicitType>       inner_type_;
 };
 
 class ExplicitType {

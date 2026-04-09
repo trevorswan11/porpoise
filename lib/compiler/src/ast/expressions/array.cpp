@@ -13,7 +13,7 @@
 namespace porpoise::ast {
 
 ArrayExpression::ArrayExpression(const syntax::Token&              start_token,
-                                 Optional<mem::Box<Expression>>    size,
+                                 mem::NullableBox<Expression>      size,
                                  ExplicitType&&                    item_type,
                                  std::vector<mem::Box<Expression>> items) noexcept
     : ExprBase{start_token}, size_{std::move(size)}, item_type_{std::move(item_type)},
@@ -27,13 +27,13 @@ auto ArrayExpression::parse(syntax::Parser& parser)
     const auto start_token = parser.current_token();
     parser.advance();
 
-    Optional<mem::Box<Expression>> size;
+    mem::NullableBox<Expression> size;
     if (!parser.current_token_is(syntax::TokenType::UNDERSCORE)) {
         if (parser.current_token_is(syntax::TokenType::RBRACKET)) {
             return make_parser_unexpected(syntax::ParserError::MISSING_ARRAY_SIZE_TOKEN,
                                           start_token);
         }
-        size.emplace(TRY(parser.parse_expression()));
+        size = mem::nullable_box_from(TRY(parser.parse_expression()));
     }
 
     TRY(parser.expect_peek(syntax::TokenType::RBRACKET));
@@ -55,7 +55,7 @@ auto ArrayExpression::parse(syntax::Parser& parser)
     // Perform last minute ident/size checks to reduce load on Sema
     TRY(parser.expect_peek(syntax::TokenType::RBRACE));
     if (size) {
-        const auto& size_expr = *(*size);
+        const auto& size_expr = *size;
         if (size_expr.is<USizeExpression>()) {
             const auto& explicit_size = as<USizeExpression>(size_expr);
             const auto& size_token    = size_expr.get_token();
@@ -77,8 +77,7 @@ auto ArrayExpression::parse(syntax::Parser& parser)
 
 auto ArrayExpression::is_equal(const Node& other) const noexcept -> bool {
     const auto& casted = as<ArrayExpression>(other);
-    return optional::unsafe_eq<Expression>(size_, casted.size_) &&
-           item_type_ == casted.item_type_ &&
+    return mem::nullable_boxes_eq(size_, casted.size_) && item_type_ == casted.item_type_ &&
            std::ranges::equal(
                items_, casted.items_, [](const auto& a, const auto& b) { return *a == *b; });
 }

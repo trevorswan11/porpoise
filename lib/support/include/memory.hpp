@@ -39,6 +39,10 @@ template <typename T> struct is_nullable_box : std::false_type {};
 template <typename T, typename D> struct is_nullable_box<NullableBox<T, D>> : std::true_type {};
 template <typename T> constexpr bool is_nullable_box_v = is_nullable_box<T>::value;
 
+#define MAKE_NULLABLE_BOX_UNPACKER(name, ReturnType, member, deref)                              \
+    [[nodiscard]] auto get_##name() const noexcept -> const ReturnType& { return deref member; } \
+    [[nodiscard]] auto has_##name() const noexcept -> bool { return member.operator bool(); }
+
 struct NullBoxException : public std::logic_error {
     NullBoxException()
         : std::logic_error{"Violated Invariant: Attempted to initialize with null"} {}
@@ -119,6 +123,12 @@ template <typename T> struct is_box : std::false_type {};
 template <typename T, typename D> struct is_box<Box<T, D>> : std::true_type {};
 template <typename T> constexpr bool is_box_v = is_box<T>::value;
 
+// Makes a new nullable box from an existing box
+template <typename T>
+[[nodiscard]] constexpr auto nullable_box_from(Box<T>&& box) -> NullableBox<T> {
+    return std::unique_ptr<T>{box.release()};
+}
+
 // If you find yourself using this, think really hard about the decisions that led you here...
 template <typename T> using Rc = std::shared_ptr<T>;
 template <typename T, typename... Args>
@@ -128,26 +138,31 @@ template <typename T, typename... Args>
 
 // cppcheck-suppress-end noExplicitConstructor
 
-} // namespace mem
-
-namespace optional {
-
 // Compares two boxes based on the provided comparator
-template <typename T>
-auto unsafe_eq(const Optional<mem::Box<T>>& a,
-               const Optional<mem::Box<T>>& b,
-               Comparator<T>                cmp) noexcept -> bool {
-    if (a.has_value() != b.has_value()) { return false; }
-    if (!a.has_value()) { return true; }
-    return cmp(**a, **b);
+template <typename T, typename Comparator>
+auto nullable_boxes_eq(const mem::NullableBox<T>& a,
+                       const mem::NullableBox<T>& b,
+                       Comparator                 cmp) noexcept -> bool {
+    if (a.operator bool() != b.operator bool()) { return false; }
+    if (!a.operator bool()) { return true; }
+    return cmp(*a, *b);
 }
 
 // Compares two boxes by using the underlying type's default equality operator
 template <typename T>
-auto unsafe_eq(const Optional<mem::Box<T>>& a, const Optional<mem::Box<T>>& b) noexcept -> bool {
-    return unsafe_eq<T>(a, b, [](const T& ae, const T& be) { return ae == be; });
+auto nullable_boxes_eq(const mem::NullableBox<T>& a, const mem::NullableBox<T>& b) noexcept
+    -> bool {
+    return nullable_boxes_eq<T>(a, b, [](const auto& ae, const auto& be) { return ae == be; });
 }
 
-} // namespace optional
+} // namespace mem
+
+template <typename T, typename D> class OptionalRef<mem::Box<T, D>&> {
+    static_assert(false, "Use a NullableBox<T, D> to accomplish this!");
+};
 
 } // namespace porpoise
+
+template <typename T, typename D> class std::optional<porpoise::mem::Box<T, D>> {
+    static_assert(false, "Use a NullableBox<T, D> to accomplish this!");
+};

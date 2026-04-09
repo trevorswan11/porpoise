@@ -18,20 +18,19 @@ auto Initializer::is_equal(const Initializer& other) const noexcept -> bool {
     return *member_ == *other.member_ && *value_ == *other.value_;
 }
 
-InitializerExpression::InitializerExpression(const syntax::Token&           start_token,
-                                             Optional<mem::Box<Expression>> object_type,
-                                             std::vector<Initializer>       initializers) noexcept
+InitializerExpression::InitializerExpression(const syntax::Token&         start_token,
+                                             mem::NullableBox<Expression> object_type,
+                                             std::vector<Initializer>     initializers) noexcept
     : ExprBase{start_token}, object_type_{std::move(object_type)},
       initializers_{std::move(initializers)} {}
 InitializerExpression::~InitializerExpression() = default;
 
 auto InitializerExpression::accept(Visitor& v) const -> void { v.visit(*this); }
 
-auto InitializerExpression::parse_opt_object(syntax::Parser&                parser,
-                                             Optional<mem::Box<Expression>> object_type)
+auto InitializerExpression::parse_opt_object(syntax::Parser&              parser,
+                                             mem::NullableBox<Expression> object_type)
     -> Expected<mem::Box<Expression>, syntax::ParserDiagnostic> {
-    const auto start_token = object_type.transform([](const auto& obj) { return obj->get_token(); })
-                                 .value_or(parser.current_token());
+    const auto start_token = object_type ? object_type->get_token() : parser.current_token();
 
     std::vector<Initializer> initializers;
     while (!parser.peek_token_is(syntax::TokenType::RBRACE) &&
@@ -57,12 +56,12 @@ auto InitializerExpression::parse_opt_object(syntax::Parser&                pars
 
 auto InitializerExpression::parse(syntax::Parser& parser, mem::Box<Expression> object_type)
     -> Expected<mem::Box<Expression>, syntax::ParserDiagnostic> {
-    return parse_opt_object(parser, std::move(object_type));
+    return parse_opt_object(parser, mem::NullableBox<Expression>{object_type.release()});
 }
 
 auto InitializerExpression::is_equal(const Node& other) const noexcept -> bool {
     const auto& casted = as<InitializerExpression>(other);
-    return optional::unsafe_eq<Expression>(object_type_, casted.object_type_) &&
+    return mem::nullable_boxes_eq(object_type_, casted.object_type_) &&
            std::ranges::equal(initializers_, casted.initializers_);
 }
 

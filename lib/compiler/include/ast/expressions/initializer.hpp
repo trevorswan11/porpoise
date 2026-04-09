@@ -34,23 +34,23 @@ class InitializerExpression : public ExprBase<InitializerExpression> {
     static constexpr auto KIND = NodeKind::INITIALIZER_EXPRESSION;
 
   public:
-    InitializerExpression(const syntax::Token&           start_token,
-                          Optional<mem::Box<Expression>> object_type,
-                          std::vector<Initializer>       initializers) noexcept;
+    InitializerExpression(const syntax::Token&         start_token,
+                          mem::NullableBox<Expression> object_type,
+                          std::vector<Initializer>     initializers) noexcept;
     ~InitializerExpression() override;
 
     MAKE_MOVE_CONSTRUCTABLE_ONLY(InitializerExpression)
 
     auto                      accept(Visitor& v) const -> void override;
-    [[nodiscard]] static auto parse_opt_object(syntax::Parser&                parser,
-                                               Optional<mem::Box<Expression>> object = std::nullopt)
+    [[nodiscard]] static auto parse_opt_object(syntax::Parser&              parser,
+                                               mem::NullableBox<Expression> object = nullptr)
         -> Expected<mem::Box<Expression>, syntax::ParserDiagnostic>;
 
     // This is for the parser's dispatch table
     [[nodiscard]] static auto parse(syntax::Parser& parser, mem::Box<Expression> object)
         -> Expected<mem::Box<Expression>, syntax::ParserDiagnostic>;
 
-    MAKE_OPTIONAL_UNPACKER(object_type, Expression, object_type_, **)
+    MAKE_NULLABLE_BOX_UNPACKER(object_type, Expression, object_type_, *)
     [[nodiscard]] auto has_initializers() const noexcept -> bool { return !initializers_.empty(); }
     MAKE_GETTER(initializers, std::span<const Initializer>, )
 
@@ -58,8 +58,8 @@ class InitializerExpression : public ExprBase<InitializerExpression> {
     auto is_equal(const Node& other) const noexcept -> bool override;
 
   private:
-    Optional<mem::Box<Expression>> object_type_;
-    std::vector<Initializer>       initializers_;
+    mem::NullableBox<Expression> object_type_;
+    std::vector<Initializer>     initializers_;
 };
 
 } // namespace porpoise::ast

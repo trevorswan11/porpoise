@@ -5,11 +5,11 @@
 
 namespace porpoise::ast {
 
-WhileLoopExpression::WhileLoopExpression(const syntax::Token&           start_token,
-                                         mem::Box<Expression>           condition,
-                                         Optional<mem::Box<Expression>> continuation,
-                                         mem::Box<BlockStatement>       block,
-                                         Optional<mem::Box<Statement>>  non_break) noexcept
+WhileLoopExpression::WhileLoopExpression(const syntax::Token&         start_token,
+                                         mem::Box<Expression>         condition,
+                                         mem::NullableBox<Expression> continuation,
+                                         mem::Box<BlockStatement>     block,
+                                         mem::NullableBox<Statement>  non_break) noexcept
     : ExprBase{start_token}, condition_{std::move(condition)},
       continuation_{std::move(continuation)}, block_{std::move(block)},
       non_break_{std::move(non_break)} {}
@@ -32,7 +32,7 @@ auto WhileLoopExpression::parse(syntax::Parser& parser)
     TRY(parser.expect_peek(syntax::TokenType::RPAREN));
 
     // Continuation expression is optional and is handled as in zig
-    Optional<mem::Box<Expression>> continuation;
+    mem::NullableBox<Expression> continuation;
     if (parser.peek_token_is(syntax::TokenType::COLON)) {
         const auto continuation_start = parser.current_token();
         parser.advance();
@@ -45,7 +45,7 @@ auto WhileLoopExpression::parse(syntax::Parser& parser)
                                           continuation_start);
         }
 
-        continuation.emplace(TRY(parser.parse_expression()));
+        continuation = mem::nullable_box_from(TRY(parser.parse_expression()));
         TRY(parser.expect_peek(syntax::TokenType::RPAREN));
     }
 
@@ -70,9 +70,8 @@ auto WhileLoopExpression::parse(syntax::Parser& parser)
 auto WhileLoopExpression::is_equal(const Node& other) const noexcept -> bool {
     const auto& casted = as<WhileLoopExpression>(other);
     return *condition_ == *casted.condition_ &&
-           optional::unsafe_eq<Expression>(continuation_, casted.continuation_) &&
-           *block_ == *casted.block_ &&
-           optional::unsafe_eq<Statement>(non_break_, casted.non_break_);
+           mem::nullable_boxes_eq(continuation_, casted.continuation_) &&
+           *block_ == *casted.block_ && mem::nullable_boxes_eq(non_break_, casted.non_break_);
 }
 
 } // namespace porpoise::ast

@@ -16,7 +16,7 @@ class ArrayExpression : public ExprBase<ArrayExpression> {
 
   public:
     ArrayExpression(const syntax::Token&              start_token,
-                    Optional<mem::Box<Expression>>    size,
+                    mem::NullableBox<Expression>      size,
                     ExplicitType&&                    item_type,
                     std::vector<mem::Box<Expression>> items) noexcept;
     ~ArrayExpression() override;
@@ -27,7 +27,7 @@ class ArrayExpression : public ExprBase<ArrayExpression> {
     [[nodiscard]] static auto parse(syntax::Parser& parser)
         -> Expected<mem::Box<Expression>, syntax::ParserDiagnostic>;
 
-    MAKE_OPTIONAL_UNPACKER(explicit_size, Expression, size_, **)
+    MAKE_NULLABLE_BOX_UNPACKER(explicit_size, Expression, size_, *)
     MAKE_GETTER(item_type, const ExplicitType&)
     MAKE_GETTER(items, std::span<const mem::Box<Expression>>)
 
@@ -35,7 +35,7 @@ class ArrayExpression : public ExprBase<ArrayExpression> {
     auto is_equal(const Node& other) const noexcept -> bool override;
 
   private:
-    Optional<mem::Box<Expression>>    size_;
+    mem::NullableBox<Expression>      size_;
     ExplicitType                      item_type_;
     std::vector<mem::Box<Expression>> items_;
 };

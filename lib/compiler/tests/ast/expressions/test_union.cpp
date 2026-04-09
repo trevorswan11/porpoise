@@ -41,7 +41,7 @@ TEST_CASE("Complex union fields") {
                                                       mods::BASE,
                                                       helpers::make_ident("Foo"),
                                                   }),
-                                              helpers::make_ident("bar"),
+                                              helpers::make_ident<true>("bar"),
                                               ast::DeclModifiers::VARIABLE,
                                           }))}},
                 ast::UnionField{
@@ -50,10 +50,11 @@ TEST_CASE("Complex union fields") {
                         mods::BASE,
                         mem::make_box<ast::EnumExpression>(
                             syntax::Token{keywords::ENUM},
-                            helpers::make_ident("u64"),
+                            helpers::make_ident<true>("u64"),
                             helpers::make_vector<ast::Enumeration>(
-                                ast::Enumeration{helpers::make_ident("RED"),
-                                                 helpers::make_primitive<ast::U32Expression>("3u")},
+                                ast::Enumeration{
+                                    helpers::make_ident("RED"),
+                                    helpers::make_primitive<ast::U32Expression, true>("3u")},
                                 ast::Enumeration{helpers::make_ident("B"), {}}),
                             helpers::make_decls())}}),
             helpers::make_decls()});
@@ -79,7 +80,7 @@ TEST_CASE("Union with decls") {
                                                       mods::BASE,
                                                       helpers::make_ident("Foo"),
                                                   }),
-                                              helpers::make_ident("bar"),
+                                              helpers::make_ident<true>("bar"),
                                               ast::DeclModifiers::VARIABLE,
                                           }))}}),
                 helpers::make_decls(
@@ -88,14 +89,14 @@ TEST_CASE("Union with decls") {
                         helpers::make_ident("b"),
                         mem::make_box<ast::TypeExpression>(syntax::Token{operators::WALRUS},
                                                            std::nullopt),
-                        mem::make_box<ast::FunctionExpression>(
+                        mem::make_nullable_box<ast::FunctionExpression>(
                             syntax::Token{keywords::FN},
                             ast::SelfParameter{mods::REF, helpers::make_ident("self")},
                             helpers::make_parameters(ast::FunctionParameter{
                                 helpers::make_ident("a"), {mods::BASE, helpers::make_ident("A")}}),
                             false,
                             ast::ExplicitType{mods::BASE, helpers::make_ident("C")},
-                            helpers::make_expr_block_stmt(helpers::ident_from("c"))),
+                            helpers::make_expr_block_stmt<true>(helpers::ident_from("c"))),
                         ast::DeclModifiers::CONSTANT,
                     },
                     ast::DeclStatement{
@@ -103,7 +104,7 @@ TEST_CASE("Union with decls") {
                         helpers::make_ident("a"),
                         mem::make_box<ast::TypeExpression>(syntax::Token{operators::WALRUS},
                                                            std::nullopt),
-                        helpers::make_primitive<ast::I32Expression>("2"),
+                        helpers::make_primitive<ast::I32Expression, true>("2"),
                         ast::DeclModifiers::STATIC | ast::DeclModifiers::CONSTANT,
                     })});
     };

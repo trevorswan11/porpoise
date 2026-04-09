@@ -23,7 +23,7 @@ TEST_CASE("Explicitly sized arrays") {
         "[1uz]i32{2};",
         ast::ArrayExpression{
             rbracket,
-            helpers::make_primitive<ast::USizeExpression>("1uz"),
+            helpers::make_primitive<ast::USizeExpression, true>("1uz"),
             ast::ExplicitType{mods::BASE, helpers::make_ident("i32")},
             helpers::make_items(helpers::primitive_from<ast::I32Expression>("2"))});
 
@@ -31,7 +31,7 @@ TEST_CASE("Explicitly sized arrays") {
         "[2uz]i32{A, B, };",
         ast::ArrayExpression{
             rbracket,
-            helpers::make_primitive<ast::USizeExpression>("2uz"),
+            helpers::make_primitive<ast::USizeExpression, true>("2uz"),
             ast::ExplicitType{mods::BASE, helpers::make_ident("i32")},
             helpers::make_items(helpers::ident_from("A"), helpers::ident_from("B"))});
 }
@@ -40,7 +40,7 @@ TEST_CASE("Implicitly sized array") {
     helpers::test_expr_stmt(
         "[_]*N{a, b, c, d, e, };",
         ast::ArrayExpression{rbracket,
-                             std::nullopt,
+                             {},
                              ast::ExplicitType{mods::PTR, helpers::make_ident("N")},
                              helpers::make_items(helpers::ident_from("a"),
                                                  helpers::ident_from("b"),

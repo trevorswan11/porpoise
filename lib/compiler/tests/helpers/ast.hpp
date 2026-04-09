@@ -18,6 +18,13 @@
 
 namespace porpoise::tests::helpers {
 
+#define NULLABLE_CONSTEXPR_FACTORY(T, ...)             \
+    if constexpr (Nullable) {                          \
+        return mem::make_nullable_box<T>(__VA_ARGS__); \
+    } else {                                           \
+        return mem::make_box<T>(__VA_ARGS__);          \
+    }
+
 // Thin wrapper around Node is/as pattern with test assertion.
 template <ast::LeafNode To, typename From> auto try_into(const From& node) -> const To& {
     CHECK(node.template is<To>());
@@ -64,9 +71,9 @@ auto expr_stmt_from(const syntax::Token& start_token, N&& expected) -> ast::Expr
     return ast::ExpressionStatement{start_token, mem::make_box<N>(std::move(expected))};
 }
 
-template <ast::LeafNode N> auto make_expr_stmt(N&& expected) -> mem::Box<ast::ExpressionStatement> {
-    return mem::make_box<ast::ExpressionStatement>(
-        expr_stmt_from(expected.get_token(), std::move(expected)));
+template <ast::LeafNode N, bool Nullable = false> auto make_expr_stmt(N&& expected) {
+    NULLABLE_CONSTEXPR_FACTORY(ast::ExpressionStatement,
+                               expr_stmt_from(expected.get_token(), std::move(expected)));
 }
 
 template <ast::LeafNode N>
@@ -97,12 +104,12 @@ inline auto ident_from(const syntax::Token& tok) -> ast::IdentifierExpression {
     return ast::IdentifierExpression{tok};
 }
 
-inline auto make_ident(std::string_view name) -> mem::Box<ast::IdentifierExpression> {
-    return mem::make_box<ast::IdentifierExpression>(ident_from(name));
+template <bool Nullable = false> auto make_ident(std::string_view name) {
+    NULLABLE_CONSTEXPR_FACTORY(ast::IdentifierExpression, ident_from(name));
 }
 
-inline auto make_ident(const syntax::Token& tok) -> mem::Box<ast::IdentifierExpression> {
-    return mem::make_box<ast::IdentifierExpression>(ident_from(tok));
+template <bool Nullable = false> auto make_ident(const syntax::Token& tok) {
+    NULLABLE_CONSTEXPR_FACTORY(ast::IdentifierExpression, ident_from(tok));
 }
 
 // Creates a block statement by boxing all passed statements
@@ -113,9 +120,8 @@ template <ast::LeafNode... Ns> auto block_stmt_from(Ns&&... nodes) -> ast::Block
 }
 
 // Creates a boxed block statement by boxing all passed statements
-template <ast::LeafNode... Ns>
-auto make_block_stmt(Ns&&... nodes) -> mem::Box<ast::BlockStatement> {
-    return mem::make_box<ast::BlockStatement>(block_stmt_from(std::forward<Ns>(nodes)...));
+template <bool Nullable = false, ast::LeafNode... Ns> auto make_block_stmt(Ns&&... nodes) {
+    NULLABLE_CONSTEXPR_FACTORY(ast::BlockStatement, block_stmt_from(std::forward<Ns>(nodes)...));
 }
 
 // Creates a block statement by packing all passed expressions into expression statements
@@ -125,9 +131,9 @@ template <ast::LeafNode... Ns> auto expr_block_stmt_from(Ns&&... nodes) -> ast::
 }
 
 // Creates a boxed block statement by packing all passed expressions into expression statements
-template <ast::LeafNode... Ns>
-auto make_expr_block_stmt(Ns&&... nodes) -> mem::Box<ast::BlockStatement> {
-    return mem::make_box<ast::BlockStatement>(expr_block_stmt_from(std::forward<Ns>(nodes)...));
+template <bool Nullable = false, ast::LeafNode... Ns> auto make_expr_block_stmt(Ns&&... nodes) {
+    NULLABLE_CONSTEXPR_FACTORY(ast::BlockStatement,
+                               expr_block_stmt_from(std::forward<Ns>(nodes)...));
 }
 
 template <typename... Ps>
@@ -152,32 +158,34 @@ template <ast::PrimitiveNode N> auto primitive_from(std::string_view str) noexce
     return N{syntax::Token{tok.type, str}, *value};
 }
 
-template <ast::PrimitiveNode Primitive>
-auto make_primitive(std::string_view str) noexcept -> mem::Box<Primitive> {
-    return mem::make_box<Primitive>(primitive_from<Primitive>(str));
+// For strings:include  surrounding quotes in the input if needed, multiline strings not supported
+template <ast::PrimitiveNode Primitive, bool Nullable = false>
+auto make_primitive(std::string_view str) noexcept {
+    if constexpr (std::is_same_v<Primitive, ast::StringExpression>) {
+        const auto trimmed = string::trim(str, [](byte b) { return b == '"'; });
+        NULLABLE_CONSTEXPR_FACTORY(ast::StringExpression,
+                                   syntax::Token{syntax::TokenType::STRING, str},
+                                   std::string{trimmed});
+    } else {
+        NULLABLE_CONSTEXPR_FACTORY(Primitive, primitive_from<Primitive>(str));
+    }
 }
 
-template <ast::PrimitiveNode N>
+template <ast::PrimitiveNode N, bool Nullable = false>
     requires(std::same_as<N, ast::VoidExpression>)
-auto make_primitive() noexcept -> mem::Box<ast::VoidExpression> {
-    return mem::make_box<ast::VoidExpression>(syntax::Token{syntax::TokenType::LBRACE, "{"},
-                                              std::monostate{});
+auto make_primitive() noexcept {
+    NULLABLE_CONSTEXPR_FACTORY(
+        ast::VoidExpression, syntax::Token{syntax::TokenType::LBRACE, "{"}, std::monostate{});
 }
 
-template <ast::PrimitiveNode N>
+template <ast::PrimitiveNode N, bool Nullable = false>
     requires(std::same_as<N, ast::BoolExpression>)
-auto make_primitive(bool value) noexcept -> mem::Box<ast::BoolExpression> {
+auto make_primitive(bool value) noexcept {
     const syntax::Token tok{value ? syntax::keywords::TRUE : syntax::keywords::FALSE};
-    return mem::make_box<ast::BoolExpression>(tok, value ? true : false);
+    NULLABLE_CONSTEXPR_FACTORY(ast::BoolExpression, tok, value ? true : false);
 }
 
-// Include the surrounding quotes in the input if needed, multiline strings not supported here
-template <>
-inline auto make_primitive(std::string_view str) noexcept -> mem::Box<ast::StringExpression> {
-    const auto trimmed = string::trim(str, [](byte b) { return b == '"'; });
-    return mem::make_box<ast::StringExpression>(syntax::Token{syntax::TokenType::STRING, str},
-                                                std::string{trimmed});
-}
+#undef NULLABLE_CONSTEXPR_FACTORY
 
 namespace type_modifiers {
 
