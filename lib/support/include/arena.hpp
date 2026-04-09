@@ -51,7 +51,7 @@ class Arena {
     }
     // cppcheck-suppress-end [unreadVariable, internalAstError]
 
-    // Extremely efficient, does not invalidate any allocation until rewritten
+    // Extremely efficient, does not invalidate any allocations until rewritten
     auto reset() noexcept -> void {
         current_ = head_;
         offset_  = 0;

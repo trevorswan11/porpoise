@@ -34,23 +34,26 @@ auto ImportStatement::parse(syntax::Parser& parser)
     -> Expected<mem::Box<Statement>, syntax::ParserDiagnostic> {
     const auto start_token = parser.current_token();
 
-    std::variant<mem::Box<IdentifierExpression>, mem::Box<StringExpression>> imported_core;
-    if (parser.peek_token_is(syntax::TokenType::IDENT)) {
-        TRY(parser.expect_peek(syntax::TokenType::IDENT));
-        imported_core = downcast<IdentifierExpression>(TRY(IdentifierExpression::parse(parser)));
-    } else if (parser.peek_token_is(syntax::TokenType::STRING)) {
-        TRY(parser.expect_peek(syntax::TokenType::STRING));
-        auto string = downcast<StringExpression>(TRY(StringExpression::parse(parser)));
+    auto imported_core = TRY( // cppcheck-suppress internalAstError
+        ([&] -> Expected<std::variant<mem::Box<IdentifierExpression>, mem::Box<StringExpression>>,
+                         syntax::ParserDiagnostic> {
+            if (parser.peek_token_is(syntax::TokenType::IDENT)) {
+                TRY(parser.expect_peek(syntax::TokenType::IDENT));
+                return downcast<IdentifierExpression>(TRY(IdentifierExpression::parse(parser)));
+            } else if (parser.peek_token_is(syntax::TokenType::STRING)) {
+                TRY(parser.expect_peek(syntax::TokenType::STRING));
+                auto string = downcast<StringExpression>(TRY(StringExpression::parse(parser)));
 
-        if (string->get_value().empty()) {
-            return make_parser_unexpected(syntax::ParserError::EMPTY_USER_IMPORT,
-                                          string->get_token());
-        }
-        imported_core = std::move(string);
-    } else {
-        return make_parser_unexpected(syntax::ParserError::ILLEGAL_IMPORT_TYPE,
-                                      parser.peek_token());
-    }
+                if (string->get_value().empty()) {
+                    return make_parser_unexpected(syntax::ParserError::EMPTY_USER_IMPORT,
+                                                  string->get_token());
+                }
+                return string;
+            } else {
+                return make_parser_unexpected(syntax::ParserError::ILLEGAL_IMPORT_TYPE,
+                                              parser.peek_token());
+            }
+        }()));
 
     Optional<mem::Box<IdentifierExpression>> imported_alias;
     if (parser.peek_token_is(syntax::TokenType::AS)) {
