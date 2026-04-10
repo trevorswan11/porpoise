@@ -12,7 +12,7 @@ TEST_CASE("Correct do-while") {
         ast::DoWhileLoopExpression{
             syntax::Token{keywords::DO},
             helpers::make_expr_block_stmt(helpers::ident_from("a")),
-            mem::make_box<ast::BoolExpression>(syntax::Token{keywords::TRUE}, true)});
+            mem::make_box<ast::BoolExpression>(syntax::Token{keywords::BOOLEAN_TRUE}, true)});
 }
 
 TEST_CASE("Empty do-while") {

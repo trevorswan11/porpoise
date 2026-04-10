@@ -17,13 +17,13 @@ namespace keywords {
 
 constexpr Keyword FN{"fn", TokenType::FUNCTION};
 constexpr Keyword VAR{"var", TokenType::VAR};
-constexpr Keyword CONST{"const", TokenType::CONST};
+constexpr Keyword CONSTANT{"const", TokenType::CONSTANT};
 constexpr Keyword CONSTEXPR{"constexpr", TokenType::CONSTEXPR};
 constexpr Keyword STRUCT{"struct", TokenType::STRUCT};
 constexpr Keyword ENUM{"enum", TokenType::ENUM};
 constexpr Keyword UNION{"union", TokenType::UNION};
-constexpr Keyword TRUE{"true", TokenType::TRUE};
-constexpr Keyword FALSE{"false", TokenType::FALSE};
+constexpr Keyword BOOLEAN_TRUE{"true", TokenType::BOOLEAN_TRUE};
+constexpr Keyword BOOLEAN_FALSE{"false", TokenType::BOOLEAN_FALSE};
 constexpr Keyword IF{"if", TokenType::IF};
 constexpr Keyword ELSE{"else", TokenType::ELSE};
 constexpr Keyword DO{"do", TokenType::DO};
@@ -100,18 +100,21 @@ constexpr Keyword CTZ{"@ctz", TokenType::CTZ};
 
 constexpr auto ALL_KEYWORDS = [] {
     auto all_keywords = std::array{
-        keywords::FN,       keywords::VAR,     keywords::CONST,    keywords::CONSTEXPR,
-        keywords::STRUCT,   keywords::ENUM,    keywords::UNION,    keywords::TRUE,
-        keywords::FALSE,    keywords::IF,      keywords::ELSE,     keywords::DO,
-        keywords::MATCH,    keywords::RETURN,  keywords::DEFER,    keywords::LOOP,
-        keywords::FOR,      keywords::WHILE,   keywords::CONTINUE, keywords::BREAK,
-        keywords::IMPORT,   keywords::I32,     keywords::I64,      keywords::ISIZE,
-        keywords::U32,      keywords::U64,     keywords::USIZE,    keywords::F32,
-        keywords::F64,      keywords::U8,      keywords::BOOL,     keywords::VOID,
-        keywords::TYPE,     keywords::AS,      keywords::PUBLIC,   keywords::EXTERN,
-        keywords::EXPORT,   keywords::PACKED,  keywords::VOLATILE, keywords::STATIC,
-        keywords::NORETURN, keywords::NULLPTR, keywords::USING,    keywords::MODULE,
-        keywords::TEST,
+        keywords::FN,        keywords::VAR,          keywords::CONSTANT,
+        keywords::CONSTEXPR, keywords::STRUCT,       keywords::ENUM,
+        keywords::UNION,     keywords::BOOLEAN_TRUE, keywords::BOOLEAN_FALSE,
+        keywords::IF,        keywords::ELSE,         keywords::DO,
+        keywords::MATCH,     keywords::RETURN,       keywords::DEFER,
+        keywords::LOOP,      keywords::FOR,          keywords::WHILE,
+        keywords::CONTINUE,  keywords::BREAK,        keywords::IMPORT,
+        keywords::I32,       keywords::I64,          keywords::ISIZE,
+        keywords::U32,       keywords::U64,          keywords::USIZE,
+        keywords::F32,       keywords::F64,          keywords::U8,
+        keywords::BOOL,      keywords::VOID,         keywords::TYPE,
+        keywords::AS,        keywords::PUBLIC,       keywords::EXTERN,
+        keywords::EXPORT,    keywords::PACKED,       keywords::VOLATILE,
+        keywords::STATIC,    keywords::NORETURN,     keywords::NULLPTR,
+        keywords::USING,     keywords::MODULE,       keywords::TEST,
     };
 
     std::ranges::sort(all_keywords, {}, &Keyword::first);

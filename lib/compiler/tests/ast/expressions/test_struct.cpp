@@ -35,7 +35,7 @@ TEST_CASE("Struct flavors") {
                         ast::DeclModifiers::VARIABLE,
                     },
                     ast::DeclStatement{
-                        syntax::Token{keywords::CONST},
+                        syntax::Token{keywords::CONSTANT},
                         helpers::make_ident("b"),
                         mem::make_box<ast::TypeExpression>(syntax::Token{operators::WALRUS},
                                                            std::nullopt),

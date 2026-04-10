@@ -78,7 +78,8 @@ auto BoolExpression::accept(Visitor& v) const -> void { v.visit(*this); }
 auto BoolExpression::parse(syntax::Parser& parser)
     -> Expected<mem::Box<Expression>, syntax::ParserDiagnostic> {
     const auto& start_token = parser.current_token();
-    return mem::make_box<BoolExpression>(start_token, start_token.type == syntax::TokenType::TRUE);
+    return mem::make_box<BoolExpression>(start_token,
+                                         start_token.type == syntax::TokenType::BOOLEAN_TRUE);
 }
 
 auto VoidExpression::accept(Visitor& v) const -> void { v.visit(*this); }

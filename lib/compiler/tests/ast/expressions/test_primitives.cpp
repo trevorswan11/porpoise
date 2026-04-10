@@ -185,8 +185,8 @@ TEST_CASE("f64 parsing") {
 
 TEST_CASE("Bool parsing") {
     using N = ast::BoolExpression;
-    helpers::test_primitive<N>("true;", syntax::TokenType::TRUE, true);
-    helpers::test_primitive<N>("false;", syntax::TokenType::FALSE, false);
+    helpers::test_primitive<N>("true;", syntax::TokenType::BOOLEAN_TRUE, true);
+    helpers::test_primitive<N>("false;", syntax::TokenType::BOOLEAN_FALSE, false);
 }
 
 TEST_CASE("Void parsing") {

@@ -81,7 +81,7 @@ class DeclStatement : public StmtBase<DeclStatement> {
     using ModifierMapping                 = std::pair<syntax::TokenType, DeclModifiers>;
     static constexpr auto LEGAL_MODIFIERS = std::to_array<ModifierMapping>({
         {syntax::TokenType::VAR, DeclModifiers::VARIABLE},
-        {syntax::TokenType::CONST, DeclModifiers::CONSTANT},
+        {syntax::TokenType::CONSTANT, DeclModifiers::CONSTANT},
         {syntax::TokenType::CONSTEXPR, DeclModifiers::CONSTEXPR},
         {syntax::TokenType::PUBLIC, DeclModifiers::PUBLIC},
         {syntax::TokenType::EXTERN, DeclModifiers::EXTERN},

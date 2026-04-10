@@ -94,7 +94,7 @@ TEST_CASE("Correct declaration modifiers") {
     };
 
     // Modifiers are order independent
-    test({keywords::EXPORT, keywords::CONST},
+    test({keywords::EXPORT, keywords::CONSTANT},
          ast::DeclModifiers::EXPORT | ast::DeclModifiers::CONSTANT);
     test({keywords::PUBLIC, keywords::VAR},
          ast::DeclModifiers::PUBLIC | ast::DeclModifiers::VARIABLE);
@@ -103,7 +103,7 @@ TEST_CASE("Correct declaration modifiers") {
 
     // Uninitialized declarations are selective
     test({keywords::VAR}, ast::DeclModifiers::VARIABLE, false);
-    test({keywords::EXTERN, keywords::CONST},
+    test({keywords::EXTERN, keywords::CONSTANT},
          ast::DeclModifiers::EXTERN | ast::DeclModifiers::CONSTANT,
          false);
     test({keywords::VAR, keywords::EXTERN},
@@ -124,12 +124,12 @@ static auto test_decl_fail(std::initializer_list<syntax::Keyword> modifiers,
 }
 
 TEST_CASE("Mutability restrictions") {
-    const std::array contending_mut{keywords::CONSTEXPR, keywords::VAR, keywords::CONST};
+    const std::array contending_mut{keywords::CONSTEXPR, keywords::VAR, keywords::CONSTANT};
     for (const auto& mut : array::combinations(contending_mut)) {
         test_decl_fail({mut.first, mut.second},
                        syntax::ParserDiagnostic{syntax::ParserError::ILLEGAL_DECL_MODIFIERS, 1, 1});
     }
-    test_decl_fail({keywords::CONSTEXPR, keywords::VAR, keywords::CONST},
+    test_decl_fail({keywords::CONSTEXPR, keywords::VAR, keywords::CONSTANT},
                    syntax::ParserDiagnostic{syntax::ParserError::ILLEGAL_DECL_MODIFIERS, 1, 1});
 }
 
@@ -154,14 +154,14 @@ TEST_CASE("ABI/Linkage restrictions") {
 }
 
 TEST_CASE("Extern requirements") {
-    test_decl_fail({keywords::EXTERN, keywords::CONST},
+    test_decl_fail({keywords::EXTERN, keywords::CONSTANT},
                    syntax::ParserDiagnostic{syntax::ParserError::EXTERN_VALUE_INITIALIZED, 1, 1});
     test_decl_fail({keywords::EXTERN, keywords::VAR},
                    syntax::ParserDiagnostic{syntax::ParserError::EXTERN_VALUE_INITIALIZED, 1, 1});
 }
 
 TEST_CASE("Constant requirements") {
-    test_decl_fail({keywords::CONST},
+    test_decl_fail({keywords::CONSTANT},
                    syntax::ParserDiagnostic{syntax::ParserError::CONST_DECL_MISSING_VALUE, 1, 1},
                    "a: i32;");
     test_decl_fail({keywords::CONSTEXPR},

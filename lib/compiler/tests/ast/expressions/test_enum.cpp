@@ -64,7 +64,7 @@ TEST_CASE("Enum with decls") {
                                      helpers::make_primitive<ast::I64Expression, true>("2l")}),
                 helpers::make_decls(
                     ast::DeclStatement{
-                        syntax::Token{keywords::CONST},
+                        syntax::Token{keywords::CONSTANT},
                         helpers::make_ident("b"),
                         mem::make_box<ast::TypeExpression>(syntax::Token{operators::WALRUS},
                                                            std::nullopt),

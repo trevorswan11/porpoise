@@ -143,7 +143,7 @@ auto Token::is_builtin() const noexcept -> bool {
 auto Token::is_decl_token() const noexcept -> bool {
     switch (type) {
     case TokenType::VAR:
-    case TokenType::CONST:
+    case TokenType::CONSTANT:
     case TokenType::CONSTEXPR:
     case TokenType::PUBLIC:
     case TokenType::EXTERN:

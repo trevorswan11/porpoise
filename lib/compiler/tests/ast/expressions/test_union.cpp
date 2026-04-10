@@ -85,7 +85,7 @@ TEST_CASE("Union with decls") {
                                           }))}}),
                 helpers::make_decls(
                     ast::DeclStatement{
-                        syntax::Token{keywords::CONST},
+                        syntax::Token{keywords::CONSTANT},
                         helpers::make_ident("b"),
                         mem::make_box<ast::TypeExpression>(syntax::Token{operators::WALRUS},
                                                            std::nullopt),

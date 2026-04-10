@@ -181,7 +181,8 @@ auto make_primitive() noexcept {
 template <ast::PrimitiveNode N, bool Nullable = false>
     requires(std::same_as<N, ast::BoolExpression>)
 auto make_primitive(bool value) noexcept {
-    const syntax::Token tok{value ? syntax::keywords::TRUE : syntax::keywords::FALSE};
+    const syntax::Token tok{value ? syntax::keywords::BOOLEAN_TRUE
+                                  : syntax::keywords::BOOLEAN_FALSE};
     NULLABLE_CONSTEXPR_FACTORY(ast::BoolExpression, tok, value ? true : false);
 }
 

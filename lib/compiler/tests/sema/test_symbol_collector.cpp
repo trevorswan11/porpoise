@@ -73,7 +73,7 @@ TEST_CASE("Holistic language examples") {
             std::pair{
                 "a",
                 ast::DeclStatement{
-                    syntax::Token{keywords::CONST},
+                    syntax::Token{keywords::CONSTANT},
                     helpers::make_ident("a"),
                     mem::make_box<ast::TypeExpression>(syntax::Token{syntax::TokenType::COLON, ":"},
                                                        ast::ExplicitType{
@@ -100,7 +100,7 @@ TEST_CASE("Import aliases correctly used") {
         std::pair{
             "a",
             ast::DeclStatement{
-                syntax::Token{keywords::CONST},
+                syntax::Token{keywords::CONSTANT},
                 helpers::make_ident("a"),
                 mem::make_box<ast::TypeExpression>(syntax::Token{operators::WALRUS}, std::nullopt),
                 helpers::make_primitive<ast::I32Expression, true>("22"),
@@ -129,7 +129,7 @@ TEST_CASE("Struct hollow types") {
         std::tuple{
             "a",
             ast::DeclStatement{
-                syntax::Token{keywords::CONST},
+                syntax::Token{keywords::CONSTANT},
                 helpers::make_ident("a"),
                 mem::make_box<ast::TypeExpression>(syntax::Token{operators::WALRUS}, std::nullopt),
                 mem::make_nullable_box<ast::StructExpression>(syntax::Token{keywords::STRUCT},
@@ -150,7 +150,7 @@ TEST_CASE("Enum hollow types") {
         std::tuple{
             "a",
             ast::DeclStatement{
-                syntax::Token{keywords::CONST},
+                syntax::Token{keywords::CONSTANT},
                 helpers::make_ident("a"),
                 mem::make_box<ast::TypeExpression>(syntax::Token{operators::WALRUS}, std::nullopt),
                 mem::make_nullable_box<ast::EnumExpression>(
@@ -182,7 +182,7 @@ TEST_CASE("Enum hollow types with member") {
         std::tuple{
             "a",
             ast::DeclStatement{
-                syntax::Token{keywords::CONST},
+                syntax::Token{keywords::CONSTANT},
                 helpers::make_ident("a"),
                 mem::make_box<ast::TypeExpression>(syntax::Token{operators::WALRUS}, std::nullopt),
                 mem::make_nullable_box<ast::EnumExpression>(
@@ -210,7 +210,7 @@ TEST_CASE("Union hollow types") {
         std::tuple{
             "a",
             ast::DeclStatement{
-                syntax::Token{keywords::CONST},
+                syntax::Token{keywords::CONSTANT},
                 helpers::make_ident("a"),
                 mem::make_box<ast::TypeExpression>(syntax::Token{operators::WALRUS}, std::nullopt),
                 mem::make_nullable_box<ast::UnionExpression>(
@@ -245,7 +245,7 @@ TEST_CASE("Union hollow types with member") {
         std::tuple{
             "a",
             ast::DeclStatement{
-                syntax::Token{keywords::CONST},
+                syntax::Token{keywords::CONSTANT},
                 helpers::make_ident("a"),
                 mem::make_box<ast::TypeExpression>(syntax::Token{operators::WALRUS}, std::nullopt),
                 mem::make_nullable_box<ast::UnionExpression>(
@@ -263,7 +263,7 @@ TEST_CASE("Union hollow types with member") {
 TEST_CASE("Function hollow types") {
     const auto function_block_decl = [] {
         return ast::DeclStatement{
-            syntax::Token{keywords::CONST},
+            syntax::Token{keywords::CONSTANT},
             helpers::make_ident("b"),
             mem::make_box<ast::TypeExpression>(syntax::Token{operators::WALRUS}, std::nullopt),
             helpers::make_ident<true>("bar"),
@@ -277,7 +277,7 @@ TEST_CASE("Function hollow types") {
         std::tuple{
             "a",
             ast::DeclStatement{
-                syntax::Token{keywords::CONST},
+                syntax::Token{keywords::CONSTANT},
                 helpers::make_ident("a"),
                 mem::make_box<ast::TypeExpression>(syntax::Token{operators::WALRUS}, std::nullopt),
                 mem::make_nullable_box<ast::FunctionExpression>(
