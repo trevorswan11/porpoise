@@ -268,13 +268,17 @@ fn addArtifacts(b: *std.Build, config: struct {
 
     // The user-facing library
     const git_hash = std.mem.trimEnd(u8, b.run(&.{ "git", "rev-parse", "HEAD" }), " \r\n");
+    var out_code: u8 = undefined;
+    const git_tag_raw = b.runAllowFail(&.{ "git", "describe", "--tags", "--abbrev=0" }, &out_code, .Ignore) catch "";
+    const git_tag = std.mem.trimEnd(u8, git_tag_raw, " \r\n");
+
     const version_header = b.addConfigHeader(.{}, .{
         .VERSION_STR = version_str,
         .VERSION_MAJOR = @as(i64, version.major),
         .VERSION_MINOR = @as(i64, version.minor),
         .VERSION_PATCH = @as(i64, version.patch),
         .VERSION_PRE = version.pre orelse "",
-        .GIT_HASH = b.fmt("git-{s}", .{git_hash}),
+        .GIT_INFO = b.fmt("git-{s}{s}{s}", .{ git_hash, if (git_tag_raw.len == 0) "" else "-", git_tag }),
     });
 
     const libdriver = b.addLibrary(.{

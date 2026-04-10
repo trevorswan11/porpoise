@@ -10,7 +10,7 @@ namespace porpoise::driver {
 
 auto Parser::parse() -> Expected<unit, i32> {
     CLI::App app{fmt::format("porpoise language compiler v{}", VERSION_STR)};
-    app.set_version_flag("-v,--version", fmt::format("porpoise v{} ({})", VERSION_STR, GIT_HASH));
+    app.set_version_flag("-v,--version", fmt::format("porpoise v{} ({})", VERSION_STR, GIT_INFO));
 
     app.require_subcommand(1);
     const auto* argv = app.ensure_utf8(argv_);
