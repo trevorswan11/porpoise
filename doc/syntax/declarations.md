@@ -10,7 +10,7 @@
     - You cannot declare the same variable name in the same scope or enclosing scope
 
 ```porpoise
-const a := 2;           // Type deduced to be a signed 32 bit int
+const a := 2;           // Type deduced to be i32
 const b := "str";       // Type deduced to be a constant size array of bytes (non-null terminated)
 const c: byte = 's';    // Explicitly typed, so value must agree
 const d :=;             // Illegal, walrus needs a value!
@@ -26,13 +26,13 @@ var e: []byte;         // Allowed, e is forward declared and future assignments 
 - A mutable reference cannot be taken from a constant
 
 ## Compile-time Constants
-- Compile-time-known constants are declared with the `comptime` keyword
-- In most cases, `comptime` values behave identically to `const` constants
-    - The only difference is that `comptime` values can be used as array sizes, assuming their underlying type is `usize`
-- A `comptime` declaration can not be declared `extern`
+- Compile-time-known constants are declared with the `constexpr` keyword
+- In most cases, `constexpr` values behave identically to `const` constants
+    - The only difference is that `constexpr` values can be used as array sizes, assuming their underlying type is `usize`
+- A `constexpr` declaration can not be declared `extern`
 
 ## Variables
-- Variables are declared with the `var keyword
+- Variables are declared with the `var` keyword
 - A variable can be initialized with or without a value
     - Variables without an initial value must be initialized with an explicit type
     - Variables declared without an initial value are necessarily uninitialized, and reading from them in this state is undefined behavior
@@ -53,9 +53,32 @@ var c := &mut a;    // Illegal, cannot take mutable reference of constant
     - `static`: This keyword is only valid for struct members. It denotes a symbol as being owned (namespaced) by the struct itself, not by instances of said struct.
 
 ```porpoise
-pub var c := 2;         // Allowed, symbol can be imported
-extern const a: int;    // Allowed, externs must be explicitly typed without values
-export var b := 1;      // Allowed
-static var c := 33;     // Illegal, cannot use static on a non-struct member
-extern comptime a: int; // Illegal, inherently contradictory
+pub var c := 2;          // Allowed, symbol can be imported
+extern const a: i32;     // Allowed, externs must be explicitly typed without values
+export var b := 1;       // Allowed
+static var c := 33;      // Illegal, cannot use static on a non-struct member
+extern constexpr a: i32; // Illegal, inherently contradictory
 ```
+
+## Assignment
+- Non-const declarations can be reassigned
+- Re-assignment is right associative, meaning that you can chain assignment expressions:
+```porpoise
+var a: i32 = 2;
+var b: i32 = 5;
+a = (b = 6);
+```
+- This works because an assignment returns the assigned value
+
+## Type Aliasing
+- Type aliases can be declared with the `using` keyword
+- This is very similar to C++, for example:
+```porpoise
+using MyBool = bool;
+```
+- Note that this is an _alias_, so there is no difference between using the aliased type and handwriting the entire raw type
+- The most common use cases for this are for saving keystrokes for long types and for passing complex types to functions at the call site
+    - Since function calls prioritize expressions over types, so an attempt to pass `&mut P` will always be parsed as a mutable reference to an object P
+    - Declaring the type using `using T = &mut P;` allows you to then pass the identifier to the function
+    - This is more explicit than having to go to the function definition to see what is being expected at the call site
+- Note that these statements are allowed in any scope and are always private unless in a file that has been declared as a module

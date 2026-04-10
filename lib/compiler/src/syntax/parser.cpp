@@ -1,0 +1,335 @@
+#include <algorithm>
+#include <ranges>
+#include <utility>
+
+#include <fmt/format.h>
+#include <magic_enum/magic_enum.hpp>
+
+#include "array.hpp"
+
+#include "syntax/keywords.hpp"
+#include "syntax/parser.hpp"
+#include "syntax/precedence.hpp"
+#include "syntax/token.hpp"
+
+#include "ast/ast.hpp"
+
+namespace porpoise::syntax {
+
+Parser::Checkpoint::Checkpoint(const Parser& parser) noexcept
+    : snapshot_{parser.lexer_}, current_{parser.current_token_}, peek_{parser.peek_token_} {}
+
+auto Parser::reset(std::string_view input) noexcept -> void { *this = Parser{input}; }
+
+auto Parser::advance(u8 times) noexcept -> const Token& {
+    for (u8 i = 0; i < times; ++i) {
+        if (current_token_.type == TokenType::END &&
+            (input_.empty() && current_token_.is_at_start())) {
+            break;
+        }
+
+        current_token_ = peek_token_;
+        peek_token_    = lexer_.advance();
+    }
+    return current_token_;
+}
+
+auto Parser::consume() -> std::pair<ast::AST, Diagnostics> {
+    reset(input_);
+    ast::AST    ast;
+    Diagnostics diagnostics;
+
+    while (!current_token_is(TokenType::END)) {
+        // Advance through any amount of semicolons
+        const auto skip = [](TokenType tt) { return tt == TokenType::SEMICOLON; };
+        if (skip(current_token_.type)) { while (skip(advance().type)); }
+        if (current_token_is(TokenType::END)) { break; }
+
+        // Comments are entirely discarded from the tree
+        if (!current_token_is(TokenType::COMMENT)) {
+            auto stmt = parse_statement();
+            if (stmt) {
+                ast.emplace_back(std::move(*stmt));
+            } else {
+                diagnostics.emplace_back(std::move(stmt.error()));
+
+                // Errors should advance up to next logical end to prevent useless errors
+                const auto stop_condition = [](TokenType tt) {
+                    switch (tt) {
+                    case TokenType::RBRACE:
+                    case TokenType::SEMICOLON:
+                    case TokenType::END:       return true;
+                    default:                   return false;
+                    }
+                };
+                while (!stop_condition(advance().type));
+            }
+        }
+        advance();
+    }
+
+    return {std::move(ast), std::move(diagnostics)};
+}
+
+auto Parser::expect_peek(TokenType expected) -> Expected<unit, ParserDiagnostic> {
+    if (peek_token_is(expected)) {
+        advance();
+        return {};
+    }
+    return Unexpected{peek_error(expected)};
+}
+
+auto Parser::poll_current_precedence() const noexcept -> std::pair<Precedence, Optional<Binding>> {
+    return get_binding(current_token_.type)
+        .transform([](const auto& binding) {
+            return std::pair{binding.precedence, Optional<Binding>{binding}};
+        })
+        .value_or(std::pair{Precedence::LOWEST, std::nullopt});
+}
+
+auto Parser::poll_peek_precedence() const noexcept -> std::pair<Precedence, Optional<Binding>> {
+    return get_binding(peek_token_.type)
+        .transform([](const auto& binding) {
+            return std::pair{binding.precedence, Optional<Binding>{binding}};
+        })
+        .value_or(std::pair{Precedence::LOWEST, std::nullopt});
+}
+
+auto Parser::parse_statement() -> Expected<mem::Box<ast::Statement>, ParserDiagnostic> {
+    if (current_token_.is_decl_token()) { return ast::DeclStatement::parse(*this); }
+    switch (current_token_.type) {
+    case TokenType::BREAK:
+    case TokenType::RETURN:
+    case TokenType::CONTINUE:   return ast::JumpStatement::parse(*this);
+    case TokenType::DEFER:      return ast::DeferStatement::parse(*this);
+    case TokenType::IMPORT:     return ast::ImportStatement::parse(*this);
+    case TokenType::LBRACE:     return ast::BlockStatement::parse(*this);
+    case TokenType::UNDERSCORE: return ast::DiscardStatement::parse(*this);
+    case TokenType::MODULE:     return ast::ModuleStatement::parse(*this);
+    case TokenType::USING:      return ast::UsingStatement::parse(*this);
+    case TokenType::TEST:       return ast::TestStatement::parse(*this);
+    default:                    return ast::ExpressionStatement::parse(*this);
+    }
+}
+
+auto Parser::parse_expression(Precedence precedence)
+    -> Expected<mem::Box<ast::Expression>, ParserDiagnostic> {
+    if (current_token_is(TokenType::END)) {
+        return make_parser_unexpected(ParserError::END_OF_TOKEN_STREAM, current_token_);
+    }
+
+    const auto& prefix = poll_prefix_fn(current_token_.type);
+    if (!prefix) {
+        return make_parser_unexpected(fmt::format("No prefix parse function for {}({}) found",
+                                                  magic_enum::enum_name(current_token_.type),
+                                                  current_token_.slice),
+                                      ParserError::MISSING_PREFIX_PARSER,
+                                      current_token_);
+    }
+    auto lhs_expression = TRY((*prefix)(*this));
+
+    while (!peek_token_is(TokenType::SEMICOLON) && precedence < poll_peek_precedence().first) {
+        const auto& infix = poll_infix_fn(peek_token_.type);
+        if (!infix) { break; }
+        advance();
+        lhs_expression = TRY((*infix)(*this, std::move(lhs_expression)));
+    }
+
+    return lhs_expression;
+}
+
+[[nodiscard]] auto Parser::parse_restricted_statement(ParserError error)
+    -> Expected<mem::Box<ast::Statement>, ParserDiagnostic> {
+    auto clause = TRY(parse_statement());
+
+    // The clause can only be a jump, block, or expression statement
+    if (!clause->any<ast::ExpressionStatement, ast::JumpStatement, ast::BlockStatement>()) {
+        return make_parser_unexpected(error, clause->get_token());
+    }
+    return clause;
+}
+
+[[nodiscard]] auto Parser::try_parse_restricted_alternate(ParserError error)
+    -> Expected<mem::NullableBox<ast::Statement>, ParserDiagnostic> {
+    if (peek_token_is(TokenType::ELSE)) {
+        // Advance twice to actually look at the statement's first token
+        advance(2);
+        return mem::nullable_box_from(TRY(parse_restricted_statement(error)));
+    }
+    return nullptr;
+}
+
+auto Parser::parse_member_decls(ast::MemberValidator validator)
+    -> Expected<ast::Members, ParserDiagnostic> {
+    ast::Members members;
+    while (!peek_token_is(syntax::TokenType::RBRACE) && !peek_token_is(syntax::TokenType::END)) {
+        advance();
+        auto member = TRY(parse_statement());
+        if (!member->is<ast::DeclStatement>()) {
+            return make_parser_unexpected(syntax::ParserError::INVALID_MEMBER, member->get_token());
+        }
+
+        // Check the decl against the validator if provided
+        if (validator && !validator(ast::Node::as<ast::DeclStatement>(*member))) {
+            return make_parser_unexpected(syntax::ParserError::INVALID_MEMBER, member->get_token());
+        }
+        members.emplace_back(ast::Node::downcast<ast::DeclStatement>(std::move(member)));
+    }
+    return members;
+}
+
+using PrefixPair          = std::pair<TokenType, Parser::PrefixFn>;
+constexpr auto PREFIX_FNS = [] {
+    constexpr auto initial_prefixes = std::to_array<PrefixPair>({
+        {TokenType::IDENT, ast::IdentifierExpression::parse},
+        {TokenType::U8, ast::U8Expression::parse},
+        {TokenType::F32, ast::F32Expression::parse},
+        {TokenType::F64, ast::F64Expression::parse},
+        {TokenType::BANG, ast::UnaryExpression::parse},
+        {TokenType::NOT, ast::UnaryExpression::parse},
+        {TokenType::MINUS, ast::UnaryExpression::parse},
+        {TokenType::PLUS, ast::UnaryExpression::parse},
+        {TokenType::STAR, ast::DereferenceExpression::parse},
+        {TokenType::BW_AND, ast::ReferenceExpression::parse},
+        {TokenType::AND_MUT, ast::ReferenceExpression::parse},
+        {TokenType::DOT, ast::ImplicitAccessExpression::parse},
+        {TokenType::BOOLEAN_TRUE, ast::BoolExpression::parse},
+        {TokenType::BOOLEAN_FALSE, ast::BoolExpression::parse},
+        {TokenType::LBRACE, ast::VoidExpression::parse},
+        {TokenType::STRING, ast::StringExpression::parse},
+        {TokenType::MULTILINE_STRING, ast::StringExpression::parse},
+        {TokenType::LPAREN, ast::GroupedExpression::parse},
+        {TokenType::IF, ast::IfExpression::parse},
+        {TokenType::FUNCTION, ast::FunctionExpression::parse},
+        {TokenType::PACKED, ast::StructExpression::parse},
+        {TokenType::STRUCT, ast::StructExpression::parse},
+        {TokenType::UNION, ast::UnionExpression::parse},
+        {TokenType::ENUM, ast::EnumExpression::parse},
+        {TokenType::MATCH, ast::MatchExpression::parse},
+        {TokenType::LBRACKET, ast::ArrayExpression::parse},
+        {TokenType::FOR, ast::ForLoopExpression::parse},
+        {TokenType::WHILE, ast::WhileLoopExpression::parse},
+        {TokenType::DO, ast::DoWhileLoopExpression::parse},
+        {TokenType::LOOP, ast::InfiniteLoopExpression::parse},
+    });
+
+    constexpr auto total_ints =
+        static_cast<usize>(TokenType::UZINT_16) - static_cast<usize>(TokenType::INT_2) + 1;
+    std::array<PrefixPair, total_ints> int_prefixes;
+    usize                              cursor = 0;
+    for (auto i = std::to_underlying(TokenType::INT_2);
+         i <= std::to_underlying(TokenType::UZINT_16);
+         ++i, ++cursor) {
+        const auto tt = static_cast<TokenType>(i);
+        using token_type::IntegerCategory;
+        switch (token_type::to_int_category(tt)) {
+        case IntegerCategory::SIGNED_BASE:
+            int_prefixes[cursor] = {tt, ast::I32Expression::parse};
+            break;
+        case IntegerCategory::SIGNED_WIDE:
+            int_prefixes[cursor] = {tt, ast::I64Expression::parse};
+            break;
+        case IntegerCategory::SIGNED_SIZE:
+            int_prefixes[cursor] = {tt, ast::ISizeExpression::parse};
+            break;
+        case IntegerCategory::UNSIGNED_BASE:
+            int_prefixes[cursor] = {tt, ast::U32Expression::parse};
+            break;
+        case IntegerCategory::UNSIGNED_WIDE:
+            int_prefixes[cursor] = {tt, ast::U64Expression::parse};
+            break;
+        case IntegerCategory::UNSIGNED_SIZE:
+            int_prefixes[cursor] = {tt, ast::USizeExpression::parse};
+            break;
+        }
+    }
+
+    constexpr auto primitive_prefixes =
+        ALL_PRIMITIVES | std::views::transform([](TokenType tt) -> PrefixPair {
+            return {tt, ast::IdentifierExpression::parse};
+        });
+
+    constexpr auto materialized_primitives =
+        array::materialize_sized_view<ALL_PRIMITIVES.size()>(primitive_prefixes);
+
+    constexpr auto builtins_prefixes =
+        ALL_BUILTINS | std::views::transform([](const auto& builtin) -> PrefixPair {
+            return {builtin.second, ast::IdentifierExpression::parse};
+        });
+
+    constexpr auto materialized_builtins =
+        array::materialize_sized_view<ALL_BUILTINS.size()>(builtins_prefixes);
+
+    auto prefix_fns = array::concat(
+        initial_prefixes, materialized_primitives, materialized_builtins, int_prefixes);
+    std::ranges::sort(prefix_fns, {}, &PrefixPair::first);
+    return prefix_fns;
+}();
+
+constexpr auto Parser::poll_prefix_fn(TokenType tt) noexcept -> Optional<const PrefixFn&> {
+    const auto it = std::ranges::lower_bound(PREFIX_FNS, tt, {}, &PrefixPair::first);
+    if (it == PREFIX_FNS.end() || it->first != tt) { return std::nullopt; }
+    return Optional<const PrefixFn&>{it->second};
+}
+
+using InfixPair          = std::pair<TokenType, Parser::InfixFn>;
+constexpr auto INFIX_FNS = [] {
+    auto infix_fns = std::to_array<InfixPair>({
+        {TokenType::PLUS, ast::BinaryExpression::parse},
+        {TokenType::MINUS, ast::BinaryExpression::parse},
+        {TokenType::STAR, ast::BinaryExpression::parse},
+        {TokenType::SLASH, ast::BinaryExpression::parse},
+        {TokenType::PERCENT, ast::BinaryExpression::parse},
+        {TokenType::LT, ast::BinaryExpression::parse},
+        {TokenType::LT_EQ, ast::BinaryExpression::parse},
+        {TokenType::GT, ast::BinaryExpression::parse},
+        {TokenType::GT_EQ, ast::BinaryExpression::parse},
+        {TokenType::EQ, ast::BinaryExpression::parse},
+        {TokenType::NEQ, ast::BinaryExpression::parse},
+        {TokenType::BOOLEAN_AND, ast::BinaryExpression::parse},
+        {TokenType::BOOLEAN_OR, ast::BinaryExpression::parse},
+        {TokenType::BW_AND, ast::BinaryExpression::parse},
+        {TokenType::BW_OR, ast::BinaryExpression::parse},
+        {TokenType::XOR, ast::BinaryExpression::parse},
+        {TokenType::SHR, ast::BinaryExpression::parse},
+        {TokenType::SHL, ast::BinaryExpression::parse},
+        {TokenType::DOT, ast::DotExpression::parse},
+        {TokenType::DOT_DOT, ast::RangeExpression::parse},
+        {TokenType::DOT_DOT_EQ, ast::RangeExpression::parse},
+        {TokenType::LPAREN, ast::CallExpression::parse},
+        {TokenType::LBRACKET, ast::IndexExpression::parse},
+        {TokenType::LBRACE, ast::InitializerExpression::parse},
+        {TokenType::ASSIGN, ast::AssignmentExpression::parse},
+        {TokenType::PLUS_ASSIGN, ast::AssignmentExpression::parse},
+        {TokenType::MINUS_ASSIGN, ast::AssignmentExpression::parse},
+        {TokenType::STAR_ASSIGN, ast::AssignmentExpression::parse},
+        {TokenType::SLASH_ASSIGN, ast::AssignmentExpression::parse},
+        {TokenType::PERCENT_ASSIGN, ast::AssignmentExpression::parse},
+        {TokenType::BW_AND_ASSIGN, ast::AssignmentExpression::parse},
+        {TokenType::BW_OR_ASSIGN, ast::AssignmentExpression::parse},
+        {TokenType::SHL_ASSIGN, ast::AssignmentExpression::parse},
+        {TokenType::SHR_ASSIGN, ast::AssignmentExpression::parse},
+        {TokenType::NOT_ASSIGN, ast::AssignmentExpression::parse},
+        {TokenType::XOR_ASSIGN, ast::AssignmentExpression::parse},
+        {TokenType::COLON_COLON, ast::ScopeResolutionExpression::parse},
+    });
+
+    std::ranges::sort(infix_fns, {}, &InfixPair::first);
+    return infix_fns;
+}();
+
+constexpr auto Parser::poll_infix_fn(TokenType tt) noexcept -> Optional<const InfixFn&> {
+    const auto it = std::ranges::lower_bound(INFIX_FNS, tt, {}, &InfixPair::first);
+    if (it == INFIX_FNS.end() || it->first != tt) { return std::nullopt; }
+    return Optional<const InfixFn&>{it->second};
+}
+
+auto Parser::tt_mismatch_error(TokenType expected, const Token& actual) -> ParserDiagnostic {
+    return ParserDiagnostic{fmt::format("Expected token {}, found {}",
+                                        magic_enum::enum_name(expected),
+                                        magic_enum::enum_name(actual.type)),
+                            ParserError::UNEXPECTED_TOKEN,
+                            actual};
+}
+
+} // namespace porpoise::syntax

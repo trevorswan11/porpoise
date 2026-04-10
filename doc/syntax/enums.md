@@ -4,17 +4,22 @@
     - Variants
     - Optional default values for variants
 - Enums are strongly typed, and are declared with the standard declaration syntax
-    - As enums are types, they can also be defined with a `using` statement. This restricts the modifiers you can use, preventing access/abi restrictions
 - In the event that the standard declaration syntax is used, it must be `const`
 - The backing type of an enum is defaulted to the smallest available type, but can be set to any integer (signed, unsigned, or byte)
 - Enums can be casted to and from their underlying type by using the `@cast` builtin
 ```porpoise
-const Colors := enum { RED, BLUE = 3, GREEN };
-const Shapes := enum : ulong { CIRCLE, SQUARE };
+const Colors := enum { red, blue = 3, green };
+const Shapes := enum : u64 { circle, square };
 ```
 - Enum variants are namespaced, meaning they do not leak into their outer scope as they would in C
-- To access an enum's variant, the `::` operator is used
+- To access an enum's variant, the `.` operator is used
 ```porpoise
-Colors::RED;
+const a := Colors.red;
+const a: Colors = .red; // Equivalent
 ```
-- You can not put methods on an enum as you would with a struct
+- You can put declarations inside of an enum as you would with a struct
+    - These can be member functions, static functions, or static variables only
+        - Member functions have a first argument which is an instance of the enum as explained in the struct documentation
+    - Attempting to emplace an instance variable in an enum is not supported
+        - This means that all non-function declarations must be explicitly marked `static`
+    - These members must appear after all enumeration values 

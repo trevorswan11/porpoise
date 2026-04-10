@@ -24,6 +24,10 @@
             .url = "https://github.com/martinus/unordered_dense/archive/refs/tags/v4.8.1.tar.gz",
             .hash = "N-V-__8AAGlLPgDtp5xVf4RWSebI05x30M4e2QYAaY26KyEc",
         },
+        .cli11 = .{
+            .url = "https://github.com/CLIUtils/CLI11/archive/refs/tags/v2.6.2.tar.gz",
+            .hash = "N-V-__8AAHcMLADvHaaY0S0vedJqkqRHvPgQaEZ9HEfxw4JM",
+        },
         .llvm = .{
             .url = "https://github.com/llvm/llvm-project/archive/refs/tags/llvmorg-21.1.8.tar.gz",
             .hash = "N-V-__8AABpqQW-SXByMsTbdc-Sm0xuxtXzfQBvflhYdUshy",
@@ -81,8 +85,10 @@
         },
     },
     .paths = .{
-        "apps",
-        "packages",
+        "lib",
+        "porpoise",
+        "tools",
+        "third-party",
         "build.zig",
         "build.zig.zon",
         "flake.nix",

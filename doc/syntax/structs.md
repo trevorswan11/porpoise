@@ -1,6 +1,5 @@
 # Structs
 - Structs are defined using the standard declaration syntax
-    - As structs are types, they can also be defined with a `using` statement. This restricts the modifiers you can use, preventing access/abi restrictions
 - Struct definitions must be `const`
 - Struct members are simply declarations
     - Members cannot be marked `extern` or `export`
@@ -21,15 +20,12 @@
         - This parameter has the underlying type of the directly enclosing struct
     - Functions are considered to be top-level within the struct and must be `const`
     - Members can be declared in any order, the compiler is order independent and is free to reorder to optimize
-- Struct type are internal to the compiler and should seldom be written by hand
-    - Struct definitions must use the walrus operator `:=` or `using` assignment
-    - The type of a struct can be retrieving by using the `@typeOf` builtin
-- Static members are resolved using the `::` operator
+- Static members are resolved using the `.` operator
 - Instance members are resolved using the `.` operator
 
 ```porpoise
 const Foo := struct {           // Standard declaration with type inference
-    var bar: int;               // Mutable member variable
+    var bar: i32;               // Mutable member variable
     const baz: []byte = "baz";  // Constant member variable, must be initialized in-line
 
     pub var boo := 4u;          // Members are private by default
@@ -48,15 +44,15 @@ const Foo := struct {           // Standard declaration with type inference
     };
 
     // Compile Error - top-level functions cannot be marked 'var'
-    // var worker_four := fn(a: int, b: uint): ulong {
+    // var worker_four := fn(a: i32, b: u32): u64 {
     //
     // };
 
     pub const fee := "Hello, World!";           // Members can be placed anywhere in the struct definition
 };
 
-Foo::foo;                                           // Static members are resolved using the '::' operator
-Foo::worker_three();                                // The same goes for functions
+Foo.foo;                                           // Members (static and non-static) are resolved using the '.' operator
+Foo.worker_three();                                // The same goes for functions
 ```
 
 - Structs can be marked `packed` to prevent the compiler from reordering members or from adding additional padding
@@ -69,3 +65,16 @@ const Bar := packed struct {
 
 - There is no inheritance
 - Interfaces are not natively supported
+
+## Initialization
+- Structs can be initialized in two ways
+    - You may use the structs name followed by a braced list of implicit access declarations assigned to values
+    - You may use the `.{}` syntax followed by the same list as above
+- The below example demonstrates both of these mechanisms
+```porpoise
+const S = struct { var a: int; };
+
+const s1 := S{ .a = 3 };
+const s2: S = .{ .a = 3 };
+```
+- All member variables that do not have default values associated with their declarations must be initialized in either case
