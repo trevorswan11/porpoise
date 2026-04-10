@@ -1,6 +1,6 @@
 #pragma once
 
-namespace porpoise::win32 {
+namespace porpoise::driver::win32 {
 
 // Enables UTF8 on creation, disables on destruction
 //
@@ -13,4 +13,4 @@ class RichConsole {
 #endif
 };
 
-} // namespace porpoise::win32
+} // namespace porpoise::driver::win32

@@ -1,10 +1,9 @@
 #include <iostream>
-#include <string>
 
 #include <fmt/format.h>
 #include <fmt/ranges.h>
 
-#include "program.hpp"
+#include "arguments/ast_dump.hpp"
 
 #include "ast/dumper.hpp"
 #include "ast/node.hpp"
@@ -13,16 +12,15 @@
 
 #include "string.hpp"
 
-namespace porpoise {
+namespace porpoise::driver {
 
-auto Program::interactive() -> void {
-    std::string line;
+auto AstDump::run() -> void {
     while (true) {
         fmt::print(">>> ");
-        line.clear();
+        line_.clear();
 
-        if (!std::getline(std::cin, line)) { break; }
-        const auto trimmed = string::trim(line);
+        if (!std::getline(std::cin, line_)) { break; }
+        const auto trimmed = string::trim(line_);
         if (trimmed == "exit") { break; }
         if (trimmed.empty()) { continue; }
 
@@ -49,4 +47,4 @@ auto Program::interactive() -> void {
     }
 }
 
-} // namespace porpoise
+} // namespace porpoise::driver

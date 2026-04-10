@@ -87,7 +87,7 @@ auto VoidExpression::parse(syntax::Parser& parser)
     -> Expected<mem::Box<Expression>, syntax::ParserDiagnostic> {
     const auto start_token = parser.current_token();
     TRY(parser.expect_peek(syntax::TokenType::RBRACE));
-    return mem::make_box<VoidExpression>(start_token, std::monostate{});
+    return mem::make_box<VoidExpression>(start_token, unit{});
 }
 
 // cppcheck-suppress-end [constParameterReference, duplInheritedMember]

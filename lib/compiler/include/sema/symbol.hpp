@@ -114,7 +114,7 @@ class SymbolTable {
 
     MAKE_MOVE_CONSTRUCTABLE_ONLY(SymbolTable)
 
-    auto insert(std::string_view name, SymbolicNode node) -> Expected<std::monostate, Diagnostic>;
+    auto insert(std::string_view name, SymbolicNode node) -> Expected<unit, Diagnostic>;
 
     auto reserve(usize cap) -> void { symbols_.reserve(cap); }
 
@@ -194,7 +194,7 @@ class SymbolTableRegistry {
     }
 
     [[nodiscard]] auto insert_into(usize table_idx, std::string_view name, SymbolicNode node)
-        -> Expected<std::monostate, Diagnostic>;
+        -> Expected<unit, Diagnostic>;
 
     template <typename Self> [[nodiscard]] auto get(this Self&& self, usize idx) -> auto& {
         return self.tables_.at(idx);
@@ -222,9 +222,9 @@ class SymbolTableRegistry {
         return self.tables_[idx].get_opt(name);
     }
 
-    [[nodiscard]] auto
-    is_shadowing(const SymbolTableStack& stack, std::string_view name, SymbolicNode node) noexcept
-        -> Expected<std::monostate, Diagnostic>;
+    [[nodiscard]] auto is_shadowing(const SymbolTableStack& stack,
+                                    std::string_view        name,
+                                    SymbolicNode node) noexcept -> Expected<unit, Diagnostic>;
 
   private:
     Tables tables_;

@@ -1,5 +1,4 @@
 #include <algorithm>
-#include <variant>
 
 #include "ast/expressions/for.hpp"
 
@@ -17,7 +16,7 @@ auto ForLoopCapture::Valued::is_equal(const Valued& other) const noexcept -> boo
     return modifier_ == other.modifier_ && *ident_ == *other.ident_;
 }
 
-ForLoopCapture::ForLoopCapture() noexcept : underlying_{std::monostate{}} {}
+ForLoopCapture::ForLoopCapture() noexcept : underlying_{unit{}} {}
 ForLoopCapture::ForLoopCapture(Valued valued) noexcept : underlying_{Valued{std::move(valued)}} {}
 ForLoopCapture::~ForLoopCapture() = default;
 

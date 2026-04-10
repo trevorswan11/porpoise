@@ -3,6 +3,10 @@
 #include <utility> // IWYU pragma: export
 #include <variant> // IWYU pragma: export
 
+namespace porpoise {
+
+using unit = std::monostate;
+
 template <class... Ts> struct Overloaded : Ts... {
     using Ts::operator()...;
 };
@@ -24,3 +28,5 @@ template <class... Ts> struct Overloaded : Ts... {
     auto match(this Self&& self, Matcher&& matcher) -> decltype(auto) {                     \
         return std::visit(std::forward<Matcher>(matcher), std::forward<Self>(self).member); \
     }
+
+} // namespace porpoise

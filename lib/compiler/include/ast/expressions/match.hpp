@@ -1,7 +1,6 @@
 #pragma once
 
 #include <span>
-#include <variant>
 
 #include "ast/node.hpp"
 
@@ -15,7 +14,7 @@ class IdentifierExpression;
 
 class MatchArm {
   public:
-    using Capture = std::variant<mem::Box<IdentifierExpression>, std::monostate>;
+    using Capture = std::variant<mem::Box<IdentifierExpression>, unit>;
 
   public:
     MatchArm(mem::Box<Expression> pattern,
@@ -36,7 +35,7 @@ class MatchArm {
                           *std::get)
 
     [[nodiscard]] auto is_discarded_capture() const noexcept -> bool {
-        return std::holds_alternative<std::monostate>(*capture_);
+        return std::holds_alternative<unit>(*capture_);
     }
 
     MAKE_GETTER(dispatch, const Statement&, *)

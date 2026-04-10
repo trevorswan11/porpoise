@@ -217,7 +217,7 @@ class BoolExpression : public PrimitiveExpression<BoolExpression, bool> {
 };
 template <> struct disable_default_parse<BoolExpression> : std::true_type {};
 
-class VoidExpression : public PrimitiveExpression<VoidExpression, std::monostate> {
+class VoidExpression : public PrimitiveExpression<VoidExpression, unit> {
   public:
     static constexpr auto KIND = NodeKind::VOID_EXPRESSION;
 

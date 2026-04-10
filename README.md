@@ -28,15 +28,16 @@ Zig is used as the primary orchestrator for all things porpoise. Porpoise uses Z
 The following are "standalone" dependencies, required and manually fetched by porpoise's build system.
 1. [Catch2](https://github.com/catchorg/Catch2)'s amalgamated source code is compiled from source for test running. It is automatically configured in the project's build script and links statically to the test builds.
 2. [cppcheck](https://cppcheck.sourceforge.io/) is compiled from source for static analysis. It is licensed under the GNU GPLv3, but the associated compiled artifacts are neither linked with output artifacts nor shipped with releases.
-3. [magic_enum](https://github.com/Neargye/magic_enum) is used as a utility to reflect on enum values. Is is licensed under the permissible MIT license.
-4. [fmt](https://github.com/fmtlib/fmt) is used as a formatting utility in place of std::format, which is not as performant or feature-full. Is is licensed under the permissible MIT license.
-5. [unordered_dense](https://github.com/martinus/unordered_dense) provides a vastly improved hash map/set implementation that is used over the inefficient C++ standard implementation. Is is licensed under the permissible MIT license.
-6. [LLVM 21.1.8](https://releases.llvm.org/21.1.0/docs/ReleaseNotes.html) is used as porpoise's compilation backend. It is manually compiled and statically linked against porpoise through the build system. It is licensed under the permissible Apache License 2.0, and has the following dependencies:
+3. [magic_enum](https://github.com/Neargye/magic_enum) is used as a utility to reflect on enum values. Is is licensed under the permissive MIT License.
+4. [fmt](https://github.com/fmtlib/fmt) is used as a formatting utility in place of std::format, which is not as performant or feature-full. Is is licensed under the permissive MIT License.
+5. [unordered_dense](https://github.com/martinus/unordered_dense) provides a vastly improved hash map/set implementation that is used over the inefficient C++ standard implementation. Is is licensed under the permissive MIT License.
+6. [CLI11](https://github.com/CLIUtils/CLI11) is a command line parser for C++ that provides a rich feature set with a simple and intuitive interface. Is is licensed under the permissive 3-Clause BSD License.
+7. [LLVM 21.1.8](https://releases.llvm.org/21.1.0/docs/ReleaseNotes.html) is used as porpoise's compilation backend. It is manually compiled and statically linked against porpoise through the build system. It is licensed under the permissive Apache License 2.0, and has the following dependencies:
     - [libxml2](https://gitlab.gnome.org/GNOME/libxml2), licensed under the MIT License
     - [zlib](https://github.com/madler/zlib), licensed under the MIT License
     - [zstd](https://github.com/facebook/zstd), licensed under the BSD License
-7. [libarchive](https://github.com/libarchive/libarchive) is used for packaging releases, making use of zlib and zstd to create `zip` and `zst` archives. It is license under the BSD 2-Clause License, but the associated compiled artifacts are neither linked with output artifacts nor shipped with releases.
-8. [kcov](https://github.com/SimonKagstrom/kcov) is used for test coverage reporting. The licensing of this tool and its dependencies are not explicitly listed here as they are not shipped with releases of Porpoise. It has multiple dependencies, but they are all fetched lazily as kcov is only supported on Linux, MacOS, and FreeBSD:
+8. [libarchive](https://github.com/libarchive/libarchive) is used for packaging releases, making use of zlib and zstd to create `zip` and `zst` archives. It is license under the BSD 2-Clause License, but the associated compiled artifacts are neither linked with output artifacts nor shipped with releases.
+9. [kcov](https://github.com/SimonKagstrom/kcov) is used for test coverage reporting. The licensing of this tool and its dependencies are not explicitly listed here as they are not shipped with releases of Porpoise. It has multiple dependencies, but they are all fetched lazily as kcov is only supported on Linux, MacOS, and FreeBSD:
     - [curl](https://github.com/curl/curl) is required by all builds of kcov and is used for pulling the resulting badge. It has a single extra dependency which is chosen for cross-platform support:
         - [mbedtls](https://github.com/Mbed-TLS/mbedtls)
     - [binutils](https://sourceware.org/pub/binutils) is required for all kcov builds
@@ -70,9 +71,9 @@ pub const main := fn(args: [][:0]u8): i32 {
 This is by far the easiest way to get started with development. Just run `nix develop` to get started and automatically get the correct Zig version and some important development tools. Note that this provides optional preconfigured tools such as LLDB, Clangd, and ZLS to further enhance the developer experience.
 
 ### For Others
-All you need to get started with porpoise development is a valid 0.15.2 Zig installation, which can be found [here](https://ziglang.org/download/).
+All you need to get started with porpoise development is git and a valid 0.15.2 Zig installation, which can be found [here](https://ziglang.org/download/).
 
-In either case, assuming you have the Zig prerequisite on your system, building porpoise is as easy as running:
+In either case, assuming you have the git and Zig prerequisites on your system, building porpoise is as easy as running:
 ```sh
 git clone https://github.com/trevorswan11/porpoise
 cd porpoise

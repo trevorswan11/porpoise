@@ -62,8 +62,7 @@ class SymbolCollector : public ast::Visitor {
     }
 
     // Returns false if the passed result was an error type
-    template <typename T = std::monostate>
-    auto try_result(Expected<T, Diagnostic>&& result) -> bool {
+    template <typename T = unit> auto try_result(Expected<T, Diagnostic>&& result) -> bool {
         if (!result) {
             diagnostics_.emplace_back(result.error());
             return false;

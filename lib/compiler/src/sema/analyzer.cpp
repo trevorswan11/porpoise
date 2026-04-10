@@ -27,7 +27,7 @@ auto Analyzer::resolve_symbols() -> void {
 }
 
 auto Analyzer::resolve_symbol(Symbol& symbol, SymbolTableStack& stack)
-    -> Expected<std::monostate, Diagnostic> {
+    -> Expected<unit, Diagnostic> {
     switch (symbol.get_status()) {
     case ResolveStatus::RESOLVED: return {};
     case ResolveStatus::RESOLVING:

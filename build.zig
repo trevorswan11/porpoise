@@ -175,6 +175,9 @@ const TestArtifacts = struct {
     }
 };
 
+const version_str = zon.version;
+const version = std.SemanticVersion.parse(version_str) catch @compileError("Malformed version");
+
 fn addArtifacts(b: *std.Build, config: struct {
     target: ?std.Build.ResolvedTarget = null,
     optimize: std.builtin.OptimizeMode,
@@ -201,7 +204,14 @@ fn addArtifacts(b: *std.Build, config: struct {
     const unordered_dense = b.dependency("unordered_dense", .{});
     const unordered_dense_inc = unordered_dense.path("include");
 
-    const system_includes = [_]std.Build.LazyPath{ magic_enum_inc, unordered_dense_inc };
+    const cli11 = b.dependency("cli11", .{});
+    const cli11_inc = cli11.path("include");
+
+    const system_includes = [_]std.Build.LazyPath{
+        magic_enum_inc,
+        unordered_dense_inc,
+        cli11_inc,
+    };
 
     const fmt_dep = fmt.build(b, .{
         .target = target,
@@ -257,6 +267,16 @@ fn addArtifacts(b: *std.Build, config: struct {
     if (config.cdb_steps) |cdb_steps| try cdb_steps.append(b.allocator, &libcompiler.step);
 
     // The user-facing library
+    const git_hash = std.mem.trimEnd(u8, b.run(&.{ "git", "rev-parse", "HEAD" }), " \r\n");
+    const version_header = b.addConfigHeader(.{}, .{
+        .VERSION_STR = version_str,
+        .VERSION_MAJOR = @as(i64, version.major),
+        .VERSION_MINOR = @as(i64, version.minor),
+        .VERSION_PATCH = @as(i64, version.patch),
+        .VERSION_PRE = version.pre orelse "",
+        .GIT_HASH = b.fmt("git-{s}", .{git_hash}),
+    });
+
     const libdriver = b.addLibrary(.{
         .name = "driver",
         .root_module = createModule(b, .{
@@ -268,6 +288,7 @@ fn addArtifacts(b: *std.Build, config: struct {
                 b.path(ProjectPaths.support.inc),
             },
             .system_include_paths = &system_includes,
+            .config_headers = &.{version_header},
             .link_libraries = &.{ libcompiler, fmt_dep.artifact },
             .cxx = .{
                 .files = try collectFiles(b, ProjectPaths.driver.src, .{
@@ -606,11 +627,6 @@ const CDBGenerator = struct {
             if (entry.kind != .file) continue;
             const entry_name = b.dupe(entry.name);
             const stat = try dir.statFile(entry_name);
-            const first_dot = std.mem.indexOf(u8, entry_name, ".") orelse {
-                try old_frags.append(allocator, entry_name);
-                continue;
-            };
-            const base_name = entry_name[0 .. first_dot + 4];
 
             const entry_contents = try dir.readFile(entry_name, file_buf);
             const trimmed = std.mem.trimEnd(u8, entry_contents, ",\n\r\t");
@@ -622,7 +638,7 @@ const CDBGenerator = struct {
             ) catch continue;
             const ref_path = parsed.value.file;
             const absolute_ref_path = if (std.fs.path.isAbsolute(ref_path))
-                ref_path
+                b.dupe(ref_path)
             else
                 try b.build_root.join(allocator, &.{ref_path});
 
@@ -632,7 +648,7 @@ const CDBGenerator = struct {
                 continue;
             };
 
-            const gop = try newest_frags.getOrPut(base_name);
+            const gop = try newest_frags.getOrPut(absolute_ref_path);
             if (!gop.found_existing) {
                 gop.value_ptr.* = .{
                     .name = entry_name,
@@ -751,6 +767,7 @@ fn addStaticAnalysisStep(b: *std.Build, config: struct {
         "--suppress=*:magic_enum.hpp",
         "--suppress=*:.zig-cache/*",
         "--suppress=*:*llvm/*",
+        "--suppress=*:*CLI/*",
     });
 
     // Other spurious warnings
@@ -952,7 +969,6 @@ fn addPackageStep(b: *std.Build, config: struct {
 
     const package_step = b.step("package", "Package artifacts for a new release");
     package_step.dependOn(&compressor.step);
-    const version = zon.version;
 
     const ArchiveBehavior = struct {
         compressor_arg: enum { zip, zst },
@@ -979,15 +995,15 @@ fn addPackageStep(b: *std.Build, config: struct {
         artifacts.porpoise.out_filename = blk: {
             const name = artifacts.porpoise.name;
             break :blk if (target.result.os.tag == .windows)
-                b.fmt("{s}-{s}.exe", .{ name, version })
+                b.fmt("{s}-{s}.exe", .{ name, version_str })
             else
-                b.fmt("{s}-{s}", .{ name, version });
+                b.fmt("{s}-{s}", .{ name, version_str });
         };
         artifacts.porpoise.root_module.strip = true;
 
         const package_artifact_dirname = b.fmt("porpoise-{s}-{s}", .{
             try query.zigTriple(b.allocator),
-            version,
+            version_str,
         });
 
         const staging = b.addWriteFiles();
@@ -1187,14 +1203,14 @@ fn collectFiles(
     defer walker.deinit();
 
     var paths: std.ArrayList([]const u8) = .empty;
-    collector: while (try walker.next()) |entry| {
+    while (try walker.next()) |entry| {
         if (entry.kind != .file) continue;
         for (config.allowed_extensions) |ext| {
             if (std.mem.endsWith(u8, entry.basename, ext)) break;
-        } else continue :collector;
+        } else continue;
 
         if (config.dropped_files) |drop| for (drop) |drop_file| {
-            if (std.mem.eql(u8, drop_file, entry.basename)) continue :collector;
+            if (std.mem.eql(u8, drop_file, entry.basename)) continue;
         };
 
         if (config.return_basenames_only) {

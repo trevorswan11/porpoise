@@ -1,6 +1,5 @@
-#include "program.hpp"
+#include "launch.hpp"
 
-auto main() -> int {
-    porpoise::Program p;
-    p.interactive();
+auto main(int argc, char* argv[]) -> int {
+    return porpoise::driver::launch(argc, argv).error_or(0);
 }

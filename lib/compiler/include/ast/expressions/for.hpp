@@ -45,13 +45,13 @@ class ForLoopCapture {
 
     MAKE_VARIANT_UNPACKER(valued, Valued, Valued, underlying_, std::get)
     [[nodiscard]] auto is_discarded() const noexcept -> bool {
-        return std::holds_alternative<std::monostate>(underlying_);
+        return std::holds_alternative<unit>(underlying_);
     }
 
     MAKE_EQ_DELEGATION(ForLoopCapture)
 
   private:
-    std::variant<Valued, std::monostate> underlying_;
+    std::variant<Valued, unit> underlying_;
 };
 
 class ForLoopExpression : public ExprBase<ForLoopExpression> {

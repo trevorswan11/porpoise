@@ -8,9 +8,24 @@ Porpoise adheres to a somewhat strict style guide to enhance readability.
 Upon PR creation and workflow approval, GitHub actions will run `zig build fmt-check`, an equally-intensive step that performs a dry run of `clang-format` on the codebase. This can also be invoked on your machine if you are interested in confirming the state of your local version of the codebase.
 
 ## General Naming Conventions
+- **Files**: `snake_case.cpp`, `snake_case.hpp`, `snake_case.zig`
+- **Functions & Variables**: snake_case
+- **Types (Classes, Structs, Enums)**: PascalCase
+- **Type Traits**: snake_case (e.g. mem::is_box)
+- **Template Parameters**: PascalCase (e.g., template <typename TValue, bool Real>)
+- **Constants & Macros**: SCREAMING_SNAKE_CASE
+- **Private/Internal Members**: Suffix with an underscore (e.g. member_variable_)
 
 ## Language-Specific Conventions
 
 ### C++
+- Use `.hpp` for headers and `.cpp` for source files
+- Avoid `using namespace ...;` in headers
+- Prefer enum class over standard enum
+- Use the `#pragma once` directive over `#ifdef` include guards
+- `#undef` macros in header files after use when possible
 
 ### Zig
+- Use PascalCase for functions that return a type
+- Use PascalCase for files that should be treated as types
+- Follow the [Zig Standard Library style](https://ziglang.org/documentation/0.15.2/#Style-Guide)

@@ -43,7 +43,7 @@ class Type;
 
 namespace types {
 
-using PrimitiveType = std::monostate;
+using PrimitiveType = unit;
 
 struct Slice {
     NonNull<Type> underlying;

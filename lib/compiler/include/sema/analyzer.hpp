@@ -38,7 +38,7 @@ class Analyzer {
 
   private:
     [[nodiscard]] auto resolve_symbol(Symbol& symbol, SymbolTableStack& stack)
-        -> Expected<std::monostate, Diagnostic>;
+        -> Expected<unit, Diagnostic>;
 
   private:
     ast::AST            tree_;

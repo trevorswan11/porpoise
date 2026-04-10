@@ -2,7 +2,6 @@
 
 #include <string_view>
 #include <utility>
-#include <variant>
 #include <vector>
 
 #include "ast/node.hpp"
@@ -10,6 +9,8 @@
 #include "syntax/lexer.hpp"
 #include "syntax/precedence.hpp"
 #include "syntax/token.hpp"
+
+#include "variant.hpp"
 
 namespace porpoise {
 
@@ -144,8 +145,7 @@ class Parser {
     auto peek_token_is(TokenType t) const noexcept -> bool { return peek_token_.type == t; }
 
     // Advances the cursor tokens only if the expected token type matches the actual peek token.
-    [[nodiscard]] auto expect_peek(TokenType expected)
-        -> Expected<std::monostate, ParserDiagnostic>;
+    [[nodiscard]] auto expect_peek(TokenType expected) -> Expected<unit, ParserDiagnostic>;
 
     // Indiscriminately returns an error citing the peek token.
     [[nodiscard]] auto peek_error(TokenType expected) -> ParserDiagnostic {
