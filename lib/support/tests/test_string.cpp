@@ -6,7 +6,10 @@
 
 namespace porpoise::tests {
 
-TEST_CASE("Byte type requirement") { STATIC_CHECK(std::is_same_v<std::string::value_type, byte>); }
+TEST_CASE("Byte type requirement") {
+    STATIC_CHECK(std::is_same_v<std::string::value_type, byte>);
+    STATIC_CHECK(std::is_same_v<char, byte>);
+}
 
 TEST_CASE("Is space") {
     CHECK(string::is_space(' '));

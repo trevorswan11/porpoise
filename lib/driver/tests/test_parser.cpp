@@ -12,7 +12,7 @@ namespace helpers {
 
 class MockArgv {
   public:
-    explicit MockArgv(std::initializer_list<std::string> args) : strings_(args) {
+    explicit MockArgv(std::initializer_list<std::string> args) : strings_{args} {
         pointers_.reserve(strings_.size() + 1);
         for (auto& s : strings_) { pointers_.push_back(s.data()); }
         pointers_.push_back(nullptr);
@@ -28,8 +28,10 @@ class MockArgv {
 
 } // namespace helpers
 
+using namespace std::string_literals;
+
 TEST_CASE("Ast dump parser") {
-    auto           args = helpers::MockArgv{{"porpoise", "ast"}};
+    auto           args = helpers::MockArgv{{"porpoise"s, "ast"s}};
     driver::Parser parser{args.argc(), args.argv()};
     CHECK(std::holds_alternative<driver::AstDump>(parser.get_parsed()));
 }
