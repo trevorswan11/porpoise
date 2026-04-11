@@ -29,7 +29,7 @@ TEST_CASE("For loop with modified captures") {
                 ast::ForLoopCapture::Valued{{}, helpers::make_ident("i")},
                 ast::ForLoopCapture::Valued{ast::TypeModifier{ast::TypeModifier::Modifier::MUT_REF},
                                             helpers::make_ident("j")},
-                ast::ForLoopCapture{}),
+                ast::ForLoopCapture{syntax::Token{syntax::TokenType::UNDERSCORE, "_"}}),
             helpers::make_expr_block_stmt(helpers::ident_from("a")),
             {}});
 }

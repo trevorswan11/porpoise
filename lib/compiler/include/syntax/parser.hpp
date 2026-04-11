@@ -145,7 +145,7 @@ class Parser {
     auto peek_token_is(TokenType t) const noexcept -> bool { return peek_token_.type == t; }
 
     // Advances the cursor tokens only if the expected token type matches the actual peek token.
-    [[nodiscard]] auto expect_peek(TokenType expected) -> Expected<unit, ParserDiagnostic>;
+    [[nodiscard]] auto expect_peek(TokenType expected) -> Expected<Unit, ParserDiagnostic>;
 
     // Indiscriminately returns an error citing the peek token.
     [[nodiscard]] auto peek_error(TokenType expected) -> ParserDiagnostic {

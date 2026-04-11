@@ -5,7 +5,7 @@
 
 namespace porpoise {
 
-using unit = std::monostate;
+using Unit = std::monostate;
 
 template <class... Ts> struct Overloaded : Ts... {
     using Ts::operator()...;

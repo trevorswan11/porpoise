@@ -93,6 +93,11 @@ template <typename T> constexpr bool is_leaf_node_v = is_leaf_node<T>::value;
 // Used for types who inherit from a CRTP class, avoid otherwise
 template <typename T> struct disable_default_parse : std::false_type {};
 
+#define MAKE_AST_SEMA_TYPE_FNS()                                                                 \
+    [[nodiscard]] auto has_sema_type() const noexcept -> bool { return sema_type_.has_value(); } \
+    [[nodiscard]] auto get_sema_type() const noexcept -> sema::Type& { return *sema_type_; }     \
+    auto set_sema_type(sema::Type& type) const noexcept -> void { sema_type_.emplace(type); }
+
 class Node {
   public:
     Node()          = delete;
@@ -105,9 +110,7 @@ class Node {
     auto get_token() const noexcept -> const syntax::Token& { return start_token_; }
     auto get_kind() const noexcept -> NodeKind { return kind_; }
 
-    [[nodiscard]] auto has_sema_type() const noexcept -> bool { return sema_type_.has_value(); }
-    [[nodiscard]] auto get_sema_type() const noexcept -> sema::Type& { return *sema_type_; }
-    auto set_sema_type(sema::Type& type) const noexcept -> void { sema_type_.emplace(type); }
+    MAKE_AST_SEMA_TYPE_FNS()
 
     // Compares two nodes at the AST level, ignoring semantic differences.
     friend auto operator==(const Node& lhs, const Node& rhs) noexcept -> bool {

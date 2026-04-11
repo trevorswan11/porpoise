@@ -71,7 +71,7 @@ auto Parser::consume() -> std::pair<ast::AST, Diagnostics> {
     return {std::move(ast), std::move(diagnostics)};
 }
 
-auto Parser::expect_peek(TokenType expected) -> Expected<unit, ParserDiagnostic> {
+auto Parser::expect_peek(TokenType expected) -> Expected<Unit, ParserDiagnostic> {
     if (peek_token_is(expected)) {
         advance();
         return {};

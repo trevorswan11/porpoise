@@ -27,6 +27,7 @@ class Analyzer {
         return self.registry_.get_opt(idx);
     }
 
+    MAKE_GETTER(tree, std::span<const mem::Box<ast::Node>>)
     MAKE_DEDUCING_GETTER(registry, SymbolTableRegistry&)
     MAKE_DEDUCING_GETTER(pool, TypePool&)
     MAKE_GETTER(diagnostics, const Diagnostics&)
@@ -38,7 +39,7 @@ class Analyzer {
 
   private:
     [[nodiscard]] auto resolve_symbol(Symbol& symbol, SymbolTableStack& stack)
-        -> Expected<unit, Diagnostic>;
+        -> Expected<Unit, Diagnostic>;
 
   private:
     ast::AST            tree_;

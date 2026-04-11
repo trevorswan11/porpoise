@@ -24,6 +24,7 @@ class CallArgument {
 
     MAKE_VARIANT_UNPACKER(expression, Expression, mem::Box<Expression>, argument_, *std::get)
     MAKE_VARIANT_UNPACKER(type, ExplicitType, ExplicitType, argument_, std::get)
+    MAKE_VARIANT_MATCHER(argument_)
 
     MAKE_EQ_DELEGATION(CallArgument)
 

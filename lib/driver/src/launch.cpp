@@ -4,7 +4,7 @@
 
 namespace porpoise::driver {
 
-auto launch(i32 argc, byte** argv) -> Expected<unit, i32> {
+auto launch(i32 argc, byte** argv) -> Expected<Unit, i32> {
     driver::Parser parser{argc, argv};
     TRY(parser.parse());
     return parser.dispatch();

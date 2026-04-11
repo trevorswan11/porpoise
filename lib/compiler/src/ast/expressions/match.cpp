@@ -27,7 +27,7 @@ auto MatchArm::is_equal(const MatchArm& other) const noexcept -> bool {
                        Overloaded{[&a](const mem::Box<IdentifierExpression>& b) {
                                       return *b == *std::get<mem::Box<IdentifierExpression>>(a);
                                   },
-                                  [](const unit&) { return true; }},
+                                  [](const Unit&) { return true; }},
                        b);
                }) &&
            *dispatch_ == *other.dispatch_;
@@ -81,7 +81,7 @@ auto MatchExpression::parse(syntax::Parser& parser)
             // An underscore is equivalent to a lack of capture
             if (parser.peek_token_is(syntax::TokenType::UNDERSCORE)) {
                 parser.advance();
-                capture.emplace(unit{});
+                capture.emplace(Unit{});
             } else {
                 TRY(parser.expect_peek(syntax::TokenType::IDENT));
                 capture.emplace(

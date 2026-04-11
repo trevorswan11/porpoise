@@ -175,7 +175,7 @@ template <ast::PrimitiveNode N, bool Nullable = false>
     requires(std::same_as<N, ast::VoidExpression>)
 auto make_primitive() noexcept {
     NULLABLE_CONSTEXPR_FACTORY(
-        ast::VoidExpression, syntax::Token{syntax::TokenType::LBRACE, "{"}, unit{});
+        ast::VoidExpression, syntax::Token{syntax::TokenType::LBRACE, "{"}, Unit{});
 }
 
 template <ast::PrimitiveNode N, bool Nullable = false>

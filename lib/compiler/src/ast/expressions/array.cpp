@@ -38,7 +38,6 @@ auto ArrayExpression::parse(syntax::Parser& parser)
 
     TRY(parser.expect_peek(syntax::TokenType::RBRACKET));
     auto item_type = TRY(ExplicitType::parse(parser));
-
     TRY(parser.expect_peek(syntax::TokenType::LBRACE));
 
     // Current token is either the LBRACE at the start or a comma before parsing

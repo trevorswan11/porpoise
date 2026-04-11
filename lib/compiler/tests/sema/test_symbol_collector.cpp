@@ -11,18 +11,21 @@ namespace mods      = helpers::type_modifiers;
 
 namespace helpers {
 
-auto test_illegal_top_level_stmt(std::string_view input, std::string_view stringified) -> void {
-    helpers::test_collector_fail(
-        input,
-        sema::Diagnostic{fmt::format("Cannot have {} at the top level", stringified),
-                         sema::Error::ILLEGAL_TOP_LEVEL_STATEMENT,
-                         std::pair{1uz, 1uz}});
-}
-
 template <typename SymbolicMaker> struct HollowSymbol {
     std::string_view name;
     SymbolicMaker    maker;
 };
+
+// A common decl for tests formatted as `const name := bar;`
+auto common_decl(std::string_view name) -> ast::DeclStatement {
+    return ast::DeclStatement{
+        syntax::Token{keywords::CONSTANT},
+        helpers::make_ident(name),
+        mem::make_box<ast::TypeExpression>(syntax::Token{operators::WALRUS}, std::nullopt),
+        helpers::make_ident<true>("bar"),
+        ast::DeclModifiers::CONSTANT,
+    };
+}
 
 // Shallowly checks the symbols in the inner scope of a statement
 template <typename... HollowSymbols>
@@ -40,12 +43,14 @@ auto test_hollow_symbols(sema::Analyzer& analyzer, HollowSymbols&&... symbol) ->
 
 } // namespace helpers
 
+auto common_decl() -> ast::DeclStatement { return helpers::common_decl("foo"); }
+
 TEST_CASE("Holistic language examples") {
     const auto test = [](bool is_module) {
         const auto input = fmt::format(R"({}module;
                                         import std;
                                         using Integer = i32;
-                                        const a: Integer = 1;)",
+                                        const foo := bar;)",
                                        is_module ? "" : "//");
 
         helpers::test_collector(
@@ -70,19 +75,7 @@ TEST_CASE("Holistic language examples") {
                           if (is_module) { using_stmt.mark_public(); }
                           return using_stmt;
                       }()},
-            std::pair{
-                "a",
-                ast::DeclStatement{
-                    syntax::Token{keywords::CONSTANT},
-                    helpers::make_ident("a"),
-                    mem::make_box<ast::TypeExpression>(syntax::Token{syntax::TokenType::COLON, ":"},
-                                                       ast::ExplicitType{
-                                                           mods::BASE,
-                                                           helpers::make_ident("Integer"),
-                                                       }),
-                    helpers::make_primitive<ast::I32Expression, true>("1"),
-                    ast::DeclModifiers::CONSTANT,
-                }});
+            std::pair{"foo", common_decl()});
     };
 
     test(true);
@@ -91,40 +84,18 @@ TEST_CASE("Holistic language examples") {
 
 TEST_CASE("Import aliases correctly used") {
     helpers::test_collector(
-        "import a as A; const a := 22;",
+        "import foo as A; const foo := bar;",
         false,
         std::pair{"A",
                   ast::ImportStatement{syntax::Token{keywords::IMPORT},
-                                       ast::LibraryImport{helpers::make_ident("a"),
+                                       ast::LibraryImport{helpers::make_ident("foo"),
                                                           helpers::make_ident<true>("A")}}},
-        std::pair{
-            "a",
-            ast::DeclStatement{
-                syntax::Token{keywords::CONSTANT},
-                helpers::make_ident("a"),
-                mem::make_box<ast::TypeExpression>(syntax::Token{operators::WALRUS}, std::nullopt),
-                helpers::make_primitive<ast::I32Expression, true>("22"),
-                ast::DeclModifiers::CONSTANT,
-            }});
+        std::pair{"foo", common_decl()});
 }
 
 TEST_CASE("Struct hollow types") {
-    const auto struct_decl = [] {
-        return ast::DeclStatement{
-            syntax::Token{keywords::VAR},
-            helpers::make_ident("b"),
-            mem::make_box<ast::TypeExpression>(syntax::Token{syntax::TokenType::COLON, ":"},
-                                               ast::ExplicitType{
-                                                   mods::BASE,
-                                                   helpers::make_ident("Foo"),
-                                               }),
-            helpers::make_ident<true>("bar"),
-            ast::DeclModifiers::VARIABLE,
-        };
-    };
-
     auto analyzer = helpers::test_collector(
-        "const a := struct { var b: Foo = bar; };",
+        "const a := struct { const foo := bar; };",
         false,
         std::tuple{
             "a",
@@ -133,12 +104,12 @@ TEST_CASE("Struct hollow types") {
                 helpers::make_ident("a"),
                 mem::make_box<ast::TypeExpression>(syntax::Token{operators::WALRUS}, std::nullopt),
                 mem::make_nullable_box<ast::StructExpression>(syntax::Token{keywords::STRUCT},
-                                                              helpers::make_decls(struct_decl())),
+                                                              helpers::make_decls(common_decl())),
                 ast::DeclModifiers::CONSTANT,
             },
             sema::types::Key{sema::TypeKind::STRUCT, false, 1}});
 
-    helpers::test_hollow_symbols(analyzer, helpers::HollowSymbol{"b", struct_decl});
+    helpers::test_hollow_symbols(analyzer, helpers::HollowSymbol{"foo", common_decl});
 }
 
 TEST_CASE("Enum hollow types") {
@@ -261,18 +232,8 @@ TEST_CASE("Union hollow types with member") {
 }
 
 TEST_CASE("Function hollow types") {
-    const auto function_block_decl = [] {
-        return ast::DeclStatement{
-            syntax::Token{keywords::CONSTANT},
-            helpers::make_ident("b"),
-            mem::make_box<ast::TypeExpression>(syntax::Token{operators::WALRUS}, std::nullopt),
-            helpers::make_ident<true>("bar"),
-            ast::DeclModifiers::CONSTANT,
-        };
-    };
-
     auto analyzer = helpers::test_collector(
-        "const a := fn(&self, c: type): void { const b := bar; };",
+        "const a := fn(&self, c: type): void { const foo := bar; };",
         false,
         std::tuple{
             "a",
@@ -287,15 +248,26 @@ TEST_CASE("Function hollow types") {
                         helpers::make_ident("c"), {mods::BASE, helpers::make_ident("type")}}),
                     false,
                     ast::ExplicitType{mods::BASE, helpers::make_ident("void")},
-                    helpers::make_block_stmt<true>(function_block_decl())),
+                    helpers::make_block_stmt<true>(common_decl())),
                 ast::DeclModifiers::CONSTANT,
             },
-            sema::types::Key{sema::TypeKind::FUNCTION, false, 1}},
-        std::tuple{"self", ast::SelfParameter{mods::REF, helpers::make_ident("self")}},
-        std::tuple{"c",
-                   ast::FunctionParameter{helpers::make_ident("c"),
-                                          {mods::BASE, helpers::make_ident("type")}}});
-    helpers::test_hollow_symbols(analyzer, helpers::HollowSymbol{"b", function_block_decl});
+            sema::types::Key{sema::TypeKind::FUNCTION, false, 1}});
+
+    helpers::test_hollow_symbols(
+        analyzer,
+        helpers::HollowSymbol{"foo", common_decl},
+        helpers::HollowSymbol{
+            "self", [] { return ast::SelfParameter{mods::REF, helpers::make_ident("self")}; }},
+        helpers::HollowSymbol{"c", [] {
+                                  return ast::FunctionParameter{
+                                      helpers::make_ident("c"),
+                                      {mods::BASE, helpers::make_ident("type")}};
+                              }});
+}
+
+TEST_CASE("Test statement symbol collection") {
+    auto analyzer = helpers::test_collector(R"(test "foo" { const foo := bar; })", false);
+    helpers::test_hollow_symbols(analyzer, helpers::HollowSymbol{"foo", common_decl});
 }
 
 TEST_CASE("Duplicate module declaration") {
@@ -321,12 +293,29 @@ TEST_CASE("Duplicate identifiers") {
                          std::pair{1uz, 15uz}});
 }
 
-TEST_CASE("Illegal top-level statement") {
-    helpers::test_illegal_top_level_stmt("{}", "block");
-    helpers::test_illegal_top_level_stmt("defer 2;", "defer");
-    helpers::test_illegal_top_level_stmt("_ = 2;", "discard");
-    helpers::test_illegal_top_level_stmt("2;", "expression");
-    helpers::test_illegal_top_level_stmt("return 2;", "jump");
+TEST_CASE("Semantically illegal statement") {
+    helpers::test_collector_fail("{}",
+                                 sema::Diagnostic{"Cannot have block at the top level",
+                                                  sema::Error::ILLEGAL_TOP_LEVEL_STATEMENT,
+                                                  std::pair{1uz, 1uz}});
+
+    helpers::test_collector_fail("defer 2;",
+                                 sema::Diagnostic{"Cannot have defer outside of a function's scope",
+                                                  sema::Error::ILLEGAL_TOP_LEVEL_STATEMENT,
+                                                  std::pair{1uz, 1uz}});
+
+    helpers::test_collector_fail("return 2;",
+                                 sema::Diagnostic{"Cannot return outside of a function",
+                                                  sema::Error::ILLEGAL_CONTROL_FLOW,
+                                                  std::pair{1uz, 1uz}});
+
+    helpers::test_collector_fail("break; continue;",
+                                 sema::Diagnostic{"Cannot continue or break outside of a loop",
+                                                  sema::Error::ILLEGAL_CONTROL_FLOW,
+                                                  std::pair{1uz, 1uz}},
+                                 sema::Diagnostic{"Cannot continue or break outside of a loop",
+                                                  sema::Error::ILLEGAL_CONTROL_FLOW,
+                                                  std::pair{1uz, 8uz}});
 }
 
 TEST_CASE("Shadowing declarations") {
@@ -406,19 +395,19 @@ TEST_CASE("Redundant constexpr usage on top level declarations") {
 
 } // namespace
 
-TEST_CASE("Function self param redeclaration") {
+TEST_CASE("Function basic param redeclaration") {
     helpers::test_collector_fail(
         "const f := fn(f: bool): void {};",
-        sema::Diagnostic{"Redeclaration of symbol 'f'. Previous declaration here: [1, 1]",
-                         sema::Error::IDENTIFIER_REDECLARATION,
+        sema::Diagnostic{"Attempt to shadow identifier 'f'. Previous declaration here: [1, 1]",
+                         sema::Error::SHADOWING_DECLARATION,
                          std::pair{1uz, 15uz}});
 }
 
-TEST_CASE("Function basic param redeclaration") {
+TEST_CASE("Function self param redeclaration") {
     helpers::test_collector_fail(
         "const f := fn(f): void {};",
-        sema::Diagnostic{"Redeclaration of symbol 'f'. Previous declaration here: [1, 1]",
-                         sema::Error::IDENTIFIER_REDECLARATION,
+        sema::Diagnostic{"Attempt to shadow identifier 'f'. Previous declaration here: [1, 1]",
+                         sema::Error::SHADOWING_DECLARATION,
                          std::pair{1uz, 15uz}});
 }
 

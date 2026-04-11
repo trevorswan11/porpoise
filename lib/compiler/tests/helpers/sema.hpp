@@ -36,28 +36,25 @@ auto test_collector(std::string_view input, bool is_module, KVs&&... kvs) -> sem
     CHECK(actual.size() == sizeof...(KVs));
     CHECK(actual.is_module() == is_module);
 
-    (
-        [&](auto&& kv) mutable {
-            using SymbolicNodeType = decltype(std::get<1>(kv));
-            if constexpr (ast::is_leaf_node_v<std::remove_cvref_t<SymbolicNodeType>>) {
-                CHECK(std::get<1>(kv)
-                          .template any<ast::DeclStatement,
-                                        ast::ImportStatement,
-                                        ast::UsingStatement>());
-            }
+    (..., [&] mutable {
+        using SymbolicNodeType = decltype(std::get<1>(kvs));
+        if constexpr (ast::is_leaf_node_v<std::remove_cvref_t<SymbolicNodeType>>) {
+            CHECK(
+                std::get<1>(kvs)
+                    .template any<ast::DeclStatement, ast::ImportStatement, ast::UsingStatement>());
+        }
 
-            const auto opt = actual.get_opt(std::get<0>(kv));
-            CHECK(opt);
-            sema::Symbol expected{std::get<0>(kv), &std::get<1>(kv)};
-            if constexpr (std::tuple_size<std::remove_cvref_t<decltype(kv)>>{} > 2) {
-                const auto type = analyzer.get_pool().get(std::get<2>(kv));
-                CHECK(type);
-                expected.emplace_type(*type);
-            }
+        const auto opt = actual.get_opt(std::get<0>(kvs));
+        CHECK(opt);
+        sema::Symbol expected{std::get<0>(kvs), &std::get<1>(kvs)};
+        if constexpr (std::tuple_size<std::remove_cvref_t<decltype(kvs)>>{} > 2) {
+            const auto type = analyzer.get_pool().get(std::get<2>(kvs));
+            CHECK(type);
+            expected.emplace_type(*type);
+        }
 
-            CHECK(*opt == expected);
-        }(std::forward<KVs>(kvs)),
-        ...);
+        CHECK(*opt == expected);
+    }());
     return analyzer;
 }
 

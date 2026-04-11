@@ -40,7 +40,7 @@ TEST_CASE("Match with arm capture") {
                                                helpers::make_ident("c"),
                                                helpers::make_expr_stmt(helpers::ident_from("d"))},
                                  ast::MatchArm{helpers::make_ident("e"),
-                                               unit{},
+                                               Unit{},
                                                helpers::make_expr_stmt(helpers::ident_from("f"))},
                                  ast::MatchArm{helpers::make_ident("g"),
                                                {},

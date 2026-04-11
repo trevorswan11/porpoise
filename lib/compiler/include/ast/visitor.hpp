@@ -1,5 +1,7 @@
 #pragma once
 
+#include "memory.hpp"
+
 namespace porpoise::ast {
 
 #define FOREACH_AST_EXPR(X)      \
@@ -88,6 +90,23 @@ class Visitor {
   public:
     virtual ~Visitor() = default;
     ABSTRACT_AST_VISITOR_DECLARATION()
+
+  protected:
+    template <typename T> constexpr auto visit_list(const T& list) -> void {
+        for (const auto& node : list) { unwrap_and_accept(node); }
+    }
+
+    template <typename AcceptableAST>
+    constexpr auto unwrap_and_accept(const AcceptableAST& a) -> void {
+        using A = std::remove_cvref_t<decltype(a)>;
+        if constexpr (mem::is_box_v<A>) {
+            a->accept(*this);
+        } else if constexpr (mem::is_nullable_box_v<A>) {
+            if (a) { a->accept(*this); }
+        } else {
+            a.accept(*this);
+        }
+    }
 };
 
 } // namespace porpoise::ast
