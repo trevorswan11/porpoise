@@ -8,12 +8,11 @@
 #include "sema/symbol.hpp"
 #include "sema/type.hpp"
 
+#include "counter.hpp"
+
 namespace porpoise::sema {
 
-// A very shallow AST walker for pass 1.
-// - Collects top-level declarations only
-// - Performs 0 type-checking
-// - Does not verify undeclared identifier use
+// An AST walker that performs 0 type checking
 class SymbolCollector : public ast::Visitor {
   public:
     // Manages a new scopes symbol table
@@ -85,8 +84,8 @@ class SymbolCollector : public ast::Visitor {
 
     bool            first_node_{true};
     Optional<Type&> last_type_;
-    usize           in_function_scope_{0};
-    usize           in_loop_scope_{0};
+    DefaultCounter  in_function_scope_;
+    DefaultCounter  in_loop_scope_;
 };
 
 } // namespace porpoise::sema

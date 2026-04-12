@@ -44,8 +44,8 @@ auto SymbolCollector::visit(const ast::CallExpression& call) -> void {
 }
 
 auto SymbolCollector::visit(const ast::DoWhileLoopExpression& do_while) -> void {
-    const ScopedCount c{in_loop_scope_};
-    const auto        idx = visit_scope(
+    const auto g   = in_loop_scope_.guard();
+    const auto idx = visit_scope(
         do_while.get_block(), TypeKind::BLOCK, [this](const auto& stmt) { stmt->accept(*this); });
     last_type_->set_symbol_table_idx(idx);
     do_while.set_sema_type(*last_type_.take());
@@ -70,9 +70,9 @@ auto SymbolCollector::visit(const ast::ForLoopCapture& capture) -> void {
 }
 
 auto SymbolCollector::visit(const ast::ForLoopExpression& for_expr) -> void {
-    const auto        new_idx = registry_.create();
-    const Scope       s{table_stack_, new_idx, table_idx_};
-    const ScopedCount c{in_loop_scope_};
+    const auto  new_idx = registry_.create();
+    const Scope s{table_stack_, new_idx, table_idx_};
+    const auto  g = in_loop_scope_.guard();
 
     // Parameters belong to the parent scope
     visit_list(for_expr.get_captures());
@@ -93,9 +93,9 @@ auto SymbolCollector::visit(const ast::FunctionParameter& param) -> void {
 }
 
 auto SymbolCollector::visit(const ast::FunctionExpression& fn) -> void {
-    const auto        new_idx = registry_.create();
-    const Scope       s{table_stack_, new_idx, table_idx_};
-    const ScopedCount c{in_function_scope_};
+    const auto  new_idx = registry_.create();
+    const Scope s{table_stack_, new_idx, table_idx_};
+    const auto  g = in_function_scope_.guard();
 
     // Parameters belong to the parent scope
     if (fn.has_self()) { visit(fn.get_self()); }
@@ -117,8 +117,8 @@ auto SymbolCollector::visit(const ast::IndexExpression& index) -> void {
 }
 
 auto SymbolCollector::visit(const ast::InfiniteLoopExpression& loop) -> void {
-    const ScopedCount c{in_loop_scope_};
-    const auto        idx = visit_scope(
+    const auto g   = in_loop_scope_.guard();
+    const auto idx = visit_scope(
         loop.get_block(), TypeKind::BLOCK, [this](const auto& stmt) { stmt->accept(*this); });
     last_type_->set_symbol_table_idx(idx);
     loop.set_sema_type(*last_type_.take());
@@ -190,8 +190,8 @@ auto SymbolCollector::visit(const ast::UnionExpression& union_expr) -> void {
 }
 
 auto SymbolCollector::visit(const ast::WhileLoopExpression& while_expr) -> void {
-    const ScopedCount c{in_loop_scope_};
-    const auto        idx = visit_scope(
+    const auto g   = in_loop_scope_.guard();
+    const auto idx = visit_scope(
         while_expr.get_block(), TypeKind::BLOCK, [this](const auto& stmt) { stmt->accept(*this); });
     if (while_expr.has_non_break()) { while_expr.get_non_break().accept(*this); }
 
@@ -200,7 +200,7 @@ auto SymbolCollector::visit(const ast::WhileLoopExpression& while_expr) -> void 
 }
 
 auto SymbolCollector::visit(const ast::BlockStatement& block) -> void {
-    if (table_idx_ == 0) {
+    if (table_stack_.size() == 1) {
         diagnostics_.emplace_back("Cannot have block at the top level",
                                   Error::ILLEGAL_TOP_LEVEL_STATEMENT,
                                   block.get_token());

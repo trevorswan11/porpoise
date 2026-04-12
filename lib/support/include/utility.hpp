@@ -11,7 +11,6 @@
 
 namespace porpoise {
 
-// Indiscriminately increments the count on construction and decrements on destruction.
 class ScopedCount {
   public:
     explicit ScopedCount(usize& count) noexcept : count_{count} { count_ += 1; }

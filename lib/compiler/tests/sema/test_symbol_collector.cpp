@@ -11,11 +11,6 @@ namespace mods      = helpers::type_modifiers;
 
 namespace helpers {
 
-template <typename SymbolicMaker> struct HollowSymbol {
-    std::string_view name;
-    SymbolicMaker    maker;
-};
-
 // A common decl for tests formatted as `const name := bar;`
 auto common_decl(std::string_view name) -> ast::DeclStatement {
     return ast::DeclStatement{
@@ -28,16 +23,17 @@ auto common_decl(std::string_view name) -> ast::DeclStatement {
 }
 
 // Shallowly checks the symbols in the inner scope of a statement
-template <typename... HollowSymbols>
-auto test_hollow_symbols(sema::Analyzer& analyzer, HollowSymbols&&... symbol) -> void {
+template <typename... MakerPair>
+auto test_hollow_symbols(sema::Analyzer& analyzer, MakerPair&&... pair) -> void {
     auto& registry = analyzer.get_registry();
     CHECK(registry.size() == 2);
-    CHECK(registry.get(1).size() == sizeof...(symbol));
+    CHECK(registry.get(1).size() == sizeof...(pair));
 
     (..., [&] {
-        const auto         expected_decl = symbol.maker();
-        const sema::Symbol expected{symbol.name, &expected_decl};
-        CHECK(expected == registry.get_from(1, symbol.name));
+        const auto         name          = std::get<0>(pair);
+        const auto         expected_decl = std::get<1>(pair)();
+        const sema::Symbol expected{name, &expected_decl};
+        CHECK(expected == registry.get_from(1, name));
     }());
 }
 
@@ -109,7 +105,7 @@ TEST_CASE("Struct hollow types") {
             },
             sema::types::Key{sema::TypeKind::STRUCT, false, 1}});
 
-    helpers::test_hollow_symbols(analyzer, helpers::HollowSymbol{"foo", common_decl});
+    helpers::test_hollow_symbols(analyzer, std::tuple{"foo", common_decl});
 }
 
 TEST_CASE("Enum hollow types") {
@@ -132,7 +128,7 @@ TEST_CASE("Enum hollow types") {
                 ast::DeclModifiers::CONSTANT,
             },
             sema::types::Key{sema::TypeKind::ENUM, false, 1}});
-    helpers::test_hollow_symbols(analyzer, helpers::HollowSymbol{"b", enumeration});
+    helpers::test_hollow_symbols(analyzer, std::tuple{"b", enumeration});
 }
 
 TEST_CASE("Enum hollow types with member") {
@@ -165,8 +161,7 @@ TEST_CASE("Enum hollow types with member") {
             },
             sema::types::Key{sema::TypeKind::ENUM, false, 1}});
 
-    helpers::test_hollow_symbols(
-        analyzer, helpers::HollowSymbol{"b", enumeration}, helpers::HollowSymbol{"c", member});
+    helpers::test_hollow_symbols(analyzer, std::tuple{"b", enumeration}, std::tuple{"c", member});
 }
 
 TEST_CASE("Union hollow types") {
@@ -191,7 +186,7 @@ TEST_CASE("Union hollow types") {
                 ast::DeclModifiers::CONSTANT,
             },
             sema::types::Key{sema::TypeKind::UNION, false, 1}});
-    helpers::test_hollow_symbols(analyzer, helpers::HollowSymbol{"b", field});
+    helpers::test_hollow_symbols(analyzer, std::tuple{"b", field});
 }
 
 TEST_CASE("Union hollow types with member") {
@@ -227,8 +222,7 @@ TEST_CASE("Union hollow types with member") {
             },
             sema::types::Key{sema::TypeKind::UNION, false, 1}});
 
-    helpers::test_hollow_symbols(
-        analyzer, helpers::HollowSymbol{"b", field}, helpers::HollowSymbol{"c", member});
+    helpers::test_hollow_symbols(analyzer, std::tuple{"b", field}, std::tuple{"c", member});
 }
 
 TEST_CASE("Function hollow types") {
@@ -255,19 +249,18 @@ TEST_CASE("Function hollow types") {
 
     helpers::test_hollow_symbols(
         analyzer,
-        helpers::HollowSymbol{"foo", common_decl},
-        helpers::HollowSymbol{
-            "self", [] { return ast::SelfParameter{mods::REF, helpers::make_ident("self")}; }},
-        helpers::HollowSymbol{"c", [] {
-                                  return ast::FunctionParameter{
-                                      helpers::make_ident("c"),
-                                      {mods::BASE, helpers::make_ident("type")}};
-                              }});
+        std::tuple{"foo", common_decl},
+        std::tuple{"self",
+                   [] { return ast::SelfParameter{mods::REF, helpers::make_ident("self")}; }},
+        std::tuple{"c", [] {
+                       return ast::FunctionParameter{helpers::make_ident("c"),
+                                                     {mods::BASE, helpers::make_ident("type")}};
+                   }});
 }
 
 TEST_CASE("Test statement symbol collection") {
     auto analyzer = helpers::test_collector(R"(test "foo" { const foo := bar; })", false);
-    helpers::test_hollow_symbols(analyzer, helpers::HollowSymbol{"foo", common_decl});
+    helpers::test_hollow_symbols(analyzer, std::tuple{"foo", common_decl});
 }
 
 TEST_CASE("Duplicate module declaration") {
