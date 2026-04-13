@@ -32,7 +32,7 @@ auto ImportStatement::accept(Visitor& v) const -> void { v.visit(*this); }
 
 auto ImportStatement::parse(syntax::Parser& parser)
     -> Expected<mem::Box<Statement>, syntax::ParserDiagnostic> {
-    const auto start_token = parser.current_token();
+    const auto start_token = parser.get_current_token();
 
     auto imported_core = TRY( // cppcheck-suppress internalAstError
         ([&] -> Expected<std::variant<mem::Box<IdentifierExpression>, mem::Box<StringExpression>>,
@@ -51,7 +51,7 @@ auto ImportStatement::parse(syntax::Parser& parser)
                 return string;
             } else {
                 return make_parser_unexpected(syntax::ParserError::ILLEGAL_IMPORT_TYPE,
-                                              parser.peek_token());
+                                              parser.get_peek_token());
             }
         }()));
 

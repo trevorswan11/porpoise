@@ -35,7 +35,7 @@ auto ExplicitType::accept(Visitor& v) const -> void { v.visit(*this); }
 [[nodiscard]] auto ExplicitType::parse(syntax::Parser& parser)
     -> Expected<ExplicitType, syntax::ParserDiagnostic> {
     // Always check for a modifier and advance past it if present
-    const auto modifier_token = parser.peek_token();
+    const auto modifier_token = parser.get_peek_token();
     const auto modifier       = TypeModifier::from_token(modifier_token);
     if (!modifier.is_value()) { parser.advance(); }
 
@@ -70,14 +70,14 @@ auto ExplicitType::accept(Visitor& v) const -> void { v.visit(*this); }
                             ExplicitArrayType{std::move(dimension),
                                               null_terminated,
                                               mem::make_box<ExplicitType>(std::move(inner))}};
-    } else if (!TypeModifier::from_token(parser.peek_token()).is_value()) {
+    } else if (!TypeModifier::from_token(parser.get_peek_token()).is_value()) {
         // Don't advance since the parser does it implicitly here (costs two from_token calls)
         auto inner = TRY(ExplicitType::parse(parser));
         return ExplicitType{std::move(modifier), mem::make_box<ExplicitType>(std::move(inner))};
     }
 
     // Otherwise the type has to be a 'simple' function or ident
-    const auto& peek_token = parser.peek_token();
+    const auto& peek_token = parser.get_peek_token();
     if (peek_token.is_valid_ident() && !peek_token.is_builtin()) {
         // It's trivial to catch these syntactic errors here
         if (!modifier.is_value()) {
@@ -102,7 +102,7 @@ auto ExplicitType::accept(Visitor& v) const -> void { v.visit(*this); }
     }
 
     // The inner type is limited to functions and user-defined types
-    const auto type_start = parser.current_token();
+    const auto type_start = parser.get_current_token();
     if (parser.peek_token_is(syntax::TokenType::FUNCTION)) {
         parser.advance();
         auto type_expr = TRY(FunctionExpression::parse_type(parser));
@@ -167,7 +167,7 @@ auto TypeExpression::accept(Visitor& v) const -> void { v.visit(*this); }
 auto TypeExpression::parse(syntax::Parser& parser)
     -> Expected<std::pair<mem::Box<Expression>, bool>, syntax::ParserDiagnostic> {
     // The start start token is always offset as this is called irregularly
-    const auto start_token = parser.peek_token();
+    const auto start_token = parser.get_peek_token();
 
     auto [type, initialized] = TRY(
         ([&]() -> Expected<std::pair<mem::Box<TypeExpression>, bool>, syntax::ParserDiagnostic> {

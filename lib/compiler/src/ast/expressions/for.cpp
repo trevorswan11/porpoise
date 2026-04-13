@@ -58,7 +58,7 @@ auto ForLoopExpression::accept(Visitor& v) const -> void { v.visit(*this); }
 
 auto ForLoopExpression::parse(syntax::Parser& parser)
     -> Expected<mem::Box<Expression>, syntax::ParserDiagnostic> {
-    const auto start_token = parser.current_token();
+    const auto start_token = parser.get_current_token();
 
     // Iterables have to be surrounded by parentheses
     TRY(parser.expect_peek(syntax::TokenType::LPAREN));
@@ -88,10 +88,10 @@ auto ForLoopExpression::parse(syntax::Parser& parser)
            !parser.peek_token_is(syntax::TokenType::END)) {
         parser.advance();
         if (parser.current_token_is(syntax::TokenType::UNDERSCORE)) {
-            captures.emplace_back(parser.current_token());
+            captures.emplace_back(parser.get_current_token());
         } else {
             // Always check for a modifier and advance past it if present
-            const auto modifier = TypeModifier::from_token(parser.current_token());
+            const auto modifier = TypeModifier::from_token(parser.get_current_token());
             if (!modifier.is_value()) { parser.advance(); }
 
             auto capture = downcast<IdentifierExpression>(TRY(IdentifierExpression::parse(parser)));

@@ -22,7 +22,7 @@ template <typename Derived> class PrefixExpression : public ExprBase<Derived> {
         -> Expected<mem::Box<Expression>, syntax::ParserDiagnostic>
         requires(!disable_default_parse<Derived>::value)
     {
-        const auto prefix_token = parser.current_token();
+        const auto prefix_token = parser.get_current_token();
         if (parser.peek_token_is(syntax::TokenType::END)) {
             return make_parser_unexpected(syntax::ParserError::PREFIX_MISSING_OPERAND,
                                           prefix_token);

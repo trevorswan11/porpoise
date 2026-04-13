@@ -24,7 +24,7 @@ auto ArrayExpression::accept(Visitor& v) const -> void { v.visit(*this); }
 
 auto ArrayExpression::parse(syntax::Parser& parser)
     -> Expected<mem::Box<Expression>, syntax::ParserDiagnostic> {
-    const auto start_token = parser.current_token();
+    const auto start_token = parser.get_current_token();
     parser.advance();
 
     mem::NullableBox<Expression> size;

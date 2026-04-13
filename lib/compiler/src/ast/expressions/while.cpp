@@ -19,7 +19,7 @@ auto WhileLoopExpression::accept(Visitor& v) const -> void { v.visit(*this); }
 
 auto WhileLoopExpression::parse(syntax::Parser& parser)
     -> Expected<mem::Box<Expression>, syntax::ParserDiagnostic> {
-    const auto start_token = parser.current_token();
+    const auto start_token = parser.get_current_token();
 
     // Conditions have to be surrounded by parentheses
     TRY(parser.expect_peek(syntax::TokenType::LPAREN));
@@ -34,7 +34,7 @@ auto WhileLoopExpression::parse(syntax::Parser& parser)
     // Continuation expression is optional and is handled as in zig
     mem::NullableBox<Expression> continuation;
     if (parser.peek_token_is(syntax::TokenType::COLON)) {
-        const auto continuation_start = parser.current_token();
+        const auto continuation_start = parser.get_current_token();
         parser.advance();
         TRY(parser.expect_peek(syntax::TokenType::LPAREN));
 

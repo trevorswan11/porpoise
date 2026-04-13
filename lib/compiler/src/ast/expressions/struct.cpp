@@ -15,7 +15,7 @@ auto StructExpression::accept(Visitor& v) const -> void { v.visit(*this); }
 
 auto StructExpression::parse(syntax::Parser& parser)
     -> Expected<mem::Box<Expression>, syntax::ParserDiagnostic> {
-    const auto start_token = parser.current_token();
+    const auto start_token = parser.get_current_token();
     if (parser.current_token_is(syntax::TokenType::PACKED)) {
         TRY(parser.expect_peek(syntax::TokenType::STRUCT));
     } else if (parser.peek_token_is(syntax::TokenType::PACKED)) {

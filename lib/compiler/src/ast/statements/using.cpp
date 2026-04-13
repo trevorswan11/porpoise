@@ -21,7 +21,7 @@ auto UsingStatement::accept(Visitor& v) const -> void { v.visit(*this); }
 
 auto UsingStatement::parse(syntax::Parser& parser)
     -> Expected<mem::Box<Statement>, syntax::ParserDiagnostic> {
-    const auto start_token = parser.current_token();
+    const auto start_token = parser.get_current_token();
     TRY(parser.expect_peek(syntax::TokenType::IDENT));
     auto alias = downcast<IdentifierExpression>(TRY(IdentifierExpression::parse(parser)));
 

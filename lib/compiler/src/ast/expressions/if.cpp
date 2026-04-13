@@ -8,7 +8,7 @@ auto IfExpression::accept(Visitor& v) const -> void { v.visit(*this); }
 
 auto IfExpression::parse(syntax::Parser& parser)
     -> Expected<mem::Box<Expression>, syntax::ParserDiagnostic> {
-    const auto start_token = parser.current_token();
+    const auto start_token = parser.get_current_token();
 
     bool constexpr_condition = false;
     if (parser.peek_token_is(syntax::TokenType::CONSTEXPR)) {

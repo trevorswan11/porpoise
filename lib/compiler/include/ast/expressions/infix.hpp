@@ -25,12 +25,12 @@ template <typename Derived> class InfixExpression : public ExprBase<Derived> {
 
     [[nodiscard]] static auto parse(syntax::Parser& parser, mem::Box<Expression> lhs)
         -> Expected<mem::Box<Expression>, syntax::ParserDiagnostic> {
-        const auto op_token = parser.current_token();
+        const auto op_token = parser.get_current_token();
         if (parser.peek_token_is(syntax::TokenType::END)) {
             return make_parser_unexpected(syntax::ParserError::INFIX_MISSING_RHS, op_token);
         }
 
-        auto [current_precedence, current_binding] = parser.poll_current_precedence();
+        auto [current_precedence, current_binding] = parser.get_current_precedence();
         if (current_binding && current_binding->right_assoc) {
             current_precedence =
                 static_cast<syntax::Precedence>(std::to_underlying(current_precedence) - 1);

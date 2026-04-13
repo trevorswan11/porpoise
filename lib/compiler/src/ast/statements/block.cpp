@@ -9,7 +9,7 @@ auto BlockStatement::accept(Visitor& v) const -> void { v.visit(*this); }
 
 auto BlockStatement::parse(syntax::Parser& parser, bool allow_imports)
     -> Expected<mem::Box<Statement>, syntax::ParserDiagnostic> {
-    const auto start_token = parser.current_token();
+    const auto start_token = parser.get_current_token();
 
     Statements statements;
     while (!parser.peek_token_is(syntax::TokenType::RBRACE) &&

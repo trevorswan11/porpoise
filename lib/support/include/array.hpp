@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <array>
 #include <limits>
+#include <ranges>
 #include <utility>
 
 #include "types.hpp"

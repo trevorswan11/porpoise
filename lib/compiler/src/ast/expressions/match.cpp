@@ -45,7 +45,7 @@ auto MatchExpression::accept(Visitor& v) const -> void { v.visit(*this); }
 
 auto MatchExpression::parse(syntax::Parser& parser)
     -> Expected<mem::Box<Expression>, syntax::ParserDiagnostic> {
-    const auto start_token = parser.current_token();
+    const auto start_token = parser.get_current_token();
 
     // Conditions have to be surrounded by parentheses
     TRY(parser.expect_peek(syntax::TokenType::LPAREN));

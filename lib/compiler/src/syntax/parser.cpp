@@ -1,11 +1,5 @@
-#include <algorithm>
-#include <ranges>
-#include <utility>
-
 #include <fmt/format.h>
 #include <magic_enum/magic_enum.hpp>
-
-#include "array.hpp"
 
 #include "syntax/keywords.hpp"
 #include "syntax/parser.hpp"
@@ -13,6 +7,8 @@
 #include "syntax/token.hpp"
 
 #include "ast/ast.hpp"
+
+#include "array.hpp"
 
 namespace porpoise::syntax {
 
@@ -79,7 +75,15 @@ auto Parser::expect_peek(TokenType expected) -> Expected<Unit, ParserDiagnostic>
     return Unexpected{peek_error(expected)};
 }
 
-auto Parser::poll_current_precedence() const noexcept -> std::pair<Precedence, Optional<Binding>> {
+auto Parser::peek_error(TokenType expected) -> ParserDiagnostic {
+    return ParserDiagnostic{fmt::format("Expected token {}, found {}",
+                                        magic_enum::enum_name(expected),
+                                        magic_enum::enum_name(peek_token_.type)),
+                            ParserError::UNEXPECTED_TOKEN,
+                            peek_token_};
+}
+
+auto Parser::get_current_precedence() const noexcept -> std::pair<Precedence, Optional<Binding>> {
     return get_binding(current_token_.type)
         .transform([](const auto& binding) {
             return std::pair{binding.precedence, Optional<Binding>{binding}};
@@ -87,7 +91,7 @@ auto Parser::poll_current_precedence() const noexcept -> std::pair<Precedence, O
         .value_or(std::pair{Precedence::LOWEST, std::nullopt});
 }
 
-auto Parser::poll_peek_precedence() const noexcept -> std::pair<Precedence, Optional<Binding>> {
+auto Parser::get_peek_precedence() const noexcept -> std::pair<Precedence, Optional<Binding>> {
     return get_binding(peek_token_.type)
         .transform([](const auto& binding) {
             return std::pair{binding.precedence, Optional<Binding>{binding}};
@@ -118,7 +122,7 @@ auto Parser::parse_expression(Precedence precedence)
         return make_parser_unexpected(ParserError::END_OF_TOKEN_STREAM, current_token_);
     }
 
-    const auto& prefix = poll_prefix_fn(current_token_.type);
+    const auto& prefix = try_get_prefix_fn(current_token_.type);
     if (!prefix) {
         return make_parser_unexpected(fmt::format("No prefix parse function for {}({}) found",
                                                   magic_enum::enum_name(current_token_.type),
@@ -128,8 +132,8 @@ auto Parser::parse_expression(Precedence precedence)
     }
     auto lhs_expression = TRY((*prefix)(*this));
 
-    while (!peek_token_is(TokenType::SEMICOLON) && precedence < poll_peek_precedence().first) {
-        const auto& infix = poll_infix_fn(peek_token_.type);
+    while (!peek_token_is(TokenType::SEMICOLON) && precedence < get_peek_precedence().first) {
+        const auto& infix = try_get_poll_infix_fn(peek_token_.type);
         if (!infix) { break; }
         advance();
         lhs_expression = TRY((*infix)(*this, std::move(lhs_expression)));
@@ -266,7 +270,7 @@ constexpr auto PREFIX_FNS = [] {
     return prefix_fns;
 }();
 
-constexpr auto Parser::poll_prefix_fn(TokenType tt) noexcept -> Optional<const PrefixFn&> {
+constexpr auto Parser::try_get_prefix_fn(TokenType tt) noexcept -> Optional<const PrefixFn&> {
     const auto it = std::ranges::lower_bound(PREFIX_FNS, tt, {}, &PrefixPair::first);
     if (it == PREFIX_FNS.end() || it->first != tt) { return std::nullopt; }
     return Optional<const PrefixFn&>{it->second};
@@ -318,18 +322,10 @@ constexpr auto INFIX_FNS = [] {
     return infix_fns;
 }();
 
-constexpr auto Parser::poll_infix_fn(TokenType tt) noexcept -> Optional<const InfixFn&> {
+constexpr auto Parser::try_get_poll_infix_fn(TokenType tt) noexcept -> Optional<const InfixFn&> {
     const auto it = std::ranges::lower_bound(INFIX_FNS, tt, {}, &InfixPair::first);
     if (it == INFIX_FNS.end() || it->first != tt) { return std::nullopt; }
     return Optional<const InfixFn&>{it->second};
-}
-
-auto Parser::tt_mismatch_error(TokenType expected, const Token& actual) -> ParserDiagnostic {
-    return ParserDiagnostic{fmt::format("Expected token {}, found {}",
-                                        magic_enum::enum_name(expected),
-                                        magic_enum::enum_name(actual.type)),
-                            ParserError::UNEXPECTED_TOKEN,
-                            actual};
 }
 
 } // namespace porpoise::syntax

@@ -15,7 +15,7 @@ auto DoWhileLoopExpression::accept(Visitor& v) const -> void { v.visit(*this); }
 
 auto DoWhileLoopExpression::parse(syntax::Parser& parser)
     -> Expected<mem::Box<Expression>, syntax::ParserDiagnostic> {
-    const auto start_token = parser.current_token();
+    const auto start_token = parser.get_current_token();
     TRY(parser.expect_peek(syntax::TokenType::LBRACE));
 
     auto block = downcast<BlockStatement>(TRY(BlockStatement::parse(parser)));
@@ -24,7 +24,7 @@ auto DoWhileLoopExpression::parse(syntax::Parser& parser)
 
     if (parser.peek_token_is(syntax::TokenType::RPAREN)) {
         return make_parser_unexpected(syntax::ParserError::WHILE_MISSING_CONDITION,
-                                      parser.current_token());
+                                      parser.get_current_token());
     }
     parser.advance();
 
