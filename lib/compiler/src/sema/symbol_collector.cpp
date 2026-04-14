@@ -32,6 +32,7 @@ namespace porpoise::sema {
 MAKE_COLLECTOR_NOOPS(GENERATE_COLLECTOR_NOOP)
 
 auto SymbolCollector::visit(const ast::ArrayExpression& array) -> void {
+    const auto g = in_expr_scope_.guard();
     visit_list(array.get_items());
 }
 
@@ -40,11 +41,12 @@ auto SymbolCollector::visit(const ast::CallArgument& arg) -> void {
 }
 
 auto SymbolCollector::visit(const ast::CallExpression& call) -> void {
+    const auto g = in_expr_scope_.guard();
     visit_list(call.get_arguments());
 }
 
 auto SymbolCollector::visit(const ast::DoWhileLoopExpression& do_while) -> void {
-    const auto g   = in_loop_scope_.guard();
+    const auto g   = loop_guard();
     const auto idx = visit_scope(
         do_while.get_block(), TypeKind::BLOCK, [this](const auto& stmt) { stmt->accept(*this); });
     last_type_->set_symbol_table_idx(idx);
@@ -72,7 +74,7 @@ auto SymbolCollector::visit(const ast::ForLoopCapture& capture) -> void {
 auto SymbolCollector::visit(const ast::ForLoopExpression& for_expr) -> void {
     const auto  new_idx = registry_.create();
     const Scope s{table_stack_, new_idx, table_idx_};
-    const auto  g = in_loop_scope_.guard();
+    const auto  g = loop_guard();
 
     // Parameters belong to the parent scope
     visit_list(for_expr.get_captures());
@@ -95,7 +97,7 @@ auto SymbolCollector::visit(const ast::FunctionParameter& param) -> void {
 auto SymbolCollector::visit(const ast::FunctionExpression& fn) -> void {
     const auto  new_idx = registry_.create();
     const Scope s{table_stack_, new_idx, table_idx_};
-    const auto  g = in_function_scope_.guard();
+    const auto  g = fn_guard();
 
     // Parameters belong to the parent scope
     if (fn.has_self()) { visit(fn.get_self()); }
@@ -108,16 +110,18 @@ auto SymbolCollector::visit(const ast::FunctionExpression& fn) -> void {
 }
 
 auto SymbolCollector::visit(const ast::IfExpression& if_expr) -> void {
+    const auto g = in_expr_scope_.guard();
     if_expr.get_consequence().accept(*this);
     if (if_expr.has_alternate()) { if_expr.get_alternate().accept(*this); }
 }
 
 auto SymbolCollector::visit(const ast::IndexExpression& index) -> void {
+    const auto g = in_expr_scope_.guard();
     index.get_index().accept(*this);
 }
 
 auto SymbolCollector::visit(const ast::InfiniteLoopExpression& loop) -> void {
-    const auto g   = in_loop_scope_.guard();
+    const auto g   = loop_guard();
     const auto idx = visit_scope(
         loop.get_block(), TypeKind::BLOCK, [this](const auto& stmt) { stmt->accept(*this); });
     last_type_->set_symbol_table_idx(idx);
@@ -126,6 +130,7 @@ auto SymbolCollector::visit(const ast::InfiniteLoopExpression& loop) -> void {
 
 #define MAKE_INFIX_COLLECTOR(NodeType)                          \
     auto SymbolCollector::visit(const NodeType& node) -> void { \
+        const auto g = in_expr_scope_.guard();                  \
         node.get_lhs().accept(*this);                           \
         node.get_rhs().accept(*this);                           \
     }
@@ -139,6 +144,7 @@ auto SymbolCollector::visit(const ast::Initializer& init) -> void {
 }
 
 auto SymbolCollector::visit(const ast::InitializerExpression& init) -> void {
+    const auto g = in_expr_scope_.guard();
     if (init.has_initializers()) { visit_list(init.get_initializers()); }
 }
 
@@ -157,12 +163,16 @@ auto SymbolCollector::visit(const ast::MatchArm& arm) -> void {
 }
 
 auto SymbolCollector::visit(const ast::MatchExpression& match) -> void {
+    const auto g = in_expr_scope_.guard();
     visit_list(match.get_arms());
     if (match.has_catch_all()) { match.get_catch_all().accept(*this); }
 }
 
-#define MAKE_PREFIX_COLLECTOR(NodeType) \
-    auto SymbolCollector::visit(const NodeType& node) -> void { node.get_rhs().accept(*this); }
+#define MAKE_PREFIX_COLLECTOR(NodeType)                         \
+    auto SymbolCollector::visit(const NodeType& node) -> void { \
+        const auto g = in_expr_scope_.guard();                  \
+        node.get_rhs().accept(*this);                           \
+    }
 
 MAKE_PREFIX_COLLECTOR(ast::ReferenceExpression)
 MAKE_PREFIX_COLLECTOR(ast::DereferenceExpression)
@@ -200,14 +210,14 @@ auto SymbolCollector::visit(const ast::WhileLoopExpression& while_expr) -> void 
 }
 
 auto SymbolCollector::visit(const ast::BlockStatement& block) -> void {
-    if (table_stack_.size() == 1) {
+    if (!in_expr_scope_ && table_stack_.size() == 1) {
         diagnostics_.emplace_back("Cannot have block at the top level",
                                   Error::ILLEGAL_TOP_LEVEL_STATEMENT,
                                   block.get_token());
     }
 
     const auto scope_idx =
-        visit_scope(block, TypeKind::STRUCT, [this](const auto& stmt) { stmt->accept(*this); });
+        visit_scope(block, TypeKind::BLOCK, [this](const auto& stmt) { stmt->accept(*this); });
     last_type_->set_symbol_table_idx(scope_idx);
     block.set_sema_type(*last_type_);
 }

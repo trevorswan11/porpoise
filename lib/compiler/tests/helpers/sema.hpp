@@ -4,9 +4,11 @@
 #include <type_traits>
 
 #include <catch2/catch_test_macros.hpp>
+
 #include <fmt/format.h>
 #include <fmt/ranges.h>
 
+#include "helpers/ast.hpp"
 #include "helpers/common.hpp"
 
 #include "sema/analyzer.hpp"
@@ -79,6 +81,40 @@ auto test_collector_fail(std::string_view failing, Ds&&... expected_diagnostics)
         CHECK(errors.size() == expected_count);
     }
     CHECK(std::ranges::equal(errors, expected_arr));
+}
+
+// A common decl for tests formatted as `const name := assign;`
+template <bool Alloc> auto common_decl(std::string_view name, std::string_view assign) {
+    auto decl = ast::DeclStatement{
+        syntax::Token{syntax::keywords::CONSTANT},
+        helpers::make_ident(name),
+        mem::make_box<ast::TypeExpression>(syntax::Token{syntax::operators::WALRUS}, std::nullopt),
+        helpers::make_ident<true>(assign),
+        ast::DeclModifiers::CONSTANT,
+    };
+
+    if constexpr (Alloc) {
+        return mem::make_box<ast::DeclStatement>(std::move(decl));
+    } else {
+        return decl;
+    }
+}
+
+inline auto foo_bar_decl() -> ast::DeclStatement { return common_decl<false>("foo", "bar"); }
+
+// Shallowly checks the symbols in the inner scope of a statement
+template <typename... MakerPair>
+auto test_hollow_symbols(sema::Analyzer& analyzer, MakerPair&&... pair) -> void {
+    auto& registry = analyzer.get_registry();
+    CHECK(registry.size() == 2);
+    CHECK(registry.get(1).size() == sizeof...(pair));
+
+    (..., [&] {
+        const auto         name          = std::get<0>(pair);
+        const auto         expected_decl = std::get<1>(pair)();
+        const sema::Symbol expected{name, &expected_decl};
+        CHECK(expected == registry.get_from(1, name));
+    }());
 }
 
 } // namespace porpoise::tests::helpers

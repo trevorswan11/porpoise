@@ -11,7 +11,7 @@ concept Countable = std::is_integral_v<T> && !std::is_same_v<T, bool>;
 
 // A simple counter that provides RAII-based up/down counting
 template <Countable Underlying> class Counter {
-  private:
+  public:
     class Guard {
       public:
         explicit Guard(Counter& c) : c_{c} { c_.increment(); }

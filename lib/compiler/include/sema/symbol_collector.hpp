@@ -75,6 +75,14 @@ class SymbolCollector : public ast::Visitor {
                try_result(registry_.insert_into(table_idx_, name, node));
     }
 
+    auto loop_guard() noexcept -> std::pair<DefaultCounter::Guard, DefaultCounter::Guard> {
+        return {in_loop_scope_.guard(), in_expr_scope_.guard()};
+    }
+
+    auto fn_guard() noexcept -> std::pair<DefaultCounter::Guard, DefaultCounter::Guard> {
+        return {in_function_scope_.guard(), in_expr_scope_.guard()};
+    }
+
   private:
     usize                table_idx_;
     SymbolTableStack     table_stack_;
@@ -86,6 +94,7 @@ class SymbolCollector : public ast::Visitor {
     Optional<Type&> last_type_;
     DefaultCounter  in_function_scope_;
     DefaultCounter  in_loop_scope_;
+    DefaultCounter  in_expr_scope_;
 };
 
 } // namespace porpoise::sema
