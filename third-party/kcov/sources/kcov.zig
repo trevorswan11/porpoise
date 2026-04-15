@@ -38,64 +38,64 @@ pub fn runBinToCSource(builder: *const KcovBuilder) BinToCSourceFiles {
 
     const library_cc = blk: {
         const run_bin_to_c_source = b.addRunArtifact(bin_to_c_source);
-        run_bin_to_c_source.max_stdio_size = 32 * mib;
+        run_bin_to_c_source.stdio_limit = .limited(32 * mib);
         run_bin_to_c_source.clearEnvironment();
         run_bin_to_c_source.addArtifactArg(builder.kcov_sowrapper);
         run_bin_to_c_source.addArg("__library");
-        break :blk renameLazyPath(b, run_bin_to_c_source.captureStdOut(), "library.cc");
+        break :blk renameLazyPath(b, run_bin_to_c_source.captureStdOut(.{}), "library.cc");
     };
 
     const bash_redirector_library_cc = blk: {
         const run_bin_to_c_source = b.addRunArtifact(bin_to_c_source);
-        run_bin_to_c_source.max_stdio_size = 32 * mib;
+        run_bin_to_c_source.stdio_limit = .limited(32 * mib);
         run_bin_to_c_source.clearEnvironment();
         run_bin_to_c_source.addArtifactArg(builder.bash_execve_redirector);
         run_bin_to_c_source.addArg("bash_redirector_library");
-        break :blk renameLazyPath(b, run_bin_to_c_source.captureStdOut(), "bash-redirector-library.cc");
+        break :blk renameLazyPath(b, run_bin_to_c_source.captureStdOut(.{}), "bash-redirector-library.cc");
     };
 
     const bash_cloexec_library_cc = blk: {
         const run_bin_to_c_source = b.addRunArtifact(bin_to_c_source);
-        run_bin_to_c_source.max_stdio_size = 32 * mib;
+        run_bin_to_c_source.stdio_limit = .limited(32 * mib);
         run_bin_to_c_source.clearEnvironment();
         run_bin_to_c_source.addArtifactArg(builder.bash_tracefd_cloexec);
         run_bin_to_c_source.addArg("bash_cloexec_library");
-        break :blk renameLazyPath(b, run_bin_to_c_source.captureStdOut(), "bash-cloexec-library.cc");
+        break :blk renameLazyPath(b, run_bin_to_c_source.captureStdOut(.{}), "bash-cloexec-library.cc");
     };
 
     const kcov_system_library_cc = blk: {
         const run_bin_to_c_source = b.addRunArtifact(bin_to_c_source);
         run_bin_to_c_source.clearEnvironment();
-        run_bin_to_c_source.max_stdio_size = 256 * mib;
+        run_bin_to_c_source.stdio_limit = .limited(256 * mib);
         run_bin_to_c_source.addArtifactArg(builder.kcov_system_lib);
         run_bin_to_c_source.addArg("kcov_system_library");
-        break :blk renameLazyPath(b, run_bin_to_c_source.captureStdOut(), "kcov-system-library.cc");
+        break :blk renameLazyPath(b, run_bin_to_c_source.captureStdOut(.{}), "kcov-system-library.cc");
     };
 
     const python_helper_cc = blk: {
         const run_bin_to_c_source = b.addRunArtifact(bin_to_c_source);
-        run_bin_to_c_source.max_stdio_size = 32 * mib;
+        run_bin_to_c_source.stdio_limit = .limited(32 * mib);
         run_bin_to_c_source.clearEnvironment();
         run_bin_to_c_source.addFileArg(builder.metadata.root.path(b, "src/engines/python-helper.py"));
         run_bin_to_c_source.addArg("python_helper");
-        break :blk renameLazyPath(b, run_bin_to_c_source.captureStdOut(), "python-helper.cc");
+        break :blk renameLazyPath(b, run_bin_to_c_source.captureStdOut(.{}), "python-helper.cc");
     };
 
     const bash_helper_cc = blk: {
         const run_bin_to_c_source = b.addRunArtifact(bin_to_c_source);
-        run_bin_to_c_source.max_stdio_size = 32 * mib;
+        run_bin_to_c_source.stdio_limit = .limited(32 * mib);
         run_bin_to_c_source.clearEnvironment();
         run_bin_to_c_source.addFileArg(builder.metadata.root.path(b, "src/engines/bash-helper.sh"));
         run_bin_to_c_source.addArg("bash_helper");
         run_bin_to_c_source.addFileArg(builder.metadata.root.path(b, "src/engines/bash-helper-debug-trap.sh"));
         run_bin_to_c_source.addArg("bash_helper_debug_trap");
-        break :blk renameLazyPath(b, run_bin_to_c_source.captureStdOut(), "bash-helper.cc");
+        break :blk renameLazyPath(b, run_bin_to_c_source.captureStdOut(.{}), "bash-helper.cc");
     };
 
     const html_data_files_cc = blk: {
         const run_bin_to_c_source = b.addRunArtifact(bin_to_c_source);
         run_bin_to_c_source.clearEnvironment();
-        run_bin_to_c_source.max_stdio_size = 32 * mib;
+        run_bin_to_c_source.stdio_limit = .limited(32 * mib);
         for (
             [_][]const u8{
                 "data/bcov.css",
@@ -127,7 +127,7 @@ pub fn runBinToCSource(builder: *const KcovBuilder) BinToCSourceFiles {
             run_bin_to_c_source.addFileArg(builder.metadata.root.path(b, path));
             run_bin_to_c_source.addArg(name);
         }
-        break :blk renameLazyPath(b, run_bin_to_c_source.captureStdOut(), "html-data-files.cc");
+        break :blk renameLazyPath(b, run_bin_to_c_source.captureStdOut(.{}), "html-data-files.cc");
     };
 
     const version_c = blk: {

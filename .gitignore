@@ -58,6 +58,7 @@ dkms.conf
 # Zig
 zig-out/
 .zig-cache
+zig-pkg/
 
 # Lsp caches
 .cache

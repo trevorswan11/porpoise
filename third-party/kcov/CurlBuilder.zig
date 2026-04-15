@@ -102,6 +102,7 @@ pub fn buildMbedtls(b: *std.Build, config: Config) ?Artifact {
 /// Handles CA and the resulting configuration
 fn makeConfigHeader(self: *const Self) *std.Build.Step.ConfigHeader {
     const b = self.b;
+    const io = b.graph.io;
     const target = self.metadata.config.target;
 
     const ca_bundle_autodetect = target.query.isNative() and target.result.os.tag != .windows;
@@ -118,7 +119,7 @@ fn makeConfigHeader(self: *const Self) *std.Build.Step.ConfigHeader {
             "/etc/ssl/cert.pem",
         };
         for (search_paths) |search_path| {
-            std.fs.accessAbsolute(search_path, .{}) catch continue;
+            std.Io.Dir.accessAbsolute(io, search_path, .{}) catch continue;
             ca_bundle = search_path;
             break;
         }
@@ -126,12 +127,12 @@ fn makeConfigHeader(self: *const Self) *std.Build.Step.ConfigHeader {
 
     if (ca_path_autodetect) blk: {
         const search_ca_path = "/etc/ssl/certs";
-        var ca_dir = std.fs.openDirAbsolute(search_ca_path, .{ .iterate = true }) catch break :blk;
-        defer ca_dir.close();
+        var ca_dir = std.Io.Dir.openDirAbsolute(io, search_ca_path, .{ .iterate = true }) catch break :blk;
+        defer ca_dir.close(io);
 
         var walker = ca_dir.walk(b.allocator) catch @panic("OOM");
         defer walker.deinit();
-        while (walker.next() catch break :blk) |entry| {
+        while (walker.next(io) catch break :blk) |entry| {
             if (entry.basename.len != 10) continue;
             if (!std.mem.endsWith(u8, entry.basename, ".0")) continue;
             ca_path = search_ca_path;

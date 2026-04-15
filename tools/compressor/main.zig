@@ -5,17 +5,16 @@ const c = @cImport({
     @cInclude("archive_entry.h");
 });
 
-pub fn main() !void {
-    var arena: std.heap.ArenaAllocator = .init(std.heap.c_allocator);
-    defer arena.deinit();
-    const allocator = arena.allocator();
+pub fn main(init: std.process.Init) !void {
+    const allocator = init.arena.allocator();
+    const io = init.io;
 
     var stderr_buf: [1024]u8 = undefined;
-    const stderr_handle: std.fs.File = .stderr();
-    var writer = stderr_handle.writer(&stderr_buf);
+    const stderr_handle: std.Io.File = .stderr();
+    var writer = stderr_handle.writer(io, &stderr_buf);
     const stderr = &writer.interface;
 
-    const args = try std.process.argsAlloc(allocator);
+    const args = try init.minimal.args.toSlice(allocator);
     if (args.len != 4) {
         try stderr.print("Usage: {s} [zip|zst] [output_file] [input_dir]\n", .{args[0]});
         try stderr.flush();
@@ -47,9 +46,9 @@ pub fn main() !void {
     defer _ = c.archive_write_close(archive);
 
     // The build system guarantees that everything in the input directory is ready to be compressed
-    var dir = try std.fs.cwd().openDir(in_dir, .{ .iterate = true });
-    defer dir.close();
-    const dir_basename = std.fs.path.basename(in_dir);
+    var dir = try std.Io.Dir.cwd().openDir(io, in_dir, .{ .iterate = true });
+    defer dir.close(io);
+    const dir_basename = std.Io.Dir.path.basename(in_dir);
     var walker = try dir.walk(allocator);
     defer walker.deinit();
 
@@ -58,23 +57,23 @@ pub fn main() !void {
     const input_buf = file_reader_buf[0 .. buf_size / 2];
     const output_buf = file_reader_buf[buf_size / 2 ..];
 
-    while (try walker.next()) |entry| {
+    while (try walker.next(io)) |entry| {
         if (entry.kind != .file) continue;
         const archive_entry = c.archive_entry_new() orelse return error.EntryNewFailed;
         defer c.archive_entry_free(archive_entry);
 
         // Put the files into a subdirectory so decompressing doesn't dump into cwd
-        const entry_path = try std.fs.path.joinZ(allocator, &.{ dir_basename, entry.path });
+        const entry_path = try std.Io.Dir.path.joinZ(allocator, &.{ dir_basename, entry.path });
         c.archive_entry_set_pathname(archive_entry, entry_path.ptr);
 
         // File stats for the header
-        const stat = try entry.dir.statFile(entry.basename);
+        const stat = try entry.dir.statFile(io, entry.basename, .{});
         c.archive_entry_set_size(archive_entry, @intCast(stat.size));
-        c.archive_entry_set_mtime(archive_entry, @intCast(@divTrunc(stat.mtime, std.time.ns_per_s)), 0);
+        c.archive_entry_set_mtime(archive_entry, @intCast(@divTrunc(stat.mtime.nanoseconds, std.time.ns_per_s)), 0);
 
         // https://github.com/libarchive/libarchive/blob/master/libarchive/archive_entry.h#L216
         c.archive_entry_set_filetype(archive_entry, 0o100000);
-        c.archive_entry_set_perm(archive_entry, @intCast(stat.mode));
+        c.archive_entry_set_perm(archive_entry, @intCast(@intFromEnum(stat.permissions)));
 
         if (c.archive_write_header(archive, archive_entry) != c.ARCHIVE_OK) {
             try stderr.print("Header error: {s}\n", .{c.archive_error_string(archive)});
@@ -82,9 +81,9 @@ pub fn main() !void {
             continue;
         }
 
-        const file = try entry.dir.openFile(entry.basename, .{});
-        defer file.close();
-        var reader = file.reader(input_buf);
+        const file = try entry.dir.openFile(io, entry.basename, .{});
+        defer file.close(io);
+        var reader = file.reader(io, input_buf);
 
         while (!reader.atEnd()) {
             const bytes_read = try reader.interface.readSliceShort(output_buf);

@@ -14,6 +14,7 @@ pub fn build(b: *std.Build, config: struct {
         .target = config.target,
         .optimize = config.optimize,
         .link_libcpp = true,
+        .link_libc = true,
     });
 
     const include = upstream.path("include");
