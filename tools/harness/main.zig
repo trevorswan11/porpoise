@@ -4,6 +4,7 @@ const testing = std.testing;
 extern fn launch(c_int, [*c][*c]u8) c_int;
 
 var instrumentor: Instrumentor = undefined;
+var instrumentor_active: std.atomic.Value(bool) = .init(false);
 
 pub fn main(init: std.process.Init) !void {
     var gpa: Instrumentor.Gpa = .init;
@@ -60,6 +61,7 @@ const Instrumentor = struct {
     live_allocations: std.AutoHashMap(usize, void),
 
     pub fn init(allocator: std.mem.Allocator, io: std.Io) Instrumentor {
+        instrumentor_active.store(true, .seq_cst);
         return .{
             .allocator = allocator,
             .io = io,
@@ -68,6 +70,7 @@ const Instrumentor = struct {
     }
 
     pub fn deinit(self: *Instrumentor, gpa: ?*Gpa) void {
+        instrumentor_active.store(false, .seq_cst);
         self.live_allocations.deinit();
         if (self.args) |*args| {
             freeArgs(&args.zig_conv);
@@ -237,12 +240,32 @@ const Instrumentor = struct {
 };
 
 export fn alloc(size: usize) callconv(.c) ?*anyopaque {
+    if (!instrumentor_active.load(.acquire)) {
+        return Instrumentor.internal_allocator.rawAlloc(
+            size,
+            .of(std.c.max_align_t),
+            @returnAddress(),
+        );
+    }
     return instrumentor.alloc(size) catch null;
 }
 
+fn deallocInternal(ptr: *anyopaque) void {
+    Instrumentor.internal_allocator.rawFree(
+        @as([*]u8, @ptrCast(ptr))[0..0],
+        .of(std.c.max_align_t),
+        @returnAddress(),
+    );
+}
+
 export fn dealloc(ptr: ?*anyopaque) callconv(.c) void {
+    if (!instrumentor_active.load(.acquire)) {
+        const p = ptr orelse return;
+        return deallocInternal(p);
+    }
+
     instrumentor.dealloc(ptr) catch |err| switch (err) {
-        error.InvalidFree => @panic("Double or invalid free detected"),
+        error.InvalidFree => deallocInternal(ptr.?),
         error.HeapCorruption => @panic("Heap corruption detected: allocated block has malformed header"),
         error.LockFailed => @panic("IO Error: Failed to obtain lock"),
     };
