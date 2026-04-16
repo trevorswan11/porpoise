@@ -6,7 +6,7 @@ Make sure you are comfortable with the license; all contributions are licensed u
 
 ## Prerequisites & Dependencies
 
-The developer experience has been set up in such a way that the only system dependencies are git and [Zig v0.15.2](https://ziglang.org/download/). This standard should be upheld in all PRs, adding all new dependencies to the project `build.zig.zon` and adding any build steps to the `third-party` directory.
+The developer experience has been set up in such a way that the only system dependencies are git and [Zig v0.16.0](https://ziglang.org/download/). This standard should be upheld in all PRs, adding all new dependencies to the project `build.zig.zon` and adding any build steps to the `third-party` directory.
 
 ## Pull Request Requirements
 

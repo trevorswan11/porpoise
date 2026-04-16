@@ -1,7 +1,7 @@
 <h1 align="center">porpoise</h1>
 
 <p align="center">
-<img src="https://img.shields.io/badge/C%2B%2B-23-blue?logo=c%2B%2B&logoColor=white" alt="C++23" /> <img src="https://img.shields.io/badge/Zig-0.15.2-orange?logo=zig" alt="Zig 0.15.2" /> <a href="LICENSE"><img src="https://img.shields.io/github/license/trevorswan11/porpoise" alt="License" /></a> <a href="https://github.com/trevorswan11/porpoise/actions/workflows/format.yml"><img src="https://github.com/trevorswan11/porpoise/actions/workflows/format.yml/badge.svg" alt="Formatting" /></a> <a href="https://github.com/trevorswan11/porpoise/actions/workflows/ci.yml"><img src="https://github.com/trevorswan11/porpoise/actions/workflows/ci.yml/badge.svg" alt="CI" /></a> <img src="https://raw.githubusercontent.com/trevorswan11/porpoise/coverage/coverage.svg" alt="Coverage" />
+<img src="https://img.shields.io/badge/C%2B%2B-23-blue?logo=c%2B%2B&logoColor=white" alt="C++23" /> <img src="https://img.shields.io/badge/Zig-0.16.0-orange?logo=zig" alt="Zig 0.16.0" /> <a href="LICENSE"><img src="https://img.shields.io/github/license/trevorswan11/porpoise" alt="License" /></a> <a href="https://github.com/trevorswan11/porpoise/actions/workflows/format.yml"><img src="https://github.com/trevorswan11/porpoise/actions/workflows/format.yml/badge.svg" alt="Formatting" /></a> <a href="https://github.com/trevorswan11/porpoise/actions/workflows/ci.yml"><img src="https://github.com/trevorswan11/porpoise/actions/workflows/ci.yml/badge.svg" alt="CI" /></a> <img src="https://raw.githubusercontent.com/trevorswan11/porpoise/coverage/coverage.svg" alt="Coverage" />
 </p>
 
 <p align="center">
@@ -71,7 +71,7 @@ pub const main := fn(args: [][:0]u8): i32 {
 This is by far the easiest way to get started with development. Just run `nix develop` to get started and automatically get the correct Zig version and some important development tools. Note that this provides optional preconfigured tools such as LLDB, Clangd, and ZLS to further enhance the developer experience.
 
 ### For Others
-All you need to get started with porpoise development is git and a valid 0.15.2 Zig installation, which can be found [here](https://ziglang.org/download/).
+All you need to get started with porpoise development is git and a valid 0.16.0 Zig installation, which can be found [here](https://ziglang.org/download/).
 
 In either case, assuming you have the git and Zig prerequisites on your system, building porpoise is as easy as running:
 ```sh

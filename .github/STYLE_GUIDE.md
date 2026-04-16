@@ -28,4 +28,4 @@ Upon PR creation and workflow approval, GitHub actions will run `zig build fmt-c
 ### Zig
 - Use PascalCase for functions that return a type
 - Use PascalCase for files that should be treated as types
-- Follow the [Zig Standard Library style](https://ziglang.org/documentation/0.15.2/#Style-Guide)
+- Follow the [Zig Standard Library style](https://ziglang.org/documentation/0.16.0/#Style-Guide)
