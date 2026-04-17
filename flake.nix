@@ -6,9 +6,8 @@
     flake-utils.url = "github:numtide/flake-utils";
     zig-flake.url = "github:mitchellh/zig-overlay";
     zls-flake = {
-      url = "github:zigtools/zls?ref=0.15.1";
+      url = "github:zigtools/zls?ref=0.16.0";
       inputs.nixpkgs.follows = "nixpkgs";
-      inputs.zig-overlay.follows = "zig-flake";
     };
   };
 
@@ -27,10 +26,8 @@
           inherit system;
           overlays = [
             (final: prev: {
-              zig = zig-flake.packages.${system}."0.15.2";
-              zls = zls-flake.packages.${system}.default.overrideAttrs (old: {
-                nativeBuildInputs = (old.nativeBuildInputs or [ ]) ++ [ final.zig ];
-              });
+              zig = zig-flake.packages.${system}."0.16.0";
+              zls = zls-flake.packages.${system}.default;
             })
           ];
         };
