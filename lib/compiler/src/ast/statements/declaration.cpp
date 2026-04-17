@@ -20,11 +20,11 @@ auto DeclStatement::accept(Visitor& v) const -> void { v.visit(*this); }
 
 auto DeclStatement::parse(syntax::Parser& parser)
     -> Expected<mem::Box<Statement>, syntax::ParserDiagnostic> {
-    const auto start_token = parser.current_token();
+    const auto start_token = parser.get_current_token();
     auto       modifiers   = token_to_modifier(start_token).value();
 
     Optional<DeclModifiers> current_modifier;
-    while ((current_modifier = token_to_modifier(parser.peek_token()))) {
+    while ((current_modifier = token_to_modifier(parser.get_peek_token()))) {
         parser.advance();
         if (modifiers_has(modifiers, *current_modifier)) {
             return make_parser_unexpected(syntax::ParserError::DUPLICATE_DECL_MODIFIER,

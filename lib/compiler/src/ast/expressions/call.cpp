@@ -59,7 +59,7 @@ auto CallExpression::parse(syntax::Parser& parser, mem::Box<Expression> function
            !parser.peek_token_is(syntax::TokenType::END)) {
         if (parser.peek_token_is(syntax::TokenType::COMMA)) {
             return make_parser_unexpected(syntax::ParserError::COMMA_WITH_MISSING_CALL_ARGUMENT,
-                                          parser.peek_token());
+                                          parser.get_peek_token());
         }
 
         // Advance cannot be called here since explicit type relies on peek, not current

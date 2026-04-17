@@ -8,12 +8,11 @@
 #include "sema/symbol.hpp"
 #include "sema/type.hpp"
 
+#include "counter.hpp"
+
 namespace porpoise::sema {
 
-// A very shallow AST walker for pass 1.
-// - Collects top-level declarations only
-// - Performs 0 type-checking
-// - Does not verify undeclared identifier use
+// An AST walker that performs 0 type checking
 class SymbolCollector : public ast::Visitor {
   public:
     // Manages a new scopes symbol table
@@ -62,7 +61,7 @@ class SymbolCollector : public ast::Visitor {
     }
 
     // Returns false if the passed result was an error type
-    template <typename T = unit> auto try_result(Expected<T, Diagnostic>&& result) -> bool {
+    template <typename T = Unit> auto try_result(Expected<T, Diagnostic>&& result) -> bool {
         if (!result) {
             diagnostics_.emplace_back(result.error());
             return false;
@@ -76,6 +75,14 @@ class SymbolCollector : public ast::Visitor {
                try_result(registry_.insert_into(table_idx_, name, node));
     }
 
+    auto loop_guard() noexcept -> std::pair<DefaultCounter::Guard, DefaultCounter::Guard> {
+        return {in_loop_scope_.guard(), in_expr_scope_.guard()};
+    }
+
+    auto fn_guard() noexcept -> std::pair<DefaultCounter::Guard, DefaultCounter::Guard> {
+        return {in_function_scope_.guard(), in_expr_scope_.guard()};
+    }
+
   private:
     usize                table_idx_;
     SymbolTableStack     table_stack_;
@@ -85,6 +92,9 @@ class SymbolCollector : public ast::Visitor {
 
     bool            first_node_{true};
     Optional<Type&> last_type_;
+    DefaultCounter  in_function_scope_;
+    DefaultCounter  in_loop_scope_;
+    DefaultCounter  in_expr_scope_;
 };
 
 } // namespace porpoise::sema

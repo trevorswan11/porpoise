@@ -8,7 +8,7 @@
 
 namespace porpoise::driver {
 
-auto Parser::parse() -> Expected<unit, i32> {
+auto Parser::parse() -> Expected<Unit, i32> {
     CLI::App app{fmt::format("porpoise language compiler v{}", VERSION_STR)};
     app.set_version_flag("-v,--version", fmt::format("porpoise v{} ({})", VERSION_STR, GIT_INFO));
 
@@ -22,10 +22,10 @@ auto Parser::parse() -> Expected<unit, i32> {
     } catch (const CLI::ParseError& e) { return Unexpected{app.exit(e)}; };
     if (ast_app->parsed()) { parsed_.emplace<AstDump>(); }
 
-    return unit{};
+    return Unit{};
 }
 
-auto Parser::dispatch() -> unit {
+auto Parser::dispatch() -> Unit {
     std::visit(Overloaded{[](AstDump& d) { d.run(); }}, parsed_);
     return {};
 }

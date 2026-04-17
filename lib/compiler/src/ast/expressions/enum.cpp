@@ -35,7 +35,7 @@ auto EnumExpression::accept(Visitor& v) const -> void { v.visit(*this); }
 
 auto EnumExpression::parse(syntax::Parser& parser)
     -> Expected<mem::Box<Expression>, syntax::ParserDiagnostic> {
-    const auto start_token = parser.current_token();
+    const auto start_token = parser.get_current_token();
 
     mem::NullableBox<IdentifierExpression> underlying;
     if (parser.peek_token_is(syntax::TokenType::COLON)) {
@@ -48,7 +48,7 @@ auto EnumExpression::parse(syntax::Parser& parser)
     Enumerations enumerations;
     while (!parser.peek_token_is(syntax::TokenType::RBRACE) &&
            !parser.peek_token_is(syntax::TokenType::END)) {
-        if (parser.peek_token().is_decl_token()) { break; }
+        if (parser.get_peek_token().is_decl_token()) { break; }
 
         TRY(parser.expect_peek(syntax::TokenType::IDENT));
         auto ident = downcast<IdentifierExpression>(TRY(IdentifierExpression::parse(parser)));

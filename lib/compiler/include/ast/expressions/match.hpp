@@ -14,7 +14,7 @@ class IdentifierExpression;
 
 class MatchArm {
   public:
-    using Capture = std::variant<mem::Box<IdentifierExpression>, unit>;
+    using Capture = std::variant<mem::Box<IdentifierExpression>, Unit>;
 
   public:
     MatchArm(mem::Box<Expression> pattern,
@@ -35,17 +35,23 @@ class MatchArm {
                           *std::get)
 
     [[nodiscard]] auto is_discarded_capture() const noexcept -> bool {
-        return std::holds_alternative<unit>(*capture_);
+        return std::holds_alternative<Unit>(*capture_);
     }
 
     MAKE_GETTER(dispatch, const Statement&, *)
+    [[nodiscard]] auto get_token() const noexcept -> const syntax::Token& {
+        return pattern_->get_token();
+    }
+
+    MAKE_AST_SEMA_TYPE_FNS()
 
     MAKE_EQ_DELEGATION(MatchArm)
 
   private:
-    mem::Box<Expression> pattern_;
-    Optional<Capture>    capture_;
-    mem::Box<Statement>  dispatch_;
+    mem::Box<Expression>          pattern_;
+    Optional<Capture>             capture_;
+    mem::Box<Statement>           dispatch_;
+    mutable Optional<sema::Type&> sema_type_;
 };
 
 class MatchExpression : public ExprBase<MatchExpression> {

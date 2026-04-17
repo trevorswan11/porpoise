@@ -138,22 +138,20 @@ class Parser {
     auto advance(u8 times = 1) noexcept -> const Token&;
     auto consume() -> std::pair<ast::AST, Diagnostics>;
 
-    auto current_token() const noexcept -> const Token& { return current_token_; }
-    auto peek_token() const noexcept -> const Token& { return peek_token_; }
+    auto get_current_token() const noexcept -> const Token& { return current_token_; }
+    auto get_peek_token() const noexcept -> const Token& { return peek_token_; }
 
     auto current_token_is(TokenType t) const noexcept -> bool { return current_token_.type == t; }
     auto peek_token_is(TokenType t) const noexcept -> bool { return peek_token_.type == t; }
 
     // Advances the cursor tokens only if the expected token type matches the actual peek token.
-    [[nodiscard]] auto expect_peek(TokenType expected) -> Expected<unit, ParserDiagnostic>;
+    [[nodiscard]] auto expect_peek(TokenType expected) -> Expected<Unit, ParserDiagnostic>;
 
     // Indiscriminately returns an error citing the peek token.
-    [[nodiscard]] auto peek_error(TokenType expected) -> ParserDiagnostic {
-        return tt_mismatch_error(expected, peek_token_);
-    }
+    [[nodiscard]] auto peek_error(TokenType expected) -> ParserDiagnostic;
 
-    auto poll_current_precedence() const noexcept -> std::pair<Precedence, Optional<Binding>>;
-    auto poll_peek_precedence() const noexcept -> std::pair<Precedence, Optional<Binding>>;
+    auto get_current_precedence() const noexcept -> std::pair<Precedence, Optional<Binding>>;
+    auto get_peek_precedence() const noexcept -> std::pair<Precedence, Optional<Binding>>;
 
     [[nodiscard]] auto parse_statement() -> Expected<mem::Box<ast::Statement>, ParserDiagnostic>;
     [[nodiscard]] auto parse_expression(Precedence precedence = Precedence::LOWEST)
@@ -172,12 +170,10 @@ class Parser {
     [[nodiscard]] auto parse_member_decls(ast::MemberValidator validator = nullptr)
         -> Expected<ast::Members, ParserDiagnostic>;
 
-    static constexpr auto poll_prefix_fn(TokenType tt) noexcept -> Optional<const PrefixFn&>;
-    static constexpr auto poll_infix_fn(TokenType tt) noexcept -> Optional<const InfixFn&>;
+    static constexpr auto try_get_prefix_fn(TokenType tt) noexcept -> Optional<const PrefixFn&>;
+    static constexpr auto try_get_poll_infix_fn(TokenType tt) noexcept -> Optional<const InfixFn&>;
 
   private:
-    static auto tt_mismatch_error(TokenType expected, const Token& actual) -> ParserDiagnostic;
-
     // Reverts the parser to the state from the checkpoint.
     auto rollback(const Checkpoint& checkpoint) noexcept -> void {
         lexer_.restore(checkpoint.snapshot_);

@@ -8,7 +8,7 @@ auto JumpStatement::accept(Visitor& v) const -> void { v.visit(*this); }
 
 auto JumpStatement::parse(syntax::Parser& parser)
     -> Expected<mem::Box<Statement>, syntax::ParserDiagnostic> {
-    const auto start_token = parser.current_token();
+    const auto start_token = parser.get_current_token();
 
     mem::NullableBox<Expression> value;
     if (start_token.type == syntax::TokenType::RETURN &&

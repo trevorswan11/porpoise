@@ -16,7 +16,7 @@ auto ImplicitAccessExpression::parse(syntax::Parser& parser)
     }
 
     // Otherwise it suffices to fall back to standard prefix parsing
-    const auto prefix_token = parser.current_token();
+    const auto prefix_token = parser.get_current_token();
     if (parser.peek_token_is(syntax::TokenType::END)) {
         return make_parser_unexpected(syntax::ParserError::PREFIX_MISSING_OPERAND, prefix_token);
     }

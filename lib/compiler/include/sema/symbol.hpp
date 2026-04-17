@@ -32,6 +32,9 @@ class Enumeration;
 class SelfParameter;
 class FunctionParameter;
 
+class ForLoopCapture;
+class MatchArm;
+
 } // namespace ast
 
 namespace sema {
@@ -43,6 +46,8 @@ using SymbolicUnionField  = NonNull<const ast::UnionField>;
 using SymbolicEnumeration = NonNull<const ast::Enumeration>;
 using SymbolicSelfParam   = NonNull<const ast::SelfParameter>;
 using SymbolicParam       = NonNull<const ast::FunctionParameter>;
+using SymbolicCapture     = NonNull<const ast::ForLoopCapture>;
+using SymbolicArm         = NonNull<const ast::MatchArm>;
 
 // No other nodes can ever be at the top level
 using SymbolicNode = std::variant<SymbolicDecl,
@@ -51,7 +56,9 @@ using SymbolicNode = std::variant<SymbolicDecl,
                                   SymbolicUnionField,
                                   SymbolicEnumeration,
                                   SymbolicSelfParam,
-                                  SymbolicParam>;
+                                  SymbolicParam,
+                                  SymbolicCapture,
+                                  SymbolicArm>;
 
 class Type;
 
@@ -78,6 +85,8 @@ class Symbol {
     MAKE_VARIANT_UNPACKER(enumeration, ast::Enumeration, SymbolicEnumeration, node_, *std::get)
     MAKE_VARIANT_UNPACKER(self_param, ast::SelfParameter, SymbolicSelfParam, node_, *std::get)
     MAKE_VARIANT_UNPACKER(basic_param, ast::FunctionParameter, SymbolicParam, node_, *std::get)
+    MAKE_VARIANT_UNPACKER(for_loop_capture, ast::ForLoopCapture, SymbolicCapture, node_, *std::get)
+    MAKE_VARIANT_UNPACKER(match_arm, ast::MatchArm, SymbolicArm, node_, *std::get)
 
     MAKE_VARIANT_MATCHER(node_)
     [[nodiscard]] auto get_node_token() const noexcept -> syntax::Token;
@@ -114,7 +123,7 @@ class SymbolTable {
 
     MAKE_MOVE_CONSTRUCTABLE_ONLY(SymbolTable)
 
-    auto insert(std::string_view name, SymbolicNode node) -> Expected<unit, Diagnostic>;
+    auto insert(std::string_view name, SymbolicNode node) -> Expected<Unit, Diagnostic>;
 
     auto reserve(usize cap) -> void { symbols_.reserve(cap); }
 
@@ -194,7 +203,7 @@ class SymbolTableRegistry {
     }
 
     [[nodiscard]] auto insert_into(usize table_idx, std::string_view name, SymbolicNode node)
-        -> Expected<unit, Diagnostic>;
+        -> Expected<Unit, Diagnostic>;
 
     template <typename Self> [[nodiscard]] auto get(this Self&& self, usize idx) -> auto& {
         return self.tables_.at(idx);
@@ -224,7 +233,7 @@ class SymbolTableRegistry {
 
     [[nodiscard]] auto is_shadowing(const SymbolTableStack& stack,
                                     std::string_view        name,
-                                    SymbolicNode node) noexcept -> Expected<unit, Diagnostic>;
+                                    SymbolicNode node) noexcept -> Expected<Unit, Diagnostic>;
 
   private:
     Tables tables_;

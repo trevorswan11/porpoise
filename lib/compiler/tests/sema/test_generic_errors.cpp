@@ -1,0 +1,81 @@
+#include <catch2/catch_test_macros.hpp>
+
+#include "helpers/sema.hpp"
+
+namespace porpoise::tests {
+
+TEST_CASE("Duplicate identifiers") {
+    helpers::test_collector_fail(
+        "const a := 2; import a;",
+        sema::Diagnostic{"Redeclaration of symbol 'a'. Previous declaration here: [1, 1]",
+                         sema::Error::IDENTIFIER_REDECLARATION,
+                         std::pair{1uz, 15uz}});
+}
+
+TEST_CASE("Semantically illegal statements") {
+    helpers::test_collector_fail("{}",
+                                 sema::Diagnostic{"Cannot have block at the top level",
+                                                  sema::Error::ILLEGAL_TOP_LEVEL_STATEMENT,
+                                                  std::pair{1uz, 1uz}});
+
+    helpers::test_collector_fail("defer 2;",
+                                 sema::Diagnostic{"Cannot have defer outside of a function's scope",
+                                                  sema::Error::ILLEGAL_TOP_LEVEL_STATEMENT,
+                                                  std::pair{1uz, 1uz}});
+
+    helpers::test_collector_fail("return 2;",
+                                 sema::Diagnostic{"Cannot return outside of a function",
+                                                  sema::Error::ILLEGAL_CONTROL_FLOW,
+                                                  std::pair{1uz, 1uz}});
+
+    helpers::test_collector_fail("break; continue;",
+                                 sema::Diagnostic{"Cannot continue or break outside of a loop",
+                                                  sema::Error::ILLEGAL_CONTROL_FLOW,
+                                                  std::pair{1uz, 1uz}},
+                                 sema::Diagnostic{"Cannot continue or break outside of a loop",
+                                                  sema::Error::ILLEGAL_CONTROL_FLOW,
+                                                  std::pair{1uz, 8uz}});
+}
+
+using namespace std::string_view_literals;
+
+constexpr auto RESTRICTED_INPUTS = std::array{
+    std::pair{"a := fn(): void {};"sv, "function"sv},
+    std::pair{"a := struct { const b := 2; };"sv, "struct"sv},
+    std::pair{"a := enum { A };"sv, "enum"sv},
+    std::pair{"a := union { b: bool };"sv, "union"sv},
+};
+
+TEST_CASE("Restricted non-const top level declarations") {
+    for (const auto& [input, desc] : RESTRICTED_INPUTS) {
+        helpers::test_collector_fail(
+            fmt::format("var {}", input),
+            sema::Diagnostic{
+                fmt::format("Top level {}s must be marked const at the top level", desc),
+                sema::Error::ILLEGAL_NON_CONST_STATEMENT,
+                std::pair{1uz, 1uz}});
+    }
+}
+
+TEST_CASE("Restricted non-const top level struct declarations") {
+    for (const auto& [input, desc] : RESTRICTED_INPUTS) {
+        helpers::test_collector_fail(
+            fmt::format("const S := struct {{ var {} }};", input),
+            sema::Diagnostic{
+                fmt::format("Top level {}s must be marked const at the top level", desc),
+                sema::Error::ILLEGAL_NON_CONST_STATEMENT,
+                std::pair{1uz, 21uz}});
+    }
+}
+
+TEST_CASE("Redundant constexpr usage on top level declarations") {
+    for (const auto& [input, desc] : RESTRICTED_INPUTS) {
+        helpers::test_collector_fail(
+            fmt::format("constexpr {}", input),
+            sema::Diagnostic{fmt::format("Top level {}s are implicitly compile time known", desc),
+                             sema::Error::REDUNDANT_CONSTEXPR,
+                             std::pair{1uz, 1uz}});
+    }
+}
+
+} // namespace porpoise::tests

@@ -35,7 +35,7 @@ class ForLoopCapture {
     };
 
   public:
-    ForLoopCapture() noexcept;
+    explicit ForLoopCapture(const syntax::Token& token) noexcept;
     explicit ForLoopCapture(Valued valued) noexcept;
     ~ForLoopCapture();
 
@@ -45,13 +45,15 @@ class ForLoopCapture {
 
     MAKE_VARIANT_UNPACKER(valued, Valued, Valued, underlying_, std::get)
     [[nodiscard]] auto is_discarded() const noexcept -> bool {
-        return std::holds_alternative<unit>(underlying_);
+        return std::holds_alternative<syntax::Token>(underlying_);
     }
+
+    [[nodiscard]] auto get_token() const noexcept -> const syntax::Token&;
 
     MAKE_EQ_DELEGATION(ForLoopCapture)
 
   private:
-    std::variant<Valued, unit> underlying_;
+    std::variant<Valued, syntax::Token> underlying_;
 };
 
 class ForLoopExpression : public ExprBase<ForLoopExpression> {

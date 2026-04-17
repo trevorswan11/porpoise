@@ -12,7 +12,7 @@ auto StringExpression::accept(Visitor& v) const -> void { v.visit(*this); }
 
 auto StringExpression::parse(syntax::Parser& parser)
     -> Expected<mem::Box<Expression>, syntax::ParserDiagnostic> {
-    const auto start_token = parser.current_token();
+    const auto start_token = parser.get_current_token();
     const auto promoted    = start_token.promote();
     if (!promoted) {
         return make_parser_unexpected(syntax::ParserError::MALFORMED_STRING, start_token);
@@ -32,7 +32,7 @@ auto U8Expression::accept(Visitor& v) const -> void { v.visit(*this); }
 
 auto U8Expression::parse(syntax::Parser& parser)
     -> Expected<mem::Box<Expression>, syntax::ParserDiagnostic> {
-    const auto start_token = parser.current_token();
+    const auto start_token = parser.get_current_token();
     const auto slice       = start_token.slice;
     if (slice[1] != '\\') { return mem::make_box<U8Expression>(start_token, slice[1]); }
 
@@ -77,7 +77,7 @@ auto BoolExpression::accept(Visitor& v) const -> void { v.visit(*this); }
 
 auto BoolExpression::parse(syntax::Parser& parser)
     -> Expected<mem::Box<Expression>, syntax::ParserDiagnostic> {
-    const auto& start_token = parser.current_token();
+    const auto& start_token = parser.get_current_token();
     return mem::make_box<BoolExpression>(start_token,
                                          start_token.type == syntax::TokenType::BOOLEAN_TRUE);
 }
@@ -86,9 +86,9 @@ auto VoidExpression::accept(Visitor& v) const -> void { v.visit(*this); }
 
 auto VoidExpression::parse(syntax::Parser& parser)
     -> Expected<mem::Box<Expression>, syntax::ParserDiagnostic> {
-    const auto start_token = parser.current_token();
+    const auto start_token = parser.get_current_token();
     TRY(parser.expect_peek(syntax::TokenType::RBRACE));
-    return mem::make_box<VoidExpression>(start_token, unit{});
+    return mem::make_box<VoidExpression>(start_token, Unit{});
 }
 
 // cppcheck-suppress-end [constParameterReference, duplInheritedMember]

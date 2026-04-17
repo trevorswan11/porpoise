@@ -27,7 +27,7 @@ auto Symbol::get_node_token() const noexcept -> syntax::Token {
     return match([](const auto& node) { return node->get_token(); });
 }
 
-auto SymbolTable::insert(std::string_view name, SymbolicNode node) -> Expected<unit, Diagnostic> {
+auto SymbolTable::insert(std::string_view name, SymbolicNode node) -> Expected<Unit, Diagnostic> {
     // Reserved identifier use is impossible due to a parser invariant
     auto [it, inserted] = symbols_.try_emplace(name, name, node);
 
@@ -40,11 +40,11 @@ auto SymbolTable::insert(std::string_view name, SymbolicNode node) -> Expected<u
             Error::IDENTIFIER_REDECLARATION,
             std::visit([](const auto& inner) { return inner->get_token(); }, node));
     }
-    return unit{};
+    return Unit{};
 }
 
 auto SymbolTableRegistry::insert_into(usize table_idx, std::string_view name, SymbolicNode node)
-    -> Expected<unit, Diagnostic> {
+    -> Expected<Unit, Diagnostic> {
     if (auto table = get_opt(table_idx)) { return table->insert(name, node); }
     return make_sema_unexpected(Error::INVALID_TABLE_IDX);
 }
@@ -52,7 +52,7 @@ auto SymbolTableRegistry::insert_into(usize table_idx, std::string_view name, Sy
 [[nodiscard]] auto SymbolTableRegistry::is_shadowing(const SymbolTableStack& stack,
                                                      std::string_view        name,
                                                      SymbolicNode            node) noexcept
-    -> Expected<unit, Diagnostic> {
+    -> Expected<Unit, Diagnostic> {
     for (const auto idx : stack | std::views::take(stack.size() - 1)) {
         if (const auto symbol = get(idx).get_opt(name)) {
             return make_sema_unexpected(
@@ -65,7 +65,7 @@ auto SymbolTableRegistry::insert_into(usize table_idx, std::string_view name, Sy
                 std::visit([](const auto& inner) { return inner->get_token(); }, node));
         }
     }
-    return unit{};
+    return Unit{};
 }
 
 } // namespace porpoise::sema

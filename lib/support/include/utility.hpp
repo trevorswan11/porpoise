@@ -7,7 +7,18 @@
 
 #include <fmt/format.h>
 
+#include "types.hpp"
+
 namespace porpoise {
+
+class ScopedCount {
+  public:
+    explicit ScopedCount(usize& count) noexcept : count_{count} { count_ += 1; }
+    ~ScopedCount() { count_ -= 1; }
+
+  private:
+    usize& count_;
+};
 
 #define MAKE_GETTER_2(name, ReturnType) \
     [[nodiscard]] auto get_##name() const noexcept -> ReturnType { return name##_; }

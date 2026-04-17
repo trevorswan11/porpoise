@@ -72,7 +72,7 @@ auto FunctionExpression::accept(Visitor& v) const -> void { v.visit(*this); }
 
 auto FunctionExpression::parse(syntax::Parser& parser)
     -> Expected<mem::Box<Expression>, syntax::ParserDiagnostic> {
-    const auto start_token = parser.current_token();
+    const auto start_token = parser.get_current_token();
     TRY(parser.expect_peek(syntax::TokenType::LPAREN));
 
     // Parse the definition now that we're at the fn token
@@ -86,7 +86,7 @@ auto FunctionExpression::parse(syntax::Parser& parser)
     } else {
         // The 'self' parameter can be a value type, ref, or mutable ref
         parser.advance();
-        auto self_modifier = TypeModifier::from_token(parser.current_token());
+        auto self_modifier = TypeModifier::from_token(parser.get_current_token());
         if (self_modifier.is_value() && (parser.peek_token_is(syntax::TokenType::COMMA) ||
                                          parser.peek_token_is(syntax::TokenType::RPAREN))) {
             self.emplace(SelfParameter{
@@ -168,7 +168,7 @@ auto FunctionExpression::parse(syntax::Parser& parser)
 
 auto FunctionExpression::parse_type(syntax::Parser& parser)
     -> Expected<mem::Box<Expression>, syntax::ParserDiagnostic> {
-    const auto start_token = parser.current_token();
+    const auto start_token = parser.get_current_token();
     TRY(parser.expect_peek(syntax::TokenType::LPAREN));
 
     // Parse the definition now that we're at the fn token

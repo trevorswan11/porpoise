@@ -338,8 +338,8 @@ pub fn runKcov(self: *Self, config: RunKcovConfig) !RunKcovReport {
         run.addArg("-f");
         run.addArtifactArg(self.kcov_exe);
 
-        _ = run.captureStdOut();
-        _ = run.captureStdErr();
+        _ = run.captureStdOut(.{});
+        _ = run.captureStdErr(.{});
         self.signer = run;
     }
 

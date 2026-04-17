@@ -37,13 +37,13 @@ auto UnionExpression::accept(Visitor& v) const -> void { v.visit(*this); }
 
 auto UnionExpression::parse(syntax::Parser& parser)
     -> Expected<mem::Box<Expression>, syntax::ParserDiagnostic> {
-    const auto start_token = parser.current_token();
+    const auto start_token = parser.get_current_token();
     TRY(parser.expect_peek(syntax::TokenType::LBRACE));
 
     Fields fields;
     while (!parser.peek_token_is(syntax::TokenType::RBRACE) &&
            !parser.peek_token_is(syntax::TokenType::END)) {
-        if (parser.peek_token().is_decl_token()) { break; }
+        if (parser.get_peek_token().is_decl_token()) { break; }
 
         TRY(parser.expect_peek(syntax::TokenType::IDENT));
         auto ident = downcast<IdentifierExpression>(TRY(IdentifierExpression::parse(parser)));

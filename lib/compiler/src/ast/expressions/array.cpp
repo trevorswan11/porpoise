@@ -24,7 +24,7 @@ auto ArrayExpression::accept(Visitor& v) const -> void { v.visit(*this); }
 
 auto ArrayExpression::parse(syntax::Parser& parser)
     -> Expected<mem::Box<Expression>, syntax::ParserDiagnostic> {
-    const auto start_token = parser.current_token();
+    const auto start_token = parser.get_current_token();
     parser.advance();
 
     mem::NullableBox<Expression> size;
@@ -38,7 +38,6 @@ auto ArrayExpression::parse(syntax::Parser& parser)
 
     TRY(parser.expect_peek(syntax::TokenType::RBRACKET));
     auto item_type = TRY(ExplicitType::parse(parser));
-
     TRY(parser.expect_peek(syntax::TokenType::LBRACE));
 
     // Current token is either the LBRACE at the start or a comma before parsing

@@ -57,7 +57,7 @@ template <typename Derived, typename T> class PrimitiveExpression : public ExprB
         -> Expected<mem::Box<Expression>, syntax::ParserDiagnostic>
         requires(!disable_default_parse<Derived>::value)
     {
-        const auto start_token = parser.current_token();
+        const auto start_token = parser.get_current_token();
         auto       value = parse_primitive_value<value_type>(start_token.slice, start_token.type);
         if (value) { return mem::make_box<Derived>(start_token, *value); }
 
@@ -217,7 +217,7 @@ class BoolExpression : public PrimitiveExpression<BoolExpression, bool> {
 };
 template <> struct disable_default_parse<BoolExpression> : std::true_type {};
 
-class VoidExpression : public PrimitiveExpression<VoidExpression, unit> {
+class VoidExpression : public PrimitiveExpression<VoidExpression, Unit> {
   public:
     static constexpr auto KIND = NodeKind::VOID_EXPRESSION;
 

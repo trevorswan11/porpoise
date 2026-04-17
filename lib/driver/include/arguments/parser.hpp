@@ -19,8 +19,8 @@ class Parser {
   public:
     Parser(i32 argc, byte** argv) noexcept : argc_{argc}, argv_{argv} {}
 
-    auto parse() -> Expected<unit, i32>;
-    auto dispatch() -> unit;
+    auto parse() -> Expected<Unit, i32>;
+    auto dispatch() -> Unit;
 
     MAKE_GETTER(parsed, Parsed)
 
