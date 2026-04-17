@@ -28,7 +28,7 @@ template <ast::LeafNode Node, bool Nullable, typename... Args> auto make_leaf_no
 
 // Thin wrapper around Node is/as pattern with test assertion.
 template <ast::LeafNode To, typename From> auto try_into(const From& node) -> const To& {
-    CHECK(node.template is<To>());
+    REQUIRE(node.template is<To>());
     return ast::Node::as<To>(node);
 }
 
@@ -94,16 +94,8 @@ template <typename T, typename... Ts> auto make_vector(Ts&&... es) -> std::vecto
     return list;
 }
 
-inline auto ident_from(std::string_view name) -> ast::IdentifierExpression {
-    const auto extract = [](const auto& key) { return key.second; };
-    const auto tt      = syntax::get_keyword(name).transform(extract).value_or(
-        syntax::get_builtin(name).transform(extract).value_or(syntax::TokenType::IDENT));
-    return ast::IdentifierExpression{syntax::Token{tt, name}};
-}
-
-inline auto ident_from(const syntax::Token& tok) -> ast::IdentifierExpression {
-    return ast::IdentifierExpression{tok};
-}
+auto ident_from(std::string_view name) -> ast::IdentifierExpression;
+auto ident_from(const syntax::Token& tok) -> ast::IdentifierExpression;
 
 template <bool Nullable = false> auto make_ident(std::string_view name) {
     return make_leaf_node<ast::IdentifierExpression, Nullable>(ident_from(name));
@@ -154,13 +146,13 @@ template <ast::PrimitiveNode N> auto primitive_from(std::string_view str) noexce
     syntax::Lexer l{str};
     const auto    tok = l.advance();
 
-    CHECK(syntax::token_type::is_number(tok.type));
+    REQUIRE(syntax::token_type::is_number(tok.type));
     auto value = ast::parse_primitive_value<typename N::value_type, false>(str, tok.type);
-    CHECK(value);
+    REQUIRE(value);
     return N{syntax::Token{tok.type, str}, *value};
 }
 
-// For strings:include  surrounding quotes in the input if needed, multiline strings not supported
+// For strings, include  surrounding quotes in the input if needed, multiline strings not supported
 template <ast::PrimitiveNode Primitive, bool Nullable = false>
 auto make_primitive(std::string_view str) noexcept {
     if constexpr (std::is_same_v<Primitive, ast::StringExpression>) {

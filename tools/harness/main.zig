@@ -7,7 +7,7 @@ var instrumentor: Instrumentor = undefined;
 var instrumentor_active = false;
 
 pub fn main(init: std.process.Init) !void {
-    var gpa: Instrumentor.Gpa = .init;
+    var gpa: Gpa = .init;
     const allocator = gpa.allocator();
 
     instrumentor = .init(allocator, init.io);
@@ -21,6 +21,11 @@ pub fn main(init: std.process.Init) !void {
     instrumentor.report();
     std.process.exit(result);
 }
+
+const Gpa = std.heap.DebugAllocator(.{
+    .thread_safe = true,
+    .stack_trace_frames = if (std.debug.sys_can_stack_trace) 10 else 0,
+});
 
 const Instrumentor = struct {
     const internal_allocator = std.heap.c_allocator;
@@ -38,11 +43,6 @@ const Instrumentor = struct {
 
     const header_magic = 0xDEADBEEF;
     const header_size = @sizeOf(AllocHeader);
-
-    const Gpa = std.heap.DebugAllocator(.{
-        .thread_safe = true,
-        .stack_trace_frames = if (std.debug.sys_can_stack_trace) 10 else 0,
-    });
 
     allocator: std.mem.Allocator,
     io: std.Io,
@@ -73,17 +73,17 @@ const Instrumentor = struct {
         instrumentor_active = false;
         self.live_allocations.deinit();
         if (self.args) |*args| {
-            freeArgs(&args.zig_conv);
+            freeArgs(internal_allocator, &args.zig_conv);
             internal_allocator.free(args.c_conv);
         }
         if (gpa) |g| _ = g.deinit();
     }
 
-    fn freeArgs(args: *std.ArrayList([:0]u8)) void {
+    fn freeArgs(allocator: std.mem.Allocator, args: *std.ArrayList([:0]u8)) void {
         for (args.items) |arg| {
-            internal_allocator.free(arg);
+            allocator.free(arg);
         }
-        args.deinit(internal_allocator);
+        args.deinit(allocator);
         args.* = .empty;
     }
 
@@ -95,7 +95,7 @@ const Instrumentor = struct {
         defer args_iter.deinit();
 
         var zig_args: std.ArrayList([:0]u8) = try .initCapacity(internal_allocator, 2);
-        errdefer freeArgs(&zig_args);
+        errdefer freeArgs(internal_allocator, &zig_args);
 
         while (args_iter.next()) |arg| {
             const mut_arg = try internal_allocator.dupeZ(u8, arg);
@@ -271,6 +271,45 @@ export fn dealloc(ptr: ?*anyopaque) callconv(.c) void {
         error.HeapCorruption => @panic("Heap corruption detected: allocated block has malformed header"),
         error.LockFailed => @panic("IO Error: Failed to obtain lock"),
     };
+}
+
+test "Args freeing" {
+    const allocator = testing.allocator;
+    var args: std.ArrayList([:0]u8) = .empty;
+    errdefer args.deinit(allocator);
+
+    for (0..10) |i| {
+        try args.append(
+            allocator,
+            try std.fmt.allocPrintSentinel(allocator, "{d}", .{i}, 0),
+        );
+    }
+
+    Instrumentor.freeArgs(allocator, &args);
+    try std.testing.expect(std.meta.eql(args, std.ArrayList([:0]u8).empty));
+}
+
+test "Exposed alloc/dealloc pre-init" {
+    const mem = alloc(8);
+    try std.testing.expect(mem != null);
+    dealloc(mem);
+}
+
+test "Active flag (re)setting" {
+    var inst: Instrumentor = .init(testing.allocator, testing.io);
+    errdefer inst.deinit(null);
+    try std.testing.expect(instrumentor_active);
+    inst.deinit(null);
+    try std.testing.expect(!instrumentor_active);
+}
+
+test "Exposed alloc/dealloc post-init" {
+    instrumentor = .init(testing.allocator, testing.io);
+    defer instrumentor.deinit(null);
+
+    const mem = alloc(8);
+    try std.testing.expect(mem != null);
+    dealloc(mem);
 }
 
 test "Correct allocation pipeline" {

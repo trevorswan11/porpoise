@@ -1,5 +1,3 @@
-#include <utility>
-
 #include "sema/symbol_collector.hpp"
 
 #include "ast/ast.hpp"
@@ -223,13 +221,9 @@ auto SymbolCollector::visit(const ast::BlockStatement& block) -> void {
 }
 
 auto SymbolCollector::visit(const ast::DeclStatement& decl) -> void {
-    // Only move on to value inspection is the node
+    // We can stop analyzing early if there's no value
     const auto name = decl.get_ident().get_name();
     try_declare(name, &decl);
-
-    if (decl.has_modifier(ast::DeclModifiers::PUBLIC)) {
-        registry_.get_from(table_idx_, name).mark_public();
-    }
     if (!decl.has_value()) { return; }
 
     // Valued decls should be evaluated to get shallow types
@@ -238,37 +232,17 @@ auto SymbolCollector::visit(const ast::DeclStatement& decl) -> void {
                  ast::FunctionExpression,
                  ast::UnionExpression,
                  ast::StructExpression>()) {
-        static constexpr auto expr_name = [](ast::NodeKind kind) {
-            switch (kind) {
-            case ast::NodeKind::ENUM_EXPRESSION:     return "enum";
-            case ast::NodeKind::FUNCTION_EXPRESSION: return "function";
-            case ast::NodeKind::UNION_EXPRESSION:    return "union";
-            case ast::NodeKind::STRUCT_EXPRESSION:   return "struct";
-            default:                                 std::unreachable();
-            }
-        };
-
+        // Certain values cannot be constexpr or non-const to reduce mental overhead
         if (decl.has_modifier(ast::DeclModifiers::CONSTEXPR)) {
-            diagnostics_.emplace_back(fmt::format("Top level {}s are implicitly compile time known",
-                                                  expr_name(expr.get_kind())),
-                                      Error::REDUNDANT_CONSTEXPR,
-                                      decl.get_token());
+            diagnostics_.emplace_back(
+                fmt::format("Top level {}s are implicitly compile time known", expr.display_name()),
+                Error::REDUNDANT_CONSTEXPR,
+                decl.get_token());
         } else if (!decl.has_modifier(ast::DeclModifiers::CONSTANT)) {
             diagnostics_.emplace_back(
                 fmt::format("Top level {}s must be marked const at the top level",
-                            expr_name(expr.get_kind())),
+                            expr.display_name()),
                 Error::ILLEGAL_NON_CONST_STATEMENT,
-                decl.get_token());
-        }
-    }
-
-    // Functions cannot be used as valued stubs
-    if (expr.is<ast::FunctionExpression>()) {
-        const auto& func = ast::Node::as<ast::FunctionExpression>(expr);
-        if (!func.has_body()) {
-            diagnostics_.emplace_back(
-                fmt::format("Functions cannot be used as valued stubs in declarations"),
-                Error::FUNCTION_DECLARATION_MISSING_BODY,
                 decl.get_token());
         }
     }
@@ -320,9 +294,10 @@ auto SymbolCollector::visit(const ast::JumpStatement& node) -> void {
 
 auto SymbolCollector::visit(const ast::ModuleStatement& module_stmt) -> void {
     auto& table = registry_.get(table_idx_);
-    if (first_node_) {
-        table.indicate_module();
-    } else if (table.is_module()) {
+    if (first_node_) { return table.indicate_module(); }
+
+    // Module statements are highly restricted in terms of usage and location
+    if (table.is_module()) {
         diagnostics_.emplace_back("Only one module statement is allowed per file",
                                   Error::DUPLICATE_MODULE_STATEMENT,
                                   module_stmt.get_token());

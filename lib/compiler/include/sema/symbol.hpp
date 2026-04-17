@@ -91,8 +91,8 @@ class Symbol {
     MAKE_VARIANT_MATCHER(node_)
     [[nodiscard]] auto get_node_token() const noexcept -> syntax::Token;
 
-    auto               mark_public() noexcept -> void { public_ = true; }
-    [[nodiscard]] auto is_public() const noexcept -> bool { return public_; }
+    // Can only be true for decls, imports, and type aliases
+    [[nodiscard]] auto is_public() const noexcept -> bool;
 
     auto               emplace_type(Type& type) noexcept -> void { type_.emplace(type); }
     [[nodiscard]] auto has_type() const noexcept -> bool { return type_.has_value(); }
@@ -105,7 +105,6 @@ class Symbol {
 
   private:
     std::string_view      name_;
-    bool                  public_{false};
     SymbolicNode          node_;
     Optional<sema::Type&> type_;
     ResolveStatus         status_{ResolveStatus::UNRESOLVED};
