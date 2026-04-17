@@ -41,16 +41,19 @@ jobs:
             - name: Cache Zig Folders
               uses: actions/cache@v4
               with:
-                path: |
-                  ${{ env.ZIG_LOCAL_CACHE_DIR }}
-                  ${{ env.ZIG_GLOBAL_CACHE_DIR }}
-                key: ${{ runner.os }}-zig-${{ hashFiles('third-party/llvm/**.zig') }}
-                restore-keys: |
-                  ${{ runner.os }}-zig-
+                  path: |
+                      ${{ env.ZIG_LOCAL_CACHE_DIR }}
+                      ${{ env.ZIG_GLOBAL_CACHE_DIR }}
+                  key: ${{ runner.os }}-zig-${{ hashFiles('third-party/llvm/**.zig') }}
+                  restore-keys: |
+                      ${{ runner.os }}-zig-
 
             - name: Fetch dependencies
-              run: |
-                  zig build --fetch=all -j2
+              uses: nick-fields/retry@v3
+              with:
+                  timeout_minutes: 10
+                  max_attempts: 3
+                  command: zig build --fetch=all -j2
 
             - name: Run tests (debug)
               run: zig build test

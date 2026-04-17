@@ -26,8 +26,11 @@ jobs:
                   version: 0.16.0
 
             - name: Fetch dependencies
-              run: |
-                  zig build --fetch=all -j2
+              uses: nick-fields/retry@v3
+              with:
+                  timeout_minutes: 10
+                  max_attempts: 3
+                  command: zig build --fetch=all -j2
 
             - name: Build and package
               run: zig build package

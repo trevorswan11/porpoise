@@ -34,16 +34,19 @@ jobs:
             - name: Cache Zig Folders
               uses: actions/cache@v4
               with:
-                path: |
-                  ${{ env.ZIG_LOCAL_CACHE_DIR }}
-                  ${{ env.ZIG_GLOBAL_CACHE_DIR }}
-                key: ${{ runner.os }}-zig-${{ hashFiles('build.zig.zon') }}
-                restore-keys: |
-                  ${{ runner.os }}-zig-
+                  path: |
+                      ${{ env.ZIG_LOCAL_CACHE_DIR }}
+                      ${{ env.ZIG_GLOBAL_CACHE_DIR }}
+                  key: ${{ runner.os }}-zig-${{ hashFiles('build.zig.zon') }}
+                  restore-keys: |
+                      ${{ runner.os }}-zig-
 
             - name: Fetch dependencies
-              run: |
-                  zig build --fetch=all -j2
+              uses: nick-fields/retry@v3
+              with:
+                  timeout_minutes: 10
+                  max_attempts: 3
+                  command: zig build --fetch=all -j2
 
             - name: Run coverage reporter
               run: |
@@ -52,6 +55,6 @@ jobs:
             - name: Deploy merged report
               uses: JamesIves/github-pages-deploy-action@v4
               with:
-                folder: zig-out
-                branch: coverage
-                single-commit: true
+                  folder: zig-out
+                  branch: coverage
+                  single-commit: true
