@@ -77,17 +77,17 @@ enum class NodeKind : u8 {
 constexpr auto NODE_TYPE_COUNT = magic_enum::enum_count<NodeKind>();
 constexpr auto NODE_NAMES      = [] {
     using enum NodeKind;
-    std::array<std::string_view, NODE_TYPE_COUNT> arr{};
-    arr.fill("expression");
-    arr[static_cast<usize>(ENUM_EXPRESSION)]     = "enum";
-    arr[static_cast<usize>(FUNCTION_EXPRESSION)] = "function";
-    arr[static_cast<usize>(UNION_EXPRESSION)]    = "union";
-    arr[static_cast<usize>(STRUCT_EXPRESSION)]   = "struct";
+    std::array<std::string_view, NODE_TYPE_COUNT> names;
+    names.fill("expression");
+    names[static_cast<usize>(ENUM_EXPRESSION)]     = "enum";
+    names[static_cast<usize>(FUNCTION_EXPRESSION)] = "function";
+    names[static_cast<usize>(UNION_EXPRESSION)]    = "union";
+    names[static_cast<usize>(STRUCT_EXPRESSION)]   = "struct";
 
     for (usize i = static_cast<usize>(BLOCK_STATEMENT); i < NODE_TYPE_COUNT; ++i) {
-        arr[i] = "statement";
+        names[i] = "statement";
     }
-    return arr;
+    return names;
 }();
 
 class Node;

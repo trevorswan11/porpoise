@@ -43,7 +43,7 @@ pub fn build(b: *std.Build) !void {
 
     const cdb_flags = [_][]const u8{
         "-gen-cdb-fragment-path",
-        getCacheRelativePath(b, &.{CDBGenerator.cdb_frags_dirname}),
+        b.cache_root.join(b.allocator, &.{CDBGenerator.cdb_frags_dirname}) catch @panic("OOM"),
     };
 
     try compiler_flags.appendSlice(b.allocator, &cdb_flags);
@@ -461,21 +461,6 @@ fn addArtifacts(b: *std.Build, config: struct {
     };
 }
 
-const SystemLibraries = struct {
-    search_paths: []const std.Build.LazyPath,
-    libs: []const []const u8,
-};
-
-const CXXOpts = struct {
-    files: []const []const u8,
-    flags: []const []const u8,
-};
-
-const Import = struct {
-    name: []const u8,
-    module: *std.Build.Module,
-};
-
 const CreateModuleConfig = struct {
     target: std.Build.ResolvedTarget,
     optimize: std.builtin.OptimizeMode,
@@ -485,9 +470,18 @@ const CreateModuleConfig = struct {
     config_headers: ?[]const *std.Build.Step.ConfigHeader = null,
     source_root: ?std.Build.LazyPath = null,
     link_libraries: ?[]const *std.Build.Step.Compile = null,
-    system_libraries: ?SystemLibraries = null,
-    imports: ?[]const Import = null,
-    cxx: ?CXXOpts = null,
+    system_libraries: ?struct {
+        search_paths: []const std.Build.LazyPath,
+        libs: []const []const u8,
+    } = null,
+    imports: ?[]const struct {
+        name: []const u8,
+        module: *std.Build.Module,
+    } = null,
+    cxx: ?struct {
+        files: []const []const u8,
+        flags: []const []const u8,
+    } = null,
 };
 
 fn createModule(b: *std.Build, config: CreateModuleConfig) *std.Build.Module {
@@ -615,7 +609,7 @@ const CDBGenerator = struct {
         const io = b.graph.io;
         const cache_root = b.cache_root.handle;
 
-        self.output_file.path = getCacheRelativePath(b, &.{cdb_filename});
+        self.output_file.path = b.cache_root.join(b.allocator, &.{cdb_filename}) catch @panic("OOM");
         try cache_root.createDirPath(io, cdb_frags_dirname);
         var newest_frags: std.StringHashMap(FragInfo) = .init(allocator);
 
@@ -715,7 +709,7 @@ fn addTooling(b: *std.Build, config: struct {
         .clang = config.clang,
     });
 
-    const check_step = try addStaticAnalysisStep(b, .{
+    const check_step = addStaticAnalysisStep(b, .{
         .tooling_sources = tooling_sources,
         .cppcheck = config.cppcheck,
         .cdb_gen = config.cdb_gen,
@@ -761,11 +755,11 @@ fn addStaticAnalysisStep(b: *std.Build, config: struct {
     tooling_sources: []const []const u8,
     cppcheck: *std.Build.Step.Compile,
     cdb_gen: *CDBGenerator,
-}) !*std.Build.Step {
+}) *std.Build.Step {
     const check_step = b.step("check", "Run static analysis on all project files");
     const cppcheck_run = b.addRunArtifact(config.cppcheck);
 
-    const installed_cppcheck_cache_path = getCacheRelativePath(b, &.{"cppcheck"});
+    const installed_cppcheck_cache_path = b.cache_root.join(b.allocator, &.{"cppcheck"}) catch @panic("OOM");
     cppcheck_run.addArg("--inline-suppr");
     cppcheck_run.addPrefixedFileArg("--project=", config.cdb_gen.getCdbPath());
     const cppcheck_cache = cppcheck_run.addPrefixedOutputDirectoryArg(
@@ -1293,9 +1287,4 @@ fn collectFiles(
         try paths.appendSlice(b.allocator, extra_files);
     }
     return paths.items;
-}
-
-/// Resolves the relative path with its root at the cache directory
-fn getCacheRelativePath(b: *std.Build, paths: []const []const u8) []const u8 {
-    return b.cache_root.join(b.allocator, paths) catch @panic("OOM");
 }

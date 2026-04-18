@@ -187,15 +187,4 @@ constexpr auto get_builtin(std::string_view sv) noexcept -> Optional<Keyword> {
     return Optional<Keyword>{*it};
 }
 
-constexpr auto is_builtin(TokenType tt) noexcept -> bool {
-    constexpr auto ALL_BUILTINS_BY_TT = [] {
-        auto arr = ALL_BUILTINS;
-        std::ranges::sort(arr, {}, &Keyword::second);
-        return arr;
-    }();
-
-    const auto it = std::ranges::lower_bound(ALL_BUILTINS_BY_TT, tt, {}, &Keyword::second);
-    return it != ALL_BUILTINS_BY_TT.end() && it->second == tt;
-}
-
 } // namespace porpoise::syntax

@@ -136,8 +136,18 @@ auto Token::is_primitive() const noexcept -> bool {
     return std::ranges::contains(ALL_PRIMITIVES, type);
 }
 
+constexpr auto ALL_BUILTINS_BY_TT = [] {
+    std::array<bool, TOKEN_TYPE_COUNT> builtins;
+    builtins.fill(false);
+
+    for (const auto& builtin : ALL_BUILTINS) {
+        builtins[static_cast<usize>(builtin.second)] = true;
+    }
+    return builtins;
+}();
+
 auto Token::is_builtin() const noexcept -> bool {
-    return std::ranges::contains(ALL_BUILTINS, type, &Keyword::second);
+    return ALL_BUILTINS_BY_TT[static_cast<usize>(type)];
 }
 
 auto Token::is_decl_token() const noexcept -> bool {

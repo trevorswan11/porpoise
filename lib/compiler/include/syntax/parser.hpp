@@ -170,8 +170,8 @@ class Parser {
     [[nodiscard]] auto parse_member_decls(ast::MemberValidator validator = nullptr)
         -> Expected<ast::Members, ParserDiagnostic>;
 
-    static constexpr auto try_get_prefix_fn(TokenType tt) noexcept -> Optional<const PrefixFn&>;
-    static constexpr auto try_get_poll_infix_fn(TokenType tt) noexcept -> Optional<const InfixFn&>;
+    static auto try_get_prefix_fn(TokenType tt) noexcept -> Optional<PrefixFn>;
+    static auto try_get_poll_infix_fn(TokenType tt) noexcept -> Optional<InfixFn>;
 
   private:
     // Reverts the parser to the state from the checkpoint.
