@@ -471,6 +471,11 @@ const CXXOpts = struct {
     flags: []const []const u8,
 };
 
+const Import = struct {
+    name: []const u8,
+    module: *std.Build.Module,
+};
+
 const CreateModuleConfig = struct {
     target: std.Build.ResolvedTarget,
     optimize: std.builtin.OptimizeMode,
@@ -481,6 +486,7 @@ const CreateModuleConfig = struct {
     source_root: ?std.Build.LazyPath = null,
     link_libraries: ?[]const *std.Build.Step.Compile = null,
     system_libraries: ?SystemLibraries = null,
+    imports: ?[]const Import = null,
     cxx: ?CXXOpts = null,
 };
 
@@ -493,38 +499,28 @@ fn createModule(b: *std.Build, config: CreateModuleConfig) *std.Build.Module {
         .link_libcpp = true,
     });
 
-    if (config.include_paths) |include_paths| {
-        for (include_paths) |inc_path| {
-            mod.addIncludePath(inc_path);
-        }
-    }
+    if (config.include_paths) |include_paths| for (include_paths) |inc_path| {
+        mod.addIncludePath(inc_path);
+    };
 
-    if (config.system_include_paths) |system_includes| {
-        for (system_includes) |inc_path| {
-            mod.addSystemIncludePath(inc_path);
-        }
-    }
+    if (config.system_include_paths) |system_includes| for (system_includes) |inc_path| {
+        mod.addSystemIncludePath(inc_path);
+    };
 
-    if (config.config_headers) |config_headers| {
-        for (config_headers) |header| {
-            mod.addConfigHeader(header);
-        }
-    }
+    if (config.config_headers) |config_headers| for (config_headers) |header| {
+        mod.addConfigHeader(header);
+    };
 
-    if (config.link_libraries) |link_libraries| {
-        for (link_libraries) |lib| {
-            mod.linkLibrary(lib);
-        }
-    }
+    if (config.link_libraries) |link_libraries| for (link_libraries) |lib| {
+        mod.linkLibrary(lib);
+    };
 
-    if (config.cxx) |cxx| {
-        mod.addCSourceFiles(.{
-            .root = config.source_root,
-            .files = cxx.files,
-            .flags = cxx.flags,
-            .language = .cpp,
-        });
-    }
+    if (config.cxx) |cxx| mod.addCSourceFiles(.{
+        .root = config.source_root,
+        .files = cxx.files,
+        .flags = cxx.flags,
+        .language = .cpp,
+    });
 
     if (config.system_libraries) |libs| {
         for (libs.search_paths) |path| {
@@ -537,6 +533,10 @@ fn createModule(b: *std.Build, config: CreateModuleConfig) *std.Build.Module {
             });
         }
     }
+
+    if (config.imports) |imports| for (imports) |import| {
+        mod.addImport(import.name, import.module);
+    };
 
     return mod;
 }
@@ -1004,11 +1004,25 @@ fn addPackageStep(b: *std.Build, config: struct {
         .target = b.graph.host,
         .optimize = .ReleaseFast,
     });
+
+    const headers = b.addTranslateC(.{
+        .root_source_file = b.path(ProjectPaths.compressor ++ "c.h"),
+        .target = b.graph.host,
+        .optimize = .ReleaseFast,
+    });
+    headers.addIncludePath(libarchive_dep.artifact.getEmittedIncludeTree());
+
     const compressor = createExecutable(b, .{
         .zig_main = b.path(ProjectPaths.compressor ++ "main.zig"),
         .target = b.graph.host,
         .optimize = .ReleaseFast,
         .link_libraries = &.{libarchive_dep.artifact},
+        .imports = &.{
+            .{
+                .name = "c",
+                .module = headers.createModule(),
+            },
+        },
     }, .{
         .name = "compressor",
         .behavior = .standalone,
@@ -1028,7 +1042,6 @@ fn addPackageStep(b: *std.Build, config: struct {
     const ArchiveBehavior = struct {
         compressor_arg: enum { zip, zst },
         file_extension: []const u8,
-        artifact_dirname: []const u8,
         skip: bool = false,
     };
 
@@ -1081,20 +1094,18 @@ fn addPackageStep(b: *std.Build, config: struct {
             .{
                 .compressor_arg = .zip,
                 .file_extension = "zip",
-                .artifact_dirname = package_artifact_dirname,
                 .skip = target.result.os.tag != .windows,
             },
             .{
                 .compressor_arg = .zst,
                 .file_extension = "tar.zst",
-                .artifact_dirname = package_artifact_dirname,
             },
         };
 
         for (archives) |archive| {
             if (archive.skip) continue;
             const out_name = b.fmt("{s}.{s}", .{
-                archive.artifact_dirname,
+                package_artifact_dirname,
                 archive.file_extension,
             });
 
