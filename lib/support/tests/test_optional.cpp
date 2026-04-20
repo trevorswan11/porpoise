@@ -67,9 +67,9 @@ TEST_CASE("OptRef conversions") {
     }
 
     SECTION("Derived -> Base") {
-        Derived                 d;
-        const opt::Ref<Derived> d_opt{d};
-        const opt::Ref<Base>    base_opt = d_opt;
+        helpers::Derived                 d;
+        const opt::Ref<helpers::Derived> d_opt{d};
+        const opt::Ref<helpers::Base>    base_opt = d_opt;
         CHECK(base_opt.has_value());
         CHECK(base_opt->x == 10);
     }
@@ -149,12 +149,12 @@ TEST_CASE("opt::NonNull from OptRef") {
 }
 
 TEST_CASE("opt::NonNull conversions") {
-    Derived                     d;
-    const opt::NonNull<Derived> d_ptr{&d};
+    helpers::Derived                     d;
+    const opt::NonNull<helpers::Derived> d_ptr{&d};
 
-    opt::NonNull<Base> b_ptr{d_ptr};
+    opt::NonNull<helpers::Base> b_ptr{d_ptr};
     CHECK(b_ptr->x == 10);
-    opt::NonNull<const Derived> cd_ptr{d_ptr};
+    opt::NonNull<const helpers::Derived> cd_ptr{d_ptr};
     CHECK(cd_ptr->y == 20);
 }
 

@@ -2,6 +2,7 @@
 
 namespace porpoise {
 
+// Similar to a std::pair, but the Visitor may be a function pointer
 template <typename Iterable, typename Visitor> struct IterPair {
     const Iterable& iterable;
     Visitor         visitor;

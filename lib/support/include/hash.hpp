@@ -10,14 +10,18 @@ namespace porpoise::hash {
 
 namespace wyhash = ankerl::unordered_dense::detail::wyhash;
 
+// A 'high-quality' hash backed by `wyhash` with a `std::hash` fallback
 class Hasher {
   public:
-    template <typename T> explicit Hasher(const T& initial) : hash_{hash<T>(initial)} {}
+    // Hashes the provided value to use as the initial hashed value
+    template <typename T> explicit Hasher(const T& initial) : hash_{hash(initial)} {}
 
+    // Hashes the provided value and mixes the result with the current hash
     template <typename T> auto combine(const T& value) noexcept -> void {
         hash_ = wyhash::mix(hash_, hash(value));
     }
 
+    // Call this after a full operation to get the resulting hash
     [[nodiscard]] auto finalize() const noexcept -> u64 { return hash_; }
 
   private:

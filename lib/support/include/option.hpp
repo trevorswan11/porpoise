@@ -8,7 +8,7 @@
 namespace porpoise::opt {
 
 using None          = std::nullopt_t;
-constexpr auto none = std::nullopt;
+constexpr None none = std::nullopt;
 
 template <typename T> class Ref {
   public:
@@ -50,6 +50,7 @@ template <typename T> class Ref {
     T* ptr_;
 };
 
+// A safe, reference-allowable optional type dispatcher
 template <typename T>
 using Option =
     std::conditional_t<std::is_reference_v<T>, Ref<std::remove_reference_t<T>>, std::optional<T>>;

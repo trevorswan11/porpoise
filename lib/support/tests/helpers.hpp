@@ -2,7 +2,7 @@
 
 #include "types.hpp"
 
-namespace porpoise::tests {
+namespace porpoise::tests::helpers {
 
 struct Base {
     virtual ~Base() = default;

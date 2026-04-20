@@ -71,7 +71,7 @@ template <MappableEnum E, MappableValue Value> class EnumMap {
         return self.map_[*index];
     }
 
-    // Returns the value at the key or nullopt if contextually convertible
+    // Returns the value at the key or none if contextually convertible
     //
     // Contextually convertible Values are pointers and optional types
     [[nodiscard]] constexpr auto get_opt(E key) const noexcept {
