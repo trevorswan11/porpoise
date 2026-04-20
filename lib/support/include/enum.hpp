@@ -59,14 +59,15 @@ template <MappableEnum E, typename Value> class EnumMap {
     // Returns the value at the key or nullopt if contextually convertible
     //
     // Contextually convertible Values are pointers and optional types
-    [[nodiscard]] constexpr auto get_opt(E key) const noexcept -> Optional<Value> {
+    [[nodiscard]] constexpr auto get_opt(E key) const noexcept {
         const auto value = operator[](key);
         if constexpr (is_optional_v<Value>) {
             return operator[](key);
         } else if constexpr (std::is_pointer_v<Value>) {
             return value ? Optional<Value>{value} : std::nullopt;
+        } else {
+            return Optional<Value>{value};
         }
-        return value;
     }
 
   private:

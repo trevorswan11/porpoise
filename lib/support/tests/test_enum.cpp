@@ -56,6 +56,15 @@ TEST_CASE("Standard enum map") {
     for (const auto& item : map) {
         if (item) { CHECK(item == 4); }
     }
+
+    SECTION("Automatic optional getting") {
+        const auto present_opt = map.get_opt(MockEnum::A);
+        CHECK(present_opt);
+        CHECK(present_opt == 4);
+
+        const auto missing_opt = map.get_opt(MockEnum::B);
+        CHECK_FALSE(missing_opt);
+    }
 }
 
 TEST_CASE("Positive enum map") {
@@ -67,6 +76,14 @@ TEST_CASE("Positive enum map") {
     map[MockPositiveEnum::A] = &v;
     for (const auto& item : map) {
         if (item != nullptr) { CHECK(*item == 1); }
+    }
+
+    SECTION("Automatic optional getting") {
+        const auto present_opt = map.get_opt(MockPositiveEnum::A);
+        CHECK(**present_opt == 1);
+
+        const auto missing_opt = map.get_opt(MockPositiveEnum::B);
+        CHECK_FALSE(missing_opt);
     }
 }
 
