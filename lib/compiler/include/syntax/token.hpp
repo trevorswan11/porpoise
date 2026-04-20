@@ -203,7 +203,6 @@ enum class TokenType : u8 {
 
     ILLEGAL,
 };
-constexpr auto TOKEN_TYPE_COUNT = magic_enum::enum_count<TokenType>();
 
 enum class Base : u8 {
     BINARY      = 2,

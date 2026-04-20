@@ -74,22 +74,6 @@ enum class NodeKind : u8 {
     USING_STATEMENT,
 };
 
-constexpr auto NODE_TYPE_COUNT = magic_enum::enum_count<NodeKind>();
-constexpr auto NODE_NAMES      = [] {
-    using enum NodeKind;
-    std::array<std::string_view, NODE_TYPE_COUNT> names;
-    names.fill("expression");
-    names[static_cast<usize>(ENUM_EXPRESSION)]     = "enum";
-    names[static_cast<usize>(FUNCTION_EXPRESSION)] = "function";
-    names[static_cast<usize>(UNION_EXPRESSION)]    = "union";
-    names[static_cast<usize>(STRUCT_EXPRESSION)]   = "struct";
-
-    for (usize i = static_cast<usize>(BLOCK_STATEMENT); i < NODE_TYPE_COUNT; ++i) {
-        names[i] = "statement";
-    }
-    return names;
-}();
-
 class Node;
 
 // A type that can be anything in the Node inheritance hierarchy
@@ -155,9 +139,7 @@ class Node {
     }
 
     // Returns the node's name fit for diagnostics, better than a raw magic enum poll
-    [[nodiscard]] constexpr auto display_name() const noexcept -> std::string_view {
-        return NODE_NAMES[static_cast<usize>(kind_)];
-    }
+    [[nodiscard]] auto display_name() const noexcept -> std::string_view;
 
   protected:
     Node(const syntax::Token& tok, NodeKind kind) noexcept : start_token_{tok}, kind_{kind} {}

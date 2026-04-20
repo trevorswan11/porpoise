@@ -52,6 +52,11 @@ using Optional = std::conditional_t<std::is_reference_v<T>,
                                     OptionalRef<std::remove_reference_t<T>>,
                                     std::optional<T>>;
 
+template <typename T> struct is_optional : std::false_type {};
+template <typename T> struct is_optional<std::optional<T>> : std::true_type {};
+template <typename T> struct is_optional<OptionalRef<T>> : std::true_type {};
+template <typename T> constexpr bool is_optional_v = is_optional<T>::value;
+
 #define MAKE_OPTIONAL_UNPACKER(name, ReturnType, member, deref)                                  \
     [[nodiscard]] auto get_##name() const noexcept -> const ReturnType& { return deref member; } \
     [[nodiscard]] auto has_##name() const noexcept -> bool { return member.has_value(); }

@@ -5,6 +5,8 @@
 #include "syntax/keywords.hpp"
 #include "syntax/token.hpp"
 
+#include "enum.hpp"
+
 namespace porpoise::syntax {
 
 auto base_idx(Base base) noexcept -> i32 {
@@ -137,18 +139,12 @@ auto Token::is_primitive() const noexcept -> bool {
 }
 
 constexpr auto ALL_BUILTINS_BY_TT = [] {
-    std::array<bool, TOKEN_TYPE_COUNT> builtins;
-    builtins.fill(false);
-
-    for (const auto& builtin : ALL_BUILTINS) {
-        builtins[static_cast<usize>(builtin.second)] = true;
-    }
+    EnumMap<TokenType, bool> builtins{false};
+    for (const auto& builtin : ALL_BUILTINS) { builtins[builtin.second] = true; }
     return builtins;
 }();
 
-auto Token::is_builtin() const noexcept -> bool {
-    return ALL_BUILTINS_BY_TT[static_cast<usize>(type)];
-}
+auto Token::is_builtin() const noexcept -> bool { return ALL_BUILTINS_BY_TT[type]; }
 
 auto Token::is_decl_token() const noexcept -> bool {
     switch (type) {

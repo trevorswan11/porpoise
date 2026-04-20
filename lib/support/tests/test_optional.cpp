@@ -23,6 +23,14 @@ TEST_CASE("Optional template specialization") {
     STATIC_CHECK(std::is_same_v<Optional<i32>, std::optional<i32>>);
 }
 
+TEST_CASE("Optional template checks") {
+    STATIC_CHECK(is_optional<Optional<int>>::value);
+    STATIC_CHECK(is_optional<Optional<int&>>::value);
+    STATIC_CHECK(is_optional_v<Optional<int>>);
+    STATIC_CHECK(is_optional_v<Optional<int&>>);
+    STATIC_CHECK_FALSE(is_optional_v<int>);
+}
+
 TEST_CASE("OptRef basic construction") {
     i32                    val = 42;
     const OptionalRef<i32> opt{val};
