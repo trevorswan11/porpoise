@@ -29,7 +29,7 @@ auto InitializerExpression::accept(Visitor& v) const -> void { v.visit(*this); }
 
 auto InitializerExpression::parse_opt_object(syntax::Parser&              parser,
                                              mem::NullableBox<Expression> object_type)
-    -> Expected<mem::Box<Expression>, syntax::ParserDiagnostic> {
+    -> Result<mem::Box<Expression>, syntax::ParserDiagnostic> {
     const auto start_token = object_type ? object_type->get_token() : parser.get_current_token();
 
     std::vector<Initializer> initializers;
@@ -55,7 +55,7 @@ auto InitializerExpression::parse_opt_object(syntax::Parser&              parser
 }
 
 auto InitializerExpression::parse(syntax::Parser& parser, mem::Box<Expression> object_type)
-    -> Expected<mem::Box<Expression>, syntax::ParserDiagnostic> {
+    -> Result<mem::Box<Expression>, syntax::ParserDiagnostic> {
     return parse_opt_object(parser, mem::NullableBox<Expression>{object_type.release()});
 }
 

@@ -9,7 +9,7 @@ namespace porpoise::ast {
 class GroupedExpression {
   public:
     [[nodiscard]] static auto parse(syntax::Parser& parser)
-        -> Expected<mem::Box<Expression>, syntax::ParserDiagnostic> {
+        -> Result<mem::Box<Expression>, syntax::ParserDiagnostic> {
         parser.advance();
         auto inner = TRY(parser.parse_expression());
         TRY(parser.expect_peek(syntax::TokenType::RPAREN));

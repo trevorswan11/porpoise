@@ -22,7 +22,7 @@ class IndexExpression : public ExprBase<IndexExpression> {
 
     auto                      accept(Visitor& v) const -> void override;
     [[nodiscard]] static auto parse(syntax::Parser& parser, mem::Box<Expression> array)
-        -> Expected<mem::Box<Expression>, syntax::ParserDiagnostic>;
+        -> Result<mem::Box<Expression>, syntax::ParserDiagnostic>;
 
     MAKE_GETTER(array, const Expression&, *)
     MAKE_GETTER(index, const Expression&, *)

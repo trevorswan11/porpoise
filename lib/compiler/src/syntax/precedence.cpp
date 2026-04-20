@@ -5,7 +5,7 @@
 namespace porpoise::syntax {
 
 constexpr auto ALL_BINDINGS = [] {
-    EnumMap<TokenType, Optional<Binding>> bindings;
+    EnumMap<TokenType, opt::Option<Binding>> bindings;
 
     bindings[TokenType::PLUS]           = {Precedence::ADD_SUB};
     bindings[TokenType::MINUS]          = {Precedence::ADD_SUB};
@@ -48,6 +48,8 @@ constexpr auto ALL_BINDINGS = [] {
     return bindings;
 }();
 
-auto Binding::try_get_from(TokenType tt) noexcept -> Optional<Binding> { return ALL_BINDINGS[tt]; }
+auto Binding::try_get_from(TokenType tt) noexcept -> opt::Option<Binding> {
+    return ALL_BINDINGS[tt];
+}
 
 } // namespace porpoise::syntax

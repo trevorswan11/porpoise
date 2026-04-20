@@ -17,7 +17,7 @@ auto common_decl(std::string_view name, std::string_view assign) -> ast::DeclSta
     return ast::DeclStatement{
         syntax::Token{syntax::keywords::CONSTANT},
         helpers::make_ident(name),
-        mem::make_box<ast::TypeExpression>(syntax::Token{syntax::operators::WALRUS}, std::nullopt),
+        mem::make_box<ast::TypeExpression>(syntax::Token{syntax::operators::WALRUS}, opt::none),
         helpers::make_ident<true>(assign),
         ast::DeclModifiers::CONSTANT,
     };

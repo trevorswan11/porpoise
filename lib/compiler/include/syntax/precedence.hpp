@@ -2,7 +2,7 @@
 
 #include "syntax/token.hpp"
 
-#include "optional.hpp"
+#include "option.hpp"
 #include "types.hpp"
 
 namespace porpoise::syntax {
@@ -27,7 +27,7 @@ struct Binding {
     Precedence precedence;
     bool       right_assoc{false};
 
-    [[nodiscard]] static auto try_get_from(TokenType tt) noexcept -> Optional<Binding>;
+    [[nodiscard]] static auto try_get_from(TokenType tt) noexcept -> opt::Option<Binding>;
 };
 
 } // namespace porpoise::syntax

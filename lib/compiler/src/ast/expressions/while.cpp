@@ -18,14 +18,14 @@ WhileLoopExpression::~WhileLoopExpression() = default;
 auto WhileLoopExpression::accept(Visitor& v) const -> void { v.visit(*this); }
 
 auto WhileLoopExpression::parse(syntax::Parser& parser)
-    -> Expected<mem::Box<Expression>, syntax::ParserDiagnostic> {
+    -> Result<mem::Box<Expression>, syntax::ParserDiagnostic> {
     const auto start_token = parser.get_current_token();
 
     // Conditions have to be surrounded by parentheses
     TRY(parser.expect_peek(syntax::TokenType::LPAREN));
     parser.advance();
     if (parser.current_token_is(syntax::TokenType::RPAREN)) {
-        return make_parser_unexpected(syntax::ParserError::WHILE_MISSING_CONDITION, start_token);
+        return make_parser_err(syntax::ParserError::WHILE_MISSING_CONDITION, start_token);
     }
 
     auto condition = TRY(parser.parse_expression());
@@ -41,8 +41,8 @@ auto WhileLoopExpression::parse(syntax::Parser& parser)
         // Consume again to look at the actual expr start
         parser.advance();
         if (parser.current_token_is(syntax::TokenType::RPAREN)) {
-            return make_parser_unexpected(syntax::ParserError::EMPTY_WHILE_CONTINUATION,
-                                          continuation_start);
+            return make_parser_err(syntax::ParserError::EMPTY_WHILE_CONTINUATION,
+                                   continuation_start);
         }
 
         continuation = mem::nullable_box_from(TRY(parser.parse_expression()));
@@ -57,7 +57,7 @@ auto WhileLoopExpression::parse(syntax::Parser& parser)
 
     // There needs to be at least a continuation or block
     if (!continuation && block->empty()) {
-        return make_parser_unexpected(syntax::ParserError::EMPTY_WHILE_LOOP, block->get_token());
+        return make_parser_err(syntax::ParserError::EMPTY_WHILE_LOOP, block->get_token());
     }
 
     return mem::make_box<WhileLoopExpression>(start_token,

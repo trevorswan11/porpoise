@@ -13,13 +13,13 @@ InfiniteLoopExpression::~InfiniteLoopExpression() = default;
 auto InfiniteLoopExpression::accept(Visitor& v) const -> void { v.visit(*this); }
 
 auto InfiniteLoopExpression::parse(syntax::Parser& parser)
-    -> Expected<mem::Box<Expression>, syntax::ParserDiagnostic> {
+    -> Result<mem::Box<Expression>, syntax::ParserDiagnostic> {
     const auto start_token = parser.get_current_token();
     TRY(parser.expect_peek(syntax::TokenType::LBRACE));
 
     auto block = downcast<BlockStatement>(TRY(BlockStatement::parse(parser)));
     if (block->empty()) {
-        return make_parser_unexpected(syntax::ParserError::EMPTY_LOOP, block->get_token());
+        return make_parser_err(syntax::ParserError::EMPTY_LOOP, block->get_token());
     }
     return mem::make_box<InfiniteLoopExpression>(start_token, std::move(block));
 }

@@ -9,7 +9,7 @@
 namespace porpoise::ast {
 
 MatchArm::MatchArm(mem::Box<Expression> pattern,
-                   Optional<Capture>    capture,
+                   opt::Option<Capture> capture,
                    mem::Box<Statement>  dispatch) noexcept
     : pattern_{std::move(pattern)}, capture_{std::move(capture)}, dispatch_{std::move(dispatch)} {}
 MatchArm::~MatchArm() = default;
@@ -18,7 +18,7 @@ auto MatchArm::accept(Visitor& v) const -> void { v.visit(*this); }
 
 auto MatchArm::is_equal(const MatchArm& other) const noexcept -> bool {
     return *pattern_ == *other.pattern_ &&
-           optional::safe_eq<Capture>(
+           opt::safe_eq<Capture>(
                capture_,
                other.capture_,
                [](const Capture& a, const Capture& b) {
@@ -44,15 +44,14 @@ MatchExpression::~MatchExpression() = default;
 auto MatchExpression::accept(Visitor& v) const -> void { v.visit(*this); }
 
 auto MatchExpression::parse(syntax::Parser& parser)
-    -> Expected<mem::Box<Expression>, syntax::ParserDiagnostic> {
+    -> Result<mem::Box<Expression>, syntax::ParserDiagnostic> {
     const auto start_token = parser.get_current_token();
 
     // Conditions have to be surrounded by parentheses
     TRY(parser.expect_peek(syntax::TokenType::LPAREN));
     parser.advance();
     if (parser.current_token_is(syntax::TokenType::RPAREN)) {
-        return make_parser_unexpected(syntax::ParserError::MATCH_EXPR_MISSING_CONDITION,
-                                      start_token);
+        return make_parser_err(syntax::ParserError::MATCH_EXPR_MISSING_CONDITION, start_token);
     }
 
     auto matcher = TRY(parser.parse_expression());
@@ -61,7 +60,7 @@ auto MatchExpression::parse(syntax::Parser& parser)
     TRY(parser.expect_peek(syntax::TokenType::LBRACE));
     if (parser.peek_token_is(syntax::TokenType::RBRACE)) {
         parser.advance();
-        return make_parser_unexpected(syntax::ParserError::ARMLESS_MATCH_EXPR, start_token);
+        return make_parser_err(syntax::ParserError::ARMLESS_MATCH_EXPR, start_token);
     }
 
     std::vector<MatchArm> arms;
@@ -74,7 +73,7 @@ auto MatchExpression::parse(syntax::Parser& parser)
         TRY(parser.expect_peek(syntax::TokenType::FAT_ARROW));
 
         // There is an optional capture for every arm
-        Optional<MatchArm::Capture> capture;
+        opt::Option<MatchArm::Capture> capture;
         if (parser.peek_token_is(syntax::TokenType::BW_OR)) {
             parser.advance();
 

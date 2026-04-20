@@ -11,9 +11,9 @@
 
 #include "syntax/token.hpp"
 
-#include "expected.hpp"
 #include "iterator.hpp"
-#include "optional.hpp"
+#include "option.hpp"
+#include "result.hpp"
 #include "utility.hpp"
 #include "variant.hpp"
 
@@ -39,15 +39,15 @@ class MatchArm;
 
 namespace sema {
 
-using SymbolicDecl        = NonNull<const ast::DeclStatement>;
-using SymbolicImport      = NonNull<const ast::ImportStatement>;
-using SymbolicUsing       = NonNull<const ast::UsingStatement>;
-using SymbolicUnionField  = NonNull<const ast::UnionField>;
-using SymbolicEnumeration = NonNull<const ast::Enumeration>;
-using SymbolicSelfParam   = NonNull<const ast::SelfParameter>;
-using SymbolicParam       = NonNull<const ast::FunctionParameter>;
-using SymbolicCapture     = NonNull<const ast::ForLoopCapture>;
-using SymbolicArm         = NonNull<const ast::MatchArm>;
+using SymbolicDecl        = opt::NonNull<const ast::DeclStatement>;
+using SymbolicImport      = opt::NonNull<const ast::ImportStatement>;
+using SymbolicUsing       = opt::NonNull<const ast::UsingStatement>;
+using SymbolicUnionField  = opt::NonNull<const ast::UnionField>;
+using SymbolicEnumeration = opt::NonNull<const ast::Enumeration>;
+using SymbolicSelfParam   = opt::NonNull<const ast::SelfParameter>;
+using SymbolicParam       = opt::NonNull<const ast::FunctionParameter>;
+using SymbolicCapture     = opt::NonNull<const ast::ForLoopCapture>;
+using SymbolicArm         = opt::NonNull<const ast::MatchArm>;
 
 // No other nodes can ever be at the top level
 using SymbolicNode = std::variant<SymbolicDecl,
@@ -104,10 +104,10 @@ class Symbol {
     MAKE_EQ_DELEGATION(Symbol)
 
   private:
-    std::string_view      name_;
-    SymbolicNode          node_;
-    Optional<sema::Type&> type_;
-    ResolveStatus         status_{ResolveStatus::UNRESOLVED};
+    std::string_view         name_;
+    SymbolicNode             node_;
+    opt::Option<sema::Type&> type_;
+    ResolveStatus            status_{ResolveStatus::UNRESOLVED};
 };
 
 class SymbolTable {
@@ -122,7 +122,7 @@ class SymbolTable {
 
     MAKE_MOVE_CONSTRUCTABLE_ONLY(SymbolTable)
 
-    auto insert(std::string_view name, SymbolicNode node) -> Expected<Unit, Diagnostic>;
+    auto insert(std::string_view name, SymbolicNode node) -> Result<Unit, Diagnostic>;
 
     auto reserve(usize cap) -> void { symbols_.reserve(cap); }
 
@@ -143,9 +143,9 @@ class SymbolTable {
     [[nodiscard]] auto get_opt(this Self&& self, std::string_view name) noexcept {
         auto it          = self.symbols_.find(name);
         using ReturnType = std::conditional_t<std::is_const_v<std::remove_reference_t<Self>>,
-                                              Optional<const Symbol&>,
-                                              Optional<Symbol&>>;
-        if (it == self.symbols_.end()) { return ReturnType{std::nullopt}; }
+                                              opt::Option<const Symbol&>,
+                                              opt::Option<Symbol&>>;
+        if (it == self.symbols_.end()) { return ReturnType{opt::none}; }
         return ReturnType{it->second};
     }
 
@@ -202,7 +202,7 @@ class SymbolTableRegistry {
     }
 
     [[nodiscard]] auto insert_into(usize table_idx, std::string_view name, SymbolicNode node)
-        -> Expected<Unit, Diagnostic>;
+        -> Result<Unit, Diagnostic>;
 
     template <typename Self> [[nodiscard]] auto get(this Self&& self, usize idx) -> auto& {
         return self.tables_.at(idx);
@@ -210,9 +210,9 @@ class SymbolTableRegistry {
 
     template <typename Self> [[nodiscard]] auto get_opt(this Self&& self, usize idx) noexcept {
         using ReturnType = std::conditional_t<std::is_const_v<std::remove_reference_t<Self>>,
-                                              Optional<const SymbolTable&>,
-                                              Optional<SymbolTable&>>;
-        if (idx >= self.tables_.size()) { return ReturnType{std::nullopt}; }
+                                              opt::Option<const SymbolTable&>,
+                                              opt::Option<SymbolTable&>>;
+        if (idx >= self.tables_.size()) { return ReturnType{opt::none}; }
         return ReturnType{self.tables_[idx]};
     }
 
@@ -224,15 +224,15 @@ class SymbolTableRegistry {
     template <typename Self>
     [[nodiscard]] auto get_from_opt(this Self&& self, usize idx, std::string_view name) noexcept {
         using ReturnType = std::conditional_t<std::is_const_v<std::remove_reference_t<Self>>,
-                                              Optional<const Symbol&>,
-                                              Optional<Symbol&>>;
-        if (idx >= self.tables_.size()) { return ReturnType{std::nullopt}; }
+                                              opt::Option<const Symbol&>,
+                                              opt::Option<Symbol&>>;
+        if (idx >= self.tables_.size()) { return ReturnType{opt::none}; }
         return self.tables_[idx].get_opt(name);
     }
 
     [[nodiscard]] auto is_shadowing(const SymbolTableStack& stack,
                                     std::string_view        name,
-                                    SymbolicNode node) noexcept -> Expected<Unit, Diagnostic>;
+                                    SymbolicNode node) noexcept -> Result<Unit, Diagnostic>;
 
   private:
     Tables tables_;

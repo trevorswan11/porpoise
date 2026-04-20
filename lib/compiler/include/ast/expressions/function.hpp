@@ -60,7 +60,7 @@ class FunctionExpression : public ExprBase<FunctionExpression> {
 
   public:
     FunctionExpression(const syntax::Token&             start_token,
-                       Optional<SelfParameter>          self,
+                       opt::Option<SelfParameter>       self,
                        std::vector<FunctionParameter>   parameters,
                        bool                             variadic,
                        ExplicitType&&                   return_type,
@@ -71,11 +71,11 @@ class FunctionExpression : public ExprBase<FunctionExpression> {
 
     auto                      accept(Visitor& v) const -> void override;
     [[nodiscard]] static auto parse(syntax::Parser& parser)
-        -> Expected<mem::Box<Expression>, syntax::ParserDiagnostic>;
+        -> Result<mem::Box<Expression>, syntax::ParserDiagnostic>;
 
     // Meant to be called by the explicit type parser only
     [[nodiscard]] static auto parse_type(syntax::Parser& parser)
-        -> Expected<mem::Box<Expression>, syntax::ParserDiagnostic>;
+        -> Result<mem::Box<Expression>, syntax::ParserDiagnostic>;
 
     MAKE_OPTIONAL_UNPACKER(self, SelfParameter, self_, *)
     MAKE_GETTER(parameters, std::span<const FunctionParameter>)
@@ -88,7 +88,7 @@ class FunctionExpression : public ExprBase<FunctionExpression> {
     auto is_equal(const Node& other) const noexcept -> bool override;
 
   private:
-    Optional<SelfParameter>          self_;
+    opt::Option<SelfParameter>       self_;
     std::vector<FunctionParameter>   parameters_;
     bool                             variadic_;
     ExplicitType                     return_type_;

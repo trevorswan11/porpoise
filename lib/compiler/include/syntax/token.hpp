@@ -8,8 +8,8 @@
 #include <magic_enum/magic_enum.hpp>
 
 #include "diagnostic.hpp"
-#include "expected.hpp"
-#include "optional.hpp"
+#include "option.hpp"
+#include "result.hpp"
 #include "source_loc.hpp"
 #include "types.hpp"
 
@@ -255,8 +255,8 @@ consteval auto to_int_category(TokenType tt) noexcept -> IntegerCategory {
     }
 }
 
-auto to_base(TokenType tt) noexcept -> Optional<Base>;
-auto misc_from_char(byte b) noexcept -> Optional<TokenType>;
+auto to_base(TokenType tt) noexcept -> opt::Option<Base>;
+auto misc_from_char(byte b) noexcept -> opt::Option<TokenType>;
 
 constexpr auto is_i32(TokenType tt) noexcept -> bool {
     return TokenType::INT_2 <= tt && tt <= TokenType::INT_16;
@@ -313,7 +313,7 @@ struct Token {
         : type{tok.second}, slice{tok.first} {}
 
     [[nodiscard]] auto is_at_start() const noexcept -> bool { return line == 0 && column == 0; }
-    [[nodiscard]] auto promote() const -> Expected<std::string, TokenDiagnostic>;
+    [[nodiscard]] auto promote() const -> Result<std::string, TokenDiagnostic>;
     [[nodiscard]] auto is_primitive() const noexcept -> bool;
     [[nodiscard]] auto is_builtin() const noexcept -> bool;
     [[nodiscard]] auto is_decl_token() const noexcept -> bool;

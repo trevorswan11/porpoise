@@ -14,7 +14,7 @@ DoWhileLoopExpression::~DoWhileLoopExpression() = default;
 auto DoWhileLoopExpression::accept(Visitor& v) const -> void { v.visit(*this); }
 
 auto DoWhileLoopExpression::parse(syntax::Parser& parser)
-    -> Expected<mem::Box<Expression>, syntax::ParserDiagnostic> {
+    -> Result<mem::Box<Expression>, syntax::ParserDiagnostic> {
     const auto start_token = parser.get_current_token();
     TRY(parser.expect_peek(syntax::TokenType::LBRACE));
 
@@ -23,8 +23,8 @@ auto DoWhileLoopExpression::parse(syntax::Parser& parser)
     TRY(parser.expect_peek(syntax::TokenType::LPAREN));
 
     if (parser.peek_token_is(syntax::TokenType::RPAREN)) {
-        return make_parser_unexpected(syntax::ParserError::WHILE_MISSING_CONDITION,
-                                      parser.get_current_token());
+        return make_parser_err(syntax::ParserError::WHILE_MISSING_CONDITION,
+                               parser.get_current_token());
     }
     parser.advance();
 
@@ -32,7 +32,7 @@ auto DoWhileLoopExpression::parse(syntax::Parser& parser)
     auto condition = TRY(parser.parse_expression());
     TRY(parser.expect_peek(syntax::TokenType::RPAREN));
     if (block->empty()) {
-        return make_parser_unexpected(syntax::ParserError::EMPTY_LOOP, block->get_token());
+        return make_parser_err(syntax::ParserError::EMPTY_LOOP, block->get_token());
     }
     return mem::make_box<DoWhileLoopExpression>(
         start_token, std::move(block), std::move(condition));

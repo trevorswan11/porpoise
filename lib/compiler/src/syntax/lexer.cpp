@@ -106,7 +106,7 @@ auto Lexer::read_character(u8 n) noexcept -> void {
     }
 }
 
-auto Lexer::read_operator() const noexcept -> Optional<Token> {
+auto Lexer::read_operator() const noexcept -> opt::Option<Token> {
     const auto start_line = line_no_;
     const auto start_col  = col_no_;
 
@@ -125,7 +125,7 @@ auto Lexer::read_operator() const noexcept -> Optional<Token> {
     }
 
     // We cannot greedily consume the lexer here since the next token instruction handles that
-    if (max_len == 0) { return std::nullopt; }
+    if (max_len == 0) { return opt::none; }
     return Token{matched_type, input_.substr(pos_, max_len), start_line, start_col};
 }
 

@@ -10,7 +10,7 @@ namespace helpers {
 template <ast::PrimitiveNode N>
 auto test_primitive(std::string_view                                               input,
                     std::string_view                                               node_token_slice,
-                    Optional<syntax::TokenType>                                    expected_type,
+                    opt::Option<syntax::TokenType>                                 expected_type,
                     std::variant<typename N::value_type, syntax::ParserDiagnostic> expected_value)
     -> void {
     using T = typename N::value_type;
@@ -36,7 +36,7 @@ auto test_primitive(std::string_view                                            
 
 template <ast::PrimitiveNode N>
 auto test_primitive(std::string_view                                               input,
-                    Optional<syntax::TokenType>                                    expected_type,
+                    opt::Option<syntax::TokenType>                                 expected_type,
                     std::variant<typename N::value_type, syntax::ParserDiagnostic> expected_value)
     -> void {
     test_primitive<N>(input, input, expected_type, expected_value);
@@ -75,7 +75,7 @@ TEST_CASE("i32 parsing") {
 
     helpers::test_primitive<N>(
         "0xFFFFFFFFFFFFFFFFFFF;",
-        std::nullopt,
+        opt::none,
         syntax::ParserDiagnostic{syntax::ParserError::INTEGER_OVERFLOW, 1, 1});
 }
 
@@ -88,7 +88,7 @@ TEST_CASE("i64") {
 
     helpers::test_primitive<N>(
         "0xFFFFFFFFFFFFFFFFFFFl;",
-        std::nullopt,
+        opt::none,
         syntax::ParserDiagnostic{syntax::ParserError::INTEGER_OVERFLOW, 1, 1});
 }
 
@@ -101,7 +101,7 @@ TEST_CASE("isize parsing") {
 
     helpers::test_primitive<N>(
         "0xFFFFFFFFFFFFFFFFz;",
-        std::nullopt,
+        opt::none,
         syntax::ParserDiagnostic{syntax::ParserError::INTEGER_OVERFLOW, 1, 1});
 }
 
@@ -114,7 +114,7 @@ TEST_CASE("u32 parsing") {
 
     helpers::test_primitive<N>(
         "0xFFFFFFFFFFFFFFFFu;",
-        std::nullopt,
+        opt::none,
         syntax::ParserDiagnostic{syntax::ParserError::INTEGER_OVERFLOW, 1, 1});
 }
 
@@ -127,7 +127,7 @@ TEST_CASE("u64 parsing") {
 
     helpers::test_primitive<N>(
         "0xFFFFFFFFFFFFFFFFFul;",
-        std::nullopt,
+        opt::none,
         syntax::ParserDiagnostic{syntax::ParserError::INTEGER_OVERFLOW, 1, 1});
 }
 
@@ -140,7 +140,7 @@ TEST_CASE("usize parsing") {
 
     helpers::test_primitive<N>(
         "0xFFFFFFFFFFFFFFFFFuz;",
-        std::nullopt,
+        opt::none,
         syntax::ParserDiagnostic{syntax::ParserError::INTEGER_OVERFLOW, 1, 1});
 }
 
@@ -167,7 +167,7 @@ TEST_CASE("f32 parsing") {
     helpers::test_primitive<N>("1023.234612f;", syntax::TokenType::F32, 1023.234612f);
 
     helpers::test_primitive<N>("1023.234612e234000f;",
-                               std::nullopt,
+                               opt::none,
                                syntax::ParserDiagnostic{syntax::ParserError::FLOAT_OVERFLOW, 1, 1});
 }
 
@@ -179,7 +179,7 @@ TEST_CASE("f64 parsing") {
 
     helpers::test_primitive<N>(
         "1023.234612e234000;",
-        std::nullopt,
+        opt::none,
         syntax::ParserDiagnostic{syntax::ParserError::DOUBLE_OVERFLOW, 1, 1});
 }
 

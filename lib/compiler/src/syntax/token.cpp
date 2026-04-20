@@ -30,7 +30,7 @@ auto digit_in_base(byte c, Base base) noexcept -> bool {
 
 namespace token_type {
 
-auto to_base(TokenType tt) noexcept -> Optional<Base> {
+auto to_base(TokenType tt) noexcept -> opt::Option<Base> {
     switch (tt) {
     case TokenType::INT_2:
     case TokenType::LINT_2:
@@ -56,11 +56,11 @@ auto to_base(TokenType tt) noexcept -> Optional<Base> {
     case TokenType::UINT_16:
     case TokenType::ULINT_16:
     case TokenType::UZINT_16: return Base::HEXADECIMAL;
-    default:                  return std::nullopt;
+    default:                  return opt::none;
     }
 }
 
-auto misc_from_char(byte c) noexcept -> Optional<TokenType> {
+auto misc_from_char(byte c) noexcept -> opt::Option<TokenType> {
     switch (c) {
     case ',': return TokenType::COMMA;
     case ':': return TokenType::COLON;
@@ -72,7 +72,7 @@ auto misc_from_char(byte c) noexcept -> Optional<TokenType> {
     case '[': return TokenType::LBRACKET;
     case ']': return TokenType::RBRACKET;
     case '_': return TokenType::UNDERSCORE;
-    default:  return std::nullopt;
+    default:  return opt::none;
     }
 }
 
@@ -98,15 +98,15 @@ auto suffix_length(TokenType tt) noexcept -> usize {
 
 } // namespace token_type
 
-auto Token::promote() const -> Expected<std::string, TokenDiagnostic> {
+auto Token::promote() const -> Result<std::string, TokenDiagnostic> {
     if (type != TokenType::STRING && type != TokenType::MULTILINE_STRING) {
-        return Unexpected{TokenDiagnostic{TokenError::NON_STRING_TOKEN, line, column}};
+        return Err{TokenDiagnostic{TokenError::NON_STRING_TOKEN, line, column}};
     }
 
     // Here we can just trim off the start and finish of the string
     if (type == TokenType::STRING) {
         if (slice.size() < 2) {
-            return Unexpected{TokenDiagnostic{TokenError::UNEXPECTED_CHAR, line, column}};
+            return Err{TokenDiagnostic{TokenError::UNEXPECTED_CHAR, line, column}};
         }
         return std::string{slice.begin() + 1, slice.end() - 1};
     }

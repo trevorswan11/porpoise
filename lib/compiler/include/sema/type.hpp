@@ -8,7 +8,7 @@
 
 #include "array.hpp"
 #include "hash.hpp"
-#include "optional.hpp"
+#include "option.hpp"
 #include "types.hpp"
 #include "utility.hpp"
 #include "variant.hpp"
@@ -46,26 +46,26 @@ namespace types {
 using PrimitiveType = Unit;
 
 struct Slice {
-    NonNull<Type> underlying;
-    bool          null_terminated;
+    opt::NonNull<Type> underlying;
+    bool               null_terminated;
 };
 
 struct Array {
-    NonNull<Type> underlying;
-    usize         len;
-    bool          null_terminated;
+    opt::NonNull<Type> underlying;
+    usize              len;
+    bool               null_terminated;
 };
 
 struct Pointer {
-    NonNull<Type> underlying;
+    opt::NonNull<Type> underlying;
 };
 
 struct Reference {
-    NonNull<Type> underlying;
+    opt::NonNull<Type> underlying;
 };
 
 struct Enum {
-    NonNull<Type> underlying;
+    opt::NonNull<Type> underlying;
 };
 
 struct Struct {
@@ -73,8 +73,8 @@ struct Struct {
 };
 
 struct Function {
-    std::span<NonNull<Type>> params;
-    NonNull<Type>            return_type;
+    std::span<opt::NonNull<Type>> params;
+    opt::NonNull<Type>            return_type;
 };
 
 template <typename T>
@@ -156,12 +156,12 @@ class Type {
     }
 
     template <typename Self, typename T> [[nodiscard]] auto as_opt(this Self&& self) noexcept {
-        if (!self.resolved_) { return std::nullopt; }
+        if (!self.resolved_) { return opt::none; }
         using ReturnType = std::conditional_t<std::is_const_v<std::remove_reference_t<Self>>,
-                                              Optional<const T&>,
-                                              Optional<T&>>;
+                                              opt::Option<const T&>,
+                                              opt::Option<T&>>;
 
-        if (!std::holds_alternative<T>(*self.resolved_)) { return ReturnType{std::nullopt}; }
+        if (!std::holds_alternative<T>(*self.resolved_)) { return ReturnType{opt::none}; }
         return ReturnType{std::get<T>(*self.resolved_)};
     }
 
@@ -182,9 +182,9 @@ class Type {
     auto resolve(Resolved type) noexcept -> void { resolved_.emplace(std::move(type)); }
 
   private:
-    TypeKind           kind_;
-    usize              scope_table_idx_{array::SENTINEL_IDX};
-    Optional<Resolved> resolved_;
+    TypeKind              kind_;
+    usize                 scope_table_idx_{array::SENTINEL_IDX};
+    opt::Option<Resolved> resolved_;
 };
 
 static_assert(std::is_trivially_destructible_v<Type>);

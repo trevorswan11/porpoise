@@ -86,17 +86,16 @@ enum class ParserError : u8 {
 
 using ParserDiagnostic = Diagnostic<ParserError>;
 
-template <typename... Args>
-auto make_parser_unexpected(Args&&... args) -> Unexpected<ParserDiagnostic> {
-    return make_unexpected<ParserDiagnostic>(std::forward<Args>(args)...);
+template <typename... Args> auto make_parser_err(Args&&... args) -> Err<ParserDiagnostic> {
+    return make_err<ParserDiagnostic>(std::forward<Args>(args)...);
 }
 
 class Parser {
   public:
     using Diagnostics = std::vector<ParserDiagnostic>;
-    using PrefixFn    = Expected<mem::Box<ast::Expression>, ParserDiagnostic> (*)(Parser&);
-    using InfixFn     = Expected<mem::Box<ast::Expression>, ParserDiagnostic> (*)(
-        Parser&, mem::Box<ast::Expression>);
+    using PrefixFn    = Result<mem::Box<ast::Expression>, ParserDiagnostic> (*)(Parser&);
+    using InfixFn =
+        Result<mem::Box<ast::Expression>, ParserDiagnostic> (*)(Parser&, mem::Box<ast::Expression>);
 
     class Checkpoint {
       public:
@@ -145,33 +144,33 @@ class Parser {
     auto peek_token_is(TokenType t) const noexcept -> bool { return peek_token_.type == t; }
 
     // Advances the cursor tokens only if the expected token type matches the actual peek token.
-    [[nodiscard]] auto expect_peek(TokenType expected) -> Expected<Unit, ParserDiagnostic>;
+    [[nodiscard]] auto expect_peek(TokenType expected) -> Result<Unit, ParserDiagnostic>;
 
     // Indiscriminately returns an error citing the peek token.
     [[nodiscard]] auto peek_error(TokenType expected) -> ParserDiagnostic;
 
-    auto get_current_precedence() const noexcept -> std::pair<Precedence, Optional<Binding>>;
-    auto get_peek_precedence() const noexcept -> std::pair<Precedence, Optional<Binding>>;
+    auto get_current_precedence() const noexcept -> std::pair<Precedence, opt::Option<Binding>>;
+    auto get_peek_precedence() const noexcept -> std::pair<Precedence, opt::Option<Binding>>;
 
-    [[nodiscard]] auto parse_statement() -> Expected<mem::Box<ast::Statement>, ParserDiagnostic>;
+    [[nodiscard]] auto parse_statement() -> Result<mem::Box<ast::Statement>, ParserDiagnostic>;
     [[nodiscard]] auto parse_expression(Precedence precedence = Precedence::LOWEST)
-        -> Expected<mem::Box<ast::Expression>, ParserDiagnostic>;
+        -> Result<mem::Box<ast::Expression>, ParserDiagnostic>;
 
     // Assumes that the current token is looking at the start of the expression.
     // The resulting statement can only be a jump, block, or expression statement.
     [[nodiscard]] auto parse_restricted_statement(ParserError error)
-        -> Expected<mem::Box<ast::Statement>, ParserDiagnostic>;
+        -> Result<mem::Box<ast::Statement>, ParserDiagnostic>;
 
     // Parses a restricted statement only if an else token is currently looked at.
     [[nodiscard]] auto try_parse_restricted_alternate(ParserError error)
-        -> Expected<mem::NullableBox<ast::Statement>, ParserDiagnostic>;
+        -> Result<mem::NullableBox<ast::Statement>, ParserDiagnostic>;
 
     // Parses a member declaration list for user-defined types
     [[nodiscard]] auto parse_member_decls(ast::MemberValidator validator = nullptr)
-        -> Expected<ast::Members, ParserDiagnostic>;
+        -> Result<ast::Members, ParserDiagnostic>;
 
-    static auto try_get_prefix_fn(TokenType tt) noexcept -> Optional<PrefixFn>;
-    static auto try_get_poll_infix_fn(TokenType tt) noexcept -> Optional<InfixFn>;
+    static auto try_get_prefix_fn(TokenType tt) noexcept -> opt::Option<PrefixFn>;
+    static auto try_get_poll_infix_fn(TokenType tt) noexcept -> opt::Option<InfixFn>;
 
   private:
     // Reverts the parser to the state from the checkpoint.

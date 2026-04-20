@@ -1,5 +1,6 @@
 #pragma once
 
+#include <concepts>
 #include <type_traits>
 
 #include "types.hpp"
@@ -7,7 +8,7 @@
 namespace porpoise {
 
 template <typename T>
-concept Countable = std::is_integral_v<T> && !std::is_same_v<T, bool>;
+concept Countable = std::is_integral_v<T> && !std::same_as<T, bool>;
 
 // A simple counter that provides RAII-based up/down counting
 template <Countable Underlying> class Counter {

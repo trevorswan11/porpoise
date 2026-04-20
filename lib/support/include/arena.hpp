@@ -5,7 +5,7 @@
 #include <type_traits>
 #include <utility>
 
-#include "optional.hpp"
+#include "option.hpp"
 #include "types.hpp"
 
 namespace porpoise::mem {
@@ -33,7 +33,7 @@ class Arena {
     // Asserts that the requested type is at most 64KB
     template <typename T, typename... Args>
         requires(std::is_trivially_destructible_v<T>)
-    [[nodiscard]] auto make(Args&&... args) -> NonNull<T> {
+    [[nodiscard]] auto make(Args&&... args) -> opt::NonNull<T> {
         static_assert(sizeof(T) <= BLOCK_SIZE, "Block size cannot fit requested type");
         void* mem = alloc(sizeof(T), alignof(T));
         return new (mem) T{std::forward<Args>(args)...};

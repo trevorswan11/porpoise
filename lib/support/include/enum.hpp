@@ -9,7 +9,7 @@
 
 #include "iterator.hpp"
 #include "memory.hpp"
-#include "optional.hpp"
+#include "option.hpp"
 #include "types.hpp"
 
 namespace porpoise {
@@ -75,13 +75,13 @@ template <MappableEnum E, MappableValue Value> class EnumMap {
     //
     // Contextually convertible Values are pointers and optional types
     [[nodiscard]] constexpr auto get_opt(E key) const noexcept {
-        if constexpr (is_optional_v<Value>) {
+        if constexpr (opt::is_option_v<Value>) {
             return operator[](key);
         } else if constexpr (std::is_pointer_v<Value>) {
             const auto value = operator[](key);
-            return value ? Optional<Value>{value} : std::nullopt;
+            return value ? opt::Option<Value>{value} : opt::none;
         } else {
-            return Optional<Value>{operator[](key)};
+            return opt::Option<Value>{operator[](key)};
         }
     }
 
@@ -106,7 +106,7 @@ consteval auto enum_range() noexcept {
     constexpr usize count = high_idx - low_idx + 1;
     return []<usize... Is>(std::index_sequence<Is...>, usize offset) {
         return std::array<E, sizeof...(Is)>{enum_value<E>(offset + Is)...};
-    }(std::make_index_sequence<count>{}, low_idx);
+    }(std::make_index_sequence<count>{}, low_idx); // written with the help of Gemini
 }
 
 // Returns an array of all possible enum values

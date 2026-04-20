@@ -1,7 +1,7 @@
 #include <catch2/catch_test_macros.hpp>
 
 #include "enum.hpp"
-#include "optional.hpp"
+#include "option.hpp"
 
 namespace porpoise::tests {
 
@@ -48,7 +48,7 @@ TEST_CASE("Enum min/max calculations") {
 }
 
 TEST_CASE("Standard enum map") {
-    EnumMap<MockEnum, Optional<int>> map;
+    EnumMap<MockEnum, opt::Option<int>> map;
     CHECK(map.size() == 4);
     for (const auto& item : map) { CHECK_FALSE(item); }
 

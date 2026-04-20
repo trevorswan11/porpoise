@@ -67,12 +67,12 @@ auto Parser::consume() -> std::pair<ast::AST, Diagnostics> {
     return {std::move(ast), std::move(diagnostics)};
 }
 
-auto Parser::expect_peek(TokenType expected) -> Expected<Unit, ParserDiagnostic> {
+auto Parser::expect_peek(TokenType expected) -> Result<Unit, ParserDiagnostic> {
     if (peek_token_is(expected)) {
         advance();
         return {};
     }
-    return Unexpected{peek_error(expected)};
+    return Err{peek_error(expected)};
 }
 
 auto Parser::peek_error(TokenType expected) -> ParserDiagnostic {
@@ -83,23 +83,24 @@ auto Parser::peek_error(TokenType expected) -> ParserDiagnostic {
                             peek_token_};
 }
 
-auto Parser::get_current_precedence() const noexcept -> std::pair<Precedence, Optional<Binding>> {
+auto Parser::get_current_precedence() const noexcept
+    -> std::pair<Precedence, opt::Option<Binding>> {
     return Binding::try_get_from(current_token_.type)
         .transform([](const auto& binding) {
-            return std::pair{binding.precedence, Optional<Binding>{binding}};
+            return std::pair{binding.precedence, opt::Option<Binding>{binding}};
         })
-        .value_or(std::pair{Precedence::LOWEST, std::nullopt});
+        .value_or(std::pair{Precedence::LOWEST, opt::none});
 }
 
-auto Parser::get_peek_precedence() const noexcept -> std::pair<Precedence, Optional<Binding>> {
+auto Parser::get_peek_precedence() const noexcept -> std::pair<Precedence, opt::Option<Binding>> {
     return Binding::try_get_from(peek_token_.type)
         .transform([](const auto& binding) {
-            return std::pair{binding.precedence, Optional<Binding>{binding}};
+            return std::pair{binding.precedence, opt::Option<Binding>{binding}};
         })
-        .value_or(std::pair{Precedence::LOWEST, std::nullopt});
+        .value_or(std::pair{Precedence::LOWEST, opt::none});
 }
 
-auto Parser::parse_statement() -> Expected<mem::Box<ast::Statement>, ParserDiagnostic> {
+auto Parser::parse_statement() -> Result<mem::Box<ast::Statement>, ParserDiagnostic> {
     if (current_token_.is_decl_token()) { return ast::DeclStatement::parse(*this); }
     switch (current_token_.type) {
     case TokenType::BREAK:
@@ -117,18 +118,18 @@ auto Parser::parse_statement() -> Expected<mem::Box<ast::Statement>, ParserDiagn
 }
 
 auto Parser::parse_expression(Precedence precedence)
-    -> Expected<mem::Box<ast::Expression>, ParserDiagnostic> {
+    -> Result<mem::Box<ast::Expression>, ParserDiagnostic> {
     if (current_token_is(TokenType::END)) {
-        return make_parser_unexpected(ParserError::END_OF_TOKEN_STREAM, current_token_);
+        return make_parser_err(ParserError::END_OF_TOKEN_STREAM, current_token_);
     }
 
     const auto& prefix = try_get_prefix_fn(current_token_.type);
     if (!prefix) {
-        return make_parser_unexpected(fmt::format("No prefix parse function for {}({}) found",
-                                                  magic_enum::enum_name(current_token_.type),
-                                                  current_token_.slice),
-                                      ParserError::MISSING_PREFIX_PARSER,
-                                      current_token_);
+        return make_parser_err(fmt::format("No prefix parse function for {}({}) found",
+                                           magic_enum::enum_name(current_token_.type),
+                                           current_token_.slice),
+                               ParserError::MISSING_PREFIX_PARSER,
+                               current_token_);
     }
     auto lhs_expression = TRY((*prefix)(*this));
 
@@ -143,18 +144,18 @@ auto Parser::parse_expression(Precedence precedence)
 }
 
 [[nodiscard]] auto Parser::parse_restricted_statement(ParserError error)
-    -> Expected<mem::Box<ast::Statement>, ParserDiagnostic> {
+    -> Result<mem::Box<ast::Statement>, ParserDiagnostic> {
     auto clause = TRY(parse_statement());
 
     // The clause can only be a jump, block, or expression statement
     if (!clause->any<ast::ExpressionStatement, ast::JumpStatement, ast::BlockStatement>()) {
-        return make_parser_unexpected(error, clause->get_token());
+        return make_parser_err(error, clause->get_token());
     }
     return clause;
 }
 
 [[nodiscard]] auto Parser::try_parse_restricted_alternate(ParserError error)
-    -> Expected<mem::NullableBox<ast::Statement>, ParserDiagnostic> {
+    -> Result<mem::NullableBox<ast::Statement>, ParserDiagnostic> {
     if (peek_token_is(TokenType::ELSE)) {
         // Advance twice to actually look at the statement's first token
         advance(2);
@@ -164,18 +165,18 @@ auto Parser::parse_expression(Precedence precedence)
 }
 
 auto Parser::parse_member_decls(ast::MemberValidator validator)
-    -> Expected<ast::Members, ParserDiagnostic> {
+    -> Result<ast::Members, ParserDiagnostic> {
     ast::Members members;
     while (!peek_token_is(syntax::TokenType::RBRACE) && !peek_token_is(syntax::TokenType::END)) {
         advance();
         auto member = TRY(parse_statement());
         if (!member->is<ast::DeclStatement>()) {
-            return make_parser_unexpected(syntax::ParserError::INVALID_MEMBER, member->get_token());
+            return make_parser_err(syntax::ParserError::INVALID_MEMBER, member->get_token());
         }
 
         // Check the decl against the validator if provided
         if (validator && !validator(ast::Node::as<ast::DeclStatement>(*member))) {
-            return make_parser_unexpected(syntax::ParserError::INVALID_MEMBER, member->get_token());
+            return make_parser_err(syntax::ParserError::INVALID_MEMBER, member->get_token());
         }
         members.emplace_back(ast::Node::downcast<ast::DeclStatement>(std::move(member)));
     }
@@ -236,7 +237,7 @@ constexpr auto PREFIX_FNS = [] {
     return fns;
 }();
 
-auto Parser::try_get_prefix_fn(TokenType tt) noexcept -> Optional<PrefixFn> {
+auto Parser::try_get_prefix_fn(TokenType tt) noexcept -> opt::Option<PrefixFn> {
     return PREFIX_FNS.get_opt(tt);
 }
 
@@ -284,7 +285,7 @@ constexpr auto INFIX_FNS = [] {
     return fns;
 }();
 
-auto Parser::try_get_poll_infix_fn(TokenType tt) noexcept -> Optional<InfixFn> {
+auto Parser::try_get_poll_infix_fn(TokenType tt) noexcept -> opt::Option<InfixFn> {
     return INFIX_FNS.get_opt(tt);
 }
 

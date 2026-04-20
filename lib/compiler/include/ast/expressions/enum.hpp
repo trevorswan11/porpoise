@@ -49,7 +49,7 @@ class EnumExpression : public ExprBase<EnumExpression> {
 
     auto                      accept(Visitor& v) const -> void override;
     [[nodiscard]] static auto parse(syntax::Parser& parser)
-        -> Expected<mem::Box<Expression>, syntax::ParserDiagnostic>;
+        -> Result<mem::Box<Expression>, syntax::ParserDiagnostic>;
 
     MAKE_NULLABLE_BOX_UNPACKER(underlying, IdentifierExpression, underlying_, *)
     MAKE_GETTER(enumerations, std::span<const Enumeration>)

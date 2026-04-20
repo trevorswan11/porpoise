@@ -26,12 +26,11 @@ auto Analyzer::resolve_symbols() -> void {
     }
 }
 
-auto Analyzer::resolve_symbol(Symbol& symbol, SymbolTableStack& stack)
-    -> Expected<Unit, Diagnostic> {
+auto Analyzer::resolve_symbol(Symbol& symbol, SymbolTableStack& stack) -> Result<Unit, Diagnostic> {
     switch (symbol.get_status()) {
     case ResolveStatus::RESOLVED: return {};
     case ResolveStatus::RESOLVING:
-        return make_sema_unexpected(
+        return make_sema_err(
             fmt::format("Circular dependency detected for symbol '{}'", symbol.get_name()),
             Error::CIRCULAR_DEPENDENCY,
             symbol.get_node_token());

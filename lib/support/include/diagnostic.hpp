@@ -7,7 +7,7 @@
 
 #include <fmt/format.h>
 
-#include "optional.hpp"
+#include "option.hpp"
 #include "source_loc.hpp"
 #include "types.hpp"
 
@@ -15,9 +15,9 @@ namespace porpoise {
 
 namespace detail {
 
-[[nodiscard]] auto format_diagnostic(const Optional<std::string>&    message,
-                                     std::string_view                error_name,
-                                     const Optional<SourceLocation>& location) -> std::string;
+[[nodiscard]] auto format_diagnostic(const opt::Option<std::string>&    message,
+                                     std::string_view                   error_name,
+                                     const opt::Option<SourceLocation>& location) -> std::string;
 
 } // namespace detail
 
@@ -52,9 +52,9 @@ class Diagnostic {
     }
 
   private:
-    Optional<std::string>    message_{};
-    E                        error_;
-    Optional<SourceLocation> loc_{};
+    opt::Option<std::string>    message_{};
+    E                           error_;
+    opt::Option<SourceLocation> loc_{};
 };
 
 } // namespace porpoise

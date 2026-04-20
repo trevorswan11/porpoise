@@ -11,7 +11,7 @@
 #include "syntax/token.hpp"
 
 #include "memory.hpp"
-#include "optional.hpp"
+#include "option.hpp"
 #include "types.hpp"
 #include "utility.hpp"
 
@@ -147,9 +147,9 @@ class Node {
     virtual auto is_equal(const Node& other) const noexcept -> bool = 0;
 
   protected:
-    const syntax::Token           start_token_;
-    const NodeKind                kind_;
-    mutable Optional<sema::Type&> sema_type_;
+    const syntax::Token              start_token_;
+    const NodeKind                   kind_;
+    mutable opt::Option<sema::Type&> sema_type_;
     friend class ExplicitType;
 };
 

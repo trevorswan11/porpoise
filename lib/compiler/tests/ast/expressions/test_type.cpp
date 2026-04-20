@@ -37,7 +37,7 @@ TEST_CASE("Function types") {
         ast::ExplicitType{mods::BASE,
                           mem::make_box<ast::FunctionExpression>(
                               syntax::Token{keywords::FN},
-                              std::nullopt,
+                              opt::none,
                               Parameters{},
                               false,
                               ast::ExplicitType{mods::BASE, helpers::make_ident("noreturn")},
@@ -48,7 +48,7 @@ TEST_CASE("Function types") {
         ast::ExplicitType{mods::BASE,
                           mem::make_box<ast::FunctionExpression>(
                               syntax::Token{keywords::FN},
-                              std::nullopt,
+                              opt::none,
                               helpers::make_parameters(
                                   ast::FunctionParameter{{mods::REF, helpers::make_ident("self")}}),
                               false,
@@ -97,7 +97,7 @@ TEST_CASE("Complex function type (holistic)") {
             mods::PTR,
             mem::make_box<ast::FunctionExpression>(
                 syntax::Token{keywords::FN},
-                std::nullopt,
+                opt::none,
                 helpers::make_parameters(
                     ast::FunctionParameter{{mods::REF, helpers::make_ident("a")}},
                     ast::FunctionParameter{{mods::MUT_PTR, helpers::make_ident("B")}}),

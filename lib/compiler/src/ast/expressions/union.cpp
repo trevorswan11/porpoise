@@ -36,7 +36,7 @@ UnionExpression::~UnionExpression() = default;
 auto UnionExpression::accept(Visitor& v) const -> void { v.visit(*this); }
 
 auto UnionExpression::parse(syntax::Parser& parser)
-    -> Expected<mem::Box<Expression>, syntax::ParserDiagnostic> {
+    -> Result<mem::Box<Expression>, syntax::ParserDiagnostic> {
     const auto start_token = parser.get_current_token();
     TRY(parser.expect_peek(syntax::TokenType::LBRACE));
 
@@ -62,9 +62,7 @@ auto UnionExpression::parse(syntax::Parser& parser)
     TRY(parser.expect_peek(syntax::TokenType::RBRACE));
 
     // Validate here so that there aren't 3 errors spawning from an empty union with decls
-    if (fields.empty()) {
-        return make_parser_unexpected(syntax::ParserError::EMPTY_UNION, start_token);
-    }
+    if (fields.empty()) { return make_parser_err(syntax::ParserError::EMPTY_UNION, start_token); }
     return mem::make_box<UnionExpression>(start_token, std::move(fields), std::move(members));
 }
 

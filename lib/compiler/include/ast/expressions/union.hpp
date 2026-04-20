@@ -46,7 +46,7 @@ class UnionExpression : public ExprBase<UnionExpression> {
 
     auto                      accept(Visitor& v) const -> void override;
     [[nodiscard]] static auto parse(syntax::Parser& parser)
-        -> Expected<mem::Box<Expression>, syntax::ParserDiagnostic>;
+        -> Result<mem::Box<Expression>, syntax::ParserDiagnostic>;
 
     MAKE_GETTER(fields, std::span<const UnionField>)
     [[nodiscard]] auto has_members() const noexcept -> bool { return !members_.empty(); }

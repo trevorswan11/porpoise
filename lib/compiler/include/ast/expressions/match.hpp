@@ -18,7 +18,7 @@ class MatchArm {
 
   public:
     MatchArm(mem::Box<Expression> pattern,
-             Optional<Capture>    capture,
+             opt::Option<Capture> capture,
              mem::Box<Statement>  dispatch) noexcept;
     ~MatchArm();
 
@@ -48,10 +48,10 @@ class MatchArm {
     MAKE_EQ_DELEGATION(MatchArm)
 
   private:
-    mem::Box<Expression>          pattern_;
-    Optional<Capture>             capture_;
-    mem::Box<Statement>           dispatch_;
-    mutable Optional<sema::Type&> sema_type_;
+    mem::Box<Expression>             pattern_;
+    opt::Option<Capture>             capture_;
+    mem::Box<Statement>              dispatch_;
+    mutable opt::Option<sema::Type&> sema_type_;
 };
 
 class MatchExpression : public ExprBase<MatchExpression> {
@@ -69,7 +69,7 @@ class MatchExpression : public ExprBase<MatchExpression> {
 
     auto                      accept(Visitor& v) const -> void override;
     [[nodiscard]] static auto parse(syntax::Parser& parser)
-        -> Expected<mem::Box<Expression>, syntax::ParserDiagnostic>;
+        -> Result<mem::Box<Expression>, syntax::ParserDiagnostic>;
 
     MAKE_GETTER(matcher, const Expression&, *)
     MAKE_GETTER(arms, std::span<const MatchArm>)

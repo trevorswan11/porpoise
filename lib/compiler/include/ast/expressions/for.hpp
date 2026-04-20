@@ -72,7 +72,7 @@ class ForLoopExpression : public ExprBase<ForLoopExpression> {
 
     auto                      accept(Visitor& v) const -> void override;
     [[nodiscard]] static auto parse(syntax::Parser& parser)
-        -> Expected<mem::Box<Expression>, syntax::ParserDiagnostic>;
+        -> Result<mem::Box<Expression>, syntax::ParserDiagnostic>;
 
     MAKE_GETTER(iterables, std::span<const mem::Box<Expression>>)
     MAKE_GETTER(captures, std::span<const ForLoopCapture>)

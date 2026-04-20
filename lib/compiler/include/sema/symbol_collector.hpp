@@ -61,7 +61,7 @@ class SymbolCollector : public ast::Visitor {
     }
 
     // Returns false if the passed result was an error type
-    template <typename T = Unit> auto try_result(Expected<T, Diagnostic>&& result) -> bool {
+    template <typename T = Unit> auto try_result(Result<T, Diagnostic>&& result) -> bool {
         if (!result) {
             diagnostics_.emplace_back(result.error());
             return false;
@@ -90,11 +90,11 @@ class SymbolCollector : public ast::Visitor {
     TypePool&            pool_;
     Diagnostics&         diagnostics_;
 
-    bool            first_node_{true};
-    Optional<Type&> last_type_;
-    DefaultCounter  in_function_scope_;
-    DefaultCounter  in_loop_scope_;
-    DefaultCounter  in_expr_scope_;
+    bool               first_node_{true};
+    opt::Option<Type&> last_type_;
+    DefaultCounter     in_function_scope_;
+    DefaultCounter     in_loop_scope_;
+    DefaultCounter     in_expr_scope_;
 };
 
 } // namespace porpoise::sema

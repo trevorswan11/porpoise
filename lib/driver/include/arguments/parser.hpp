@@ -6,7 +6,7 @@
 #    include "platform/win32.hpp"
 #endif
 
-#include "expected.hpp"
+#include "result.hpp"
 #include "types.hpp"
 #include "utility.hpp"
 #include "variant.hpp"
@@ -19,7 +19,7 @@ class Parser {
   public:
     Parser(i32 argc, byte** argv) noexcept : argc_{argc}, argv_{argv} {}
 
-    auto parse() -> Expected<Unit, i32>;
+    auto parse() -> Result<Unit, i32>;
     auto dispatch() -> Unit;
 
     MAKE_GETTER(parsed, Parsed)

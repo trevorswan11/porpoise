@@ -2,23 +2,13 @@
 
 #include <cassert>
 #include <cstdio>
+#include <exception>
 #include <source_location>
 #include <utility> // IWYU pragma: export
 
 #include <fmt/format.h>
 
-#include "types.hpp"
-
 namespace porpoise {
-
-class ScopedCount {
-  public:
-    explicit ScopedCount(usize& count) noexcept : count_{count} { count_ += 1; }
-    ~ScopedCount() { count_ -= 1; }
-
-  private:
-    usize& count_;
-};
 
 #define MAKE_GETTER_2(name, ReturnType) \
     [[nodiscard]] auto get_##name() const noexcept -> ReturnType { return name##_; }
@@ -61,6 +51,7 @@ template <typename... Args>
 auto todo_impl(std::source_location loc, [[maybe_unused]] Args&&... args) noexcept -> void {
     fmt::println(stderr, "TODO: {}:{}:{}", loc.file_name(), loc.line(), loc.column());
     assert(false && "TODO");
+    std::terminate();
 }
 
 } // namespace detail

@@ -17,7 +17,7 @@ TEST_CASE("Struct hollow types") {
             ast::DeclStatement{
                 syntax::Token{keywords::CONSTANT},
                 helpers::make_ident("a"),
-                mem::make_box<ast::TypeExpression>(syntax::Token{operators::WALRUS}, std::nullopt),
+                mem::make_box<ast::TypeExpression>(syntax::Token{operators::WALRUS}, opt::none),
                 mem::make_nullable_box<ast::StructExpression>(
                     syntax::Token{keywords::STRUCT}, helpers::make_decls(helpers::foo_bar_decl())),
                 ast::DeclModifiers::CONSTANT,
@@ -38,7 +38,7 @@ TEST_CASE("Enum hollow types") {
             ast::DeclStatement{
                 syntax::Token{keywords::CONSTANT},
                 helpers::make_ident("a"),
-                mem::make_box<ast::TypeExpression>(syntax::Token{operators::WALRUS}, std::nullopt),
+                mem::make_box<ast::TypeExpression>(syntax::Token{operators::WALRUS}, opt::none),
                 mem::make_nullable_box<ast::EnumExpression>(
                     syntax::Token{keywords::ENUM},
                     nullptr,
@@ -56,7 +56,7 @@ TEST_CASE("Enum hollow types with member") {
         return ast::DeclStatement{
             syntax::Token{keywords::STATIC},
             helpers::make_ident("c"),
-            mem::make_box<ast::TypeExpression>(syntax::Token{operators::WALRUS}, std::nullopt),
+            mem::make_box<ast::TypeExpression>(syntax::Token{operators::WALRUS}, opt::none),
             helpers::make_primitive<ast::I32Expression, true>("2"),
             ast::DeclModifiers::STATIC | ast::DeclModifiers::CONSTANT,
         };
@@ -70,7 +70,7 @@ TEST_CASE("Enum hollow types with member") {
             ast::DeclStatement{
                 syntax::Token{keywords::CONSTANT},
                 helpers::make_ident("a"),
-                mem::make_box<ast::TypeExpression>(syntax::Token{operators::WALRUS}, std::nullopt),
+                mem::make_box<ast::TypeExpression>(syntax::Token{operators::WALRUS}, opt::none),
                 mem::make_nullable_box<ast::EnumExpression>(
                     syntax::Token{keywords::ENUM},
                     nullptr,
@@ -97,7 +97,7 @@ TEST_CASE("Union hollow types") {
             ast::DeclStatement{
                 syntax::Token{keywords::CONSTANT},
                 helpers::make_ident("a"),
-                mem::make_box<ast::TypeExpression>(syntax::Token{operators::WALRUS}, std::nullopt),
+                mem::make_box<ast::TypeExpression>(syntax::Token{operators::WALRUS}, opt::none),
                 mem::make_nullable_box<ast::UnionExpression>(
                     syntax::Token{keywords::UNION},
                     helpers::make_vector<ast::UnionField>(field()),
@@ -118,7 +118,7 @@ TEST_CASE("Union hollow types with member") {
         return ast::DeclStatement{
             syntax::Token{keywords::STATIC},
             helpers::make_ident("c"),
-            mem::make_box<ast::TypeExpression>(syntax::Token{operators::WALRUS}, std::nullopt),
+            mem::make_box<ast::TypeExpression>(syntax::Token{operators::WALRUS}, opt::none),
             helpers::make_primitive<ast::I32Expression, true>("2"),
             ast::DeclModifiers::STATIC | ast::DeclModifiers::CONSTANT,
         };
@@ -132,7 +132,7 @@ TEST_CASE("Union hollow types with member") {
             ast::DeclStatement{
                 syntax::Token{keywords::CONSTANT},
                 helpers::make_ident("a"),
-                mem::make_box<ast::TypeExpression>(syntax::Token{operators::WALRUS}, std::nullopt),
+                mem::make_box<ast::TypeExpression>(syntax::Token{operators::WALRUS}, opt::none),
                 mem::make_nullable_box<ast::UnionExpression>(
                     syntax::Token{keywords::UNION},
                     helpers::make_vector<ast::UnionField>(field()),
@@ -153,7 +153,7 @@ TEST_CASE("Function hollow types") {
             ast::DeclStatement{
                 syntax::Token{keywords::CONSTANT},
                 helpers::make_ident("a"),
-                mem::make_box<ast::TypeExpression>(syntax::Token{operators::WALRUS}, std::nullopt),
+                mem::make_box<ast::TypeExpression>(syntax::Token{operators::WALRUS}, opt::none),
                 mem::make_nullable_box<ast::FunctionExpression>(
                     syntax::Token{keywords::FN},
                     ast::SelfParameter{mods::REF, helpers::make_ident("self")},

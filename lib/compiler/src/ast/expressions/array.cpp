@@ -23,15 +23,14 @@ ArrayExpression::~ArrayExpression() = default;
 auto ArrayExpression::accept(Visitor& v) const -> void { v.visit(*this); }
 
 auto ArrayExpression::parse(syntax::Parser& parser)
-    -> Expected<mem::Box<Expression>, syntax::ParserDiagnostic> {
+    -> Result<mem::Box<Expression>, syntax::ParserDiagnostic> {
     const auto start_token = parser.get_current_token();
     parser.advance();
 
     mem::NullableBox<Expression> size;
     if (!parser.current_token_is(syntax::TokenType::UNDERSCORE)) {
         if (parser.current_token_is(syntax::TokenType::RBRACKET)) {
-            return make_parser_unexpected(syntax::ParserError::MISSING_ARRAY_SIZE_TOKEN,
-                                          start_token);
+            return make_parser_err(syntax::ParserError::MISSING_ARRAY_SIZE_TOKEN, start_token);
         }
         size = mem::nullable_box_from(TRY(parser.parse_expression()));
     }
@@ -61,12 +60,12 @@ auto ArrayExpression::parse(syntax::Parser& parser)
 
             // Enforce full initialization
             if (items.size() != explicit_size.get_value()) {
-                return make_parser_unexpected(syntax::ParserError::EXPLICIT_ARRAY_SIZE_MISMATCH,
-                                              size_token);
+                return make_parser_err(syntax::ParserError::EXPLICIT_ARRAY_SIZE_MISMATCH,
+                                       size_token);
             }
         } else if (!size_expr.is<IdentifierExpression>()) {
-            return make_parser_unexpected(syntax::ParserError::ILLEGAL_ARRAY_SIZE_TYPE,
-                                          size_expr.get_token());
+            return make_parser_err(syntax::ParserError::ILLEGAL_ARRAY_SIZE_TYPE,
+                                   size_expr.get_token());
         }
     }
 

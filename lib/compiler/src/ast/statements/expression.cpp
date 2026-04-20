@@ -7,7 +7,7 @@ namespace porpoise::ast {
 auto ExpressionStatement::accept(Visitor& v) const -> void { v.visit(*this); }
 
 auto ExpressionStatement::parse(syntax::Parser& parser)
-    -> Expected<mem::Box<Statement>, syntax::ParserDiagnostic> {
+    -> Result<mem::Box<Statement>, syntax::ParserDiagnostic> {
     const auto start_token = parser.get_current_token();
     auto       expr        = TRY(parser.parse_expression());
 
