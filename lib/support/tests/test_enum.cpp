@@ -34,17 +34,17 @@ enum class NonMonotonicEnum : u8 {
 };
 
 TEST_CASE("Enum min/max calculations") {
-    STATIC_CHECK(enum_min<MockEnum>() == 0);
-    STATIC_CHECK(enum_max<MockEnum>() == 3);
+    STATIC_CHECK(enum_min_underlying<MockEnum>() == 0);
+    STATIC_CHECK(enum_max_underlying<MockEnum>() == 3);
 
-    STATIC_CHECK(enum_min<MockPositiveEnum>() == 1);
-    STATIC_CHECK(enum_max<MockPositiveEnum>() == 4);
+    STATIC_CHECK(enum_min_underlying<MockPositiveEnum>() == 1);
+    STATIC_CHECK(enum_max_underlying<MockPositiveEnum>() == 4);
 
-    STATIC_CHECK(enum_min<MockNegativeEnum>() == -1);
-    STATIC_CHECK(enum_max<MockNegativeEnum>() == 2);
+    STATIC_CHECK(enum_min_underlying<MockNegativeEnum>() == -1);
+    STATIC_CHECK(enum_max_underlying<MockNegativeEnum>() == 2);
 
-    STATIC_CHECK(enum_min<NonMonotonicEnum>() == 0);
-    STATIC_CHECK(enum_max<NonMonotonicEnum>() == 25);
+    STATIC_CHECK(enum_min_underlying<NonMonotonicEnum>() == 0);
+    STATIC_CHECK(enum_max_underlying<NonMonotonicEnum>() == 25);
 }
 
 TEST_CASE("Standard enum map") {
