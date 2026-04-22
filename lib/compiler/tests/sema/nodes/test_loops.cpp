@@ -31,8 +31,7 @@ TEST_CASE("For loop collection") {
                             helpers::make_primitive<ast::I32Expression>("5"))),
                     helpers::make_vector<ast::ForLoopCapture>(capture()),
                     helpers::make_block_stmt(helpers::foo_bar_decl()),
-                    helpers::make_expr_stmt<ast::IdentifierExpression, true>(
-                        helpers::ident_from("c"))),
+                    helpers::make_expr_stmt<true>(helpers::ident_from("c"))),
                 ast::DeclModifiers::CONSTANT,
             },
             sema::types::Key{sema::TypeKind::BLOCK, false, 1}});

@@ -72,7 +72,7 @@ auto expr_stmt_from(const syntax::Token& start_token, N&& expected) -> ast::Expr
     return ast::ExpressionStatement{start_token, mem::make_box<N>(std::move(expected))};
 }
 
-template <ast::LeafNode N, bool Nullable = false> auto make_expr_stmt(N&& expected) {
+template <bool Nullable = false, ast::LeafNode N> auto make_expr_stmt(N&& expected) {
     return make_leaf_node<ast::ExpressionStatement, Nullable>(
         expr_stmt_from(expected.get_token(), std::move(expected)));
 }
