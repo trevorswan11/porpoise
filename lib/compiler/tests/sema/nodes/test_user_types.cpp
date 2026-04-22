@@ -9,7 +9,8 @@ namespace operators = syntax::operators;
 namespace mods      = helpers::type_modifiers;
 
 TEST_CASE("Struct hollow types") {
-    auto analyzer = helpers::test_collector(
+    const sema::types::Key key{sema::TypeKind::STRUCT, false, 1};
+    auto                   analyzer = helpers::test_collector(
         "const a := struct { const foo := bar; };",
         helpers::TableEntry<ast::DeclStatement>{
             "a",
@@ -22,7 +23,8 @@ TEST_CASE("Struct hollow types") {
                 ast::DeclModifiers::CONSTANT,
             },
             opt::none,
-            sema::types::Key{sema::TypeKind::STRUCT, false, 1}});
+            key,
+            key});
 
     helpers::test_hollow_symbols(analyzer, helpers::TableEntry{"foo", helpers::foo_bar_decl()});
 }
@@ -30,7 +32,8 @@ TEST_CASE("Struct hollow types") {
 TEST_CASE("Enum hollow types") {
     const auto enumeration = [] { return ast::Enumeration{helpers::make_ident("b"), {}}; };
 
-    auto analyzer = helpers::test_collector(
+    const sema::types::Key key{sema::TypeKind::ENUM, false, 1};
+    auto                   analyzer = helpers::test_collector(
         "const a := enum {b};",
         helpers::TableEntry<ast::DeclStatement>{
             "a",
@@ -46,7 +49,9 @@ TEST_CASE("Enum hollow types") {
                 ast::DeclModifiers::CONSTANT,
             },
             opt::none,
-            sema::types::Key{sema::TypeKind::ENUM, false, 1}});
+            key,
+            key});
+
     helpers::test_hollow_symbols(analyzer,
                                  helpers::TableEntry<ast::Enumeration>{"b", enumeration()});
 }
@@ -63,7 +68,8 @@ TEST_CASE("Enum hollow types with member") {
         };
     };
 
-    auto analyzer = helpers::test_collector(
+    const sema::types::Key key{sema::TypeKind::ENUM, false, 1};
+    auto                   analyzer = helpers::test_collector(
         "const a := enum {b, static const c := 2; };",
         helpers::TableEntry<ast::DeclStatement>{
             "a",
@@ -79,8 +85,8 @@ TEST_CASE("Enum hollow types with member") {
                 ast::DeclModifiers::CONSTANT,
             },
             opt::none,
-            sema::types::Key{sema::TypeKind::ENUM, false, 1},
-            sema::types::Key{sema::TypeKind::ENUM, false, 1}});
+            key,
+            key});
 
     helpers::test_hollow_symbols(analyzer,
                                  helpers::TableEntry<ast::Enumeration>{"b", enumeration()},
@@ -93,7 +99,8 @@ TEST_CASE("Union hollow types") {
                                ast::ExplicitType{mods::BASE, helpers::make_ident("i32")}};
     };
 
-    auto analyzer = helpers::test_collector(
+    const sema::types::Key key{sema::TypeKind::UNION, false, 1};
+    auto                   analyzer = helpers::test_collector(
         "const a := union { b: i32 };",
         helpers::TableEntry<ast::DeclStatement>{
             "a",
@@ -108,7 +115,9 @@ TEST_CASE("Union hollow types") {
                 ast::DeclModifiers::CONSTANT,
             },
             opt::none,
-            sema::types::Key{sema::TypeKind::UNION, false, 1}});
+            key,
+            key});
+
     helpers::test_hollow_symbols(analyzer, helpers::TableEntry{"b", field()});
 }
 
@@ -128,7 +137,8 @@ TEST_CASE("Union hollow types with member") {
         };
     };
 
-    auto analyzer = helpers::test_collector(
+    const sema::types::Key key{sema::TypeKind::UNION, false, 1};
+    auto                   analyzer = helpers::test_collector(
         "const a := union { b: i32, static const c := 2; };",
         helpers::TableEntry<ast::DeclStatement>{
             "a",
@@ -143,7 +153,8 @@ TEST_CASE("Union hollow types with member") {
                 ast::DeclModifiers::CONSTANT,
             },
             opt::none,
-            sema::types::Key{sema::TypeKind::UNION, false, 1}});
+            key,
+            key});
 
     helpers::test_hollow_symbols(
         analyzer, helpers::TableEntry{"b", field()}, helpers::TableEntry{"c", member()});

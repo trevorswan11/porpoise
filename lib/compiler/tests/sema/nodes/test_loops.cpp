@@ -15,7 +15,7 @@ TEST_CASE("For loop collection") {
 
     auto analyzer = helpers::test_collector(
         "const a := for (0..5) |i| { const foo := bar; } else c;",
-        helpers::TableEntry{
+        helpers::TableEntry<ast::DeclStatement>{
             "a",
             ast::DeclStatement{
                 syntax::Token{keywords::CONSTANT},
@@ -34,6 +34,7 @@ TEST_CASE("For loop collection") {
                     helpers::make_expr_stmt<true>(helpers::ident_from("c"))),
                 ast::DeclModifiers::CONSTANT,
             },
+            opt::none,
             sema::types::Key{sema::TypeKind::BLOCK, false, 1}});
 
     helpers::test_hollow_symbols(analyzer,

@@ -9,7 +9,8 @@ namespace operators = syntax::operators;
 namespace mods      = helpers::type_modifiers;
 
 TEST_CASE("Function hollow types") {
-    auto analyzer = helpers::test_collector(
+    const sema::types::Key key{sema::TypeKind::FUNCTION, false, 1};
+    auto                   analyzer = helpers::test_collector(
         "const a := fn(&self, c: type): void { const foo := bar; };",
         helpers::TableEntry<ast::DeclStatement>{
             "a",
@@ -28,7 +29,8 @@ TEST_CASE("Function hollow types") {
                 ast::DeclModifiers::CONSTANT,
             },
             opt::none,
-            sema::types::Key{sema::TypeKind::FUNCTION, false, 1}});
+            key,
+            key});
 
     helpers::test_hollow_symbols(
         analyzer,
