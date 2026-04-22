@@ -14,24 +14,24 @@ TEST_CASE("Module visibility modifier") {
         helpers::test_collector(
             input,
             is_module,
-            std::pair{"std",
-                      [is_module] {
-                          ast::ImportStatement import_stmt{
-                              syntax::Token{keywords::IMPORT},
-                              ast::LibraryImport{helpers::make_ident("std"), {}}};
-                          if (is_module) { import_stmt.mark_public(); }
-                          return import_stmt;
-                      }()},
-            std::pair{"I", [is_module] {
-                          ast::UsingStatement using_stmt{syntax::Token{keywords::USING},
-                                                         helpers::make_ident("I"),
-                                                         ast::ExplicitType{
-                                                             mods::BASE,
-                                                             helpers::make_ident("i32"),
-                                                         }};
-                          if (is_module) { using_stmt.mark_public(); }
-                          return using_stmt;
-                      }()});
+            helpers::TableEntry{"std",
+                                [is_module] {
+                                    ast::ImportStatement import_stmt{
+                                        syntax::Token{keywords::IMPORT},
+                                        ast::LibraryImport{helpers::make_ident("std"), {}}};
+                                    if (is_module) { import_stmt.mark_public(); }
+                                    return import_stmt;
+                                }()},
+            helpers::TableEntry{"I", [is_module] {
+                                    ast::UsingStatement using_stmt{syntax::Token{keywords::USING},
+                                                                   helpers::make_ident("I"),
+                                                                   ast::ExplicitType{
+                                                                       mods::BASE,
+                                                                       helpers::make_ident("i32"),
+                                                                   }};
+                                    if (is_module) { using_stmt.mark_public(); }
+                                    return using_stmt;
+                                }()});
     };
 
     test(true);
@@ -41,17 +41,18 @@ TEST_CASE("Module visibility modifier") {
 TEST_CASE("Import aliases correctly used") {
     helpers::test_collector(
         R"(import foo as A; import "f" as F; const foo := bar;)",
-        false,
-        std::pair{"A",
-                  ast::ImportStatement{syntax::Token{keywords::IMPORT},
-                                       ast::LibraryImport{helpers::make_ident("foo"),
-                                                          helpers::make_ident<true>("A")}}},
-        std::pair{"F",
-                  ast::ImportStatement{
-                      syntax::Token{keywords::IMPORT},
-                      ast::FileImport{helpers::make_primitive<ast::StringExpression>(R"("f")"),
-                                      helpers::make_ident("F")}}},
-        std::pair{"foo", helpers::foo_bar_decl()});
+        helpers::TableEntry{
+            "A",
+            ast::ImportStatement{
+                syntax::Token{keywords::IMPORT},
+                ast::LibraryImport{helpers::make_ident("foo"), helpers::make_ident<true>("A")}}},
+        helpers::TableEntry{
+            "F",
+            ast::ImportStatement{
+                syntax::Token{keywords::IMPORT},
+                ast::FileImport{helpers::make_primitive<ast::StringExpression>(R"("f")"),
+                                helpers::make_ident("F")}}},
+        helpers::TableEntry{"foo", helpers::foo_bar_decl()});
 }
 
 TEST_CASE("Public modifiers and querying") {

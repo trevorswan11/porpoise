@@ -45,8 +45,9 @@ auto SymbolCollector::visit(const ast::CallExpression& call) -> void {
 
 auto SymbolCollector::visit(const ast::DoWhileLoopExpression& do_while) -> void {
     const auto g   = loop_guard();
-    const auto idx = visit_scope(
-        do_while.get_block(), TypeKind::BLOCK, [this](const auto& stmt) { stmt->accept(*this); });
+    const auto idx = visit_scopes(
+        TypeKind::BLOCK,
+        IterPair{do_while.get_block(), [this](const auto& stmt) { stmt->accept(*this); }});
     last_type_->set_symbol_table_idx(idx);
     do_while.set_sema_type(*last_type_.take());
 }
@@ -57,7 +58,7 @@ auto SymbolCollector::visit(const ast::Enumeration& enumeration) -> void {
 }
 
 auto SymbolCollector::visit(const ast::EnumExpression& enum_expr) -> void {
-    const auto scope_idx = visit_scope(
+    const auto scope_idx = visit_scopes(
         TypeKind::ENUM,
         IterPair{enum_expr.get_enumerations(), [this](const auto& field) { visit(field); }},
         IterPair{enum_expr.get_members(), [this](const auto& decl) { visit(*decl); }});
@@ -76,7 +77,7 @@ auto SymbolCollector::visit(const ast::ForLoopExpression& for_expr) -> void {
 
     // Parameters belong to the parent scope
     visit_list(for_expr.get_captures());
-    visit(for_expr.get_block());
+    visit_list(for_expr.get_block());
     if (for_expr.has_non_break()) { for_expr.get_non_break().accept(*this); }
 
     last_type_.emplace(pool_[{TypeKind::BLOCK, false, new_idx}]);
@@ -119,9 +120,10 @@ auto SymbolCollector::visit(const ast::IndexExpression& index) -> void {
 }
 
 auto SymbolCollector::visit(const ast::InfiniteLoopExpression& loop) -> void {
-    const auto g   = loop_guard();
-    const auto idx = visit_scope(
-        loop.get_block(), TypeKind::BLOCK, [this](const auto& stmt) { stmt->accept(*this); });
+    const auto g = loop_guard();
+    const auto idx =
+        visit_scopes(TypeKind::BLOCK,
+                     IterPair{loop.get_block(), [this](const auto& stmt) { stmt->accept(*this); }});
     last_type_->set_symbol_table_idx(idx);
     loop.set_sema_type(*last_type_.take());
 }
@@ -177,8 +179,9 @@ MAKE_PREFIX_COLLECTOR(ast::DereferenceExpression)
 MAKE_PREFIX_COLLECTOR(ast::UnaryExpression)
 
 auto SymbolCollector::visit(const ast::StructExpression& struct_expr) -> void {
-    const auto scope_idx = visit_scope(
-        struct_expr, TypeKind::STRUCT, [this](const auto& field) { field->accept(*this); });
+    const auto scope_idx =
+        visit_scopes(TypeKind::STRUCT,
+                     IterPair{struct_expr, [this](const auto& field) { field->accept(*this); }});
     last_type_->set_symbol_table_idx(scope_idx);
     struct_expr.set_sema_type(*last_type_);
 }
@@ -189,18 +192,19 @@ auto SymbolCollector::visit(const ast::UnionField& field) -> void {
 }
 
 auto SymbolCollector::visit(const ast::UnionExpression& union_expr) -> void {
-    const auto scope_idx =
-        visit_scope(TypeKind::UNION,
-                    IterPair{union_expr.get_fields(), [this](const auto& field) { visit(field); }},
-                    IterPair{union_expr.get_members(), [this](const auto& decl) { visit(*decl); }});
+    const auto scope_idx = visit_scopes(
+        TypeKind::UNION,
+        IterPair{union_expr.get_fields(), [this](const auto& field) { visit(field); }},
+        IterPair{union_expr.get_members(), [this](const auto& decl) { visit(*decl); }});
     last_type_->set_symbol_table_idx(scope_idx);
     union_expr.set_sema_type(*last_type_);
 }
 
 auto SymbolCollector::visit(const ast::WhileLoopExpression& while_expr) -> void {
     const auto g   = in_loop_scope_.guard();
-    const auto idx = visit_scope(
-        while_expr.get_block(), TypeKind::BLOCK, [this](const auto& stmt) { stmt->accept(*this); });
+    const auto idx = visit_scopes(
+        TypeKind::BLOCK,
+        IterPair{while_expr.get_block(), [this](const auto& stmt) { stmt->accept(*this); }});
     if (while_expr.has_non_break()) { while_expr.get_non_break().accept(*this); }
 
     last_type_->set_symbol_table_idx(idx);
@@ -214,8 +218,8 @@ auto SymbolCollector::visit(const ast::BlockStatement& block) -> void {
                                   block.get_token());
     }
 
-    const auto scope_idx =
-        visit_scope(block, TypeKind::BLOCK, [this](const auto& stmt) { stmt->accept(*this); });
+    const auto scope_idx = visit_scopes(
+        TypeKind::BLOCK, IterPair{block, [this](const auto& stmt) { stmt->accept(*this); }});
     last_type_->set_symbol_table_idx(scope_idx);
     block.set_sema_type(*last_type_);
 }
@@ -316,8 +320,9 @@ auto SymbolCollector::visit(const ast::TestStatement& test) -> void {
     }
 
     // Not a symbol so don't push to the table, track in node instead
-    const auto scope_idx = visit_scope(
-        test.get_block(), TypeKind::BLOCK, [this](const auto& decl) { decl->accept(*this); });
+    const auto scope_idx =
+        visit_scopes(TypeKind::BLOCK,
+                     IterPair{test.get_block(), [this](const auto& decl) { decl->accept(*this); }});
     last_type_->set_symbol_table_idx(scope_idx);
     test.set_sema_type(*last_type_.take());
 }

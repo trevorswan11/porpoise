@@ -11,8 +11,7 @@ namespace mods      = helpers::type_modifiers;
 TEST_CASE("Struct hollow types") {
     auto analyzer = helpers::test_collector(
         "const a := struct { const foo := bar; };",
-        false,
-        std::tuple{
+        helpers::TableEntry{
             "a",
             ast::DeclStatement{
                 syntax::Token{keywords::CONSTANT},
@@ -22,9 +21,10 @@ TEST_CASE("Struct hollow types") {
                     syntax::Token{keywords::STRUCT}, helpers::make_decls(helpers::foo_bar_decl())),
                 ast::DeclModifiers::CONSTANT,
             },
+            opt::none,
             sema::types::Key{sema::TypeKind::STRUCT, false, 1}});
 
-    helpers::test_hollow_symbols(analyzer, std::tuple{"foo", helpers::foo_bar_decl});
+    helpers::test_hollow_symbols(analyzer, helpers::TableEntryMaker{"foo", helpers::foo_bar_decl});
 }
 
 TEST_CASE("Enum hollow types") {
@@ -32,8 +32,7 @@ TEST_CASE("Enum hollow types") {
 
     auto analyzer = helpers::test_collector(
         "const a := enum {b};",
-        false,
-        std::tuple{
+        helpers::TableEntry{
             "a",
             ast::DeclStatement{
                 syntax::Token{keywords::CONSTANT},
@@ -46,8 +45,10 @@ TEST_CASE("Enum hollow types") {
                     helpers::make_decls()),
                 ast::DeclModifiers::CONSTANT,
             },
+            opt::none,
             sema::types::Key{sema::TypeKind::ENUM, false, 1}});
-    helpers::test_hollow_symbols(analyzer, std::tuple{"b", enumeration});
+    helpers::test_hollow_symbols(analyzer,
+                                 helpers::TableEntryMaker<ast::Enumeration>{"b", enumeration});
 }
 
 TEST_CASE("Enum hollow types with member") {
@@ -64,8 +65,7 @@ TEST_CASE("Enum hollow types with member") {
 
     auto analyzer = helpers::test_collector(
         "const a := enum {b, static const c := 2; };",
-        false,
-        std::tuple{
+        helpers::TableEntry{
             "a",
             ast::DeclStatement{
                 syntax::Token{keywords::CONSTANT},
@@ -78,9 +78,12 @@ TEST_CASE("Enum hollow types with member") {
                     helpers::make_decls(member())),
                 ast::DeclModifiers::CONSTANT,
             },
+            opt::none,
             sema::types::Key{sema::TypeKind::ENUM, false, 1}});
 
-    helpers::test_hollow_symbols(analyzer, std::tuple{"b", enumeration}, std::tuple{"c", member});
+    helpers::test_hollow_symbols(analyzer,
+                                 helpers::TableEntryMaker<ast::Enumeration>{"b", enumeration},
+                                 helpers::TableEntryMaker<ast::DeclStatement>{"c", member});
 }
 
 TEST_CASE("Union hollow types") {
@@ -91,8 +94,7 @@ TEST_CASE("Union hollow types") {
 
     auto analyzer = helpers::test_collector(
         "const a := union { b: i32 };",
-        false,
-        std::tuple{
+        helpers::TableEntry{
             "a",
             ast::DeclStatement{
                 syntax::Token{keywords::CONSTANT},
@@ -104,8 +106,9 @@ TEST_CASE("Union hollow types") {
                     helpers::make_decls()),
                 ast::DeclModifiers::CONSTANT,
             },
+            opt::none,
             sema::types::Key{sema::TypeKind::UNION, false, 1}});
-    helpers::test_hollow_symbols(analyzer, std::tuple{"b", field});
+    helpers::test_hollow_symbols(analyzer, helpers::TableEntryMaker<ast::UnionField>{"b", field});
 }
 
 TEST_CASE("Union hollow types with member") {
@@ -126,8 +129,7 @@ TEST_CASE("Union hollow types with member") {
 
     auto analyzer = helpers::test_collector(
         "const a := union { b: i32, static const c := 2; };",
-        false,
-        std::tuple{
+        helpers::TableEntry{
             "a",
             ast::DeclStatement{
                 syntax::Token{keywords::CONSTANT},
@@ -139,16 +141,18 @@ TEST_CASE("Union hollow types with member") {
                     helpers::make_decls(member())),
                 ast::DeclModifiers::CONSTANT,
             },
+            opt::none,
             sema::types::Key{sema::TypeKind::UNION, false, 1}});
 
-    helpers::test_hollow_symbols(analyzer, std::tuple{"b", field}, std::tuple{"c", member});
+    helpers::test_hollow_symbols(analyzer,
+                                 helpers::TableEntryMaker<ast::UnionField>{"b", field},
+                                 helpers::TableEntryMaker<ast::DeclStatement>{"c", member});
 }
 
 TEST_CASE("Function hollow types") {
     auto analyzer = helpers::test_collector(
         "const a := fn(&self, c: type): void { const foo := bar; };",
-        false,
-        std::tuple{
+        helpers::TableEntry{
             "a",
             ast::DeclStatement{
                 syntax::Token{keywords::CONSTANT},
@@ -164,17 +168,19 @@ TEST_CASE("Function hollow types") {
                     helpers::make_block_stmt<true>(helpers::foo_bar_decl())),
                 ast::DeclModifiers::CONSTANT,
             },
+            opt::none,
             sema::types::Key{sema::TypeKind::FUNCTION, false, 1}});
 
     helpers::test_hollow_symbols(
         analyzer,
-        std::tuple{"foo", helpers::foo_bar_decl},
-        std::tuple{"self",
-                   [] { return ast::SelfParameter{mods::REF, helpers::make_ident("self")}; }},
-        std::tuple{"c", [] {
-                       return ast::FunctionParameter{helpers::make_ident("c"),
-                                                     {mods::BASE, helpers::make_ident("type")}};
-                   }});
+        helpers::TableEntryMaker{"foo", helpers::foo_bar_decl},
+        helpers::TableEntryMaker<ast::SelfParameter>{
+            "self", [] { return ast::SelfParameter{mods::REF, helpers::make_ident("self")}; }},
+        helpers::TableEntryMaker<ast::FunctionParameter>{
+            "c", [] {
+                return ast::FunctionParameter{helpers::make_ident("c"),
+                                              {mods::BASE, helpers::make_ident("type")}};
+            }});
 }
 
 TEST_CASE("Shadowing member/field declarations") {

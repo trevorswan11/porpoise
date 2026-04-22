@@ -13,4 +13,4 @@ struct Derived : Base {
     i32 y = 20;
 };
 
-} // namespace porpoise::tests
+} // namespace porpoise::tests::helpers

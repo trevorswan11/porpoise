@@ -59,7 +59,7 @@ TEST_CASE("Box invariant enforcement") {
 }
 
 TEST_CASE("Box upcasting") {
-    auto           d = mem::make_box<helpers::Derived>();
+    auto                    d = mem::make_box<helpers::Derived>();
     mem::Box<helpers::Base> b = std::move(d);
     CHECK(b->x == 10);
 }

@@ -45,7 +45,7 @@ class SymbolCollector : public ast::Visitor {
 
   private:
     template <typename... IterPairs>
-    [[nodiscard]] auto visit_scope(TypeKind kind, IterPairs&&... pairs) -> usize {
+    [[nodiscard]] auto visit_scopes(TypeKind kind, IterPairs&&... pairs) -> usize {
         const auto  new_idx = registry_.create();
         const Scope s{table_stack_, new_idx, table_idx_};
         (..., [&] {
@@ -53,11 +53,6 @@ class SymbolCollector : public ast::Visitor {
         }());
         last_type_.emplace(pool_[{kind, false, new_idx}]);
         return new_idx;
-    }
-
-    template <typename T, typename VisitorFn>
-    [[nodiscard]] auto visit_scope(const T& expr, TypeKind kind, VisitorFn fn) -> usize {
-        return visit_scope(kind, IterPair{expr, fn});
     }
 
     // Returns false if the passed result was an error type

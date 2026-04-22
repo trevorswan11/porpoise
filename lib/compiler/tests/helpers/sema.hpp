@@ -1,7 +1,6 @@
 #pragma once
 
 #include <tuple>
-#include <type_traits>
 
 #include <catch2/catch_test_macros.hpp>
 
@@ -22,6 +21,13 @@ namespace porpoise::tests::helpers {
 // Analyzes the assumed-syntactically-valid input and returns the analyzer and parent table index.
 [[nodiscard]] auto analyze(std::string_view input) -> std::pair<sema::Analyzer, usize>;
 
+template <ast::LeafNode N> struct TableEntry {
+    std::string_view              name;
+    N                             node;
+    opt::Option<sema::types::Key> node_type_key{opt::none};
+    opt::Option<sema::types::Key> symbol_type_key{opt::none};
+};
+
 // Verifies that the collectors output matches the provided pairs
 template <typename... KVs>
 auto test_collector(std::string_view input, bool is_module, KVs&&... kvs) -> sema::Analyzer {
@@ -32,20 +38,32 @@ auto test_collector(std::string_view input, bool is_module, KVs&&... kvs) -> sem
     CHECK(actual.is_module() == is_module);
 
     (..., [&] mutable {
-        const auto opt = actual.get_opt(std::get<0>(kvs));
+        const auto opt = actual.get_opt(kvs.name);
         REQUIRE(opt);
-        sema::Symbol expected{std::get<0>(kvs), &std::get<1>(kvs)};
 
-        // A third tuple param is allowed to be a type
-        if constexpr (std::tuple_size<std::remove_cvref_t<decltype(kvs)>>{} > 2) {
-            const auto type = analyzer.get_pool().get(std::get<2>(kvs));
+        // The node can be an emplaced type if provided
+        if (kvs.node_type_key) {
+            const auto type = analyzer.get_pool().get(*kvs.node_type_key);
+            REQUIRE(type);
+            kvs.node.set_sema_type(*type);
+        }
+        sema::Symbol expected{kvs.name, &kvs.node};
+
+        // The symbol's upper-level type can be set as well
+        if (kvs.symbol_type_key) {
+            const auto type = analyzer.get_pool().get(*kvs.symbol_type_key);
             REQUIRE(type);
             expected.emplace_type(*type);
         }
-
         CHECK(*opt == expected);
     }());
     return std::move(analyzer);
+}
+
+// Assumes that the input is not inside of a module
+template <typename... KVs>
+auto test_collector(std::string_view input, KVs&&... kvs) -> sema::Analyzer {
+    return test_collector(input, false, std::forward<KVs>(kvs)...);
 }
 
 // Tests a semantically failing input against the expected generated errors
@@ -75,17 +93,49 @@ auto test_collector_fail(std::string_view failing, Ds&&... expected_diagnostics)
 auto        common_decl(std::string_view name, std::string_view assign) -> ast::DeclStatement;
 inline auto foo_bar_decl() -> ast::DeclStatement { return common_decl("foo", "bar"); }
 
+// A helper for creating non-node symbols
+template <typename N> struct TableEntryMaker {
+    std::string_view name;
+    N (*node_maker)();
+    opt::Option<sema::types::Key> symbol_type_key{opt::none};
+};
+
+// A helper for creating leaf-node-based symbols
+template <ast::LeafNode N> struct TableEntryMaker<N> {
+    std::string_view name;
+    N (*node_maker)();
+    opt::Option<sema::types::Key> node_type_key{opt::none};
+    opt::Option<sema::types::Key> symbol_type_key{opt::none};
+};
+
+template <typename T> struct is_table_node_maker : std::false_type {};
+template <ast::LeafNode N> struct is_table_node_maker<TableEntryMaker<N>> : std::true_type {};
+template <typename T> constexpr bool is_table_node_maker_v = is_table_node_maker<T>::value;
+
 // Shallowly checks the symbols in the inner scope of a statement
-template <typename... MakerPair>
-auto test_hollow_symbols(sema::Analyzer& analyzer, MakerPair&&... pair) -> void {
+template <typename... Makers>
+auto test_hollow_symbols(sema::Analyzer& analyzer, Makers&&... makers) -> void {
     auto& registry = analyzer.get_registry();
     REQUIRE(registry.size() == 2);
-    CHECK(registry.get(1).size() == sizeof...(pair));
+    CHECK(registry.get(1).size() == sizeof...(makers));
 
     (..., [&] {
-        const auto         name          = std::get<0>(pair);
-        const auto         expected_decl = std::get<1>(pair)();
-        const sema::Symbol expected{name, &expected_decl};
+        const auto  name          = makers.name;
+        const auto& expected_node = makers.node_maker();
+        if constexpr (is_table_node_maker_v<std::remove_cvref_t<decltype(makers)>>) {
+            if (makers.node_type_key) {
+                const auto type = analyzer.get_pool().get(*makers.node_type_key);
+                REQUIRE(type);
+                expected_node.set_sema_type(*type);
+            }
+        }
+        sema::Symbol expected{name, &expected_node};
+
+        if (makers.symbol_type_key) {
+            const auto type = analyzer.get_pool().get(*makers.symbol_type_key);
+            REQUIRE(type);
+            expected.emplace_type(*type);
+        }
         CHECK(expected == registry.get_from(1, name));
     }());
 }
