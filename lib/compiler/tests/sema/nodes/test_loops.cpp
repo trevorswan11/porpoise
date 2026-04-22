@@ -37,8 +37,8 @@ TEST_CASE("For loop collection") {
             sema::types::Key{sema::TypeKind::BLOCK, false, 1}});
 
     helpers::test_hollow_symbols(analyzer,
-                                 helpers::TableEntryMaker<ast::ForLoopCapture>{"i", capture},
-                                 helpers::TableEntryMaker{"foo", helpers::foo_bar_decl});
+                                 helpers::TableEntry{"i", capture()},
+                                 helpers::TableEntry{"foo", helpers::foo_bar_decl()});
 }
 
 } // namespace porpoise::tests

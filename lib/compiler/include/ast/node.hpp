@@ -112,11 +112,16 @@ class Node {
 
     MAKE_AST_SEMA_TYPE_FNS()
 
-    // Compares two nodes at the AST level, ignoring semantic differences.
     friend auto operator==(const Node& lhs, const Node& rhs) noexcept -> bool {
         if (lhs.kind_ != rhs.kind_) { return false; }
         if (lhs.start_token_.type != rhs.start_token_.type) { return false; }
         if (lhs.start_token_.slice != rhs.start_token_.slice) { return false; }
+        if (!opt::safe_eq<sema::Type&>(
+                lhs.sema_type_, rhs.sema_type_, [](const sema::Type& a, const sema::Type& b) {
+                    return &a == &b;
+                })) {
+            return false;
+        }
         return lhs.is_equal(rhs);
     }
 

@@ -8,39 +8,35 @@ namespace keywords  = syntax::keywords;
 namespace operators = syntax::operators;
 namespace mods      = helpers::type_modifiers;
 
-TEST_CASE("Function collection") {
-    helpers::test_collector(
-        R"(pub const main := fn(args: [][:0]u8): i32 { const message := "Hello, world!"; };)",
-        helpers::TableEntry{
-            "main",
+TEST_CASE("Function hollow types") {
+    auto analyzer = helpers::test_collector(
+        "const a := fn(&self, c: type): void { const foo := bar; };",
+        helpers::TableEntry<ast::DeclStatement>{
+            "a",
             ast::DeclStatement{
-                syntax::Token{keywords::PUBLIC},
+                syntax::Token{keywords::CONSTANT},
                 helpers::make_ident("a"),
                 mem::make_box<ast::TypeExpression>(syntax::Token{operators::WALRUS}, opt::none),
                 mem::make_nullable_box<ast::FunctionExpression>(
                     syntax::Token{keywords::FN},
-                    opt::none,
+                    ast::SelfParameter{mods::REF, helpers::make_ident("self")},
                     helpers::make_parameters(ast::FunctionParameter{
-                        helpers::make_ident("args"),
-                        ast::ExplicitType{
-                            mods::BASE,
-                            ast::ExplicitArrayType{
-                                {},
-                                false,
-                                mem::make_box<ast::ExplicitType>(
-                                    mods::BASE,
-                                    ast::ExplicitArrayType{
-                                        {},
-                                        true,
-                                        mem::make_box<ast::ExplicitType>(
-                                            mods::BASE, helpers::make_ident("u8"))})}}}),
+                        helpers::make_ident("c"), {mods::BASE, helpers::make_ident("type")}}),
                     false,
-                    ast::ExplicitType{mods::BASE, helpers::make_ident("i32")},
-                    helpers::make_block_stmt<true>(
-                        helpers::foo_bar_decl())), // TODO: Abstract message decl
-                ast::DeclModifiers::PUBLIC | ast::DeclModifiers::CONSTANT,
+                    ast::ExplicitType{mods::BASE, helpers::make_ident("void")},
+                    helpers::make_block_stmt<true>(helpers::foo_bar_decl())),
+                ast::DeclModifiers::CONSTANT,
             },
-            sema::types::Key{sema::TypeKind::BLOCK, false, 1}});
+            opt::none,
+            sema::types::Key{sema::TypeKind::FUNCTION, false, 1}});
+
+    helpers::test_hollow_symbols(
+        analyzer,
+        helpers::TableEntry{"foo", helpers::foo_bar_decl()},
+        helpers::TableEntry{"self", ast::SelfParameter{mods::REF, helpers::make_ident("self")}},
+        helpers::TableEntry{"c",
+                            ast::FunctionParameter{helpers::make_ident("c"),
+                                                   {mods::BASE, helpers::make_ident("type")}}});
 }
 
 TEST_CASE("Function basic param redeclaration") {

@@ -11,7 +11,7 @@ namespace mods      = helpers::type_modifiers;
 TEST_CASE("Struct hollow types") {
     auto analyzer = helpers::test_collector(
         "const a := struct { const foo := bar; };",
-        helpers::TableEntry{
+        helpers::TableEntry<ast::DeclStatement>{
             "a",
             ast::DeclStatement{
                 syntax::Token{keywords::CONSTANT},
@@ -24,7 +24,7 @@ TEST_CASE("Struct hollow types") {
             opt::none,
             sema::types::Key{sema::TypeKind::STRUCT, false, 1}});
 
-    helpers::test_hollow_symbols(analyzer, helpers::TableEntryMaker{"foo", helpers::foo_bar_decl});
+    helpers::test_hollow_symbols(analyzer, helpers::TableEntry{"foo", helpers::foo_bar_decl()});
 }
 
 TEST_CASE("Enum hollow types") {
@@ -32,7 +32,7 @@ TEST_CASE("Enum hollow types") {
 
     auto analyzer = helpers::test_collector(
         "const a := enum {b};",
-        helpers::TableEntry{
+        helpers::TableEntry<ast::DeclStatement>{
             "a",
             ast::DeclStatement{
                 syntax::Token{keywords::CONSTANT},
@@ -48,7 +48,7 @@ TEST_CASE("Enum hollow types") {
             opt::none,
             sema::types::Key{sema::TypeKind::ENUM, false, 1}});
     helpers::test_hollow_symbols(analyzer,
-                                 helpers::TableEntryMaker<ast::Enumeration>{"b", enumeration});
+                                 helpers::TableEntry<ast::Enumeration>{"b", enumeration()});
 }
 
 TEST_CASE("Enum hollow types with member") {
@@ -65,7 +65,7 @@ TEST_CASE("Enum hollow types with member") {
 
     auto analyzer = helpers::test_collector(
         "const a := enum {b, static const c := 2; };",
-        helpers::TableEntry{
+        helpers::TableEntry<ast::DeclStatement>{
             "a",
             ast::DeclStatement{
                 syntax::Token{keywords::CONSTANT},
@@ -79,11 +79,12 @@ TEST_CASE("Enum hollow types with member") {
                 ast::DeclModifiers::CONSTANT,
             },
             opt::none,
+            sema::types::Key{sema::TypeKind::ENUM, false, 1},
             sema::types::Key{sema::TypeKind::ENUM, false, 1}});
 
     helpers::test_hollow_symbols(analyzer,
-                                 helpers::TableEntryMaker<ast::Enumeration>{"b", enumeration},
-                                 helpers::TableEntryMaker<ast::DeclStatement>{"c", member});
+                                 helpers::TableEntry<ast::Enumeration>{"b", enumeration()},
+                                 helpers::TableEntry{"c", member()});
 }
 
 TEST_CASE("Union hollow types") {
@@ -94,7 +95,7 @@ TEST_CASE("Union hollow types") {
 
     auto analyzer = helpers::test_collector(
         "const a := union { b: i32 };",
-        helpers::TableEntry{
+        helpers::TableEntry<ast::DeclStatement>{
             "a",
             ast::DeclStatement{
                 syntax::Token{keywords::CONSTANT},
@@ -108,7 +109,7 @@ TEST_CASE("Union hollow types") {
             },
             opt::none,
             sema::types::Key{sema::TypeKind::UNION, false, 1}});
-    helpers::test_hollow_symbols(analyzer, helpers::TableEntryMaker<ast::UnionField>{"b", field});
+    helpers::test_hollow_symbols(analyzer, helpers::TableEntry{"b", field()});
 }
 
 TEST_CASE("Union hollow types with member") {
@@ -129,7 +130,7 @@ TEST_CASE("Union hollow types with member") {
 
     auto analyzer = helpers::test_collector(
         "const a := union { b: i32, static const c := 2; };",
-        helpers::TableEntry{
+        helpers::TableEntry<ast::DeclStatement>{
             "a",
             ast::DeclStatement{
                 syntax::Token{keywords::CONSTANT},
@@ -144,43 +145,8 @@ TEST_CASE("Union hollow types with member") {
             opt::none,
             sema::types::Key{sema::TypeKind::UNION, false, 1}});
 
-    helpers::test_hollow_symbols(analyzer,
-                                 helpers::TableEntryMaker<ast::UnionField>{"b", field},
-                                 helpers::TableEntryMaker<ast::DeclStatement>{"c", member});
-}
-
-TEST_CASE("Function hollow types") {
-    auto analyzer = helpers::test_collector(
-        "const a := fn(&self, c: type): void { const foo := bar; };",
-        helpers::TableEntry{
-            "a",
-            ast::DeclStatement{
-                syntax::Token{keywords::CONSTANT},
-                helpers::make_ident("a"),
-                mem::make_box<ast::TypeExpression>(syntax::Token{operators::WALRUS}, opt::none),
-                mem::make_nullable_box<ast::FunctionExpression>(
-                    syntax::Token{keywords::FN},
-                    ast::SelfParameter{mods::REF, helpers::make_ident("self")},
-                    helpers::make_parameters(ast::FunctionParameter{
-                        helpers::make_ident("c"), {mods::BASE, helpers::make_ident("type")}}),
-                    false,
-                    ast::ExplicitType{mods::BASE, helpers::make_ident("void")},
-                    helpers::make_block_stmt<true>(helpers::foo_bar_decl())),
-                ast::DeclModifiers::CONSTANT,
-            },
-            opt::none,
-            sema::types::Key{sema::TypeKind::FUNCTION, false, 1}});
-
     helpers::test_hollow_symbols(
-        analyzer,
-        helpers::TableEntryMaker{"foo", helpers::foo_bar_decl},
-        helpers::TableEntryMaker<ast::SelfParameter>{
-            "self", [] { return ast::SelfParameter{mods::REF, helpers::make_ident("self")}; }},
-        helpers::TableEntryMaker<ast::FunctionParameter>{
-            "c", [] {
-                return ast::FunctionParameter{helpers::make_ident("c"),
-                                              {mods::BASE, helpers::make_ident("type")}};
-            }});
+        analyzer, helpers::TableEntry{"b", field()}, helpers::TableEntry{"c", member()});
 }
 
 TEST_CASE("Shadowing member/field declarations") {
