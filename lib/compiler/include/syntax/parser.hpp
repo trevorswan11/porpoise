@@ -152,17 +152,19 @@ class Parser {
     auto get_current_precedence() const noexcept -> std::pair<Precedence, opt::Option<Binding>>;
     auto get_peek_precedence() const noexcept -> std::pair<Precedence, opt::Option<Binding>>;
 
-    [[nodiscard]] auto parse_statement() -> Result<mem::Box<ast::Statement>, ParserDiagnostic>;
+    [[nodiscard]] auto parse_statement(bool require_semicolon)
+        -> Result<mem::Box<ast::Statement>, ParserDiagnostic>;
     [[nodiscard]] auto parse_expression(Precedence precedence = Precedence::LOWEST)
         -> Result<mem::Box<ast::Expression>, ParserDiagnostic>;
 
     // Assumes that the current token is looking at the start of the expression.
     // The resulting statement can only be a jump, block, or expression statement.
-    [[nodiscard]] auto parse_restricted_statement(ParserError error)
+    [[nodiscard]] auto parse_restricted_statement(ParserError error, bool require_semicolon = true)
         -> Result<mem::Box<ast::Statement>, ParserDiagnostic>;
 
     // Parses a restricted statement only if an else token is currently looked at.
-    [[nodiscard]] auto try_parse_restricted_alternate(ParserError error)
+    [[nodiscard]] auto try_parse_restricted_alternate(ParserError error,
+                                                      bool        require_semicolon = true)
         -> Result<mem::NullableBox<ast::Statement>, ParserDiagnostic>;
 
     // Parses a member declaration list for user-defined types

@@ -19,7 +19,7 @@ class ExpressionStatement : public StmtBase<ExpressionStatement> {
     MAKE_MOVE_CONSTRUCTABLE_ONLY(ExpressionStatement)
 
     auto                      accept(Visitor& v) const -> void override;
-    [[nodiscard]] static auto parse(syntax::Parser& parser)
+    [[nodiscard]] static auto parse(syntax::Parser& parser, bool require_semicolon)
         -> Result<mem::Box<Statement>, syntax::ParserDiagnostic>;
 
     MAKE_GETTER(expression, const Expression&, *)

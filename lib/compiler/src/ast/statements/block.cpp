@@ -15,7 +15,7 @@ auto BlockStatement::parse(syntax::Parser& parser, bool allow_imports)
     while (!parser.peek_token_is(syntax::TokenType::RBRACE) &&
            !parser.peek_token_is(syntax::TokenType::END)) {
         parser.advance();
-        auto inner_stmt = TRY(parser.parse_statement());
+        auto inner_stmt = TRY(parser.parse_statement(true));
 
         // Import statements are usually only allowed at the top level
         if (!allow_imports && inner_stmt->is<ImportStatement>()) {

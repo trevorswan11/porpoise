@@ -92,7 +92,7 @@ auto MatchExpression::parse(syntax::Parser& parser)
         // The resulting statement must be restricted like an if branch
         parser.advance();
         auto consequence =
-            TRY(parser.parse_restricted_statement(syntax::ParserError::ILLEGAL_MATCH_ARM));
+            TRY(parser.parse_restricted_statement(syntax::ParserError::ILLEGAL_MATCH_ARM, false));
         arms.emplace_back(std::move(pattern), std::move(capture), std::move(consequence));
     }
     TRY(parser.expect_peek(syntax::TokenType::RBRACE));

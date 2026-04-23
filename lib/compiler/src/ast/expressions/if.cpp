@@ -29,9 +29,9 @@ auto IfExpression::parse(syntax::Parser& parser)
     // The consequence and alternate are trivially handled by restricted statement parsers
     parser.advance();
     auto consequence =
-        TRY(parser.parse_restricted_statement(syntax::ParserError::ILLEGAL_IF_BRANCH));
+        TRY(parser.parse_restricted_statement(syntax::ParserError::ILLEGAL_IF_BRANCH, false));
     auto alternate =
-        TRY(parser.try_parse_restricted_alternate(syntax::ParserError::ILLEGAL_IF_BRANCH));
+        TRY(parser.try_parse_restricted_alternate(syntax::ParserError::ILLEGAL_IF_BRANCH, false));
 
     return mem::make_box<IfExpression>(start_token,
                                        constexpr_condition,

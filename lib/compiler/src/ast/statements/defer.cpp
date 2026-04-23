@@ -17,7 +17,7 @@ auto DeferStatement::parse(syntax::Parser& parser)
         return make_parser_err(syntax::ParserError::DEFER_MISSING_DEFERREE, start_token);
     }
     parser.advance();
-    auto stmt = TRY(parser.parse_statement());
+    auto stmt = TRY(parser.parse_statement(true));
 
     // The statement has different restrictions from expression alternates
     if (!stmt->any<ExpressionStatement, DiscardStatement, BlockStatement>()) {

@@ -43,7 +43,7 @@ auto Parser::consume() -> std::pair<ast::AST, Diagnostics> {
 
         // Comments are entirely discarded from the tree
         if (!current_token_is(TokenType::COMMENT)) {
-            auto stmt = parse_statement();
+            auto stmt = parse_statement(true);
             if (stmt) {
                 ast.emplace_back(std::move(*stmt));
             } else {
@@ -100,7 +100,8 @@ auto Parser::get_peek_precedence() const noexcept -> std::pair<Precedence, opt::
         .value_or(std::pair{Precedence::LOWEST, opt::none});
 }
 
-auto Parser::parse_statement() -> Result<mem::Box<ast::Statement>, ParserDiagnostic> {
+auto Parser::parse_statement(bool require_semicolon)
+    -> Result<mem::Box<ast::Statement>, ParserDiagnostic> {
     if (current_token_.is_decl_token()) { return ast::DeclStatement::parse(*this); }
     switch (current_token_.type) {
     case TokenType::BREAK:
@@ -113,7 +114,7 @@ auto Parser::parse_statement() -> Result<mem::Box<ast::Statement>, ParserDiagnos
     case TokenType::MODULE:     return ast::ModuleStatement::parse(*this);
     case TokenType::USING:      return ast::UsingStatement::parse(*this);
     case TokenType::TEST:       return ast::TestStatement::parse(*this);
-    default:                    return ast::ExpressionStatement::parse(*this);
+    default:                    return ast::ExpressionStatement::parse(*this, require_semicolon);
     }
 }
 
@@ -143,9 +144,9 @@ auto Parser::parse_expression(Precedence precedence)
     return lhs_expression;
 }
 
-[[nodiscard]] auto Parser::parse_restricted_statement(ParserError error)
+[[nodiscard]] auto Parser::parse_restricted_statement(ParserError error, bool require_semicolon)
     -> Result<mem::Box<ast::Statement>, ParserDiagnostic> {
-    auto clause = TRY(parse_statement());
+    auto clause = TRY(parse_statement(require_semicolon));
 
     // The clause can only be a jump, block, or expression statement
     if (!clause->any<ast::ExpressionStatement, ast::JumpStatement, ast::BlockStatement>()) {
@@ -154,12 +155,12 @@ auto Parser::parse_expression(Precedence precedence)
     return clause;
 }
 
-[[nodiscard]] auto Parser::try_parse_restricted_alternate(ParserError error)
+[[nodiscard]] auto Parser::try_parse_restricted_alternate(ParserError error, bool require_semicolon)
     -> Result<mem::NullableBox<ast::Statement>, ParserDiagnostic> {
     if (peek_token_is(TokenType::ELSE)) {
         // Advance twice to actually look at the statement's first token
         advance(2);
-        return mem::nullable_box_from(TRY(parse_restricted_statement(error)));
+        return mem::nullable_box_from(TRY(parse_restricted_statement(error, require_semicolon)));
     }
     return nullptr;
 }
@@ -169,7 +170,7 @@ auto Parser::parse_member_decls(ast::MemberValidator validator)
     ast::Members members;
     while (!peek_token_is(syntax::TokenType::RBRACE) && !peek_token_is(syntax::TokenType::END)) {
         advance();
-        auto member = TRY(parse_statement());
+        auto member = TRY(parse_statement(true));
         if (!member->is<ast::DeclStatement>()) {
             return make_parser_err(syntax::ParserError::INVALID_MEMBER, member->get_token());
         }
