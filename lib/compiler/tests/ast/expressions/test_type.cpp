@@ -25,10 +25,42 @@ auto test_type_expr(std::string_view type_str, ast::ExplicitType&& expected) -> 
 namespace mods = helpers::type_modifiers;
 
 using Parameters = std::vector<ast::FunctionParameter>;
+using Arguments  = std::vector<ast::CallArgument>;
 
-TEST_CASE("Indent type") {
-    helpers::test_type_expr("i32", ast::ExplicitType{mods::BASE, helpers::make_ident("i32")});
-    helpers::test_type_expr("*i32", ast::ExplicitType{mods::PTR, helpers::make_ident("i32")});
+TEST_CASE("Named types") {
+    SECTION("Shallow types") {
+        helpers::test_type_expr("i32", ast::ExplicitType{mods::BASE, helpers::make_ident("i32")});
+        helpers::test_type_expr("*i32", ast::ExplicitType{mods::PTR, helpers::make_ident("i32")});
+
+        const syntax::Token a{syntax::TokenType::IDENT, "a"};
+        helpers::test_type_expr("a()",
+                                ast::ExplicitType{mods::BASE,
+                                                  mem::make_box<ast::CallExpression>(
+                                                      a, helpers::make_ident(a), Arguments{})});
+    }
+
+    SECTION("Scoped types") {
+        const syntax::Token outer{syntax::TokenType::IDENT, "std"};
+        helpers::test_type_expr(
+            "std::Io",
+            ast::ExplicitType{mods::BASE,
+                              mem::make_box<ast::ScopeResolutionExpression>(
+                                  outer, helpers::make_ident(outer), helpers::make_ident("Io"))});
+        helpers::test_type_expr(
+            "*std::Io",
+            ast::ExplicitType{mods::PTR,
+                              mem::make_box<ast::ScopeResolutionExpression>(
+                                  outer, helpers::make_ident(outer), helpers::make_ident("Io"))});
+        helpers::test_type_expr(
+            "std::ArrayList(u8)",
+            ast::ExplicitType{
+                mods::BASE,
+                mem::make_box<ast::CallExpression>(
+                    outer,
+                    mem::make_box<ast::ScopeResolutionExpression>(
+                        outer, helpers::make_ident(outer), helpers::make_ident("ArrayList")),
+                    helpers::make_vector<ast::CallArgument>(helpers::make_ident("u8")))});
+    }
 }
 
 TEST_CASE("Function types") {

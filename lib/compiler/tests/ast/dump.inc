@@ -402,4 +402,26 @@ TestStatement
                 └─ BinaryExpression (EQ)
                     ├─ LHS: IdentifierExpression: a
                     └─ RHS: BoolExpression: true
+DeclStatement (a)
+├─ Modifiers: VARIABLE
+└─ Type: ExplicitType (modifier: BASE)
+    └─ CallExpression
+        ├─ Callee: ScopeResolutionExpression
+        │   ├─ Outer: IdentifierExpression: std
+        │   └─ Inner: IdentifierExpression: ArrayList
+        └─ Arguments:
+            └─ IdentifierExpression: u8 (primitive)
+DeclStatement (a)
+├─ Modifiers: VARIABLE
+└─ Type: ExplicitType (modifier: BASE)
+    └─ ScopeResolutionExpression
+        ├─ Outer: IdentifierExpression: std
+        └─ Inner: IdentifierExpression: Io
+DeclStatement (a)
+├─ Modifiers: VARIABLE
+└─ Type: ExplicitType (modifier: BASE)
+    └─ CallExpression
+        ├─ Callee: IdentifierExpression: List
+        └─ Arguments:
+            └─ IdentifierExpression: i32 (primitive)
 )"

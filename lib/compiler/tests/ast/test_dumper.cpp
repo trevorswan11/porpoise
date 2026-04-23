@@ -54,6 +54,9 @@ constexpr std::string_view input{R"(
     enum : i64 { A = 2l, const b := fn(&self, a: A): C { c; }; };
     const a := {};
     test "dump" { import other; std::testing::expect(a == true); }
+    var a: std::ArrayList(u8);
+    var a: std::Io;
+    var a: List(i32);
 )"};
 
 constexpr std::string_view expected{

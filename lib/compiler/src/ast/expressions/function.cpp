@@ -2,9 +2,11 @@
 
 #include "ast/expressions/function.hpp"
 
+#include "ast/expressions/call.hpp" // IWYU pragma: keep
 #include "ast/expressions/enum.hpp"
 #include "ast/expressions/identifier.hpp"
 #include "ast/expressions/primitive.hpp" // IWYU pragma: keep
+#include "ast/expressions/scope_resolve.hpp"
 #include "ast/expressions/struct.hpp"
 #include "ast/expressions/type.hpp"
 #include "ast/expressions/union.hpp"
