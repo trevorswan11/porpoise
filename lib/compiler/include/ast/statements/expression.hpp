@@ -32,6 +32,8 @@ class ExpressionStatement : public StmtBase<ExpressionStatement> {
 
   private:
     mem::Box<Expression> expression_;
+
+    friend class LabelExpression; // The label expression moves the expression out when parsing
 };
 
 } // namespace porpoise::ast

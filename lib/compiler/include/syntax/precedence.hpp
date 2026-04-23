@@ -22,6 +22,7 @@ enum class Precedence : u8 {
     SCOPE_RESOLUTION = 110,
     GROUP_CALL_IDX   = 120,
     INITIALIZATION   = 130,
+    LABEL            = 130,
 };
 
 struct Binding {

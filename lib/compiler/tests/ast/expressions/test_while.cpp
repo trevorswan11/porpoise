@@ -39,7 +39,7 @@ TEST_CASE("While with else") {
             {},
             helpers::make_expr_block_stmt(helpers::ident_from("a")),
             mem::make_nullable_box<ast::ReturnStatement>(syntax::Token{keywords::RETURN},
-                                                       helpers::make_ident<true>("b"))});
+                                                         helpers::make_ident<true>("b"))});
 }
 
 TEST_CASE("Full while loop") {
@@ -55,7 +55,7 @@ TEST_CASE("Full while loop") {
                 helpers::make_primitive<ast::I32Expression>("1")),
             helpers::make_expr_block_stmt(helpers::ident_from("a")),
             mem::make_nullable_box<ast::ReturnStatement>(syntax::Token{keywords::RETURN},
-                                                       helpers::make_ident<true>("b"))});
+                                                         helpers::make_ident<true>("b"))});
 }
 
 TEST_CASE("Empty while with continuation") {

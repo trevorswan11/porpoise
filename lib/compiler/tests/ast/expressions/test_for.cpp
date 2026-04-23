@@ -48,7 +48,7 @@ TEST_CASE("Full for loop with else") {
                 ast::ForLoopCapture::Valued{{}, helpers::make_ident("i")}),
             helpers::make_expr_block_stmt(helpers::ident_from("a")),
             mem::make_nullable_box<ast::ReturnStatement>(syntax::Token{keywords::RETURN},
-                                                       helpers::make_ident<true>("b"))});
+                                                         helpers::make_ident<true>("b"))});
 }
 
 TEST_CASE("Non-terminated iterables") {

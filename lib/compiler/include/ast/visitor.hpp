@@ -26,7 +26,7 @@ namespace porpoise::ast {
     X(RangeExpression)           \
     X(Initializer)               \
     X(InitializerExpression)     \
-    X(LabelExpression)     \
+    X(LabelExpression)           \
     X(MatchArm)                  \
     X(MatchExpression)           \
     X(ReferenceExpression)       \

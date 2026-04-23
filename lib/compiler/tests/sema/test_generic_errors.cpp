@@ -28,13 +28,14 @@ TEST_CASE("Semantically illegal statements") {
                                                   sema::Error::ILLEGAL_CONTROL_FLOW,
                                                   std::pair{1uz, 1uz}});
 
-    helpers::test_collector_fail("break; continue;",
-                                 sema::Diagnostic{"Cannot continue or break outside of a loop or label",
-                                                  sema::Error::ILLEGAL_CONTROL_FLOW,
-                                                  std::pair{1uz, 1uz}},
-                                 sema::Diagnostic{"Cannot continue or break outside of a loop or label",
-                                                  sema::Error::ILLEGAL_CONTROL_FLOW,
-                                                  std::pair{1uz, 8uz}});
+    helpers::test_collector_fail(
+        "break; continue;",
+        sema::Diagnostic{"Cannot continue or break outside of a loop or label",
+                         sema::Error::ILLEGAL_CONTROL_FLOW,
+                         std::pair{1uz, 1uz}},
+        sema::Diagnostic{"Cannot continue or break outside of a loop or label",
+                         sema::Error::ILLEGAL_CONTROL_FLOW,
+                         std::pair{1uz, 8uz}});
 }
 
 using namespace std::string_view_literals;

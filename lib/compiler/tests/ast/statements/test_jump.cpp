@@ -24,9 +24,10 @@ TEST_CASE("Labeled breaks") {
 }
 
 TEST_CASE("Labeled continues") {
-    helpers::test_stmt(
-        "continue :blk;",
-        ast::JumpStatement{syntax::Token{keywords::CONTINUE}, helpers::make_ident<true>("blk"), {}});
+    helpers::test_stmt("continue :blk;",
+                       ast::JumpStatement{syntax::Token{keywords::CONTINUE},
+                                          helpers::make_ident<true>("blk"),
+                                          {}});
 
     helpers::test_stmt("continue :blk 1;",
                        ast::JumpStatement{syntax::Token{keywords::CONTINUE},

@@ -44,6 +44,7 @@ constexpr auto ALL_BINDINGS = [] {
     bindings[TokenType::DOT]            = {Precedence::SCOPE_RESOLUTION};
     bindings[TokenType::COLON_COLON]    = {Precedence::SCOPE_RESOLUTION};
     bindings[TokenType::LBRACE]         = {Precedence::INITIALIZATION};
+    bindings[TokenType::COLON]          = {Precedence::LABEL};
 
     return bindings;
 }();

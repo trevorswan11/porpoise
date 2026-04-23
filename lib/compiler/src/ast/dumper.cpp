@@ -300,7 +300,20 @@ auto ASTDumper::visit(const InitializerExpression& init) -> void {
     }
 }
 
-auto ASTDumper::visit(const ast::LabelExpression&) -> void {}
+auto ASTDumper::visit(const ast::LabelExpression& label) -> void {
+    fmt::println(out_, "Label Expression:");
+    {
+        const Indent::Guard g{indent_, false};
+        fmt::print(out_, "{}Label: ", indent_.current_branch());
+        visit(label.get_name());
+    }
+
+    {
+        const Indent::Guard g{indent_, true};
+        fmt::print(out_, "{}Body:", indent_.current_branch());
+        label.match([this](const auto& b) { visit(*b); });
+    }
+}
 
 auto ASTDumper::visit(const MatchArm& arm) -> void {
     fmt::println(out_, "Arm:");
