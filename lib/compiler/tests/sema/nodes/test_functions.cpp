@@ -4,7 +4,56 @@
 
 namespace porpoise::tests {
 
-namespace helpers {}
+namespace keywords  = syntax::keywords;
+namespace operators = syntax::operators;
+namespace mods      = helpers::type_modifiers;
+
+TEST_CASE("Function hollow types") {
+    const sema::types::Key key{sema::TypeKind::FUNCTION, false, 1};
+    auto                   analyzer = helpers::test_collector(
+        "const a := fn(&self, c: type): void { const foo := bar; };",
+        helpers::TableEntry<ast::DeclStatement>{
+            "a",
+            ast::DeclStatement{
+                syntax::Token{keywords::CONSTANT},
+                helpers::make_ident("a"),
+                mem::make_box<ast::TypeExpression>(syntax::Token{operators::WALRUS}, opt::none),
+                mem::make_nullable_box<ast::FunctionExpression>(
+                    syntax::Token{keywords::FN},
+                    ast::SelfParameter{mods::REF, helpers::make_ident("self")},
+                    helpers::make_parameters(ast::FunctionParameter{
+                        helpers::make_ident("c"), {mods::BASE, helpers::make_ident("type")}}),
+                    false,
+                    ast::ExplicitType{mods::BASE, helpers::make_ident("void")},
+                    helpers::make_block_stmt<true>(helpers::foo_bar_decl())),
+                ast::DeclModifiers::CONSTANT,
+            },
+            opt::none,
+            key,
+            key});
+
+    helpers::test_hollow_symbols(
+        analyzer,
+        helpers::TableEntry{"foo", helpers::foo_bar_decl()},
+        helpers::TableEntry{"self", ast::SelfParameter{mods::REF, helpers::make_ident("self")}},
+        helpers::TableEntry{"c",
+                            ast::FunctionParameter{helpers::make_ident("c"),
+                                                   {mods::BASE, helpers::make_ident("type")}}});
+}
+
+TEST_CASE("Well-placed function control-flow statements") {
+    helpers::analyze_and_validate("pub const main := fn(args: [][:0]u8): void { return; };");
+    helpers::analyze_and_validate("pub const main := fn(args: [][:0]u8): i32 { return 0; };");
+    helpers::analyze_and_validate("pub const main := fn(args: [][:0]u8): i32 { defer a = 2; };");
+}
+
+TEST_CASE("Defer statements respect identifier collection rules") {
+    helpers::test_collector_fail(
+        "pub const main := fn(args: [][:0]u8): i32 { defer { var main: i32; } };",
+        sema::Diagnostic{"Attempt to shadow identifier 'main'. Previous declaration here: [1, 1]",
+                         sema::Error::SHADOWING_DECLARATION,
+                         std::pair{1uz, 53uz}});
+}
 
 TEST_CASE("Function basic param redeclaration") {
     helpers::test_collector_fail(

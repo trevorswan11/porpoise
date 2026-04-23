@@ -11,7 +11,7 @@
 #include "syntax/token.hpp"
 
 #include "memory.hpp"
-#include "optional.hpp"
+#include "option.hpp"
 #include "types.hpp"
 #include "utility.hpp"
 
@@ -112,11 +112,16 @@ class Node {
 
     MAKE_AST_SEMA_TYPE_FNS()
 
-    // Compares two nodes at the AST level, ignoring semantic differences.
     friend auto operator==(const Node& lhs, const Node& rhs) noexcept -> bool {
         if (lhs.kind_ != rhs.kind_) { return false; }
         if (lhs.start_token_.type != rhs.start_token_.type) { return false; }
         if (lhs.start_token_.slice != rhs.start_token_.slice) { return false; }
+        if (!opt::safe_eq<sema::Type&>(
+                lhs.sema_type_, rhs.sema_type_, [](const sema::Type& a, const sema::Type& b) {
+                    return &a == &b;
+                })) {
+            return false;
+        }
         return lhs.is_equal(rhs);
     }
 
@@ -138,15 +143,18 @@ class Node {
         return mem::box_into<To>(std::move(from));
     }
 
+    // Returns the node's name fit for diagnostics, better than a raw magic enum poll
+    [[nodiscard]] auto display_name() const noexcept -> std::string_view;
+
   protected:
     Node(const syntax::Token& tok, NodeKind kind) noexcept : start_token_{tok}, kind_{kind} {}
 
     virtual auto is_equal(const Node& other) const noexcept -> bool = 0;
 
   protected:
-    const syntax::Token           start_token_;
-    const NodeKind                kind_;
-    mutable Optional<sema::Type&> sema_type_;
+    const syntax::Token              start_token_;
+    const NodeKind                   kind_;
+    mutable opt::Option<sema::Type&> sema_type_;
     friend class ExplicitType;
 };
 

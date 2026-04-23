@@ -7,10 +7,10 @@ namespace porpoise::ast {
 auto IndexExpression::accept(Visitor& v) const -> void { v.visit(*this); }
 
 auto IndexExpression::parse(syntax::Parser& parser, mem::Box<Expression> array)
-    -> Expected<mem::Box<Expression>, syntax::ParserDiagnostic> {
+    -> Result<mem::Box<Expression>, syntax::ParserDiagnostic> {
     const auto start_token = array->get_token();
     if (parser.peek_token_is(syntax::TokenType::RBRACKET)) {
-        return make_parser_unexpected(syntax::ParserError::INDEX_MISSING_EXPRESSION, start_token);
+        return make_parser_err(syntax::ParserError::INDEX_MISSING_EXPRESSION, start_token);
     }
     parser.advance();
 

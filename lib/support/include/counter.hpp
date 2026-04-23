@@ -1,5 +1,6 @@
 #pragma once
 
+#include <concepts>
 #include <type_traits>
 
 #include "types.hpp"
@@ -7,18 +8,26 @@
 namespace porpoise {
 
 template <typename T>
-concept Countable = std::is_integral_v<T> && !std::is_same_v<T, bool>;
+concept Countable = std::is_integral_v<T> && !std::same_as<T, bool>;
 
 // A simple counter that provides RAII-based up/down counting
 template <Countable Underlying> class Counter {
   public:
     class Guard {
       public:
-        explicit Guard(Counter& c) : c_{c} { c_.increment(); }
-        ~Guard() { c_.decrement(); }
+        explicit Guard(Counter& c) : c_{&c} { c_->increment(); }
+        ~Guard() {
+            if (c_) { c_->decrement(); }
+        }
+
+        Guard(const Guard&)                    = delete;
+        auto operator=(const Guard&) -> Guard& = delete;
+
+        Guard(Guard&& other) noexcept : c_{other.c_} { other.c_ = nullptr; }
+        auto operator=(const Guard&&) -> Guard& = delete;
 
       private:
-        Counter& c_;
+        Counter* c_;
     };
 
   public:

@@ -5,20 +5,23 @@
 #include <optional>
 #include <type_traits>
 
-namespace porpoise {
+namespace porpoise::opt {
 
-template <typename T> class OptionalRef {
+using None          = std::nullopt_t;
+constexpr None none = std::nullopt;
+
+template <typename T> class Ref {
   public:
     // cppcheck-suppress-begin noExplicitConstructor
-    OptionalRef() noexcept : ptr_{nullptr} {}
-    OptionalRef(std::nullopt_t) noexcept : ptr_{nullptr} {}
-    OptionalRef(T& ref) noexcept : ptr_{&ref} {}
-    OptionalRef(T* ref) noexcept : ptr_{ref} {}
-    OptionalRef(T&&) = delete;
+    Ref() noexcept : ptr_{nullptr} {}
+    Ref(None) noexcept : ptr_{nullptr} {}
+    Ref(T& ref) noexcept : ptr_{&ref} {}
+    Ref(T* ref) noexcept : ptr_{ref} {}
+    Ref(T&&) = delete;
 
     template <typename U>
         requires(std::convertible_to<U*, T*>)
-    OptionalRef(const OptionalRef<U>& other) noexcept : ptr_{other.operator->()} {}
+    Ref(const Ref<U>& other) noexcept : ptr_{other.operator->()} {}
     // cppcheck-suppress-end noExplicitConstructor
 
     [[nodiscard]] auto     has_value() const noexcept -> bool { return ptr_ != nullptr; }
@@ -47,10 +50,30 @@ template <typename T> class OptionalRef {
     T* ptr_;
 };
 
+// A safe, reference-allowable optional type dispatcher
 template <typename T>
-using Optional = std::conditional_t<std::is_reference_v<T>,
-                                    OptionalRef<std::remove_reference_t<T>>,
-                                    std::optional<T>>;
+using Option =
+    std::conditional_t<std::is_reference_v<T>, Ref<std::remove_reference_t<T>>, std::optional<T>>;
+
+template <typename T> struct is_option : std::false_type {};
+template <typename T> struct is_option<std::optional<T>> : std::true_type {};
+template <typename T> struct is_option<Ref<T>> : std::true_type {};
+template <typename T> constexpr bool is_option_v = is_option<T>::value;
+
+// Compares two values, forwarding safety concerns to the comparator.
+template <typename T, typename Comparator>
+auto safe_eq(const Option<T>& a, const Option<T>& b, Comparator cmp) noexcept -> bool {
+    if (a.has_value() != b.has_value()) { return false; }
+    if (!a.has_value()) { return true; }
+    return cmp(*a, *b);
+}
+
+// Compares two values, delegating equality to the default equality operator.
+template <typename T> auto safe_eq(const Option<T>& a, const Option<T>& b) noexcept -> bool {
+    if (a.has_value() != b.has_value()) { return false; }
+    if (!a.has_value()) { return true; }
+    return *a == *b;
+}
 
 #define MAKE_OPTIONAL_UNPACKER(name, ReturnType, member, deref)                                  \
     [[nodiscard]] auto get_##name() const noexcept -> const ReturnType& { return deref member; } \
@@ -65,9 +88,9 @@ class NonNull {
     NonNull(T* ptr) noexcept : ptr_{ptr} {
         assert(ptr_ && "Attempt to create NonNull from nullptr");
     }
-    NonNull(OptionalRef<T> opt) : ptr_{&opt.value()} {}
-    NonNull(std::nullopt_t) = delete;
-    NonNull(T&&)            = delete;
+    NonNull(Ref<T> opt) : ptr_{&opt.value()} {}
+    NonNull(None) = delete;
+    NonNull(T&&)  = delete;
 
     template <typename U>
         requires(std::convertible_to<U*, T*>)
@@ -85,23 +108,4 @@ class NonNull {
     T* ptr_;
 };
 
-namespace optional {
-
-// Compares two values, forwarding safety concerns to the comparator.
-template <typename T, typename Comparator>
-auto safe_eq(const Optional<T>& a, const Optional<T>& b, Comparator cmp) noexcept -> bool {
-    if (a.has_value() != b.has_value()) { return false; }
-    if (!a.has_value()) { return true; }
-    return cmp(*a, *b);
-}
-
-// Compares two values, delegating equality to the default equality operator.
-template <typename T> auto safe_eq(const Optional<T>& a, const Optional<T>& b) noexcept -> bool {
-    if (a.has_value() != b.has_value()) { return false; }
-    if (!a.has_value()) { return true; }
-    return *a == *b;
-}
-
-} // namespace optional
-
-} // namespace porpoise
+} // namespace porpoise::opt

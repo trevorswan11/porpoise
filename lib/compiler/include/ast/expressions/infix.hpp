@@ -24,10 +24,10 @@ template <typename Derived> class InfixExpression : public ExprBase<Derived> {
     auto accept(Visitor& v) const noexcept -> void override { v.visit(Node::as<Derived>(*this)); }
 
     [[nodiscard]] static auto parse(syntax::Parser& parser, mem::Box<Expression> lhs)
-        -> Expected<mem::Box<Expression>, syntax::ParserDiagnostic> {
+        -> Result<mem::Box<Expression>, syntax::ParserDiagnostic> {
         const auto op_token = parser.get_current_token();
         if (parser.peek_token_is(syntax::TokenType::END)) {
-            return make_parser_unexpected(syntax::ParserError::INFIX_MISSING_RHS, op_token);
+            return make_parser_err(syntax::ParserError::INFIX_MISSING_RHS, op_token);
         }
 
         auto [current_precedence, current_binding] = parser.get_current_precedence();

@@ -88,7 +88,7 @@ TEST_CASE("Union with decls") {
                         syntax::Token{keywords::CONSTANT},
                         helpers::make_ident("b"),
                         mem::make_box<ast::TypeExpression>(syntax::Token{operators::WALRUS},
-                                                           std::nullopt),
+                                                           opt::none),
                         mem::make_nullable_box<ast::FunctionExpression>(
                             syntax::Token{keywords::FN},
                             ast::SelfParameter{mods::REF, helpers::make_ident("self")},
@@ -103,7 +103,7 @@ TEST_CASE("Union with decls") {
                         syntax::Token{keywords::STATIC},
                         helpers::make_ident("a"),
                         mem::make_box<ast::TypeExpression>(syntax::Token{operators::WALRUS},
-                                                           std::nullopt),
+                                                           opt::none),
                         helpers::make_primitive<ast::I32Expression, true>("2"),
                         ast::DeclModifiers::STATIC | ast::DeclModifiers::CONSTANT,
                     })});

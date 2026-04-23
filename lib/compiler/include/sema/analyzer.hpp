@@ -39,7 +39,7 @@ class Analyzer {
 
   private:
     [[nodiscard]] auto resolve_symbol(Symbol& symbol, SymbolTableStack& stack)
-        -> Expected<Unit, Diagnostic>;
+        -> Result<Unit, Diagnostic>;
 
   private:
     ast::AST            tree_;

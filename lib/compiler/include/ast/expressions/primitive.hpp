@@ -21,7 +21,7 @@ concept PrimitiveNode = LeafNode<N> && requires { typename N::value_type; };
 
 template <typename ValueType, bool AssertLast = true>
 [[nodiscard]] auto parse_primitive_value(std::string_view slice, syntax::TokenType type) noexcept
-    -> Optional<ValueType> {
+    -> opt::Option<ValueType> {
     const auto  base  = syntax::token_type::to_base(type);
     const auto* first = slice.cbegin() + (!base || *base == syntax::Base::DECIMAL ? 0 : 2);
     const auto* last  = slice.cend() - syntax::token_type::suffix_length(type);
@@ -42,7 +42,7 @@ template <typename ValueType, bool AssertLast = true>
     }
 
     assert(result.ec == std::errc::result_out_of_range);
-    return std::nullopt;
+    return opt::none;
 }
 
 template <typename Derived, typename T> class PrimitiveExpression : public ExprBase<Derived> {
@@ -54,19 +54,19 @@ template <typename Derived, typename T> class PrimitiveExpression : public ExprB
         : ExprBase<Derived>{start_token}, value_{std::move(value)} {}
 
     static auto parse(syntax::Parser& parser)
-        -> Expected<mem::Box<Expression>, syntax::ParserDiagnostic>
+        -> Result<mem::Box<Expression>, syntax::ParserDiagnostic>
         requires(!disable_default_parse<Derived>::value)
     {
         const auto start_token = parser.get_current_token();
         auto       value = parse_primitive_value<value_type>(start_token.slice, start_token.type);
         if (value) { return mem::make_box<Derived>(start_token, *value); }
 
-        return make_parser_unexpected(std::is_same_v<value_type, f64>
-                                          ? syntax::ParserError::DOUBLE_OVERFLOW
-                                          : (std::is_same_v<value_type, f32>
-                                                 ? syntax::ParserError::FLOAT_OVERFLOW
-                                                 : syntax::ParserError::INTEGER_OVERFLOW),
-                                      start_token);
+        return make_parser_err(std::is_same_v<value_type, f64>
+                                   ? syntax::ParserError::DOUBLE_OVERFLOW
+                                   : (std::is_same_v<value_type, f32>
+                                          ? syntax::ParserError::FLOAT_OVERFLOW
+                                          : syntax::ParserError::INTEGER_OVERFLOW),
+                               start_token);
     }
 
     MAKE_GETTER(value, const value_type&)
@@ -91,7 +91,7 @@ class StringExpression : public PrimitiveExpression<StringExpression, std::strin
 
     auto                      accept(Visitor& v) const -> void override;
     [[nodiscard]] static auto parse(syntax::Parser& parser)
-        -> Expected<mem::Box<Expression>, syntax::ParserDiagnostic>;
+        -> Result<mem::Box<Expression>, syntax::ParserDiagnostic>;
 };
 template <> struct disable_default_parse<StringExpression> : std::true_type {};
 
@@ -171,7 +171,7 @@ class U8Expression : public PrimitiveExpression<U8Expression, byte> {
 
     auto                      accept(Visitor& v) const -> void override;
     [[nodiscard]] static auto parse(syntax::Parser& parser)
-        -> Expected<mem::Box<Expression>, syntax::ParserDiagnostic>;
+        -> Result<mem::Box<Expression>, syntax::ParserDiagnostic>;
 };
 template <> struct disable_default_parse<U8Expression> : std::true_type {};
 
@@ -211,7 +211,7 @@ class BoolExpression : public PrimitiveExpression<BoolExpression, bool> {
 
     auto                      accept(Visitor& v) const -> void override;
     [[nodiscard]] static auto parse(syntax::Parser& parser)
-        -> Expected<mem::Box<Expression>, syntax::ParserDiagnostic>;
+        -> Result<mem::Box<Expression>, syntax::ParserDiagnostic>;
 
     operator bool() const noexcept { return value_; }
 };
@@ -227,7 +227,7 @@ class VoidExpression : public PrimitiveExpression<VoidExpression, Unit> {
 
     auto                      accept(Visitor& v) const -> void override;
     [[nodiscard]] static auto parse(syntax::Parser& parser)
-        -> Expected<mem::Box<Expression>, syntax::ParserDiagnostic>;
+        -> Result<mem::Box<Expression>, syntax::ParserDiagnostic>;
 };
 template <> struct disable_default_parse<VoidExpression> : std::true_type {};
 

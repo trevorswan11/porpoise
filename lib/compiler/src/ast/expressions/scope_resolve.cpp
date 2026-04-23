@@ -14,10 +14,9 @@ ScopeResolutionExpression::~ScopeResolutionExpression() = default;
 auto ScopeResolutionExpression::accept(Visitor& v) const -> void { v.visit(*this); }
 
 auto ScopeResolutionExpression::parse(syntax::Parser& parser, mem::Box<Expression> outer)
-    -> Expected<mem::Box<Expression>, syntax::ParserDiagnostic> {
+    -> Result<mem::Box<Expression>, syntax::ParserDiagnostic> {
     if (!outer->any<IdentifierExpression, ScopeResolutionExpression>()) {
-        return make_parser_unexpected(syntax::ParserError::ILLEGAL_OUTER_SCOPE_TYPE,
-                                      outer->get_token());
+        return make_parser_err(syntax::ParserError::ILLEGAL_OUTER_SCOPE_TYPE, outer->get_token());
     }
 
     TRY(parser.expect_peek(syntax::TokenType::IDENT));

@@ -9,10 +9,9 @@ namespace keywords = syntax::keywords;
 TEST_CASE("Correct do-while") {
     helpers::test_expr_stmt(
         "do {a;} while (true);",
-        ast::DoWhileLoopExpression{
-            syntax::Token{keywords::DO},
-            helpers::make_expr_block_stmt(helpers::ident_from("a")),
-            mem::make_box<ast::BoolExpression>(syntax::Token{keywords::BOOLEAN_TRUE}, true)});
+        ast::DoWhileLoopExpression{syntax::Token{keywords::DO},
+                                   helpers::make_expr_block_stmt(helpers::ident_from("a")),
+                                   helpers::make_primitive<ast::BoolExpression>(true)});
 }
 
 TEST_CASE("Empty do-while") {

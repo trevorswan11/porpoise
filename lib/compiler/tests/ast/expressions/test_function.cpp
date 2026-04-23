@@ -10,7 +10,7 @@ using Parameters = std::vector<ast::FunctionParameter>;
 
 namespace helpers {
 
-auto function_expr_from(Optional<ast::SelfParameter>&&        self,
+auto function_expr_from(opt::Option<ast::SelfParameter>&&     self,
                         Parameters&&                          parameters,
                         ast::ExplicitType&&                   return_type,
                         mem::NullableBox<ast::BlockStatement> block = nullptr,
@@ -23,7 +23,7 @@ auto function_expr_from(Optional<ast::SelfParameter>&&        self,
                                    std::move(block)};
 }
 
-auto function_expr_from(Optional<ast::SelfParameter>&&        self,
+auto function_expr_from(opt::Option<ast::SelfParameter>&&     self,
                         ast::ExplicitType&&                   return_type,
                         mem::NullableBox<ast::BlockStatement> block = nullptr)
     -> ast::FunctionExpression {
@@ -35,13 +35,13 @@ auto function_expr_from(Parameters&&                          parameters,
                         mem::NullableBox<ast::BlockStatement> block = nullptr)
     -> ast::FunctionExpression {
     return function_expr_from(
-        std::nullopt, std::move(parameters), std::move(return_type), std::move(block));
+        opt::none, std::move(parameters), std::move(return_type), std::move(block));
 }
 
 auto function_expr_from(ast::ExplicitType&&                   return_type,
                         mem::NullableBox<ast::BlockStatement> block = nullptr)
     -> ast::FunctionExpression {
-    return function_expr_from(std::nullopt, {}, std::move(return_type), std::move(block));
+    return function_expr_from(opt::none, {}, std::move(return_type), std::move(block));
 }
 
 } // namespace helpers
@@ -92,7 +92,7 @@ TEST_CASE("Functions with variadic parameter") {
     SECTION("Sole variadic") {
         helpers::test_expr_stmt(
             "fn(...): i32 {};",
-            helpers::function_expr_from(std::nullopt,
+            helpers::function_expr_from(opt::none,
                                         Parameters{},
                                         ast::ExplicitType{mods::BASE, helpers::make_ident("i32")},
                                         helpers::make_block_stmt<true>(),
@@ -113,7 +113,7 @@ TEST_CASE("Functions with variadic parameter") {
         helpers::test_expr_stmt(
             "fn(a: A, ...): i32 {};",
             helpers::function_expr_from(
-                std::nullopt,
+                opt::none,
                 helpers::make_parameters(ast::FunctionParameter{
                     helpers::make_ident("a"), {mods::BASE, helpers::make_ident("A")}}),
                 ast::ExplicitType{mods::BASE, helpers::make_ident("i32")},

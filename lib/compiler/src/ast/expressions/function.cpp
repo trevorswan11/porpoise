@@ -20,7 +20,7 @@ SelfParameter::~SelfParameter() = default;
 auto SelfParameter::accept(Visitor& v) const -> void { v.visit(*this); }
 
 auto SelfParameter::is_equal(const SelfParameter& other) const noexcept -> bool {
-    return optional::safe_eq<TypeModifier>(modifier_, other.modifier_) && *ident_ == *other.ident_;
+    return opt::safe_eq<TypeModifier>(modifier_, other.modifier_) && *ident_ == *other.ident_;
 }
 
 auto SelfParameter::get_token() const noexcept -> const syntax::Token& {
@@ -45,7 +45,7 @@ auto FunctionParameter::get_token() const noexcept -> const syntax::Token& {
 }
 
 FunctionExpression::FunctionExpression(const syntax::Token&             start_token,
-                                       Optional<SelfParameter>          self,
+                                       opt::Option<SelfParameter>       self,
                                        std::vector<FunctionParameter>   parameters,
                                        bool                             variadic,
                                        ExplicitType&&                   return_type,
@@ -58,7 +58,7 @@ auto FunctionExpression::accept(Visitor& v) const -> void { v.visit(*this); }
 
 // Variadic must be handled first and should break the enclosing loop
 [[nodiscard]] static auto try_parse_variadic(syntax::Parser& parser)
-    -> Expected<bool, syntax::ParserDiagnostic> {
+    -> Result<bool, syntax::ParserDiagnostic> {
     bool variadic = false;
     if (parser.peek_token_is(syntax::TokenType::ELLIPSIS)) {
         parser.advance();
@@ -71,12 +71,12 @@ auto FunctionExpression::accept(Visitor& v) const -> void { v.visit(*this); }
 }
 
 auto FunctionExpression::parse(syntax::Parser& parser)
-    -> Expected<mem::Box<Expression>, syntax::ParserDiagnostic> {
+    -> Result<mem::Box<Expression>, syntax::ParserDiagnostic> {
     const auto start_token = parser.get_current_token();
     TRY(parser.expect_peek(syntax::TokenType::LPAREN));
 
     // Parse the definition now that we're at the fn token
-    Optional<SelfParameter>        self;
+    opt::Option<SelfParameter>     self;
     std::vector<FunctionParameter> parameters;
     bool                           variadic = false;
     if (parser.peek_token_is(syntax::TokenType::RPAREN)) {
@@ -123,8 +123,8 @@ auto FunctionExpression::parse(syntax::Parser& parser)
 
             // There are no default values for parameters, and they must be explicitly typed
             if (initialized || !type->has_explicit_type()) {
-                return make_parser_unexpected(
-                    syntax::ParserError::FUNCTION_PARAMETER_HAS_DEFAULT_VALUE, type->get_token());
+                return make_parser_err(syntax::ParserError::FUNCTION_PARAMETER_HAS_DEFAULT_VALUE,
+                                       type->get_token());
             }
 
             const auto& explicit_type = type->get_explicit_type();
@@ -132,8 +132,8 @@ auto FunctionExpression::parse(syntax::Parser& parser)
                 // noreturn is not allowed for parameters
                 if (explicit_type.get_ident_type().get_token().type ==
                     syntax::TokenType::NORETURN) {
-                    return make_parser_unexpected(
-                        syntax::ParserError::FUNCTION_PARAMETER_IS_NORETURN, type->get_token());
+                    return make_parser_err(syntax::ParserError::FUNCTION_PARAMETER_IS_NORETURN,
+                                           type->get_token());
                 }
             }
 
@@ -151,8 +151,7 @@ auto FunctionExpression::parse(syntax::Parser& parser)
 
     // If there is opening brace then just return without a body
     if (!parser.peek_token_is(syntax::TokenType::LBRACE)) {
-        return make_parser_unexpected(syntax::ParserError::FN_DECLARATION_WITHOUT_BODY,
-                                      start_token);
+        return make_parser_err(syntax::ParserError::FN_DECLARATION_WITHOUT_BODY, start_token);
     }
 
     // Otherwise there must be a well-formed block
@@ -167,7 +166,7 @@ auto FunctionExpression::parse(syntax::Parser& parser)
 }
 
 auto FunctionExpression::parse_type(syntax::Parser& parser)
-    -> Expected<mem::Box<Expression>, syntax::ParserDiagnostic> {
+    -> Result<mem::Box<Expression>, syntax::ParserDiagnostic> {
     const auto start_token = parser.get_current_token();
     TRY(parser.expect_peek(syntax::TokenType::LPAREN));
 
@@ -188,8 +187,8 @@ auto FunctionExpression::parse_type(syntax::Parser& parser)
                 // noreturn is not allowed for parameters
                 const auto& token = type.get_ident_type().get_token();
                 if (token.type == syntax::TokenType::NORETURN) {
-                    return make_parser_unexpected(
-                        syntax::ParserError::FUNCTION_PARAMETER_IS_NORETURN, token);
+                    return make_parser_err(syntax::ParserError::FUNCTION_PARAMETER_IS_NORETURN,
+                                           token);
                 }
             }
 
@@ -205,20 +204,16 @@ auto FunctionExpression::parse_type(syntax::Parser& parser)
     TRY(parser.expect_peek(syntax::TokenType::COLON));
     auto return_type = TRY(ExplicitType::parse(parser));
     if (parser.peek_token_is(syntax::TokenType::LBRACE)) {
-        return make_parser_unexpected(syntax::ParserError::EXPLICIT_FN_TYPE_HAS_BODY, start_token);
+        return make_parser_err(syntax::ParserError::EXPLICIT_FN_TYPE_HAS_BODY, start_token);
     }
 
-    return mem::make_box<FunctionExpression>(start_token,
-                                             std::nullopt,
-                                             std::move(parameters),
-                                             variadic,
-                                             std::move(return_type),
-                                             nullptr);
+    return mem::make_box<FunctionExpression>(
+        start_token, opt::none, std::move(parameters), variadic, std::move(return_type), nullptr);
 }
 
 auto FunctionExpression::is_equal(const Node& other) const noexcept -> bool {
     const auto& casted        = as<FunctionExpression>(other);
-    const auto  self_matches  = optional::safe_eq<SelfParameter>(self_, casted.self_);
+    const auto  self_matches  = opt::safe_eq<SelfParameter>(self_, casted.self_);
     const auto  parameters_eq = std::ranges::equal(parameters_, casted.parameters_);
     return self_matches && parameters_eq && variadic_ == casted.variadic_ &&
            return_type_ == casted.return_type_ && mem::nullable_boxes_eq(body_, casted.body_);

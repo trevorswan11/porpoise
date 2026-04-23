@@ -52,7 +52,7 @@ TEST_CASE("Constexpr declaration") {
         ast::DeclStatement{
             syntax::Token{keywords::CONSTEXPR},
             helpers::make_ident("SIZE"),
-            mem::make_box<ast::TypeExpression>(syntax::Token{operators::WALRUS}, std::nullopt),
+            mem::make_box<ast::TypeExpression>(syntax::Token{operators::WALRUS}, opt::none),
             helpers::make_primitive<ast::USizeExpression, true>("2uz"),
             ast::DeclModifiers::CONSTEXPR,
         });
@@ -66,15 +66,15 @@ TEST_CASE("Correct declaration modifiers") {
         for (const auto& keyword : modifiers) { ss << keyword.first << " "; }
         if (initialized) {
             ss << " a := 2;";
-            helpers::test_stmt(ss.view(),
-                               ast::DeclStatement{
-                                   syntax::Token{*modifiers.begin()},
-                                   helpers::make_ident("a"),
-                                   mem::make_box<ast::TypeExpression>(
-                                       syntax::Token{operators::WALRUS}, std::nullopt),
-                                   helpers::make_primitive<ast::I32Expression, true>("2"),
-                                   flags,
-                               });
+            helpers::test_stmt(
+                ss.view(),
+                ast::DeclStatement{
+                    syntax::Token{*modifiers.begin()},
+                    helpers::make_ident("a"),
+                    mem::make_box<ast::TypeExpression>(syntax::Token{operators::WALRUS}, opt::none),
+                    helpers::make_primitive<ast::I32Expression, true>("2"),
+                    flags,
+                });
         } else {
             ss << " a: i32;";
             helpers::test_stmt(

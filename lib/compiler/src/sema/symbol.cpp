@@ -18,22 +18,32 @@ auto Symbol::is_equal(const Symbol& other) const noexcept -> bool {
                 return *v == *std::get<std::remove_cvref_t<decltype(v)>>(other.node_);
             },
             node_);
-    const auto types_eq = optional::safe_eq<Type&>(
+    const auto types_eq = opt::safe_eq<Type&>(
         type_, other.type_, [](const Type& a, const Type& b) { return &a == &b; });
-    return names_eq && nodes_eq && types_eq;
+
+    const auto status_eq = status_ == other.status_;
+    return status_eq && names_eq && nodes_eq && types_eq;
 }
 
 auto Symbol::get_node_token() const noexcept -> syntax::Token {
     return match([](const auto& node) { return node->get_token(); });
 }
 
-auto SymbolTable::insert(std::string_view name, SymbolicNode node) -> Expected<Unit, Diagnostic> {
+auto Symbol::is_public() const noexcept -> bool {
+    return match(Overloaded{
+        [](const SymbolicDecl& decl) { return decl->has_modifier(ast::DeclModifiers::PUBLIC); },
+        [](const SymbolicImport& import_stmt) { return import_stmt->is_public(); },
+        [](const SymbolicUsing& using_stmt) { return using_stmt->is_public(); },
+        [](const auto&) { return false; }});
+}
+
+auto SymbolTable::insert(std::string_view name, SymbolicNode node) -> Result<Unit, Diagnostic> {
     // Reserved identifier use is impossible due to a parser invariant
     auto [it, inserted] = symbols_.try_emplace(name, name, node);
 
     // Check for redeclaration since there's no shadowing
     if (!inserted) {
-        return make_sema_unexpected(
+        return make_sema_err(
             fmt::format("Redeclaration of symbol '{}'. Previous declaration here: {}",
                         name,
                         SourceInfo<syntax::Token>::get(it->second.get_node_token())),
@@ -44,18 +54,18 @@ auto SymbolTable::insert(std::string_view name, SymbolicNode node) -> Expected<U
 }
 
 auto SymbolTableRegistry::insert_into(usize table_idx, std::string_view name, SymbolicNode node)
-    -> Expected<Unit, Diagnostic> {
+    -> Result<Unit, Diagnostic> {
     if (auto table = get_opt(table_idx)) { return table->insert(name, node); }
-    return make_sema_unexpected(Error::INVALID_TABLE_IDX);
+    return make_sema_err(Error::INVALID_TABLE_IDX);
 }
 
 [[nodiscard]] auto SymbolTableRegistry::is_shadowing(const SymbolTableStack& stack,
                                                      std::string_view        name,
                                                      SymbolicNode            node) noexcept
-    -> Expected<Unit, Diagnostic> {
+    -> Result<Unit, Diagnostic> {
     for (const auto idx : stack | std::views::take(stack.size() - 1)) {
         if (const auto symbol = get(idx).get_opt(name)) {
-            return make_sema_unexpected(
+            return make_sema_err(
                 fmt::format("Attempt to shadow identifier '{}'. Previous declaration here: {}",
                             name,
                             symbol->match([](const auto& inner) {

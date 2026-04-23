@@ -19,13 +19,12 @@ template <typename Derived> class PrefixExpression : public ExprBase<Derived> {
     auto accept(Visitor& v) const noexcept -> void override { v.visit(Node::as<Derived>(*this)); }
 
     [[nodiscard]] static auto parse(syntax::Parser& parser)
-        -> Expected<mem::Box<Expression>, syntax::ParserDiagnostic>
+        -> Result<mem::Box<Expression>, syntax::ParserDiagnostic>
         requires(!disable_default_parse<Derived>::value)
     {
         const auto prefix_token = parser.get_current_token();
         if (parser.peek_token_is(syntax::TokenType::END)) {
-            return make_parser_unexpected(syntax::ParserError::PREFIX_MISSING_OPERAND,
-                                          prefix_token);
+            return make_parser_err(syntax::ParserError::PREFIX_MISSING_OPERAND, prefix_token);
         }
         parser.advance();
 
@@ -76,7 +75,7 @@ class ImplicitAccessExpression : public PrefixExpression<ImplicitAccessExpressio
     MAKE_MOVE_CONSTRUCTABLE_ONLY(ImplicitAccessExpression)
 
     [[nodiscard]] static auto parse(syntax::Parser& parser)
-        -> Expected<mem::Box<Expression>, syntax::ParserDiagnostic>;
+        -> Result<mem::Box<Expression>, syntax::ParserDiagnostic>;
 };
 template <> struct disable_default_parse<ImplicitAccessExpression> : std::true_type {};
 

@@ -1,9 +1,6 @@
 const std = @import("std");
 
-const c = @cImport({
-    @cInclude("archive.h");
-    @cInclude("archive_entry.h");
-});
+const c = @import("c");
 
 pub fn main(init: std.process.Init) !void {
     const allocator = init.arena.allocator();

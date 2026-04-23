@@ -22,7 +22,7 @@ class TypeResolver : public ast::Visitor {
     [[maybe_unused]] Analyzer&         analyzer_;
     [[maybe_unused]] TypePool&         pool_;
     [[maybe_unused]] SymbolTableStack& stack_;
-    Optional<Type&>                    last_type_;
+    opt::Option<Type&>                 last_type_;
 };
 
 } // namespace porpoise::sema

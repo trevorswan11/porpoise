@@ -7,7 +7,7 @@ namespace porpoise::ast {
 auto IfExpression::accept(Visitor& v) const -> void { v.visit(*this); }
 
 auto IfExpression::parse(syntax::Parser& parser)
-    -> Expected<mem::Box<Expression>, syntax::ParserDiagnostic> {
+    -> Result<mem::Box<Expression>, syntax::ParserDiagnostic> {
     const auto start_token = parser.get_current_token();
 
     bool constexpr_condition = false;
@@ -20,7 +20,7 @@ auto IfExpression::parse(syntax::Parser& parser)
     TRY(parser.expect_peek(syntax::TokenType::LPAREN));
     parser.advance();
     if (parser.current_token_is(syntax::TokenType::RPAREN)) {
-        return make_parser_unexpected(syntax::ParserError::IF_MISSING_CONDITION, start_token);
+        return make_parser_err(syntax::ParserError::IF_MISSING_CONDITION, start_token);
     }
 
     auto condition = TRY(parser.parse_expression());
@@ -29,9 +29,9 @@ auto IfExpression::parse(syntax::Parser& parser)
     // The consequence and alternate are trivially handled by restricted statement parsers
     parser.advance();
     auto consequence =
-        TRY(parser.parse_restricted_statement(syntax::ParserError::ILLEGAL_IF_BRANCH));
+        TRY(parser.parse_restricted_statement(syntax::ParserError::ILLEGAL_IF_BRANCH, false));
     auto alternate =
-        TRY(parser.try_parse_restricted_alternate(syntax::ParserError::ILLEGAL_IF_BRANCH));
+        TRY(parser.try_parse_restricted_alternate(syntax::ParserError::ILLEGAL_IF_BRANCH, false));
 
     return mem::make_box<IfExpression>(start_token,
                                        constexpr_condition,

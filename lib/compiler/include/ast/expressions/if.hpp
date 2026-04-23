@@ -26,7 +26,7 @@ class IfExpression : public ExprBase<IfExpression> {
 
     auto                      accept(Visitor& v) const -> void override;
     [[nodiscard]] static auto parse(syntax::Parser& parser)
-        -> Expected<mem::Box<Expression>, syntax::ParserDiagnostic>;
+        -> Result<mem::Box<Expression>, syntax::ParserDiagnostic>;
 
     [[nodiscard]] auto is_constexpr() const noexcept -> bool { return constexpr_condition_; }
     MAKE_GETTER(condition, const Expression&, *)

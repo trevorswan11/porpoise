@@ -1,5 +1,3 @@
-#include <utility>
-
 #include "sema/symbol_collector.hpp"
 
 #include "ast/ast.hpp"
@@ -47,8 +45,9 @@ auto SymbolCollector::visit(const ast::CallExpression& call) -> void {
 
 auto SymbolCollector::visit(const ast::DoWhileLoopExpression& do_while) -> void {
     const auto g   = loop_guard();
-    const auto idx = visit_scope(
-        do_while.get_block(), TypeKind::BLOCK, [this](const auto& stmt) { stmt->accept(*this); });
+    const auto idx = visit_scopes(
+        TypeKind::BLOCK,
+        IterPair{do_while.get_block(), [this](const auto& stmt) { stmt->accept(*this); }});
     last_type_->set_symbol_table_idx(idx);
     do_while.set_sema_type(*last_type_.take());
 }
@@ -59,7 +58,7 @@ auto SymbolCollector::visit(const ast::Enumeration& enumeration) -> void {
 }
 
 auto SymbolCollector::visit(const ast::EnumExpression& enum_expr) -> void {
-    const auto scope_idx = visit_scope(
+    const auto scope_idx = visit_scopes(
         TypeKind::ENUM,
         IterPair{enum_expr.get_enumerations(), [this](const auto& field) { visit(field); }},
         IterPair{enum_expr.get_members(), [this](const auto& decl) { visit(*decl); }});
@@ -72,13 +71,17 @@ auto SymbolCollector::visit(const ast::ForLoopCapture& capture) -> void {
 }
 
 auto SymbolCollector::visit(const ast::ForLoopExpression& for_expr) -> void {
-    const auto  new_idx = registry_.create();
-    const Scope s{table_stack_, new_idx, table_idx_};
-    const auto  g = loop_guard();
+    // The guard shouldn't enclose the else clause
+    const auto g_expr = in_expr_scope_.guard();
+    usize      new_idx;
+    {
+        new_idx = registry_.create();
+        const Scope s{table_stack_, new_idx, table_idx_};
 
-    // Parameters belong to the parent scope
-    visit_list(for_expr.get_captures());
-    visit(for_expr.get_block());
+        const auto g_loop = in_loop_scope_.guard();
+        visit_list(for_expr.get_captures());
+        visit_list(for_expr.get_block());
+    }
     if (for_expr.has_non_break()) { for_expr.get_non_break().accept(*this); }
 
     last_type_.emplace(pool_[{TypeKind::BLOCK, false, new_idx}]);
@@ -121,9 +124,10 @@ auto SymbolCollector::visit(const ast::IndexExpression& index) -> void {
 }
 
 auto SymbolCollector::visit(const ast::InfiniteLoopExpression& loop) -> void {
-    const auto g   = loop_guard();
-    const auto idx = visit_scope(
-        loop.get_block(), TypeKind::BLOCK, [this](const auto& stmt) { stmt->accept(*this); });
+    const auto g = loop_guard();
+    const auto idx =
+        visit_scopes(TypeKind::BLOCK,
+                     IterPair{loop.get_block(), [this](const auto& stmt) { stmt->accept(*this); }});
     last_type_->set_symbol_table_idx(idx);
     loop.set_sema_type(*last_type_.take());
 }
@@ -157,7 +161,7 @@ auto SymbolCollector::visit(const ast::MatchArm& arm) -> void {
     }
     arm.get_dispatch().accept(*this);
 
-    last_type_.emplace(pool_[{TypeKind::BLOCK, false, new_idx}]);
+    last_type_.emplace(pool_[{TypeKind::MATCH_ARM, false, new_idx}]);
     last_type_->set_symbol_table_idx(new_idx);
     arm.set_sema_type(*last_type_.take());
 }
@@ -179,8 +183,9 @@ MAKE_PREFIX_COLLECTOR(ast::DereferenceExpression)
 MAKE_PREFIX_COLLECTOR(ast::UnaryExpression)
 
 auto SymbolCollector::visit(const ast::StructExpression& struct_expr) -> void {
-    const auto scope_idx = visit_scope(
-        struct_expr, TypeKind::STRUCT, [this](const auto& field) { field->accept(*this); });
+    const auto scope_idx =
+        visit_scopes(TypeKind::STRUCT,
+                     IterPair{struct_expr, [this](const auto& field) { field->accept(*this); }});
     last_type_->set_symbol_table_idx(scope_idx);
     struct_expr.set_sema_type(*last_type_);
 }
@@ -191,21 +196,29 @@ auto SymbolCollector::visit(const ast::UnionField& field) -> void {
 }
 
 auto SymbolCollector::visit(const ast::UnionExpression& union_expr) -> void {
-    const auto scope_idx =
-        visit_scope(TypeKind::UNION,
-                    IterPair{union_expr.get_fields(), [this](const auto& field) { visit(field); }},
-                    IterPair{union_expr.get_members(), [this](const auto& decl) { visit(*decl); }});
+    const auto scope_idx = visit_scopes(
+        TypeKind::UNION,
+        IterPair{union_expr.get_fields(), [this](const auto& field) { visit(field); }},
+        IterPair{union_expr.get_members(), [this](const auto& decl) { visit(*decl); }});
     last_type_->set_symbol_table_idx(scope_idx);
     union_expr.set_sema_type(*last_type_);
 }
 
 auto SymbolCollector::visit(const ast::WhileLoopExpression& while_expr) -> void {
-    const auto g   = in_loop_scope_.guard();
-    const auto idx = visit_scope(
-        while_expr.get_block(), TypeKind::BLOCK, [this](const auto& stmt) { stmt->accept(*this); });
+    // The guard shouldn't enclose the else clause
+    const auto g_expr = in_expr_scope_.guard();
+    usize      new_idx;
+    {
+        new_idx = registry_.create();
+        const Scope s{table_stack_, new_idx, table_idx_};
+
+        const auto g_loop = in_loop_scope_.guard();
+        visit_list(while_expr.get_block());
+    }
     if (while_expr.has_non_break()) { while_expr.get_non_break().accept(*this); }
 
-    last_type_->set_symbol_table_idx(idx);
+    last_type_.emplace(pool_[{TypeKind::BLOCK, false, new_idx}]);
+    last_type_->set_symbol_table_idx(new_idx);
     while_expr.set_sema_type(*last_type_.take());
 }
 
@@ -216,20 +229,16 @@ auto SymbolCollector::visit(const ast::BlockStatement& block) -> void {
                                   block.get_token());
     }
 
-    const auto scope_idx =
-        visit_scope(block, TypeKind::BLOCK, [this](const auto& stmt) { stmt->accept(*this); });
+    const auto scope_idx = visit_scopes(
+        TypeKind::BLOCK, IterPair{block, [this](const auto& stmt) { stmt->accept(*this); }});
     last_type_->set_symbol_table_idx(scope_idx);
-    block.set_sema_type(*last_type_);
+    block.set_sema_type(*last_type_.take());
 }
 
 auto SymbolCollector::visit(const ast::DeclStatement& decl) -> void {
-    // Only move on to value inspection is the node
+    // We can stop analyzing early if there's no value
     const auto name = decl.get_ident().get_name();
     try_declare(name, &decl);
-
-    if (decl.has_modifier(ast::DeclModifiers::PUBLIC)) {
-        registry_.get_from(table_idx_, name).mark_public();
-    }
     if (!decl.has_value()) { return; }
 
     // Valued decls should be evaluated to get shallow types
@@ -238,37 +247,17 @@ auto SymbolCollector::visit(const ast::DeclStatement& decl) -> void {
                  ast::FunctionExpression,
                  ast::UnionExpression,
                  ast::StructExpression>()) {
-        static constexpr auto expr_name = [](ast::NodeKind kind) {
-            switch (kind) {
-            case ast::NodeKind::ENUM_EXPRESSION:     return "enum";
-            case ast::NodeKind::FUNCTION_EXPRESSION: return "function";
-            case ast::NodeKind::UNION_EXPRESSION:    return "union";
-            case ast::NodeKind::STRUCT_EXPRESSION:   return "struct";
-            default:                                 std::unreachable();
-            }
-        };
-
+        // Certain values cannot be constexpr or non-const to reduce mental overhead
         if (decl.has_modifier(ast::DeclModifiers::CONSTEXPR)) {
-            diagnostics_.emplace_back(fmt::format("Top level {}s are implicitly compile time known",
-                                                  expr_name(expr.get_kind())),
-                                      Error::REDUNDANT_CONSTEXPR,
-                                      decl.get_token());
+            diagnostics_.emplace_back(
+                fmt::format("Top level {}s are implicitly compile time known", expr.display_name()),
+                Error::REDUNDANT_CONSTEXPR,
+                decl.get_token());
         } else if (!decl.has_modifier(ast::DeclModifiers::CONSTANT)) {
             diagnostics_.emplace_back(
                 fmt::format("Top level {}s must be marked const at the top level",
-                            expr_name(expr.get_kind())),
+                            expr.display_name()),
                 Error::ILLEGAL_NON_CONST_STATEMENT,
-                decl.get_token());
-        }
-    }
-
-    // Functions cannot be used as valued stubs
-    if (expr.is<ast::FunctionExpression>()) {
-        const auto& func = ast::Node::as<ast::FunctionExpression>(expr);
-        if (!func.has_body()) {
-            diagnostics_.emplace_back(
-                fmt::format("Functions cannot be used as valued stubs in declarations"),
-                Error::FUNCTION_DECLARATION_MISSING_BODY,
                 decl.get_token());
         }
     }
@@ -307,22 +296,34 @@ auto SymbolCollector::visit(const ast::ImportStatement& import_stmt) -> void {
 }
 
 auto SymbolCollector::visit(const ast::JumpStatement& node) -> void {
-    if (node.get_token().type == syntax::TokenType::RETURN && !in_function_scope_) {
-        diagnostics_.emplace_back(
-            "Cannot return outside of a function", Error::ILLEGAL_CONTROL_FLOW, node.get_token());
-    } else if (!in_loop_scope_) {
-        diagnostics_.emplace_back("Cannot continue or break outside of a loop",
-                                  Error::ILLEGAL_CONTROL_FLOW,
-                                  node.get_token());
+    using syntax::TokenType;
+    switch (node.get_token().type) {
+    case TokenType::RETURN:
+        if (!in_function_scope_) {
+            diagnostics_.emplace_back("Cannot return outside of a function",
+                                      Error::ILLEGAL_CONTROL_FLOW,
+                                      node.get_token());
+        }
+        break;
+    case TokenType::BREAK:
+    case TokenType::CONTINUE:
+        if (!in_loop_scope_) {
+            diagnostics_.emplace_back("Cannot continue or break outside of a loop",
+                                      Error::ILLEGAL_CONTROL_FLOW,
+                                      node.get_token());
+        }
+        break;
+    default: std::unreachable();
     }
     if (node.has_expression()) { node.get_expression().accept(*this); }
 }
 
 auto SymbolCollector::visit(const ast::ModuleStatement& module_stmt) -> void {
     auto& table = registry_.get(table_idx_);
-    if (first_node_) {
-        table.indicate_module();
-    } else if (table.is_module()) {
+    if (first_node_) { return table.indicate_module(); }
+
+    // Module statements are highly restricted in terms of usage and location
+    if (table.is_module()) {
         diagnostics_.emplace_back("Only one module statement is allowed per file",
                                   Error::DUPLICATE_MODULE_STATEMENT,
                                   module_stmt.get_token());
@@ -341,8 +342,9 @@ auto SymbolCollector::visit(const ast::TestStatement& test) -> void {
     }
 
     // Not a symbol so don't push to the table, track in node instead
-    const auto scope_idx = visit_scope(
-        test.get_block(), TypeKind::BLOCK, [this](const auto& decl) { decl->accept(*this); });
+    const auto scope_idx =
+        visit_scopes(TypeKind::BLOCK,
+                     IterPair{test.get_block(), [this](const auto& decl) { decl->accept(*this); }});
     last_type_->set_symbol_table_idx(scope_idx);
     test.set_sema_type(*last_type_.take());
 }

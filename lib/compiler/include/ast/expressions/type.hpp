@@ -68,7 +68,7 @@ class ExplicitType {
 
     auto                      accept(Visitor& v) const -> void;
     [[nodiscard]] static auto parse(syntax::Parser& parser)
-        -> Expected<ExplicitType, syntax::ParserDiagnostic>;
+        -> Result<ExplicitType, syntax::ParserDiagnostic>;
 
     MAKE_GETTER(modifier, const TypeModifier&)
     MAKE_GETTER(type, const ExplicitTypeVariant&)
@@ -95,14 +95,14 @@ class TypeExpression : public ExprBase<TypeExpression> {
     static constexpr auto KIND = NodeKind::TYPE_EXPRESSION;
 
   public:
-    TypeExpression(const syntax::Token& start_token, Optional<ExplicitType> exp) noexcept;
+    TypeExpression(const syntax::Token& start_token, opt::Option<ExplicitType> exp) noexcept;
     ~TypeExpression() override;
 
     MAKE_MOVE_CONSTRUCTABLE_ONLY(TypeExpression)
 
     auto                      accept(Visitor& v) const -> void override;
     [[nodiscard]] static auto parse(syntax::Parser& parser)
-        -> Expected<std::pair<mem::Box<Expression>, bool>, syntax::ParserDiagnostic>;
+        -> Result<std::pair<mem::Box<Expression>, bool>, syntax::ParserDiagnostic>;
 
     MAKE_OPTIONAL_UNPACKER(explicit_type, ExplicitType, explicit_, *)
 
@@ -110,7 +110,7 @@ class TypeExpression : public ExprBase<TypeExpression> {
     auto is_equal(const Node& other) const noexcept -> bool override;
 
   private:
-    Optional<ExplicitType> explicit_;
+    opt::Option<ExplicitType> explicit_;
 
     // Function's need to destructively move explicit on success
     friend class FunctionExpression;

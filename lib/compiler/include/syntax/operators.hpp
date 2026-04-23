@@ -7,7 +7,7 @@
 
 #include "syntax/token.hpp"
 
-#include "optional.hpp"
+#include "option.hpp"
 
 namespace porpoise::syntax {
 
@@ -121,10 +121,10 @@ constexpr auto MAX_OPERATOR_LEN = std::ranges::max_element(ALL_OPERATORS, [](aut
                                       return a.first.size() < b.first.size();
                                   })->first.size();
 
-constexpr auto get_operator(std::string_view sv) noexcept -> Optional<Operator> {
+constexpr auto get_operator(std::string_view sv) noexcept -> opt::Option<Operator> {
     const auto it = std::ranges::lower_bound(ALL_OPERATORS, sv, {}, &Operator::first);
-    if (it == ALL_OPERATORS.end() || it->first != sv) { return std::nullopt; }
-    return Optional<Operator>{*it};
+    if (it == ALL_OPERATORS.end() || it->first != sv) { return opt::none; }
+    return opt::Option<Operator>{*it};
 }
 
 } // namespace porpoise::syntax

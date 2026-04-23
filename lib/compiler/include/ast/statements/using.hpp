@@ -23,7 +23,7 @@ class UsingStatement : public StmtBase<UsingStatement> {
 
     auto                      accept(Visitor& v) const -> void override;
     [[nodiscard]] static auto parse(syntax::Parser& parser)
-        -> Expected<mem::Box<Statement>, syntax::ParserDiagnostic>;
+        -> Result<mem::Box<Statement>, syntax::ParserDiagnostic>;
 
     MAKE_GETTER(alias, const IdentifierExpression&, *)
     MAKE_GETTER(type, const ExplicitType&)

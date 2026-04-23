@@ -33,7 +33,7 @@ ExplicitType::~ExplicitType() = default;
 auto ExplicitType::accept(Visitor& v) const -> void { v.visit(*this); }
 
 [[nodiscard]] auto ExplicitType::parse(syntax::Parser& parser)
-    -> Expected<ExplicitType, syntax::ParserDiagnostic> {
+    -> Result<ExplicitType, syntax::ParserDiagnostic> {
     // Always check for a modifier and advance past it if present
     const auto modifier_token = parser.get_peek_token();
     const auto modifier       = TypeModifier::from_token(modifier_token);
@@ -52,8 +52,8 @@ auto ExplicitType::accept(Visitor& v) const -> void { v.visit(*this); }
             parser.advance();
             dimension = mem::nullable_box_from(TRY(parser.parse_expression()));
             if (!dimension->any<USizeExpression, IdentifierExpression>()) {
-                return make_parser_unexpected(syntax::ParserError::ILLEGAL_ARRAY_SIZE_TYPE,
-                                              dimension->get_token());
+                return make_parser_err(syntax::ParserError::ILLEGAL_ARRAY_SIZE_TYPE,
+                                       dimension->get_token());
             }
 
             // The null terminated marker comes after the size for explicitly sized types
@@ -83,14 +83,14 @@ auto ExplicitType::accept(Visitor& v) const -> void { v.visit(*this); }
         if (!modifier.is_value()) {
             switch (peek_token.type) {
             case syntax::TokenType::TYPE_TYPE:
-                return make_parser_unexpected(syntax::ParserError::ILLEGAL_TYPE_TYPE_MODIFIER,
-                                              modifier_token);
+                return make_parser_err(syntax::ParserError::ILLEGAL_TYPE_TYPE_MODIFIER,
+                                       modifier_token);
             case syntax::TokenType::VOID_TYPE:
-                return make_parser_unexpected(syntax::ParserError::ILLEGAL_VOID_TYPE_MODIFIER,
-                                              modifier_token);
+                return make_parser_err(syntax::ParserError::ILLEGAL_VOID_TYPE_MODIFIER,
+                                       modifier_token);
             case syntax::TokenType::NORETURN:
-                return make_parser_unexpected(syntax::ParserError::ILLEGAL_NORETURN_TYPE_MODIFIER,
-                                              modifier_token);
+                return make_parser_err(syntax::ParserError::ILLEGAL_NORETURN_TYPE_MODIFIER,
+                                       modifier_token);
             default: break;
             }
         }
@@ -109,8 +109,7 @@ auto ExplicitType::accept(Visitor& v) const -> void { v.visit(*this); }
 
         auto function = Node::downcast<FunctionExpression>(std::move(type_expr));
         if (!(modifier.is_value() || modifier.is_ptr())) {
-            return make_parser_unexpected(syntax::ParserError::ILLEGAL_FUNCTION_TYPE_MODIFIER,
-                                          type_start);
+            return make_parser_err(syntax::ParserError::ILLEGAL_FUNCTION_TYPE_MODIFIER, type_start);
         }
 
         // Function types cannot have bodies
@@ -121,7 +120,7 @@ auto ExplicitType::accept(Visitor& v) const -> void { v.visit(*this); }
     // The user-defined types can be handled by parsing any expression and verifying it
     parser.advance();
     if (parser.current_token_is(syntax::TokenType::END)) {
-        return make_parser_unexpected(syntax::ParserError::MISSING_EXPLICIT_TYPE, type_start);
+        return make_parser_err(syntax::ParserError::MISSING_EXPLICIT_TYPE, type_start);
     }
 
     switch (auto user = TRY(parser.parse_expression()); user->get_kind()) {
@@ -133,7 +132,7 @@ auto ExplicitType::accept(Visitor& v) const -> void { v.visit(*this); }
         return ExplicitType{modifier, Node::downcast<UnionExpression>(std::move(user))};
     default: break;
     }
-    return make_parser_unexpected(syntax::ParserError::ILLEGAL_EXPLICIT_TYPE, type_start);
+    return make_parser_err(syntax::ParserError::ILLEGAL_EXPLICIT_TYPE, type_start);
 }
 
 auto ExplicitType::get_token() const noexcept -> const syntax::Token& {
@@ -157,22 +156,22 @@ auto ExplicitType::is_equal(const ExplicitType& other) const noexcept -> bool {
                       type_);
 }
 
-TypeExpression::TypeExpression(const syntax::Token&   start_token,
-                               Optional<ExplicitType> exp) noexcept
+TypeExpression::TypeExpression(const syntax::Token&      start_token,
+                               opt::Option<ExplicitType> exp) noexcept
     : ExprBase{start_token}, explicit_{std::move(exp)} {}
 TypeExpression::~TypeExpression() = default;
 
 auto TypeExpression::accept(Visitor& v) const -> void { v.visit(*this); }
 
 auto TypeExpression::parse(syntax::Parser& parser)
-    -> Expected<std::pair<mem::Box<Expression>, bool>, syntax::ParserDiagnostic> {
+    -> Result<std::pair<mem::Box<Expression>, bool>, syntax::ParserDiagnostic> {
     // The start start token is always offset as this is called irregularly
     const auto start_token = parser.get_peek_token();
 
-    auto [type, initialized] = TRY(
-        ([&]() -> Expected<std::pair<mem::Box<TypeExpression>, bool>, syntax::ParserDiagnostic> {
+    auto [type, initialized] =
+        TRY(([&]() -> Result<std::pair<mem::Box<TypeExpression>, bool>, syntax::ParserDiagnostic> {
             if (parser.peek_token_is(syntax::TokenType::WALRUS)) {
-                auto type_expr = mem::make_box<TypeExpression>(start_token, std::nullopt);
+                auto type_expr = mem::make_box<TypeExpression>(start_token, opt::none);
                 parser.advance();
                 return std::pair{std::move(type_expr), true};
             } else if (parser.peek_token_is(syntax::TokenType::COLON)) {
@@ -186,7 +185,7 @@ auto TypeExpression::parse(syntax::Parser& parser)
                 }
                 return std::pair{std::move(type_expr), false};
             } else {
-                return Unexpected{parser.peek_error(syntax::TokenType::COLON)};
+                return Err{parser.peek_error(syntax::TokenType::COLON)};
             }
         }()));
 
@@ -197,7 +196,7 @@ auto TypeExpression::parse(syntax::Parser& parser)
 
 auto TypeExpression::is_equal(const Node& other) const noexcept -> bool {
     const auto& casted = as<TypeExpression>(other);
-    return optional::safe_eq<ExplicitType>(explicit_, casted.explicit_);
+    return opt::safe_eq<ExplicitType>(explicit_, casted.explicit_);
 }
 
 } // namespace porpoise::ast

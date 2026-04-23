@@ -58,7 +58,7 @@ class DeclStatement : public StmtBase<DeclStatement> {
 
     auto                      accept(Visitor& v) const -> void override;
     [[nodiscard]] static auto parse(syntax::Parser& parser)
-        -> Expected<mem::Box<Statement>, syntax::ParserDiagnostic>;
+        -> Result<mem::Box<Statement>, syntax::ParserDiagnostic>;
 
     MAKE_GETTER(ident, const IdentifierExpression&, *)
     MAKE_GETTER(type, const TypeExpression&, *)
@@ -107,9 +107,10 @@ class DeclStatement : public StmtBase<DeclStatement> {
         return valid_mut && valid_constexpr && valid_abi;
     }
 
-    static constexpr auto token_to_modifier(const syntax::Token& tok) -> Optional<DeclModifiers> {
+    static constexpr auto token_to_modifier(const syntax::Token& tok)
+        -> opt::Option<DeclModifiers> {
         const auto it = std::ranges::find(LEGAL_MODIFIERS, tok.type, &ModifierMapping::first);
-        return it == LEGAL_MODIFIERS.end() ? std::nullopt : Optional<DeclModifiers>{it->second};
+        return it == LEGAL_MODIFIERS.end() ? opt::none : opt::Option<DeclModifiers>{it->second};
     }
 
   private:

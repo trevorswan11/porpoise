@@ -40,7 +40,7 @@ CallExpression::~CallExpression() = default;
 auto CallExpression::accept(Visitor& v) const -> void { v.visit(*this); }
 
 auto CallExpression::parse(syntax::Parser& parser, mem::Box<Expression> function)
-    -> Expected<mem::Box<Expression>, syntax::ParserDiagnostic> {
+    -> Result<mem::Box<Expression>, syntax::ParserDiagnostic> {
     std::vector<CallArgument> arguments;
     // Guaranteed to roll back if there is an error
     const auto parse_expr_unsuccessful = [&]() {
@@ -58,8 +58,8 @@ auto CallExpression::parse(syntax::Parser& parser, mem::Box<Expression> function
     while (!parser.peek_token_is(syntax::TokenType::RPAREN) &&
            !parser.peek_token_is(syntax::TokenType::END)) {
         if (parser.peek_token_is(syntax::TokenType::COMMA)) {
-            return make_parser_unexpected(syntax::ParserError::COMMA_WITH_MISSING_CALL_ARGUMENT,
-                                          parser.get_peek_token());
+            return make_parser_err(syntax::ParserError::COMMA_WITH_MISSING_CALL_ARGUMENT,
+                                   parser.get_peek_token());
         }
 
         // Advance cannot be called here since explicit type relies on peek, not current

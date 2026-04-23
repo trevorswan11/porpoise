@@ -7,7 +7,7 @@
 #include <type_traits>
 #include <utility>
 
-#include "optional.hpp"
+#include "option.hpp"
 
 namespace porpoise {
 
@@ -157,7 +157,7 @@ auto nullable_boxes_eq(const mem::NullableBox<T>& a, const mem::NullableBox<T>& 
 
 } // namespace mem
 
-template <typename T, typename D> class OptionalRef<mem::Box<T, D>&> {
+template <typename T, typename D> class opt::Ref<mem::Box<T, D>&> {
     static_assert(false, "Use a NullableBox<T, D> to accomplish this!");
 };
 

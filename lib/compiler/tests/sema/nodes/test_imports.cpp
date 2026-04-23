@@ -9,30 +9,29 @@ namespace mods     = helpers::type_modifiers;
 
 TEST_CASE("Module visibility modifier") {
     const auto test = [](bool is_module) {
-        const auto input =
-            fmt::format("{}module;\nimport std; using Integer = i32;", is_module ? "" : "//");
+        const auto input = fmt::format("{}import std; using I = i32;", is_module ? "module;" : "");
 
         helpers::test_collector(
             input,
             is_module,
-            std::pair{"std",
-                      [is_module]() {
-                          ast::ImportStatement import_stmt{
-                              syntax::Token{keywords::IMPORT},
-                              ast::LibraryImport{helpers::make_ident("std"), {}}};
-                          if (is_module) { import_stmt.mark_public(); }
-                          return import_stmt;
-                      }()},
-            std::pair{"Integer", [is_module] {
-                          ast::UsingStatement using_stmt{syntax::Token{keywords::USING},
-                                                         helpers::make_ident("Integer"),
-                                                         ast::ExplicitType{
-                                                             mods::BASE,
-                                                             helpers::make_ident("i32"),
-                                                         }};
-                          if (is_module) { using_stmt.mark_public(); }
-                          return using_stmt;
-                      }()});
+            helpers::TableEntry{"std",
+                                [is_module] {
+                                    ast::ImportStatement import_stmt{
+                                        syntax::Token{keywords::IMPORT},
+                                        ast::LibraryImport{helpers::make_ident("std"), {}}};
+                                    if (is_module) { import_stmt.mark_public(); }
+                                    return import_stmt;
+                                }()},
+            helpers::TableEntry{"I", [is_module] {
+                                    ast::UsingStatement using_stmt{syntax::Token{keywords::USING},
+                                                                   helpers::make_ident("I"),
+                                                                   ast::ExplicitType{
+                                                                       mods::BASE,
+                                                                       helpers::make_ident("i32"),
+                                                                   }};
+                                    if (is_module) { using_stmt.mark_public(); }
+                                    return using_stmt;
+                                }()});
     };
 
     test(true);
@@ -41,13 +40,33 @@ TEST_CASE("Module visibility modifier") {
 
 TEST_CASE("Import aliases correctly used") {
     helpers::test_collector(
-        "import foo as A; const foo := bar;",
-        false,
-        std::pair{"A",
-                  ast::ImportStatement{syntax::Token{keywords::IMPORT},
-                                       ast::LibraryImport{helpers::make_ident("foo"),
-                                                          helpers::make_ident<true>("A")}}},
-        std::pair{"foo", helpers::foo_bar_decl()});
+        R"(import foo as A; import "f" as F; const foo := bar;)",
+        helpers::TableEntry{
+            "A",
+            ast::ImportStatement{
+                syntax::Token{keywords::IMPORT},
+                ast::LibraryImport{helpers::make_ident("foo"), helpers::make_ident<true>("A")}}},
+        helpers::TableEntry{
+            "F",
+            ast::ImportStatement{
+                syntax::Token{keywords::IMPORT},
+                ast::FileImport{helpers::make_primitive<ast::StringExpression>(R"("f")"),
+                                helpers::make_ident("F")}}},
+        helpers::TableEntry{"foo", helpers::foo_bar_decl()});
+}
+
+TEST_CASE("Public modifiers and querying") {
+    auto [analyzer, idx] =
+        helpers::analyze("module; import foo; using bar = baz; pub const a := 2;");
+
+    auto&          parent_table = analyzer.get_table(idx);
+    constexpr auto names        = std::array{"foo", "bar", "a"};
+
+    for (const auto& name : names) {
+        auto symbol = parent_table.get_opt(name);
+        REQUIRE(symbol);
+        CHECK(symbol->is_public());
+    }
 }
 
 TEST_CASE("Duplicate module declaration") {
@@ -55,6 +74,14 @@ TEST_CASE("Duplicate module declaration") {
                                  sema::Diagnostic{"Only one module statement is allowed per file",
                                                   sema::Error::DUPLICATE_MODULE_STATEMENT,
                                                   std::pair{1uz, 9uz}});
+}
+
+TEST_CASE("Illegal module statement location") {
+    helpers::test_collector_fail(
+        "const a := 2; module;",
+        sema::Diagnostic{"Module indicator must be first statement of file",
+                         sema::Error::ILLEGAL_MODULE_STATEMENT_LOCATION,
+                         std::pair{1uz, 15uz}});
 }
 
 } // namespace porpoise::tests

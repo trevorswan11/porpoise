@@ -44,11 +44,11 @@ class InitializerExpression : public ExprBase<InitializerExpression> {
     auto                      accept(Visitor& v) const -> void override;
     [[nodiscard]] static auto parse_opt_object(syntax::Parser&              parser,
                                                mem::NullableBox<Expression> object = nullptr)
-        -> Expected<mem::Box<Expression>, syntax::ParserDiagnostic>;
+        -> Result<mem::Box<Expression>, syntax::ParserDiagnostic>;
 
     // This is for the parser's dispatch table
     [[nodiscard]] static auto parse(syntax::Parser& parser, mem::Box<Expression> object)
-        -> Expected<mem::Box<Expression>, syntax::ParserDiagnostic>;
+        -> Result<mem::Box<Expression>, syntax::ParserDiagnostic>;
 
     MAKE_NULLABLE_BOX_UNPACKER(object_type, Expression, object_type_, *)
     [[nodiscard]] auto has_initializers() const noexcept -> bool { return !initializers_.empty(); }

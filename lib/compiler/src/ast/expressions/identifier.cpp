@@ -8,10 +8,10 @@ auto IdentifierExpression::accept(Visitor& v) const -> void { v.visit(*this); }
 
 auto IdentifierExpression::parse(
     syntax::Parser& parser) // cppcheck-suppress constParameterReference
-    -> Expected<mem::Box<Expression>, syntax::ParserDiagnostic> {
+    -> Result<mem::Box<Expression>, syntax::ParserDiagnostic> {
     const auto start_token = parser.get_current_token();
     if (!start_token.is_valid_ident()) {
-        return make_parser_unexpected(syntax::ParserError::ILLEGAL_IDENTIFIER, start_token);
+        return make_parser_err(syntax::ParserError::ILLEGAL_IDENTIFIER, start_token);
     }
 
     return mem::make_box<IdentifierExpression>(start_token);

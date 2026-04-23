@@ -3,7 +3,7 @@
 #include <vector>
 
 #include "diagnostic.hpp"
-#include "expected.hpp"
+#include "result.hpp"
 
 namespace porpoise::sema {
 
@@ -26,8 +26,8 @@ enum class Error : u8 {
 using Diagnostic  = Diagnostic<Error>;
 using Diagnostics = std::vector<Diagnostic>;
 
-template <typename... Args> auto make_sema_unexpected(Args&&... args) -> Unexpected<Diagnostic> {
-    return make_unexpected<Diagnostic>(std::forward<Args>(args)...);
+template <typename... Args> auto make_sema_err(Args&&... args) -> Err<Diagnostic> {
+    return make_err<Diagnostic>(std::forward<Args>(args)...);
 }
 
 } // namespace porpoise::sema

@@ -8,7 +8,7 @@
 
 #include "syntax/token.hpp"
 
-#include "optional.hpp"
+#include "option.hpp"
 #include "types.hpp"
 
 namespace porpoise::ast {
@@ -30,12 +30,12 @@ class TypeModifier {
 
   public:
     TypeModifier() noexcept = default;
-    explicit TypeModifier(Optional<Modifier> underlying) noexcept
+    explicit TypeModifier(opt::Option<Modifier> underlying) noexcept
         : underlying_{std::move(underlying)} {}
 
     static constexpr auto from_token(const syntax::Token& tok) noexcept -> TypeModifier {
         const auto it = std::ranges::find(LEGAL_MODIFIERS, tok.type, &ModifierMapping::first);
-        return it == LEGAL_MODIFIERS.end() ? TypeModifier{std::nullopt} : TypeModifier{it->second};
+        return it == LEGAL_MODIFIERS.end() ? TypeModifier{opt::none} : TypeModifier{it->second};
     }
 
     // Whether or not the type is a 'value' type (no modifier), mutually exclusive result.
@@ -67,7 +67,7 @@ class TypeModifier {
     });
 
   private:
-    Optional<Modifier> underlying_;
+    opt::Option<Modifier> underlying_;
 
     friend struct fmt::formatter<porpoise::ast::TypeModifier>;
 };

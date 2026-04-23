@@ -7,7 +7,7 @@
 
 #include "syntax/token.hpp"
 
-#include "optional.hpp"
+#include "option.hpp"
 
 namespace porpoise::syntax {
 
@@ -121,10 +121,10 @@ constexpr auto ALL_KEYWORDS = [] {
     return all_keywords;
 }();
 
-constexpr auto get_keyword(std::string_view sv) noexcept -> Optional<Keyword> {
+constexpr auto get_keyword(std::string_view sv) noexcept -> opt::Option<Keyword> {
     const auto it = std::ranges::lower_bound(ALL_KEYWORDS, sv, {}, &Keyword::first);
-    if (it == ALL_KEYWORDS.end() || it->first != sv) { return std::nullopt; }
-    return Optional<Keyword>{*it};
+    if (it == ALL_KEYWORDS.end() || it->first != sv) { return opt::none; }
+    return opt::Option<Keyword>{*it};
 }
 
 constexpr auto ALL_PRIMITIVES = std::array{
@@ -181,21 +181,10 @@ constexpr auto ALL_BUILTINS = [] {
     return all_builtins;
 }();
 
-constexpr auto get_builtin(std::string_view sv) noexcept -> Optional<Keyword> {
+constexpr auto get_builtin(std::string_view sv) noexcept -> opt::Option<Keyword> {
     const auto it = std::ranges::lower_bound(ALL_BUILTINS, sv, {}, &Keyword::first);
-    if (it == ALL_BUILTINS.end() || it->first != sv) { return std::nullopt; }
-    return Optional<Keyword>{*it};
-}
-
-constexpr auto is_builtin(TokenType tt) noexcept -> bool {
-    constexpr auto ALL_BUILTINS_BY_TT = [] {
-        auto arr = ALL_BUILTINS;
-        std::ranges::sort(arr, {}, &Keyword::second);
-        return arr;
-    }();
-
-    const auto it = std::ranges::lower_bound(ALL_BUILTINS_BY_TT, tt, {}, &Keyword::second);
-    return it != ALL_BUILTINS_BY_TT.end() && it->second == tt;
+    if (it == ALL_BUILTINS.end() || it->first != sv) { return opt::none; }
+    return opt::Option<Keyword>{*it};
 }
 
 } // namespace porpoise::syntax

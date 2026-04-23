@@ -38,7 +38,7 @@ TEST_CASE("Struct flavors") {
                         syntax::Token{keywords::CONSTANT},
                         helpers::make_ident("b"),
                         mem::make_box<ast::TypeExpression>(syntax::Token{operators::WALRUS},
-                                                           std::nullopt),
+                                                           opt::none),
                         mem::make_nullable_box<ast::FunctionExpression>(
                             syntax::Token{keywords::FN},
                             ast::SelfParameter{mods::MUT_PTR, helpers::make_ident("this")},

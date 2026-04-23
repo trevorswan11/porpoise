@@ -25,7 +25,7 @@ class StructExpression : public ExprBase<StructExpression> {
 
     auto                      accept(Visitor& v) const -> void override;
     [[nodiscard]] static auto parse(syntax::Parser& parser)
-        -> Expected<mem::Box<Expression>, syntax::ParserDiagnostic>;
+        -> Result<mem::Box<Expression>, syntax::ParserDiagnostic>;
 
     MAKE_GETTER(members, MembersView)
     [[nodiscard]] auto is_packed() const noexcept -> bool {
