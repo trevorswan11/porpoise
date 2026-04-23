@@ -300,6 +300,8 @@ auto ASTDumper::visit(const InitializerExpression& init) -> void {
     }
 }
 
+auto ASTDumper::visit(const ast::LabelExpression&) -> void {}
+
 auto ASTDumper::visit(const MatchArm& arm) -> void {
     fmt::println(out_, "Arm:");
     {
@@ -576,10 +578,26 @@ auto ASTDumper::visit(const ImportStatement& import_stmt) -> void {
 
 auto ASTDumper::visit(const JumpStatement& jump) -> void {
     fmt::println(out_, "JumpStatement ({})", magic_enum::enum_name(jump.get_token().type));
+
+    if (jump.has_label()) {
+        const Indent::Guard g{indent_, !jump.has_expression()};
+        fmt::print(out_, "{}Label: ", indent_.current_branch());
+        jump.get_expression().accept(*this);
+    }
+
     if (jump.has_expression()) {
         const Indent::Guard g{indent_, true};
         fmt::print(out_, "{}Value: ", indent_.current_branch());
         jump.get_expression().accept(*this);
+    }
+}
+
+auto ASTDumper::visit(const ReturnStatement& return_stmt) -> void {
+    fmt::println(out_, "ReturnStatement");
+    if (return_stmt.has_expression()) {
+        const Indent::Guard g{indent_, true};
+        fmt::print(out_, "{}Value: ", indent_.current_branch());
+        return_stmt.get_expression().accept(*this);
     }
 }
 

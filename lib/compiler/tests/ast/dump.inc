@@ -31,7 +31,7 @@ ExpressionStatement
         └─ RHS: UnaryExpression (BANG)
             └─ Operand: IdentifierExpression: c
 JumpStatement (CONTINUE)
-JumpStatement (RETURN)
+ReturnStatement
 └─ Value: EnumExpression
     └─ Enumerations:
         └─ Name: IdentifierExpression: RED
@@ -66,7 +66,7 @@ ExpressionStatement
     ├─ Body: BlockStatement
     │   └─ ExpressionStatement
     │       └─ Expr: IdentifierExpression: a
-    └─ Non-Break Clause: JumpStatement (RETURN)
+    └─ Non-Break Clause: ReturnStatement
         └─ Value: IdentifierExpression: b
 DeclStatement (f_ptr)
 ├─ Modifiers: VARIABLE
@@ -213,7 +213,7 @@ ExpressionStatement
     ├─ Body: BlockStatement
     │   └─ ExpressionStatement
     │       └─ Expr: IdentifierExpression: a
-    └─ Non-Break: JumpStatement (RETURN)
+    └─ Non-Break: ReturnStatement
         └─ Value: IdentifierExpression: b
 ExpressionStatement
 └─ Expr: EnumExpression

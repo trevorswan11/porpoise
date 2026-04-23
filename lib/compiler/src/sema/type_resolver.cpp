@@ -49,6 +49,8 @@ auto TypeResolver::visit(const ast::Initializer&) -> void {}
 
 auto TypeResolver::visit(const ast::InitializerExpression&) -> void {}
 
+auto TypeResolver::visit(const ast::LabelExpression&) -> void {}
+
 auto TypeResolver::visit(const ast::MatchArm&) -> void {}
 
 auto TypeResolver::visit(const ast::MatchExpression&) -> void {}
@@ -107,6 +109,8 @@ auto TypeResolver::visit(const ast::ExpressionStatement&) -> void {}
 auto TypeResolver::visit(const ast::ImportStatement&) -> void {}
 
 auto TypeResolver::visit(const ast::JumpStatement&) -> void {}
+
+auto TypeResolver::visit(const ast::ReturnStatement&) -> void {}
 
 auto TypeResolver::visit(const ast::ModuleStatement&) -> void {}
 

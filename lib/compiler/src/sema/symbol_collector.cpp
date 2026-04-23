@@ -152,6 +152,8 @@ auto SymbolCollector::visit(const ast::InitializerExpression& init) -> void {
     if (init.has_initializers()) { visit_list(init.get_initializers()); }
 }
 
+auto SymbolCollector::visit(const ast::LabelExpression&) -> void {}
+
 auto SymbolCollector::visit(const ast::MatchArm& arm) -> void {
     const auto  new_idx = registry_.create();
     const Scope s{table_stack_, new_idx, table_idx_};
@@ -295,27 +297,22 @@ auto SymbolCollector::visit(const ast::ImportStatement& import_stmt) -> void {
     try_result(registry_.insert_into(table_idx_, name, &import_stmt));
 }
 
-auto SymbolCollector::visit(const ast::JumpStatement& node) -> void {
-    using syntax::TokenType;
-    switch (node.get_token().type) {
-    case TokenType::RETURN:
-        if (!in_function_scope_) {
-            diagnostics_.emplace_back("Cannot return outside of a function",
-                                      Error::ILLEGAL_CONTROL_FLOW,
-                                      node.get_token());
-        }
-        break;
-    case TokenType::BREAK:
-    case TokenType::CONTINUE:
-        if (!in_loop_scope_) {
-            diagnostics_.emplace_back("Cannot continue or break outside of a loop",
-                                      Error::ILLEGAL_CONTROL_FLOW,
-                                      node.get_token());
-        }
-        break;
-    default: std::unreachable();
+auto SymbolCollector::visit(const ast::JumpStatement& jump) -> void {
+    if (!in_loop_scope_ && !in_label_scope_) {
+        diagnostics_.emplace_back("Cannot continue or break outside of a loop or label",
+                                  Error::ILLEGAL_CONTROL_FLOW,
+                                  jump.get_token());
     }
-    if (node.has_expression()) { node.get_expression().accept(*this); }
+    if (jump.has_expression()) { jump.get_expression().accept(*this); }
+}
+
+auto SymbolCollector::visit(const ast::ReturnStatement& return_stmt) -> void {
+    if (!in_function_scope_) {
+        diagnostics_.emplace_back("Cannot return outside of a function",
+                                  Error::ILLEGAL_CONTROL_FLOW,
+                                  return_stmt.get_token());
+    }
+    if (return_stmt.has_expression()) { return_stmt.get_expression().accept(*this); }
 }
 
 auto SymbolCollector::visit(const ast::ModuleStatement& module_stmt) -> void {

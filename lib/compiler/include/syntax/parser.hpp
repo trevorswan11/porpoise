@@ -82,6 +82,8 @@ enum class ParserError : u8 {
     ILLEGAL_DEFERRED_STATEMENT,
     DEFER_MISSING_DEFERREE,
     EMPTY_TEST_DESCRIPTION,
+    VALUED_JUMP_MISSING_LABEL,
+    ILLEGAL_LABEL,
 };
 
 using ParserDiagnostic = Diagnostic<ParserError>;

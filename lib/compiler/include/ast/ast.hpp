@@ -17,6 +17,7 @@
 #include "ast/expressions/infinite_loop.hpp"
 #include "ast/expressions/infix.hpp"
 #include "ast/expressions/initializer.hpp"
+#include "ast/expressions/label.hpp"
 #include "ast/expressions/match.hpp"
 #include "ast/expressions/prefix.hpp"
 #include "ast/expressions/primitive.hpp"

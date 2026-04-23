@@ -47,7 +47,7 @@ TEST_CASE("Full for loop with else") {
             helpers::make_vector<ast::ForLoopCapture>(
                 ast::ForLoopCapture::Valued{{}, helpers::make_ident("i")}),
             helpers::make_expr_block_stmt(helpers::ident_from("a")),
-            mem::make_nullable_box<ast::JumpStatement>(syntax::Token{keywords::RETURN},
+            mem::make_nullable_box<ast::ReturnStatement>(syntax::Token{keywords::RETURN},
                                                        helpers::make_ident<true>("b"))});
 }
 

@@ -26,6 +26,7 @@ namespace porpoise::ast {
     X(RangeExpression)           \
     X(Initializer)               \
     X(InitializerExpression)     \
+    X(LabelExpression)     \
     X(MatchArm)                  \
     X(MatchExpression)           \
     X(ReferenceExpression)       \
@@ -60,6 +61,7 @@ namespace porpoise::ast {
     X(ExpressionStatement)  \
     X(ImportStatement)      \
     X(JumpStatement)        \
+    X(ReturnStatement)      \
     X(ModuleStatement)      \
     X(TestStatement)        \
     X(UsingStatement)

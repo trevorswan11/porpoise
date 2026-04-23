@@ -38,7 +38,7 @@ TEST_CASE("While with else") {
             helpers::make_primitive<ast::BoolExpression>(true),
             {},
             helpers::make_expr_block_stmt(helpers::ident_from("a")),
-            mem::make_nullable_box<ast::JumpStatement>(syntax::Token{keywords::RETURN},
+            mem::make_nullable_box<ast::ReturnStatement>(syntax::Token{keywords::RETURN},
                                                        helpers::make_ident<true>("b"))});
 }
 
@@ -54,7 +54,7 @@ TEST_CASE("Full while loop") {
                 syntax::TokenType::PLUS_ASSIGN,
                 helpers::make_primitive<ast::I32Expression>("1")),
             helpers::make_expr_block_stmt(helpers::ident_from("a")),
-            mem::make_nullable_box<ast::JumpStatement>(syntax::Token{keywords::RETURN},
+            mem::make_nullable_box<ast::ReturnStatement>(syntax::Token{keywords::RETURN},
                                                        helpers::make_ident<true>("b"))});
 }
 
