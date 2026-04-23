@@ -13,6 +13,12 @@ auto analyze(std::string_view input) -> std::pair<sema::Analyzer, usize> {
     return {std::move(analyzer), idx};
 }
 
+auto analyze_and_validate(std::string_view input) -> std::pair<sema::Analyzer, usize> {
+    auto [analyzer, idx] = analyze(input);
+    check_errors<sema::Diagnostic>(analyzer.get_diagnostics());
+    return {std::move(analyzer), idx};
+}
+
 auto common_decl(std::string_view name, std::string_view assign) -> ast::DeclStatement {
     return ast::DeclStatement{
         syntax::Token{syntax::keywords::CONSTANT},

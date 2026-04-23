@@ -15,11 +15,19 @@ template <Countable Underlying> class Counter {
   public:
     class Guard {
       public:
-        explicit Guard(Counter& c) : c_{c} { c_.increment(); }
-        ~Guard() { c_.decrement(); }
+        explicit Guard(Counter& c) : c_{&c} { c_->increment(); }
+        ~Guard() {
+            if (c_) { c_->decrement(); }
+        }
+
+        Guard(const Guard&)                    = delete;
+        auto operator=(const Guard&) -> Guard& = delete;
+
+        Guard(Guard&& other) noexcept : c_{other.c_} { other.c_ = nullptr; }
+        auto operator=(const Guard&&) -> Guard& = delete;
 
       private:
-        Counter& c_;
+        Counter* c_;
     };
 
   public:

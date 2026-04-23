@@ -71,13 +71,17 @@ auto SymbolCollector::visit(const ast::ForLoopCapture& capture) -> void {
 }
 
 auto SymbolCollector::visit(const ast::ForLoopExpression& for_expr) -> void {
-    const auto  new_idx = registry_.create();
-    const Scope s{table_stack_, new_idx, table_idx_};
-    const auto  g = loop_guard();
+    // The guard shouldn't enclose the else clause
+    const auto g_expr = in_expr_scope_.guard();
+    usize      new_idx;
+    {
+        new_idx = registry_.create();
+        const Scope s{table_stack_, new_idx, table_idx_};
 
-    // Parameters belong to the parent scope
-    visit_list(for_expr.get_captures());
-    visit_list(for_expr.get_block());
+        const auto g_loop = in_loop_scope_.guard();
+        visit_list(for_expr.get_captures());
+        visit_list(for_expr.get_block());
+    }
     if (for_expr.has_non_break()) { for_expr.get_non_break().accept(*this); }
 
     last_type_.emplace(pool_[{TypeKind::BLOCK, false, new_idx}]);
@@ -201,10 +205,15 @@ auto SymbolCollector::visit(const ast::UnionExpression& union_expr) -> void {
 }
 
 auto SymbolCollector::visit(const ast::WhileLoopExpression& while_expr) -> void {
-    const auto g   = in_loop_scope_.guard();
-    const auto idx = visit_scopes(
-        TypeKind::BLOCK,
-        IterPair{while_expr.get_block(), [this](const auto& stmt) { stmt->accept(*this); }});
+    // The guard shouldn't enclose the else clause
+    const auto g_expr = in_expr_scope_.guard();
+    usize      idx;
+    {
+        const auto g_loop = in_loop_scope_.guard();
+        idx               = visit_scopes(
+            TypeKind::BLOCK,
+            IterPair{while_expr.get_block(), [this](const auto& stmt) { stmt->accept(*this); }});
+    }
     if (while_expr.has_non_break()) { while_expr.get_non_break().accept(*this); }
 
     last_type_->set_symbol_table_idx(idx);
@@ -285,13 +294,24 @@ auto SymbolCollector::visit(const ast::ImportStatement& import_stmt) -> void {
 }
 
 auto SymbolCollector::visit(const ast::JumpStatement& node) -> void {
-    if (node.get_token().type == syntax::TokenType::RETURN && !in_function_scope_) {
-        diagnostics_.emplace_back(
-            "Cannot return outside of a function", Error::ILLEGAL_CONTROL_FLOW, node.get_token());
-    } else if (!in_loop_scope_) {
-        diagnostics_.emplace_back("Cannot continue or break outside of a loop",
-                                  Error::ILLEGAL_CONTROL_FLOW,
-                                  node.get_token());
+    using syntax::TokenType;
+    switch (node.get_token().type) {
+    case TokenType::RETURN:
+        if (!in_function_scope_) {
+            diagnostics_.emplace_back("Cannot return outside of a function",
+                                      Error::ILLEGAL_CONTROL_FLOW,
+                                      node.get_token());
+        }
+        break;
+    case TokenType::BREAK:
+    case TokenType::CONTINUE:
+        if (!in_loop_scope_) {
+            diagnostics_.emplace_back("Cannot continue or break outside of a loop",
+                                      Error::ILLEGAL_CONTROL_FLOW,
+                                      node.get_token());
+        }
+        break;
+    default: std::unreachable();
     }
     if (node.has_expression()) { node.get_expression().accept(*this); }
 }

@@ -21,6 +21,9 @@ namespace porpoise::tests::helpers {
 // Analyzes the assumed-syntactically-valid input and returns the analyzer and parent table index.
 [[nodiscard]] auto analyze(std::string_view input) -> std::pair<sema::Analyzer, usize>;
 
+// Analyzes the assumed-syntactically-valid input and checks for no errors
+auto analyze_and_validate(std::string_view input) -> std::pair<sema::Analyzer, usize>;
+
 // A helper for creating non-node symbols
 template <typename N> struct TableEntry {
     std::string_view              name;
