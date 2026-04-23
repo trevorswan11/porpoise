@@ -25,4 +25,15 @@ TEST_CASE("Initializer collection") {
     helpers::analyze_and_validate("const a := T{ .b = 3u + v, .c = if (5 <= h) i else j };");
 }
 
+TEST_CASE("Discard statement collection") {
+    helpers::analyze_and_validate("_ = 0..20;");
+    helpers::analyze_and_validate("const a := fn(&self, c: type): void { _ = c; };");
+}
+
+TEST_CASE("Prefix expression collection") {
+    helpers::analyze_and_validate("const a := &b;");
+    helpers::analyze_and_validate("const a := *b;");
+    helpers::analyze_and_validate("const a := !b;");
+}
+
 } // namespace porpoise::tests
