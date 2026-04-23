@@ -8,7 +8,6 @@
 #include <fmt/ranges.h>
 
 #include "helpers/ast.hpp" // IWYU pragma: keep
-#include "helpers/common.hpp"
 
 #include "sema/analyzer.hpp"
 #include "sema/error.hpp"
@@ -94,9 +93,8 @@ auto emplace_symbol_type_from_entry(sema::Analyzer& analyzer,
 template <typename... Entries>
 auto test_collector(std::string_view input, bool is_module, Entries&&... entries)
     -> sema::Analyzer {
-    auto [analyzer, idx] = analyze(input);
-    check_errors<sema::Diagnostic>(analyzer.get_diagnostics());
-    const auto& actual = analyzer.get_table(idx);
+    auto [analyzer, idx] = analyze_and_validate(input);
+    const auto& actual   = analyzer.get_table(idx);
     CHECK(actual.size() == sizeof...(Entries));
     CHECK(actual.is_module() == is_module);
 

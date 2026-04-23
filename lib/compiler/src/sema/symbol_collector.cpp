@@ -161,7 +161,7 @@ auto SymbolCollector::visit(const ast::MatchArm& arm) -> void {
     }
     arm.get_dispatch().accept(*this);
 
-    last_type_.emplace(pool_[{TypeKind::BLOCK, false, new_idx}]);
+    last_type_.emplace(pool_[{TypeKind::MATCH_ARM, false, new_idx}]);
     last_type_->set_symbol_table_idx(new_idx);
     arm.set_sema_type(*last_type_.take());
 }
@@ -207,16 +207,18 @@ auto SymbolCollector::visit(const ast::UnionExpression& union_expr) -> void {
 auto SymbolCollector::visit(const ast::WhileLoopExpression& while_expr) -> void {
     // The guard shouldn't enclose the else clause
     const auto g_expr = in_expr_scope_.guard();
-    usize      idx;
+    usize      new_idx;
     {
+        new_idx = registry_.create();
+        const Scope s{table_stack_, new_idx, table_idx_};
+
         const auto g_loop = in_loop_scope_.guard();
-        idx               = visit_scopes(
-            TypeKind::BLOCK,
-            IterPair{while_expr.get_block(), [this](const auto& stmt) { stmt->accept(*this); }});
+        visit_list(while_expr.get_block());
     }
     if (while_expr.has_non_break()) { while_expr.get_non_break().accept(*this); }
 
-    last_type_->set_symbol_table_idx(idx);
+    last_type_.emplace(pool_[{TypeKind::BLOCK, false, new_idx}]);
+    last_type_->set_symbol_table_idx(new_idx);
     while_expr.set_sema_type(*last_type_.take());
 }
 
@@ -230,7 +232,7 @@ auto SymbolCollector::visit(const ast::BlockStatement& block) -> void {
     const auto scope_idx = visit_scopes(
         TypeKind::BLOCK, IterPair{block, [this](const auto& stmt) { stmt->accept(*this); }});
     last_type_->set_symbol_table_idx(scope_idx);
-    block.set_sema_type(*last_type_);
+    block.set_sema_type(*last_type_.take());
 }
 
 auto SymbolCollector::visit(const ast::DeclStatement& decl) -> void {

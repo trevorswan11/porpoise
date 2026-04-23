@@ -1,5 +1,7 @@
 #include "helpers/sema.hpp"
 
+#include "helpers/common.hpp"
+
 namespace porpoise::tests::helpers {
 
 auto analyze(std::string_view input) -> std::pair<sema::Analyzer, usize> {

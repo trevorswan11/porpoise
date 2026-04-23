@@ -47,6 +47,14 @@ TEST_CASE("Well-placed function control-flow statements") {
     helpers::analyze_and_validate("pub const main := fn(args: [][:0]u8): i32 { defer a = 2; };");
 }
 
+TEST_CASE("Defer statements respect identifier collection rules") {
+    helpers::test_collector_fail(
+        "pub const main := fn(args: [][:0]u8): i32 { defer { var main: i32; } };",
+        sema::Diagnostic{"Attempt to shadow identifier 'main'. Previous declaration here: [1, 1]",
+                         sema::Error::SHADOWING_DECLARATION,
+                         std::pair{1uz, 53uz}});
+}
+
 TEST_CASE("Function basic param redeclaration") {
     helpers::test_collector_fail(
         "const f := fn(f: bool): void {};",
