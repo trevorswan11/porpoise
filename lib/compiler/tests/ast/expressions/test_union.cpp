@@ -141,9 +141,9 @@ TEST_CASE("Empty union with decl") {
 
 TEST_CASE("Out of order union") {
     helpers::test_parser_fail("union { a: i32, const b := fn(&self, a: A): C { c; }; b: i32, };",
-                              syntax::ParserDiagnostic{"Expected token SEMICOLON, found COLON",
+                              syntax::ParserDiagnostic{"Expected token SEMICOLON, found COMMA",
                                                        syntax::ParserError::UNEXPECTED_TOKEN,
-                                                       std::pair{1uz, 56uz}});
+                                                       std::pair{1uz, 61uz}});
 }
 
 TEST_CASE("Non-static non-function union member") {

@@ -1,9 +1,11 @@
 #include "ast/expressions/type.hpp"
 
+#include "ast/expressions/call.hpp"
 #include "ast/expressions/enum.hpp"
 #include "ast/expressions/function.hpp"
 #include "ast/expressions/identifier.hpp"
 #include "ast/expressions/primitive.hpp"
+#include "ast/expressions/scope_resolve.hpp"
 #include "ast/expressions/struct.hpp"
 #include "ast/expressions/union.hpp"
 #include "ast/visitor.hpp"
@@ -96,6 +98,20 @@ auto ExplicitType::accept(Visitor& v) const -> void { v.visit(*this); }
         }
 
         parser.advance();
+        // Manually dispatch to prevent weird consumption
+        if (parser.peek_token_is(syntax::TokenType::COLON_COLON) ||
+            parser.peek_token_is(syntax::TokenType::LPAREN)) {
+            auto parsed = TRY(parser.parse_expression(syntax::Precedence::TYPE));
+            if (parsed->is<ScopeResolutionExpression>()) {
+                return ExplicitType{modifier,
+                                    Node::downcast<ScopeResolutionExpression>(std::move(parsed))};
+            } else if (parsed->is<CallExpression>()) {
+                return ExplicitType{modifier, Node::downcast<CallExpression>(std::move(parsed))};
+            }
+
+            return make_parser_err(syntax::ParserError::ILLEGAL_EXPLICIT_TYPE, parsed->get_token());
+        }
+
         return ExplicitType{
             modifier,
             Node::downcast<IdentifierExpression>(TRY(IdentifierExpression::parse(parser)))};

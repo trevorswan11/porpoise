@@ -300,6 +300,21 @@ auto ASTDumper::visit(const InitializerExpression& init) -> void {
     }
 }
 
+auto ASTDumper::visit(const ast::LabelExpression& label) -> void {
+    fmt::println(out_, "Label Expression:");
+    {
+        const Indent::Guard g{indent_, false};
+        fmt::print(out_, "{}Label: ", indent_.current_branch());
+        visit(label.get_name());
+    }
+
+    {
+        const Indent::Guard g{indent_, true};
+        fmt::print(out_, "{}Body: ", indent_.current_branch());
+        label.match([this](const auto& b) { visit(*b); });
+    }
+}
+
 auto ASTDumper::visit(const MatchArm& arm) -> void {
     fmt::println(out_, "Arm:");
     {
@@ -515,6 +530,30 @@ auto ASTDumper::visit(const BlockStatement& block) -> void {
     }
 }
 
+auto ASTDumper::visit(const BreakStatement& node) -> void {
+    fmt::println(out_, "BreakStatement");
+    if (node.has_label()) {
+        const Indent ::Guard g{indent_, !node.has_expression()};
+        fmt::print(out_, "{}Label: ", indent_.current_branch());
+        visit(node.get_label());
+    }
+
+    if (node.has_expression()) {
+        const Indent ::Guard g{indent_, true};
+        fmt::print(out_, "{}Value: ", indent_.current_branch());
+        node.get_expression().accept(*this);
+    }
+}
+
+auto ASTDumper::visit(const ContinueStatement& node) -> void {
+    fmt::println(out_, "ContinueStatement");
+    if (node.has_label()) {
+        const Indent ::Guard g{indent_, true};
+        fmt::print(out_, "{}Label: ", indent_.current_branch());
+        node.get_label().accept(*this);
+    }
+}
+
 auto ASTDumper::visit(const DeclStatement& decl) -> void {
     fmt::println(out_, "DeclStatement ({})", decl.get_ident());
     {
@@ -574,16 +613,16 @@ auto ASTDumper::visit(const ImportStatement& import_stmt) -> void {
     }
 }
 
-auto ASTDumper::visit(const JumpStatement& jump) -> void {
-    fmt::println(out_, "JumpStatement ({})", magic_enum::enum_name(jump.get_token().type));
-    if (jump.has_expression()) {
+auto ASTDumper::visit(const ModuleStatement&) -> void { fmt::println(out_, "ModuleStatement"); }
+
+auto ASTDumper::visit(const ReturnStatement& return_stmt) -> void {
+    fmt::println(out_, "ReturnStatement");
+    if (return_stmt.has_expression()) {
         const Indent::Guard g{indent_, true};
         fmt::print(out_, "{}Value: ", indent_.current_branch());
-        jump.get_expression().accept(*this);
+        return_stmt.get_expression().accept(*this);
     }
 }
-
-auto ASTDumper::visit(const ModuleStatement&) -> void { fmt::println(out_, "ModuleStatement"); }
 
 auto ASTDumper::visit(const TestStatement& test) -> void {
     fmt::println(out_, "TestStatement");

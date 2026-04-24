@@ -1,25 +1,23 @@
 #pragma once
 
-#include <utility>
-
 #include "ast/node.hpp"
 
 #include "syntax/parser.hpp"
 
 namespace porpoise::ast {
 
-class JumpStatement : public StmtBase<JumpStatement> {
+class ReturnStatement : public StmtBase<ReturnStatement> {
   public:
-    static constexpr auto KIND = NodeKind::JUMP_STATEMENT;
+    static constexpr auto KIND = NodeKind::RETURN_STATEMENT;
 
   public:
-    JumpStatement(const syntax::Token&         start_token,
-                  mem::NullableBox<Expression> expression) noexcept
+    ReturnStatement(const syntax::Token&         start_token,
+                    mem::NullableBox<Expression> expression) noexcept
         : StmtBase{start_token}, expression_{std::move(expression)} {}
 
-    MAKE_MOVE_CONSTRUCTABLE_ONLY(JumpStatement)
+    MAKE_MOVE_CONSTRUCTABLE_ONLY(ReturnStatement)
 
-    auto                      accept(Visitor& v) const -> void override;
+    auto                      accept(Visitor& v) const noexcept -> void override;
     [[nodiscard]] static auto parse(syntax::Parser& parser)
         -> Result<mem::Box<Statement>, syntax::ParserDiagnostic>;
 
@@ -27,7 +25,7 @@ class JumpStatement : public StmtBase<JumpStatement> {
 
   protected:
     auto is_equal(const Node& other) const noexcept -> bool override {
-        const auto& casted = as<JumpStatement>(other);
+        const auto& casted = Node::as<ReturnStatement>(other);
         return mem::nullable_boxes_eq(expression_, casted.expression_);
     }
 

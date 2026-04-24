@@ -78,6 +78,10 @@ class SymbolCollector : public ast::Visitor {
         return {in_function_scope_.guard(), in_expr_scope_.guard()};
     }
 
+    auto label_guard() noexcept -> std::pair<DefaultCounter::Guard, DefaultCounter::Guard> {
+        return {in_label_scope_.guard(), in_expr_scope_.guard()};
+    }
+
   private:
     usize                table_idx_;
     SymbolTableStack     table_stack_;
@@ -89,6 +93,7 @@ class SymbolCollector : public ast::Visitor {
     opt::Option<Type&> last_type_;
     DefaultCounter     in_function_scope_;
     DefaultCounter     in_loop_scope_;
+    DefaultCounter     in_label_scope_;
     DefaultCounter     in_expr_scope_;
 };
 

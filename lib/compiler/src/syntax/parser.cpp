@@ -104,16 +104,16 @@ auto Parser::parse_statement(bool require_semicolon)
     -> Result<mem::Box<ast::Statement>, ParserDiagnostic> {
     if (current_token_.is_decl_token()) { return ast::DeclStatement::parse(*this); }
     switch (current_token_.type) {
-    case TokenType::BREAK:
-    case TokenType::RETURN:
-    case TokenType::CONTINUE:   return ast::JumpStatement::parse(*this);
-    case TokenType::DEFER:      return ast::DeferStatement::parse(*this);
-    case TokenType::IMPORT:     return ast::ImportStatement::parse(*this);
     case TokenType::LBRACE:     return ast::BlockStatement::parse(*this);
+    case TokenType::BREAK:      return ast::BreakStatement::parse(*this);
+    case TokenType::CONTINUE:   return ast::ContinueStatement::parse(*this);
+    case TokenType::DEFER:      return ast::DeferStatement::parse(*this);
     case TokenType::UNDERSCORE: return ast::DiscardStatement::parse(*this);
+    case TokenType::IMPORT:     return ast::ImportStatement::parse(*this);
     case TokenType::MODULE:     return ast::ModuleStatement::parse(*this);
-    case TokenType::USING:      return ast::UsingStatement::parse(*this);
+    case TokenType::RETURN:     return ast::ReturnStatement::parse(*this);
     case TokenType::TEST:       return ast::TestStatement::parse(*this);
+    case TokenType::USING:      return ast::UsingStatement::parse(*this);
     default:                    return ast::ExpressionStatement::parse(*this, require_semicolon);
     }
 }
@@ -149,7 +149,11 @@ auto Parser::parse_expression(Precedence precedence)
     auto clause = TRY(parse_statement(require_semicolon));
 
     // The clause can only be a jump, block, or expression statement
-    if (!clause->any<ast::ExpressionStatement, ast::JumpStatement, ast::BlockStatement>()) {
+    if (!clause->any<ast::ExpressionStatement,
+                     ast::BreakStatement,
+                     ast::ContinueStatement,
+                     ast::ReturnStatement,
+                     ast::BlockStatement>()) {
         return make_parser_err(error, clause->get_token());
     }
     return clause;
@@ -282,6 +286,7 @@ constexpr auto INFIX_FNS = [] {
     fns[TokenType::NOT_ASSIGN]     = ast::AssignmentExpression::parse;
     fns[TokenType::XOR_ASSIGN]     = ast::AssignmentExpression::parse;
     fns[TokenType::COLON_COLON]    = ast::ScopeResolutionExpression::parse;
+    fns[TokenType::COLON]          = ast::LabelExpression::parse;
 
     return fns;
 }();

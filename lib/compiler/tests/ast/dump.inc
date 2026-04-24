@@ -30,8 +30,8 @@ ExpressionStatement
         │   └─ Index: USizeExpression: 3
         └─ RHS: UnaryExpression (BANG)
             └─ Operand: IdentifierExpression: c
-JumpStatement (CONTINUE)
-JumpStatement (RETURN)
+ContinueStatement
+ReturnStatement
 └─ Value: EnumExpression
     └─ Enumerations:
         └─ Name: IdentifierExpression: RED
@@ -66,7 +66,7 @@ ExpressionStatement
     ├─ Body: BlockStatement
     │   └─ ExpressionStatement
     │       └─ Expr: IdentifierExpression: a
-    └─ Non-Break Clause: JumpStatement (RETURN)
+    └─ Non-Break Clause: ReturnStatement
         └─ Value: IdentifierExpression: b
 DeclStatement (f_ptr)
 ├─ Modifiers: VARIABLE
@@ -213,7 +213,7 @@ ExpressionStatement
     ├─ Body: BlockStatement
     │   └─ ExpressionStatement
     │       └─ Expr: IdentifierExpression: a
-    └─ Non-Break: JumpStatement (RETURN)
+    └─ Non-Break: ReturnStatement
         └─ Value: IdentifierExpression: b
 ExpressionStatement
 └─ Expr: EnumExpression
@@ -402,4 +402,35 @@ TestStatement
                 └─ BinaryExpression (EQ)
                     ├─ LHS: IdentifierExpression: a
                     └─ RHS: BoolExpression: true
+DeclStatement (a)
+├─ Modifiers: VARIABLE
+└─ Type: ExplicitType (modifier: BASE)
+    └─ CallExpression
+        ├─ Callee: ScopeResolutionExpression
+        │   ├─ Outer: IdentifierExpression: std
+        │   └─ Inner: IdentifierExpression: ArrayList
+        └─ Arguments:
+            └─ IdentifierExpression: u8 (primitive)
+DeclStatement (a)
+├─ Modifiers: VARIABLE
+└─ Type: ExplicitType (modifier: BASE)
+    └─ ScopeResolutionExpression
+        ├─ Outer: IdentifierExpression: std
+        └─ Inner: IdentifierExpression: Io
+DeclStatement (a)
+├─ Modifiers: VARIABLE
+└─ Type: ExplicitType (modifier: BASE)
+    └─ CallExpression
+        ├─ Callee: IdentifierExpression: List
+        └─ Arguments:
+            └─ IdentifierExpression: i32 (primitive)
+BreakStatement
+├─ Label: IdentifierExpression: blk
+└─ Value: IdentifierExpression: a
+ExpressionStatement
+└─ Expr: Label Expression:
+    ├─ Label: IdentifierExpression: a
+    └─ Body: BlockStatement
+        └─ ContinueStatement
+            └─ Label: IdentifierExpression: a
 )"

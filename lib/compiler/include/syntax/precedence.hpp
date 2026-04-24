@@ -18,9 +18,11 @@ enum class Precedence : u8 {
     EXPONENT         = 70,
     PREFIX           = 80,
     RANGE            = 90,
-    SCOPE_RESOLUTION = 100,
-    GROUP_CALL_IDX   = 110,
-    INITIALIZATION   = 120,
+    TYPE             = 100,
+    SCOPE_RESOLUTION = 110,
+    GROUP_CALL_IDX   = 120,
+    INITIALIZATION   = 130,
+    LABEL            = 130,
 };
 
 struct Binding {

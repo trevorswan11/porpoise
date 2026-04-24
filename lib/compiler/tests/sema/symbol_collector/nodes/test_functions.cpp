@@ -42,9 +42,9 @@ TEST_CASE("Function hollow types") {
 }
 
 TEST_CASE("Well-placed function control-flow statements") {
-    helpers::analyze_and_validate("pub const main := fn(args: [][:0]u8): void { return; };");
-    helpers::analyze_and_validate("pub const main := fn(args: [][:0]u8): i32 { return 0; };");
-    helpers::analyze_and_validate("pub const main := fn(args: [][:0]u8): i32 { defer a = 2; };");
+    helpers::collect_and_validate("pub const main := fn(args: [][:0]u8): void { return; };");
+    helpers::collect_and_validate("pub const main := fn(args: [][:0]u8): i32 { return 0; };");
+    helpers::collect_and_validate("pub const main := fn(args: [][:0]u8): i32 { defer a = 2; };");
 }
 
 TEST_CASE("Defer statements respect identifier collection rules") {

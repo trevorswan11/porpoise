@@ -111,31 +111,31 @@ TEST_CASE("While loop collection") {
 
 TEST_CASE("Well-placed loop control flow") {
     SECTION("For loops") {
-        helpers::analyze_and_validate("const a := for (0..5) |i| { break; };");
-        helpers::analyze_and_validate("const a := for (0..5) |i| { continue; };");
+        helpers::collect_and_validate("const a := for (0..5) |i| { break; };");
+        helpers::collect_and_validate("const a := for (0..5) |i| { continue; };");
     }
 
     SECTION("Do-while loop") {
-        helpers::analyze_and_validate("const a := do { break; } while (true);");
-        helpers::analyze_and_validate("const a := do { continue; } while (true);");
+        helpers::collect_and_validate("const a := do { break; } while (true);");
+        helpers::collect_and_validate("const a := do { continue; } while (true);");
     }
 
     SECTION("Infinite loop") {
-        helpers::analyze_and_validate("const a := loop { break; };");
-        helpers::analyze_and_validate("const a := loop { continue; };");
+        helpers::collect_and_validate("const a := loop { break; };");
+        helpers::collect_and_validate("const a := loop { continue; };");
     }
 
     SECTION("While loops") {
-        helpers::analyze_and_validate("const a := while (true) { break; };");
-        helpers::analyze_and_validate("const a := while (true) { continue; };");
+        helpers::collect_and_validate("const a := while (true) { break; };");
+        helpers::collect_and_validate("const a := while (true) { continue; };");
     }
 }
 
 TEST_CASE("Non-break collected as separate scope") {
-    helpers::analyze_and_validate(
+    helpers::collect_and_validate(
         "const a := for (0..5) |i| { const foo := bar; } else { const foo := bar; };");
 
-    helpers::analyze_and_validate(
+    helpers::collect_and_validate(
         "const a := while (true) : (i += 1) { const foo := bar; } else { const foo := bar; };");
 }
 

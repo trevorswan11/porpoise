@@ -26,6 +26,7 @@ namespace porpoise::ast {
     X(RangeExpression)           \
     X(Initializer)               \
     X(InitializerExpression)     \
+    X(LabelExpression)           \
     X(MatchArm)                  \
     X(MatchExpression)           \
     X(ReferenceExpression)       \
@@ -54,13 +55,15 @@ namespace porpoise::ast {
 
 #define FOREACH_AST_STMT(X) \
     X(BlockStatement)       \
+    X(BreakStatement)       \
+    X(ContinueStatement)    \
     X(DeclStatement)        \
     X(DeferStatement)       \
     X(DiscardStatement)     \
     X(ExpressionStatement)  \
     X(ImportStatement)      \
-    X(JumpStatement)        \
     X(ModuleStatement)      \
+    X(ReturnStatement)      \
     X(TestStatement)        \
     X(UsingStatement)
 

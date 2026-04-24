@@ -17,11 +17,11 @@
 
 namespace porpoise::tests::helpers {
 
-// Analyzes the assumed-syntactically-valid input and returns the analyzer and parent table index.
-[[nodiscard]] auto analyze(std::string_view input) -> std::pair<sema::Analyzer, usize>;
+// Collects the assumed-syntactically-valid input and returns the analyzer and parent table index.
+[[nodiscard]] auto collect(std::string_view input) -> std::pair<sema::Analyzer, usize>;
 
-// Analyzes the assumed-syntactically-valid input and checks for no errors
-auto analyze_and_validate(std::string_view input) -> std::pair<sema::Analyzer, usize>;
+// Collects the assumed-syntactically-valid input and checks for no errors
+auto collect_and_validate(std::string_view input) -> std::pair<sema::Analyzer, usize>;
 
 // A helper for creating non-node symbols
 template <typename N> struct TableEntry {
@@ -93,7 +93,7 @@ auto emplace_symbol_type_from_entry(sema::Analyzer& analyzer,
 template <typename... Entries>
 auto test_collector(std::string_view input, bool is_module, Entries&&... entries)
     -> sema::Analyzer {
-    auto [analyzer, idx] = analyze_and_validate(input);
+    auto [analyzer, idx] = collect_and_validate(input);
     const auto& actual   = analyzer.get_table(idx);
     CHECK(actual.size() == sizeof...(Entries));
     CHECK(actual.is_module() == is_module);

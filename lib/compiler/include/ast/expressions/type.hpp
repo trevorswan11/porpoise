@@ -12,6 +12,8 @@
 namespace porpoise::ast {
 
 class IdentifierExpression;
+class CallExpression;
+class ScopeResolutionExpression;
 class TypeExpression;
 class FunctionExpression;
 class USizeExpression;
@@ -46,6 +48,8 @@ class ExplicitArrayType {
 class ExplicitType {
   public:
     using ExplicitIdentType     = mem::Box<IdentifierExpression>;
+    using ExplicitScopeType     = mem::Box<ScopeResolutionExpression>;
+    using ExplicitCallType      = mem::Box<CallExpression>;
     using ExplicitFunctionType  = mem::Box<FunctionExpression>;
     using ExplicitRecursiveType = mem::Box<ExplicitType>;
     using ExplicitStructType    = mem::Box<StructExpression>;
@@ -53,6 +57,8 @@ class ExplicitType {
     using ExplicitUnionType     = mem::Box<UnionExpression>;
 
     using ExplicitTypeVariant = std::variant<ExplicitIdentType,
+                                             ExplicitScopeType,
+                                             ExplicitCallType,
                                              ExplicitFunctionType,
                                              ExplicitArrayType,
                                              ExplicitRecursiveType,
@@ -73,6 +79,9 @@ class ExplicitType {
     MAKE_GETTER(modifier, const TypeModifier&)
     MAKE_GETTER(type, const ExplicitTypeVariant&)
     MAKE_VARIANT_UNPACKER(ident_type, IdentifierExpression, ExplicitIdentType, type_, *std::get)
+    MAKE_VARIANT_UNPACKER(
+        scope_type, ScopeResolutionExpression, ExplicitScopeType, type_, *std::get)
+    MAKE_VARIANT_UNPACKER(call_type, CallExpression, ExplicitCallType, type_, *std::get)
     MAKE_VARIANT_UNPACKER(function_type, FunctionExpression, ExplicitFunctionType, type_, *std::get)
     MAKE_VARIANT_UNPACKER(array_type, ExplicitArrayType, ExplicitArrayType, type_, std::get)
     MAKE_VARIANT_UNPACKER(

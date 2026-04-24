@@ -4,7 +4,7 @@
 
 namespace porpoise::tests::helpers {
 
-auto analyze(std::string_view input) -> std::pair<sema::Analyzer, usize> {
+auto collect(std::string_view input) -> std::pair<sema::Analyzer, usize> {
     syntax::Parser p{input};
     auto [ast, parser_errors] = p.consume();
     CHECK_FALSE(ast.empty());
@@ -15,8 +15,8 @@ auto analyze(std::string_view input) -> std::pair<sema::Analyzer, usize> {
     return {std::move(analyzer), idx};
 }
 
-auto analyze_and_validate(std::string_view input) -> std::pair<sema::Analyzer, usize> {
-    auto [analyzer, idx] = analyze(input);
+auto collect_and_validate(std::string_view input) -> std::pair<sema::Analyzer, usize> {
+    auto [analyzer, idx] = collect(input);
     check_errors<sema::Diagnostic>(analyzer.get_diagnostics());
     return {std::move(analyzer), idx};
 }
