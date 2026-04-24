@@ -8,31 +8,25 @@ namespace keywords = syntax::keywords;
 
 TEST_CASE("Expressionless jumps") {
     helpers::test_stmt("return;", ast::ReturnStatement{syntax::Token{keywords::RETURN}, {}});
-    helpers::test_stmt("continue;", ast::JumpStatement{syntax::Token{keywords::CONTINUE}, {}, {}});
-    helpers::test_stmt("break;", ast::JumpStatement{syntax::Token{keywords::BREAK}, {}, {}});
+    helpers::test_stmt("continue;", ast::ContinueStatement{syntax::Token{keywords::CONTINUE}, {}});
+    helpers::test_stmt("break;", ast::BreakStatement{syntax::Token{keywords::BREAK}, {}, {}});
 }
 
 TEST_CASE("Labeled breaks") {
     helpers::test_stmt(
         "break :blk;",
-        ast::JumpStatement{syntax::Token{keywords::BREAK}, helpers::make_ident<true>("blk"), {}});
+        ast::BreakStatement{syntax::Token{keywords::BREAK}, helpers::make_ident<true>("blk"), {}});
 
     helpers::test_stmt("break :blk 1;",
-                       ast::JumpStatement{syntax::Token{keywords::BREAK},
-                                          helpers::make_ident<true>("blk"),
-                                          helpers::make_primitive<ast::I32Expression, true>("1")});
+                       ast::BreakStatement{syntax::Token{keywords::BREAK},
+                                           helpers::make_ident<true>("blk"),
+                                           helpers::make_primitive<ast::I32Expression, true>("1")});
 }
 
 TEST_CASE("Labeled continues") {
     helpers::test_stmt("continue :blk;",
-                       ast::JumpStatement{syntax::Token{keywords::CONTINUE},
-                                          helpers::make_ident<true>("blk"),
-                                          {}});
-
-    helpers::test_stmt("continue :blk 1;",
-                       ast::JumpStatement{syntax::Token{keywords::CONTINUE},
-                                          helpers::make_ident<true>("blk"),
-                                          helpers::make_primitive<ast::I32Expression, true>("1")});
+                       ast::ContinueStatement{syntax::Token{keywords::CONTINUE},
+                                              helpers::make_ident<true>("blk")});
 }
 
 TEST_CASE("Expression returns") {
@@ -69,12 +63,12 @@ TEST_CASE("Incorrectly terminated jumps") {
 }
 
 TEST_CASE("Illegal continue/break control flow") {
-    helpers::test_parser_fail(
-        "continue 4;",
-        syntax::ParserDiagnostic{syntax::ParserError::VALUED_JUMP_MISSING_LABEL, 1, 1});
+    helpers::test_parser_fail("continue 4;",
+                              syntax::ParserDiagnostic{syntax::ParserError::VALUED_CONTINUE, 1, 1});
 
     helpers::test_parser_fail(
-        "break 4;", syntax::ParserDiagnostic{syntax::ParserError::VALUED_JUMP_MISSING_LABEL, 1, 1});
+        "break 4;",
+        syntax::ParserDiagnostic{syntax::ParserError::VALUED_BREAK_MISSING_LABEL, 1, 1});
 }
 
 } // namespace porpoise::tests

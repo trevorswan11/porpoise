@@ -98,6 +98,10 @@ auto TypeResolver::visit(const ast::WhileLoopExpression&) -> void {}
 
 auto TypeResolver::visit(const ast::BlockStatement&) -> void {}
 
+auto TypeResolver::visit(const ast::BreakStatement&) -> void {}
+
+auto TypeResolver::visit(const ast::ContinueStatement&) -> void {}
+
 auto TypeResolver::visit(const ast::DeclStatement&) -> void {}
 
 auto TypeResolver::visit(const ast::DeferStatement&) -> void {}
@@ -108,11 +112,9 @@ auto TypeResolver::visit(const ast::ExpressionStatement&) -> void {}
 
 auto TypeResolver::visit(const ast::ImportStatement&) -> void {}
 
-auto TypeResolver::visit(const ast::JumpStatement&) -> void {}
+auto TypeResolver::visit(const ast::ModuleStatement&) -> void {}
 
 auto TypeResolver::visit(const ast::ReturnStatement&) -> void {}
-
-auto TypeResolver::visit(const ast::ModuleStatement&) -> void {}
 
 auto TypeResolver::visit(const ast::TestStatement&) -> void {}
 

@@ -55,14 +55,15 @@ namespace porpoise::ast {
 
 #define FOREACH_AST_STMT(X) \
     X(BlockStatement)       \
+    X(BreakStatement)       \
+    X(ContinueStatement)    \
     X(DeclStatement)        \
     X(DeferStatement)       \
     X(DiscardStatement)     \
     X(ExpressionStatement)  \
     X(ImportStatement)      \
-    X(JumpStatement)        \
-    X(ReturnStatement)      \
     X(ModuleStatement)      \
+    X(ReturnStatement)      \
     X(TestStatement)        \
     X(UsingStatement)
 

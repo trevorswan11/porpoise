@@ -21,16 +21,20 @@ pub const main := fn(args: [][:0]u8): i32 {
     - Match expressions
     - Blocks
 - Labels are declared as a single identifier followed by a colon before the construct is reached (e.g. `blk: {}`)
-- Inside of a blk, you can break or continue with a value
+- Inside of a block, you can break with a value
     - If there is no value but you break out of a block, the resulting block is of `void` type
 - When labels are applied to loops, you can control which iteration is skipped or broken from
     - This is particularly useful in cases of nested loops
 
 ## Jumps
 - Jump statements are implemented using the `return`, `break` and `continue` keywords
+    - `return` and `break` statements are the only constructs that can return a value upon execution
 - The `return` keyword is the only jump statement that allows an associated value
     - This value can be any expression, including a type alias or declaration (new union, struct, or enum)
-- `continue` and `break` can only be used in loop or label bodies, while `return` can only be used inside of functions
+- `break` can be used in loop or label bodies
+- `continue` in loop bodies
+    - These statements cannot have an associated value in any case
+- `return` can only be used inside of functions
 - `continue` and `break` will always apply to the immediately enclosing loop without a label
     - Without a label, a value cannot be specified with the statement
 

@@ -30,7 +30,7 @@ ExpressionStatement
         │   └─ Index: USizeExpression: 3
         └─ RHS: UnaryExpression (BANG)
             └─ Operand: IdentifierExpression: c
-JumpStatement (CONTINUE)
+ContinueStatement
 ReturnStatement
 └─ Value: EnumExpression
     └─ Enumerations:
@@ -424,13 +424,13 @@ DeclStatement (a)
         ├─ Callee: IdentifierExpression: List
         └─ Arguments:
             └─ IdentifierExpression: i32 (primitive)
-JumpStatement (BREAK)
+BreakStatement
 ├─ Label: IdentifierExpression: blk
 └─ Value: IdentifierExpression: a
 ExpressionStatement
 └─ Expr: Label Expression:
     ├─ Label: IdentifierExpression: a
     └─ Body: BlockStatement
-        └─ JumpStatement (CONTINUE)
+        └─ ContinueStatement
             └─ Label: IdentifierExpression: a
 )"
