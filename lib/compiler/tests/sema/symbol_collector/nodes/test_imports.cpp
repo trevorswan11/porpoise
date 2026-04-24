@@ -57,7 +57,7 @@ TEST_CASE("Import aliases correctly used") {
 
 TEST_CASE("Public modifiers and querying") {
     auto [analyzer, idx] =
-        helpers::analyze("module; import foo; using bar = baz; pub const a := 2;");
+        helpers::collect("module; import foo; using bar = baz; pub const a := 2;");
 
     auto&          parent_table = analyzer.get_table(idx);
     constexpr auto names        = std::array{"foo", "bar", "a"};

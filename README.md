@@ -87,6 +87,7 @@ zig build --release
     - [x] Syntax documentation
 - [ ] Multi-pass Semantic Analysis (to support order independent declarations)
     - [x] Symbol registration pass
+    - [ ] Symbol validation pass
     - [ ] Type checking pass
 - [ ] LLVM Integration
     - [ ] Build system integration

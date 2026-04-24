@@ -310,7 +310,7 @@ auto ASTDumper::visit(const ast::LabelExpression& label) -> void {
 
     {
         const Indent::Guard g{indent_, true};
-        fmt::print(out_, "{}Body:", indent_.current_branch());
+        fmt::print(out_, "{}Body: ", indent_.current_branch());
         label.match([this](const auto& b) { visit(*b); });
     }
 }
@@ -595,7 +595,7 @@ auto ASTDumper::visit(const JumpStatement& jump) -> void {
     if (jump.has_label()) {
         const Indent::Guard g{indent_, !jump.has_expression()};
         fmt::print(out_, "{}Label: ", indent_.current_branch());
-        jump.get_expression().accept(*this);
+        visit(jump.get_label());
     }
 
     if (jump.has_expression()) {

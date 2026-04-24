@@ -35,6 +35,8 @@ class FunctionParameter;
 class ForLoopCapture;
 class MatchArm;
 
+class LabelExpression;
+
 } // namespace ast
 
 namespace sema {
@@ -48,6 +50,7 @@ using SymbolicSelfParam   = opt::NonNull<const ast::SelfParameter>;
 using SymbolicParam       = opt::NonNull<const ast::FunctionParameter>;
 using SymbolicCapture     = opt::NonNull<const ast::ForLoopCapture>;
 using SymbolicArm         = opt::NonNull<const ast::MatchArm>;
+using SymbolicLabel       = opt::NonNull<const ast::LabelExpression>;
 
 // No other nodes can ever be at the top level
 using SymbolicNode = std::variant<SymbolicDecl,
@@ -58,7 +61,8 @@ using SymbolicNode = std::variant<SymbolicDecl,
                                   SymbolicSelfParam,
                                   SymbolicParam,
                                   SymbolicCapture,
-                                  SymbolicArm>;
+                                  SymbolicArm,
+                                  SymbolicLabel>;
 
 class Type;
 
@@ -87,6 +91,7 @@ class Symbol {
     MAKE_VARIANT_UNPACKER(basic_param, ast::FunctionParameter, SymbolicParam, node_, *std::get)
     MAKE_VARIANT_UNPACKER(for_loop_capture, ast::ForLoopCapture, SymbolicCapture, node_, *std::get)
     MAKE_VARIANT_UNPACKER(match_arm, ast::MatchArm, SymbolicArm, node_, *std::get)
+    MAKE_VARIANT_UNPACKER(label, ast::LabelExpression, SymbolicLabel, node_, *std::get)
 
     MAKE_VARIANT_MATCHER(node_)
     [[nodiscard]] auto get_node_token() const noexcept -> syntax::Token;

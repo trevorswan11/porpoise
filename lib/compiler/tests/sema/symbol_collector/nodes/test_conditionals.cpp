@@ -23,7 +23,7 @@ auto test_conditional_scope(sema::Analyzer& analyzer, usize idx) {
 } // namespace helpers
 
 TEST_CASE("If expression collection") {
-    auto [analyzer, idx] = helpers::analyze_and_validate(
+    auto [analyzer, idx] = helpers::collect_and_validate(
         "const a := if (b) { const foo := bar; } else { const foo := bar; };");
     CHECK(analyzer.get_registry().size() == 3);
     const auto& actual = analyzer.get_table(idx);
@@ -65,12 +65,12 @@ TEST_CASE("If expression collection") {
 }
 
 TEST_CASE("Flat if collection") {
-    helpers::analyze_and_validate("const a := if (b > 4) c; else d;");
+    helpers::collect_and_validate("const a := if (b > 4) c; else d;");
 }
 
 TEST_CASE("Match expression collection") {
     auto [analyzer, idx] =
-        helpers::analyze_and_validate("const a := match (b) { c => |d| { const foo := bar; } e => "
+        helpers::collect_and_validate("const a := match (b) { c => |d| { const foo := bar; } e => "
                                       "|_| { const foo := bar; } } else { const foo := bar; };");
     CHECK(analyzer.get_registry().size() == 6);
     const auto& actual = analyzer.get_table(idx);
@@ -121,7 +121,7 @@ TEST_CASE("Match expression collection") {
 }
 
 TEST_CASE("Flat match collection") {
-    helpers::analyze_and_validate(
+    helpers::collect_and_validate(
         "const a := match (b) { c => |d| d; e => |_| f; g => h; } else i;");
 }
 

@@ -152,7 +152,11 @@ auto SymbolCollector::visit(const ast::InitializerExpression& init) -> void {
     if (init.has_initializers()) { visit_list(init.get_initializers()); }
 }
 
-auto SymbolCollector::visit(const ast::LabelExpression&) -> void {}
+auto SymbolCollector::visit(const ast::LabelExpression& label) -> void {
+    const auto g = label_guard();
+    try_declare(label.get_name().get_name(), &label);
+    label.match([this](const auto& b) { visit(*b); });
+}
 
 auto SymbolCollector::visit(const ast::MatchArm& arm) -> void {
     const auto  new_idx = registry_.create();

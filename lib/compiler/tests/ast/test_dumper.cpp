@@ -57,6 +57,8 @@ constexpr std::string_view input{R"(
     var a: std::ArrayList(u8);
     var a: std::Io;
     var a: List(i32);
+    break :blk a;
+    a: { continue :a; };
 )"};
 
 constexpr std::string_view expected{

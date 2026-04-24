@@ -424,4 +424,13 @@ DeclStatement (a)
         ├─ Callee: IdentifierExpression: List
         └─ Arguments:
             └─ IdentifierExpression: i32 (primitive)
+JumpStatement (BREAK)
+├─ Label: IdentifierExpression: blk
+└─ Value: IdentifierExpression: a
+ExpressionStatement
+└─ Expr: Label Expression:
+    ├─ Label: IdentifierExpression: a
+    └─ Body: BlockStatement
+        └─ JumpStatement (CONTINUE)
+            └─ Label: IdentifierExpression: a
 )"
