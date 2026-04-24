@@ -26,7 +26,7 @@ auto Lexer::advance() noexcept -> Token {
 
     if (maybe_operator) {
         if (maybe_operator->type == TokenType::END) { return *maybe_operator; }
-        for (size_t i = 0; i < maybe_operator->slice.size(); ++i) { read_character(); }
+        for (usize i = 0; i < maybe_operator->slice.size(); ++i) { read_character(); }
 
         if (maybe_operator->type == TokenType::COMMENT) { return read_comment(); }
         if (maybe_operator->type == TokenType::MULTILINE_STRING) { return read_multiline_string(); }
@@ -112,11 +112,11 @@ auto Lexer::read_operator() const noexcept -> opt::Option<Token> {
 
     if (current_byte_ == '\0') { return Token{TokenType::END, {}, start_line, start_col}; }
 
-    size_t max_len      = 0;
-    auto   matched_type = TokenType::ILLEGAL;
+    usize max_len      = 0;
+    auto  matched_type = TokenType::ILLEGAL;
 
     // Try extending from length 1 up to the max operator size
-    for (size_t len = 1; len <= MAX_OPERATOR_LEN && pos_ + len <= input_.size(); ++len) {
+    for (usize len = 1; len <= MAX_OPERATOR_LEN && pos_ + len <= input_.size(); ++len) {
         const auto op = get_operator(input_.substr(pos_, len));
         if (op) {
             matched_type = op->second;
@@ -357,7 +357,7 @@ auto Lexer::read_multiline_string() noexcept -> Token {
         }
 
         // Peek positions
-        size_t peek_pos = peek_pos_;
+        usize peek_pos = peek_pos_;
         if (current_byte_ == '\r' && peek_pos < input_.size() && input_[peek_pos] == '\n') {
             peek_pos += 1;
         }
