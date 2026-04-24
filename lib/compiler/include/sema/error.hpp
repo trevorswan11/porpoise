@@ -1,8 +1,7 @@
 #pragma once
 
-#include <vector>
-
 #include "diagnostic/diagnostic.hpp"
+#include "diagnostic/list.hpp"
 
 #include "result.hpp"
 
@@ -25,7 +24,7 @@ enum class Error : u8 {
 };
 
 using Diagnostic  = Diagnostic<Error>;
-using Diagnostics = std::vector<Diagnostic>;
+using Diagnostics = DiagnosticList<Diagnostic>;
 
 template <typename... Args> auto make_sema_err(Args&&... args) -> Err<Diagnostic> {
     return make_err<Diagnostic>(std::forward<Args>(args)...);

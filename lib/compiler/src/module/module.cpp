@@ -15,7 +15,6 @@ auto ModuleManager::try_get(const std::filesystem::path& path)
 
     // Prevent re-parsing by checking the map, safe as pointers are stable
     if (auto it = modules_.find(path_str); it != modules_.end()) { return it->second.get(); }
-
     auto source = loader_.load(path_str);
     if (!source) {
         return make_module_err(fmt::format("Could not load file: {}", path_str), source.error());

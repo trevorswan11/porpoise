@@ -1,6 +1,5 @@
 #pragma once
 
-#include <type_traits>
 #include <utility>
 
 #include <magic_enum/magic_enum.hpp>
@@ -9,6 +8,7 @@
 
 #include "module/source_location.hpp"
 
+#include "enum.hpp"
 #include "option.hpp"
 #include "types.hpp"
 
@@ -22,9 +22,7 @@ namespace detail {
 
 } // namespace detail
 
-template <typename E>
-    requires std::is_scoped_enum_v<E>
-class Diagnostic {
+template <ScopedEnum E> class Diagnostic {
   public:
     explicit Diagnostic(E err) noexcept : error_{err} {}
     Diagnostic(E err, usize line, usize column) noexcept : error_{err}, loc_{{line, column}} {}
@@ -58,6 +56,13 @@ class Diagnostic {
     E                           error_;
     opt::Option<SourceLocation> loc_{};
 };
+
+template <typename T> struct is_diagnostic : std::false_type {};
+template <typename T> struct is_diagnostic<Diagnostic<T>> : std::true_type {};
+template <typename T> constexpr bool is_diagnostic_v = is_diagnostic<T>::value;
+
+template <typename T>
+concept DiagnosticType = is_diagnostic_v<T>;
 
 } // namespace porpoise
 
