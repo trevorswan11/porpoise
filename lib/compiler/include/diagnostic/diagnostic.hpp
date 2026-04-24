@@ -7,8 +7,9 @@
 
 #include <fmt/format.h>
 
+#include "module/source_location.hpp"
+
 #include "option.hpp"
-#include "source_loc.hpp"
 #include "types.hpp"
 
 namespace porpoise {
@@ -29,6 +30,7 @@ class Diagnostic {
     Diagnostic(E err, usize line, usize column) noexcept : error_{err}, loc_{{line, column}} {}
     Diagnostic(std::string msg, E err, usize line, usize column) noexcept
         : message_{std::move(msg)}, error_{err}, loc_{{line, column}} {}
+    Diagnostic(std::string msg, E err) noexcept : message_{std::move(msg)}, error_{err} {}
 
     template <Locateable T>
     Diagnostic(std::string msg, E err, const T& t) noexcept

@@ -1,16 +1,21 @@
 #pragma once
 
 #include <concepts>
+#include <utility>
 
 #include <fmt/format.h>
 
+#include "option.hpp"
 #include "types.hpp"
 
 namespace porpoise {
 
+namespace mod { struct Module; } // namespace mod
+
 struct SourceLocation {
-    usize line   = 0;
-    usize column = 0;
+    usize                     line   = 0;
+    usize                     column = 0;
+    opt::Option<mod::Module&> mod;
 
     SourceLocation() noexcept = default;
     SourceLocation(usize line, usize column) noexcept : line{line}, column{column} {}

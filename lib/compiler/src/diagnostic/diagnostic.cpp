@@ -2,13 +2,13 @@
 
 #include <fmt/format.h>
 
-#include "diagnostic.hpp"
+#include "diagnostic/diagnostic.hpp"
 
 namespace porpoise::detail {
 
-auto format_diagnostic(const std::optional<std::string>&    message,
-                       std::string_view                     error_name,
-                       const std::optional<SourceLocation>& location) -> std::string {
+auto format_diagnostic(const opt::Option<std::string>&    message,
+                       std::string_view                   error_name,
+                       const opt::Option<SourceLocation>& location) -> std::string {
     std::stringstream ss;
     if (message) { ss << *message << " ("; }
     ss << error_name;

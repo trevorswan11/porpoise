@@ -2,7 +2,8 @@
 
 #include <vector>
 
-#include "diagnostic.hpp"
+#include "diagnostic/diagnostic.hpp"
+
 #include "result.hpp"
 
 namespace porpoise::sema {
