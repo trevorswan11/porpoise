@@ -17,8 +17,12 @@ template <DiagnosticType D> class DiagnosticList {
   public:
     explicit DiagnosticList(opt::Option<std::string> source_path = opt::none)
         : source_path_{std::move(source_path)} {}
+    ~DiagnosticList() = default;
 
-    MAKE_MOVE_CONSTRUCTABLE_ONLY(DiagnosticList)
+    DiagnosticList(const DiagnosticList&)                    = delete;
+    auto operator=(const DiagnosticList&) -> DiagnosticList& = delete;
+    DiagnosticList(DiagnosticList&&) noexcept                = default;
+    auto operator=(DiagnosticList&&) -> DiagnosticList&      = default;
 
     auto push_back(const D& d) -> void { diagnostics_.push_back(d); }
 

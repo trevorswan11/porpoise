@@ -1,6 +1,9 @@
 #pragma once
 
-#include "ast/node.hpp"
+#include <string>
+#include <vector>
+
+#include "module/module.hpp"
 
 #include "sema/pool.hpp"
 #include "sema/symbol.hpp"
@@ -10,43 +13,34 @@ namespace porpoise::sema {
 // The manager for all steps of semantic analysis.
 class Analyzer {
   public:
-    explicit Analyzer(ast::AST tree) noexcept : tree_{std::move(tree)} {}
+    explicit Analyzer(mod::ModuleManager& modules) noexcept : modules_{modules} {}
     ~Analyzer() = default;
 
     MAKE_MOVE_CONSTRUCTABLE_ONLY(Analyzer)
 
-    [[nodiscard]] auto collect_symbols() -> usize;
-    auto               resolve_symbols() -> void;
+    auto analyze(const std::filesystem::path& entry_path) -> void;
 
     template <typename Self> [[nodiscard]] auto get_table(this Self&& self, usize idx) -> auto& {
         return self.registry_.get(idx);
     }
 
     template <typename Self>
-    [[nodiscard]] auto get_table_opt(this Self&& self, usize idx) noexcept {
+    [[nodiscard]] auto get_table_opt(this Self&& self, usize idx) noexcept -> auto& {
         return self.registry_.get_opt(idx);
     }
 
-    MAKE_GETTER(tree, std::span<const mem::Box<ast::Node>>)
     MAKE_DEDUCING_GETTER(registry, SymbolTableRegistry&)
     MAKE_DEDUCING_GETTER(pool, TypePool&)
-    MAKE_GETTER(diagnostics, const Diagnostics&)
-
-    auto has_diagnostics() const noexcept -> bool { return !diagnostics_.empty(); }
-    template <typename... Args> auto push_diagnostic(Args&&... args) -> void {
-        diagnostics_.emplace_back(std::forward<Args>(args)...);
-    }
 
   private:
-    [[nodiscard]] auto resolve_symbol(Symbol& symbol, SymbolTableStack& stack)
-        -> Result<Unit, Diagnostic>;
+    auto collect_symbols(mod::Module& module) -> void;
 
   private:
-    ast::AST            tree_;
+    mod::ModuleManager& modules_;
     SymbolTableRegistry registry_;
     TypePool            pool_;
-    Diagnostics         diagnostics_;
-    usize               root_idx_;
+
+    std::vector<std::string> collection_stack_;
 };
 
 } // namespace porpoise::sema

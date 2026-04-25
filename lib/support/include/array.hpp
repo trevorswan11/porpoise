@@ -2,7 +2,9 @@
 
 #include <algorithm>
 #include <array>
+#include <cassert>
 #include <limits>
+#include <optional>
 #include <ranges>
 #include <utility>
 
@@ -11,6 +13,49 @@
 namespace porpoise::array {
 
 constexpr auto SENTINEL_IDX = std::numeric_limits<usize>::max();
+
+// A minimal usize wrapper that provides zero-cost optional behavior
+class Index {
+  public:
+    Index() noexcept = default;
+
+    // cppcheck-suppress-begin noExplicitConstructor
+    Index(usize idx) noexcept : idx_{idx} {
+        assert(idx && "Attempt to construct index with sentinel value");
+    }
+    Index(std::nullopt_t) noexcept {}
+
+    // Any negative value is treated as a sentinel
+    template <Integral Int> Index(Int i) noexcept {
+        if (i >= 0) { idx_ = static_cast<usize>(i); }
+    }
+    // cppcheck-suppress-end noExplicitConstructor
+
+    [[nodiscard]] auto     has_value() const noexcept -> bool { return idx_ != SENTINEL_IDX; }
+    [[nodiscard]] explicit operator bool() const noexcept { return has_value(); }
+
+    auto emplace(usize idx) noexcept -> void {
+        assert(idx && "Attempt to emplace sentinel valued index");
+        idx_ = idx;
+    }
+
+    auto reset() noexcept -> void { idx_ = SENTINEL_IDX; }
+    auto take() noexcept -> usize {
+        usize idx = idx_;
+        reset();
+        return idx;
+    }
+
+    auto value() const -> usize {
+        if (!*this) { throw std::bad_optional_access(); }
+        return idx_;
+    }
+
+    [[nodiscard]] operator usize() const noexcept { return idx_; }
+
+  private:
+    usize idx_{SENTINEL_IDX};
+};
 
 // Materializes a sized view into its corresponding array representation
 template <auto N, typename Range> [[nodiscard]] constexpr auto materialize_sized_view(Range&& r) {

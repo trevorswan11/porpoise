@@ -28,7 +28,7 @@ TEST_CASE("Label collection") {
 TEST_CASE("Label redeclaration") {
     helpers::test_collector_fail(
         "const a := a: {};",
-        sema::Diagnostic{"Redeclaration of symbol 'a'. Previous declaration here: [1, 1]",
+        sema::Diagnostic{"Redeclaration of symbol 'a'. Previous declaration here: 1:1",
                          sema::Error::IDENTIFIER_REDECLARATION,
                          std::pair{1uz, 12uz}});
 }
@@ -36,7 +36,7 @@ TEST_CASE("Label redeclaration") {
 TEST_CASE("Label shadowing") {
     helpers::test_collector_fail(
         "const a := blk: { var blk: i32; };",
-        sema::Diagnostic{"Attempt to shadow identifier 'blk'. Previous declaration here: [1, 12]",
+        sema::Diagnostic{"Attempt to shadow identifier 'blk'. Previous declaration here: 1:12",
                          sema::Error::SHADOWING_DECLARATION,
                          std::pair{1uz, 19uz}});
 }

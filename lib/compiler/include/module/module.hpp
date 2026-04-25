@@ -10,8 +10,11 @@
 #include "module/error.hpp"
 #include "module/source_loader.hpp"
 
+#include "sema/error.hpp"
+
 #include "syntax/parser.hpp"
 
+#include "array.hpp"
 #include "memory.hpp"
 #include "option.hpp"
 #include "result.hpp"
@@ -21,19 +24,29 @@ namespace porpoise::mod {
 enum class ModuleState : u8 {
     PARSED,
     SYMBOLS_COLLECTED,
-    SYMBOLS_RESOLVED,
+    SYMBOLS_VALIDATED,
     TYPE_CHECKED,
     ERRORED,
 };
+
+using DiagnosticListVariant = std::variant<syntax::ParserDiagnostics, sema::Diagnostics>;
 
 struct Module {
     std::filesystem::path path;
     std::string           source;
     ast::AST              tree;
-    usize                 root_table_idx;
+    array::Index          root_table_idx;
     ModuleState           state;
 
-    syntax::ParserDiagnostics parse_diagnostics;
+    DiagnosticListVariant diagnostics;
+
+    MAKE_VARIANT_UNPACKER(parser_diagnostics,
+                          syntax::ParserDiagnostics,
+                          syntax::ParserDiagnostics,
+                          diagnostics,
+                          std::get)
+    MAKE_VARIANT_UNPACKER(
+        sema_diagnostics, sema::Diagnostics, sema::Diagnostics, diagnostics, std::get)
 };
 
 class ModuleManager {

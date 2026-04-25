@@ -163,31 +163,31 @@ TEST_CASE("Union hollow types with member") {
 TEST_CASE("Shadowing member/field declarations") {
     helpers::test_collector_fail(
         "const a := struct { const a := 2; };",
-        sema::Diagnostic{"Attempt to shadow identifier 'a'. Previous declaration here: [1, 1]",
+        sema::Diagnostic{"Attempt to shadow identifier 'a'. Previous declaration here: 1:1",
                          sema::Error::SHADOWING_DECLARATION,
                          std::pair{1uz, 21uz}});
 
     helpers::test_collector_fail(
         "const a := enum {a};",
-        sema::Diagnostic{"Attempt to shadow identifier 'a'. Previous declaration here: [1, 1]",
+        sema::Diagnostic{"Attempt to shadow identifier 'a'. Previous declaration here: 1:1",
                          sema::Error::SHADOWING_DECLARATION,
                          std::pair{1uz, 18uz}});
 
     helpers::test_collector_fail(
         "const a := enum {b static const a := 2; };",
-        sema::Diagnostic{"Attempt to shadow identifier 'a'. Previous declaration here: [1, 1]",
+        sema::Diagnostic{"Attempt to shadow identifier 'a'. Previous declaration here: 1:1",
                          sema::Error::SHADOWING_DECLARATION,
                          std::pair{1uz, 20uz}});
 
     helpers::test_collector_fail(
         "const a := union { a: i32 };",
-        sema::Diagnostic{"Attempt to shadow identifier 'a'. Previous declaration here: [1, 1]",
+        sema::Diagnostic{"Attempt to shadow identifier 'a'. Previous declaration here: 1:1",
                          sema::Error::SHADOWING_DECLARATION,
                          std::pair{1uz, 20uz}});
 
     helpers::test_collector_fail(
         "const a := union { b: i32 static const a := 2; };",
-        sema::Diagnostic{"Attempt to shadow identifier 'a'. Previous declaration here: [1, 1]",
+        sema::Diagnostic{"Attempt to shadow identifier 'a'. Previous declaration here: 1:1",
                          sema::Error::SHADOWING_DECLARATION,
                          std::pair{1uz, 27uz}});
 }

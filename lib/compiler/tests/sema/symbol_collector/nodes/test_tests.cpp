@@ -12,7 +12,7 @@ TEST_CASE("Test statement symbol collection") {
 TEST_CASE("Test shadowing") {
     helpers::test_collector_fail(
         R"(const a := 2; test "foo" { const a := 3; })",
-        sema::Diagnostic{"Attempt to shadow identifier 'a'. Previous declaration here: [1, 1]",
+        sema::Diagnostic{"Attempt to shadow identifier 'a'. Previous declaration here: 1:1",
                          sema::Error::SHADOWING_DECLARATION,
                          std::pair{1uz, 28uz}});
 }

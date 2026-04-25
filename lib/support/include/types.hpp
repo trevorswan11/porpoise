@@ -4,6 +4,7 @@
 #include <cstdint>
 #include <string_view>
 #include <type_traits>
+#include <concepts>
 
 namespace porpoise {
 
@@ -25,5 +26,8 @@ using f32 = float;
 using f64 = double;
 
 using byte = std::string_view::value_type;
+
+template <typename Int>
+concept Integral = std::is_integral_v<Int> && !std::same_as<Int, bool>;
 
 } // namespace porpoise
