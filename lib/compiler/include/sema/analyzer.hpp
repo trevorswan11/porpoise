@@ -18,6 +18,7 @@ class Analyzer {
 
     MAKE_MOVE_CONSTRUCTABLE_ONLY(Analyzer)
 
+    // Runs the entire sema pipeline
     auto analyze(const std::filesystem::path& entry_path) -> Result<Unit, Diagnostic>;
 
     template <typename Self> [[nodiscard]] auto get_table(this Self&& self, usize idx) -> auto& {
@@ -31,6 +32,8 @@ class Analyzer {
 
     MAKE_DEDUCING_GETTER(registry, SymbolTableRegistry&)
     MAKE_DEDUCING_GETTER(pool, TypePool&)
+
+    auto collect_symbols(mod::Module& module) -> void;
 
   private:
     mod::ModuleManager& modules_;

@@ -16,6 +16,7 @@
 #include "memory.hpp"
 #include "option.hpp"
 #include "result.hpp"
+#include "utility.hpp"
 
 namespace porpoise::sema::mod {
 
@@ -29,6 +30,17 @@ enum class ModuleState : u8 {
 
 using DiagnosticListVariant = std::variant<syntax::ParserDiagnostics, sema::Diagnostics>;
 
+#define MAKE_MODULE_DIAGNOSTIC_UNPACKER(name, DiagType)                         \
+    [[nodiscard]] auto CONCAT(get_, name)() const noexcept -> const DiagType& { \
+        try {                                                                   \
+            return std::get<DiagType>(diagnostics);                             \
+        } catch (...) { std::unreachable(); }                                   \
+    }                                                                           \
+                                                                                \
+    [[nodiscard]] auto CONCAT(has_, name)() const noexcept -> bool {            \
+        return is_errored() && std::holds_alternative<DiagType>(diagnostics);   \
+    }
+
 struct Module {
     std::filesystem::path path;
     std::string           source;
@@ -38,13 +50,9 @@ struct Module {
 
     DiagnosticListVariant diagnostics;
 
-    MAKE_VARIANT_UNPACKER(parser_diagnostics,
-                          syntax::ParserDiagnostics,
-                          syntax::ParserDiagnostics,
-                          diagnostics,
-                          std::get)
-    MAKE_VARIANT_UNPACKER(
-        sema_diagnostics, sema::Diagnostics, sema::Diagnostics, diagnostics, std::get)
+    MAKE_MODULE_DIAGNOSTIC_UNPACKER(parser_diagnostics, syntax::ParserDiagnostics)
+    MAKE_MODULE_DIAGNOSTIC_UNPACKER(sema_diagnostics, sema::Diagnostics)
+
     MAKE_VARIANT_MATCHER(diagnostics)
 
     // Errors out the module regardless of previous state and emplaces the diagnostics
@@ -54,12 +62,17 @@ struct Module {
         return state;
     }
 
-    auto is_errored() const noexcept { return state == ModuleState::ERRORED; }
+    auto is_errored() const noexcept -> bool { return state == ModuleState::ERRORED; }
 };
+
+#undef MAKE_MODULE_DIAGNOSTIC_UNPACKER
 
 class ModuleManager {
   public:
     explicit ModuleManager(SourceLoader& loader) noexcept : loader_{loader} {}
+    ~ModuleManager() = default;
+
+    MAKE_MOVE_CONSTRUCTABLE_ONLY(ModuleManager)
 
     // Attempts to load the path from the loader and parse its contents
     [[nodiscard]] auto try_get_file_module(const std::filesystem::path& path)

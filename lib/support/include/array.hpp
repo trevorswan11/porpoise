@@ -20,9 +20,7 @@ class Index {
     Index() noexcept = default;
 
     // cppcheck-suppress-begin noExplicitConstructor
-    Index(usize idx) noexcept : idx_{idx} {
-        assert(idx && "Attempt to construct index with sentinel value");
-    }
+    Index(usize idx) noexcept : idx_{idx} {}
     Index(std::nullopt_t) noexcept {}
 
     // Any negative value is treated as a sentinel
@@ -34,10 +32,7 @@ class Index {
     [[nodiscard]] auto     has_value() const noexcept -> bool { return idx_ != SENTINEL_IDX; }
     [[nodiscard]] explicit operator bool() const noexcept { return has_value(); }
 
-    auto emplace(usize idx) noexcept -> void {
-        assert(idx && "Attempt to emplace sentinel valued index");
-        idx_ = idx;
-    }
+    auto emplace(usize idx) noexcept -> void { idx_ = idx; }
 
     auto reset() noexcept -> void { idx_ = SENTINEL_IDX; }
     auto take() noexcept -> usize {

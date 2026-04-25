@@ -39,7 +39,7 @@ auto AstDump::run() -> void {
 
         // Parsing
         const auto stdin_mod = *manager.try_get_file_module(stdin_path);
-        if (stdin_mod->is_parser_diagnostics()) {
+        if (stdin_mod->has_parser_diagnostics()) {
             fmt::println(std::cerr, "{}", stdin_mod->get_parser_diagnostics());
             continue;
         } else {
@@ -48,7 +48,7 @@ auto AstDump::run() -> void {
         }
 
         // Sema
-        if (stdin_mod->is_sema_diagnostics()) {
+        if (stdin_mod->has_sema_diagnostics()) {
             fmt::println(std::cerr, "{}", stdin_mod->get_sema_diagnostics());
             continue;
         } else {

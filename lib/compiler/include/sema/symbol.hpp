@@ -55,7 +55,7 @@ using SymbolicLabel       = opt::NonNull<const ast::LabelExpression>;
 struct SymbolicImport {
     opt::NonNull<const ast::ImportStatement> node;
     opt::Option<mod::Module&>                imported_mod;
-    
+
     MAKE_EQ_DELEGATION(SymbolicImport)
 };
 

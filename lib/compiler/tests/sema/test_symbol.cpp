@@ -11,8 +11,10 @@ TEST_CASE("Basic table operations") {
     const std::string_view     name{"a"};
     const ast::ImportStatement import_node{syntax::Token{syntax::keywords::IMPORT},
                                            ast::LibraryImport{helpers::make_ident(name), {}}};
+    const sema::SymbolicImport import_sym{&import_node, opt::none};
+
     CHECK(table.empty());
-    CHECK(table.insert(name, &import_node));
+    CHECK(table.insert(name, import_sym));
     CHECK(table.size() == 1);
     CHECK_FALSE(table.empty());
 
@@ -22,7 +24,7 @@ TEST_CASE("Basic table operations") {
     CHECK(retrieved->get_name() == name);
     CHECK_FALSE(retrieved->has_type());
     CHECK(retrieved->is_import_stmt());
-    CHECK(retrieved->get_import_stmt() == import_node);
+    CHECK(retrieved->get_import_stmt() == import_sym);
 
     CHECK(*retrieved == table.get(name));
 }
@@ -33,7 +35,8 @@ TEST_CASE("Multiple table import") {
     const ast::ImportStatement module_import{
         syntax::Token{syntax::keywords::IMPORT},
         ast::LibraryImport{helpers::make_ident(module_name), {}}};
-    CHECK(table.insert(module_name, &module_import));
+    const sema::SymbolicImport module_sym{&module_import, opt::none};
+    CHECK(table.insert(module_name, module_sym));
 
     const std::string_view     user_name{"node"};
     const std::string          user_file{"node.p"};
@@ -41,13 +44,14 @@ TEST_CASE("Multiple table import") {
         syntax::Token{syntax::keywords::IMPORT},
         ast::FileImport{helpers::make_primitive<ast::StringExpression>(user_file),
                         helpers::make_ident(user_name)}};
-    CHECK(table.insert(user_name, &user_import));
+    const sema::SymbolicImport user_sym{&user_import, opt::none};
+    CHECK(table.insert(user_name, user_sym));
 
     CHECK(table.size() == 2);
     CHECK(table.has(module_name));
-    CHECK(table.get(module_name) == sema::Symbol{module_name, &module_import});
+    CHECK(table.get(module_name) == sema::Symbol{module_name, module_sym});
     CHECK(table.has(user_name));
-    CHECK(table.get(user_name) == sema::Symbol{user_name, &user_import});
+    CHECK(table.get(user_name) == sema::Symbol{user_name, user_sym});
 
     CHECK_FALSE(table.has("b"));
     CHECK_FALSE(table.get_opt("b"));
@@ -58,9 +62,10 @@ TEST_CASE("Duplicate table inserts") {
     const std::string_view     name{"a"};
     const ast::ImportStatement import_node{syntax::Token{syntax::keywords::IMPORT},
                                            ast::LibraryImport{helpers::make_ident(name), {}}};
+    const sema::SymbolicImport import_sym{&import_node, opt::none};
 
-    CHECK(table.insert(name, &import_node));
-    CHECK_FALSE(table.insert(name, &import_node));
+    CHECK(table.insert(name, import_sym));
+    CHECK_FALSE(table.insert(name, import_sym));
     CHECK(table.size() == 1);
 }
 
@@ -68,7 +73,8 @@ TEST_CASE("Illegal registry insert") {
     sema::SymbolTableRegistry  registry;
     const ast::ImportStatement import_node{syntax::Token{syntax::keywords::IMPORT},
                                            ast::LibraryImport{helpers::make_ident("a"), {}}};
-    const auto                 result = registry.insert_into(0, "a", &import_node);
+    const sema::SymbolicImport import_sym{&import_node, opt::none};
+    const auto                 result = registry.insert_into(0, "a", import_sym);
 
     CHECK_FALSE(result);
     CHECK(result.error() == sema::Diagnostic{sema::Error::INVALID_TABLE_IDX});

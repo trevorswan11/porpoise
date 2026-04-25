@@ -8,7 +8,7 @@ namespace keywords  = syntax::keywords;
 namespace operators = syntax::operators;
 
 TEST_CASE("Do-while loop collection") {
-    auto analyzer = helpers::test_collector(
+    auto ctx = helpers::test_collector(
         "const a := do { const foo := bar; } while (true);",
         helpers::TableEntry<ast::DeclStatement>{
             "a",
@@ -25,7 +25,7 @@ TEST_CASE("Do-while loop collection") {
             opt::none,
             sema::types::Key{sema::TypeKind::BLOCK, false, 1}});
 
-    helpers::test_hollow_symbols(analyzer, helpers::TableEntry{"foo", helpers::foo_bar_decl()});
+    helpers::test_hollow_symbols(ctx, helpers::TableEntry{"foo", helpers::foo_bar_decl()});
 }
 
 TEST_CASE("For loop collection") {
@@ -33,7 +33,7 @@ TEST_CASE("For loop collection") {
         return ast::ForLoopCapture{ast::ForLoopCapture::Valued{{}, helpers::make_ident("i")}};
     };
 
-    auto analyzer = helpers::test_collector(
+    auto ctx = helpers::test_collector(
         "const a := for (0..5) |i| { const foo := bar; } else c;",
         helpers::TableEntry<ast::DeclStatement>{
             "a",
@@ -57,13 +57,13 @@ TEST_CASE("For loop collection") {
             opt::none,
             sema::types::Key{sema::TypeKind::BLOCK, false, 1}});
 
-    helpers::test_hollow_symbols(analyzer,
+    helpers::test_hollow_symbols(ctx,
                                  helpers::TableEntry{"i", capture()},
                                  helpers::TableEntry{"foo", helpers::foo_bar_decl()});
 }
 
 TEST_CASE("Infinite loop collection") {
-    auto analyzer = helpers::test_collector(
+    auto ctx = helpers::test_collector(
         "const a := loop { const foo := bar; };",
         helpers::TableEntry<ast::DeclStatement>{
             "a",
@@ -79,11 +79,11 @@ TEST_CASE("Infinite loop collection") {
             opt::none,
             sema::types::Key{sema::TypeKind::BLOCK, false, 1}});
 
-    helpers::test_hollow_symbols(analyzer, helpers::TableEntry{"foo", helpers::foo_bar_decl()});
+    helpers::test_hollow_symbols(ctx, helpers::TableEntry{"foo", helpers::foo_bar_decl()});
 }
 
 TEST_CASE("While loop collection") {
-    auto analyzer = helpers::test_collector(
+    auto ctx = helpers::test_collector(
         "const a := while (true) : (i += 1) { const foo := bar; } else c;",
         helpers::TableEntry<ast::DeclStatement>{
             "a",
@@ -106,7 +106,7 @@ TEST_CASE("While loop collection") {
             opt::none,
             sema::types::Key{sema::TypeKind::BLOCK, false, 1}});
 
-    helpers::test_hollow_symbols(analyzer, helpers::TableEntry{"foo", helpers::foo_bar_decl()});
+    helpers::test_hollow_symbols(ctx, helpers::TableEntry{"foo", helpers::foo_bar_decl()});
 }
 
 TEST_CASE("Well-placed loop control flow") {

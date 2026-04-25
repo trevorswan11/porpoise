@@ -4,8 +4,6 @@
 
 #include "sema/module/module.hpp"
 
-#include "array.hpp"
-
 namespace porpoise::sema::mod {
 
 auto ModuleManager::try_get_file_module(const std::filesystem::path& path)
@@ -55,16 +53,14 @@ auto ModuleManager::try_get(const std::filesystem::path& path)
         return make_sema_err(fmt::format("Could not load file: {}", abs_path_str), source.error());
     }
 
-    syntax::Parser p{*source};
+    auto           mod = mem::make_box<Module>(path, std::move(*source));
+    syntax::Parser p{mod->source};
     auto [ast, diagnostics] = p.consume(abs_path_str);
 
-    auto mod =
-        mem::make_box<Module>(path,
-                              std::move(*source),
-                              std::move(ast),
-                              array::Index{},
-                              diagnostics.empty() ? ModuleState::PARSED : ModuleState::ERRORED,
-                              std::move(diagnostics));
+    mod->tree        = std::move(ast);
+    mod->state       = diagnostics.empty() ? ModuleState::PARSED : ModuleState::ERRORED;
+    mod->diagnostics = std::move(diagnostics);
+
     auto* ptr = mod.get();
     modules_.emplace(path, std::move(mod));
     return ptr;

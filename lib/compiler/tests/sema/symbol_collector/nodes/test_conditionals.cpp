@@ -23,8 +23,10 @@ auto test_conditional_scope(sema::Analyzer& analyzer, usize idx) {
 } // namespace helpers
 
 TEST_CASE("If expression collection") {
-    auto [analyzer, idx] = helpers::collect_and_validate(
+    auto [ctx, idx] = helpers::collect_and_validate(
         "const a := if (b) { const foo := bar; } else { const foo := bar; };");
+
+    auto& analyzer = ctx.analyzer;
     CHECK(analyzer.get_registry().size() == 3);
     const auto& actual = analyzer.get_table(idx);
     CHECK(actual.size() == 1);
@@ -69,9 +71,11 @@ TEST_CASE("Flat if collection") {
 }
 
 TEST_CASE("Match expression collection") {
-    auto [analyzer, idx] =
+    auto [ctx, idx] =
         helpers::collect_and_validate("const a := match (b) { c => |d| { const foo := bar; } e => "
                                       "|_| { const foo := bar; } } else { const foo := bar; };");
+
+    auto& analyzer = ctx.analyzer;
     CHECK(analyzer.get_registry().size() == 6);
     const auto& actual = analyzer.get_table(idx);
     CHECK(actual.size() == 1);

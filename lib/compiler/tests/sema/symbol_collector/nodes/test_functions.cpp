@@ -10,7 +10,7 @@ namespace mods      = helpers::type_modifiers;
 
 TEST_CASE("Function hollow types") {
     const sema::types::Key key{sema::TypeKind::FUNCTION, false, 1};
-    auto                   analyzer = helpers::test_collector(
+    auto                   ctx = helpers::test_collector(
         "const a := fn(&self, c: type): void { const foo := bar; };",
         helpers::TableEntry<ast::DeclStatement>{
             "a",
@@ -33,7 +33,7 @@ TEST_CASE("Function hollow types") {
             key});
 
     helpers::test_hollow_symbols(
-        analyzer,
+        ctx,
         helpers::TableEntry{"foo", helpers::foo_bar_decl()},
         helpers::TableEntry{"self", ast::SelfParameter{mods::REF, helpers::make_ident("self")}},
         helpers::TableEntry{"c",

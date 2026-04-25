@@ -6,12 +6,19 @@
 #include <fmt/format.h>
 #include <fmt/ranges.h>
 
+#include "diagnostic/list.hpp"
+
 #include "string.hpp"
 
 namespace porpoise::tests::helpers {
 
 // Checks if the error list is empty, dumping the list's contents otherwise.
 template <typename E> auto check_errors(std::span<const E> errors) {
+    if (!errors.empty()) { fmt::println("{}", errors); }
+    CHECK(errors.empty());
+}
+
+template <typename D> auto check_errors(DiagnosticList<D>& errors) {
     if (!errors.empty()) { fmt::println("{}", errors); }
     CHECK(errors.empty());
 }

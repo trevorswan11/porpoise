@@ -13,7 +13,8 @@ class FileLoader : public SourceLoader {
         -> Result<std::string, Error> override;
 
     // Converts the path to its absolute representation
-    auto normalize(const std::filesystem::path& path) -> Result<std::filesystem::path, Error> override;
+    auto normalize(const std::filesystem::path& path)
+        -> Result<std::filesystem::path, Error> override;
 };
 
 } // namespace porpoise::sema::mod

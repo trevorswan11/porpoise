@@ -10,17 +10,16 @@ namespace mods     = helpers::type_modifiers;
 TEST_CASE("Module visibility modifier") {
     const auto test = [](bool is_module) {
         const auto input = fmt::format("{}import std; using I = i32;", is_module ? "module;" : "");
+        const ast::ImportStatement import_stmt{syntax::Token{keywords::IMPORT},
+                                               ast::LibraryImport{helpers::make_ident("std"), {}}};
 
         helpers::test_collector(
             input,
             is_module,
             helpers::TableEntry{"std",
-                                [is_module] {
-                                    ast::ImportStatement import_stmt{
-                                        syntax::Token{keywords::IMPORT},
-                                        ast::LibraryImport{helpers::make_ident("std"), {}}};
+                                [&import_stmt, is_module] {
                                     if (is_module) { import_stmt.mark_public(); }
-                                    return import_stmt;
+                                    return sema::SymbolicImport{&import_stmt, opt::none};
                                 }()},
             helpers::TableEntry{"I", [is_module] {
                                     ast::UsingStatement using_stmt{syntax::Token{keywords::USING},
@@ -39,26 +38,24 @@ TEST_CASE("Module visibility modifier") {
 }
 
 TEST_CASE("Import aliases correctly used") {
-    helpers::test_collector(
-        R"(import foo as A; import "f" as F; const foo := bar;)",
-        helpers::TableEntry{
-            "A",
-            ast::ImportStatement{
-                syntax::Token{keywords::IMPORT},
-                ast::LibraryImport{helpers::make_ident("foo"), helpers::make_ident<true>("A")}}},
-        helpers::TableEntry{
-            "F",
-            ast::ImportStatement{
-                syntax::Token{keywords::IMPORT},
-                ast::FileImport{helpers::make_primitive<ast::StringExpression>(R"("f")"),
-                                helpers::make_ident("F")}}},
-        helpers::TableEntry{"foo", helpers::foo_bar_decl()});
+    const ast::ImportStatement import_one{
+        syntax::Token{keywords::IMPORT},
+        ast::LibraryImport{helpers::make_ident("foo"), helpers::make_ident<true>("A")}};
+    const ast::ImportStatement import_two{
+        syntax::Token{keywords::IMPORT},
+        ast::FileImport{helpers::make_primitive<ast::StringExpression>(R"("f")"),
+                        helpers::make_ident("F")}};
+
+    helpers::test_collector(R"(import foo as A; import "f" as F; const foo := bar;)",
+                            helpers::TableEntry{"A", sema::SymbolicImport{&import_one, opt::none}},
+                            helpers::TableEntry{"F", sema::SymbolicImport{&import_two, opt::none}},
+                            helpers::TableEntry{"foo", helpers::foo_bar_decl()});
 }
 
 TEST_CASE("Public modifiers and querying") {
-    auto [analyzer, idx] =
-        helpers::collect("module; import foo; using bar = baz; pub const a := 2;");
+    auto [ctx, idx] = helpers::collect("module; import foo; using bar = baz; pub const a := 2;");
 
+    auto&          analyzer     = ctx.analyzer;
     auto&          parent_table = analyzer.get_table(idx);
     constexpr auto names        = std::array{"foo", "bar", "a"};
 

@@ -7,8 +7,9 @@ namespace porpoise::tests {
 namespace helpers {
 
 auto collect_and_validate_label(std::string_view input, usize expected_size) -> void {
-    auto [analyzer, idx] = helpers::collect_and_validate(input);
+    auto [ctx, idx] = helpers::collect_and_validate(input);
 
+    auto&       analyzer = ctx.analyzer;
     const auto& registry = analyzer.get_registry();
     REQUIRE(registry.size() == expected_size);
 

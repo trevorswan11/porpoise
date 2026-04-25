@@ -1,7 +1,5 @@
 #pragma once
 
-#include <tuple>
-
 #include <catch2/catch_test_macros.hpp>
 
 #include <fmt/format.h>
@@ -11,17 +9,27 @@
 
 #include "sema/analyzer.hpp"
 #include "sema/error.hpp"
+#include "sema/module/memory_loader.hpp"
 #include "sema/symbol.hpp"
-
-#include "syntax/parser.hpp"
 
 namespace porpoise::tests::helpers {
 
+constexpr std::string_view test_file{"test.porp"};
+
+struct SemaTestContext {
+    mem::Box<sema::mod::MemoryLoader> loader;
+    sema::mod::ModuleManager          manager;
+    sema::Analyzer                    analyzer;
+    opt::NonNull<sema::mod::Module>   root_mod;
+
+    explicit SemaTestContext(mem::Box<sema::mod::MemoryLoader> mem_loader, std::string_view input);
+};
+
 // Collects the assumed-syntactically-valid input and returns the analyzer and parent table index.
-[[nodiscard]] auto collect(std::string_view input) -> std::pair<sema::Analyzer, usize>;
+[[nodiscard]] auto collect(std::string_view input) -> std::pair<SemaTestContext, usize>;
 
 // Collects the assumed-syntactically-valid input and checks for no errors
-auto collect_and_validate(std::string_view input) -> std::pair<sema::Analyzer, usize>;
+auto collect_and_validate(std::string_view input) -> std::pair<SemaTestContext, usize>;
 
 // A helper for creating non-node symbols
 template <typename N> struct TableEntry {
@@ -92,8 +100,9 @@ auto emplace_symbol_type_from_entry(sema::Analyzer& analyzer,
 // Verifies that the collectors output matches the provided pairs
 template <typename... Entries>
 auto test_collector(std::string_view input, bool is_module, Entries&&... entries)
-    -> sema::Analyzer {
-    auto [analyzer, idx] = collect_and_validate(input);
+    -> SemaTestContext {
+    auto [ctx, idx]      = collect_and_validate(input);
+    auto&       analyzer = ctx.analyzer;
     const auto& actual   = analyzer.get_table(idx);
     CHECK(actual.size() == sizeof...(Entries));
     CHECK(actual.is_module() == is_module);
@@ -104,17 +113,24 @@ auto test_collector(std::string_view input, bool is_module, Entries&&... entries
 
         using MakerT = std::remove_cvref_t<decltype(entries)>;
         emplace_node_type_from_entry<MakerT>(analyzer, entries, entries.node);
-        sema::Symbol expected{entries.name, &entries.node};
 
-        emplace_symbol_type_from_entry(analyzer, entries, expected);
-        CHECK(*opt == expected);
+        opt::Option<sema::Symbol> expected;
+        if constexpr (std::is_same_v<sema::SymbolicImport, decltype(entries.node)>) {
+            expected.emplace(entries.name, entries.node);
+        } else {
+            expected.emplace(entries.name, &entries.node);
+        }
+        REQUIRE(expected);
+
+        emplace_symbol_type_from_entry(analyzer, entries, *expected);
+        CHECK(*opt == *expected);
     }());
-    return std::move(analyzer);
+    return std::move(ctx);
 }
 
 // Assumes that the input is not inside of a module
 template <typename... KVs>
-auto test_collector(std::string_view input, KVs&&... kvs) -> sema::Analyzer {
+auto test_collector(std::string_view input, KVs&&... kvs) -> SemaTestContext {
     return test_collector(input, false, std::forward<KVs>(kvs)...);
 }
 
@@ -122,17 +138,23 @@ auto test_collector(std::string_view input, KVs&&... kvs) -> sema::Analyzer {
 template <typename... Ds>
     requires(std::same_as<Ds, sema::Diagnostic> && ...)
 auto test_collector_fail(std::string_view failing, Ds&&... expected_diagnostics) -> void {
-    syntax::Parser p{failing};
-    auto [ast, parser_errors] = p.consume();
-    REQUIRE_FALSE(ast.empty());
-    CHECK(parser_errors.empty());
-
     const std::array expected_arr{std::forward<Ds>(expected_diagnostics)...};
     const auto       expected_count = sizeof...(Ds);
 
-    sema::Analyzer analyzer{std::move(ast)};
-    CHECK(analyzer.get_table_opt(analyzer.collect_symbols()));
-    const auto& errors = analyzer.get_diagnostics();
+    const std::filesystem::path path{test_file};
+    sema::mod::MemoryLoader     loader;
+    sema::mod::ModuleManager    manager{loader};
+    loader.add(path, std::string{failing});
+
+    sema::Analyzer analyzer{manager};
+    auto           test_mod_result = manager.try_get_file_module(path);
+    REQUIRE(test_mod_result);
+    auto test_mod = *test_mod_result;
+    REQUIRE(!test_mod->has_parser_diagnostics());
+    analyzer.collect_symbols(*test_mod);
+
+    REQUIRE(test_mod->has_sema_diagnostics());
+    const auto& errors = test_mod->get_sema_diagnostics();
 
     if (errors.size() != expected_count) {
         for (const auto& e : errors) { fmt::println("{}", e); }
@@ -146,8 +168,9 @@ auto        common_decl(std::string_view name, std::string_view assign) -> ast::
 inline auto foo_bar_decl() -> ast::DeclStatement { return common_decl("foo", "bar"); }
 
 // Shallowly checks the symbols in the inner scope of a statement
-template <typename... EntryT>
-auto test_hollow_symbols(sema::Analyzer& analyzer, EntryT&&... entries) -> void {
+template <typename... Entries>
+auto test_hollow_symbols(SemaTestContext& ctx, Entries&&... entries) -> void {
+    auto& analyzer = ctx.analyzer;
     auto& registry = analyzer.get_registry();
     REQUIRE(registry.size() == 2);
     CHECK(registry.get(1).size() == sizeof...(entries));

@@ -5,8 +5,8 @@
 namespace porpoise::tests {
 
 TEST_CASE("Test statement symbol collection") {
-    auto analyzer = helpers::test_collector(R"(test "foo" { const foo := bar; })", false);
-    helpers::test_hollow_symbols(analyzer, helpers::TableEntry{"foo", helpers::foo_bar_decl()});
+    auto ctx = helpers::test_collector(R"(test "foo" { const foo := bar; })", false);
+    helpers::test_hollow_symbols(ctx, helpers::TableEntry{"foo", helpers::foo_bar_decl()});
 }
 
 TEST_CASE("Test shadowing") {
