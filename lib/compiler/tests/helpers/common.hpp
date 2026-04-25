@@ -27,4 +27,11 @@ constexpr auto trim_semicolons(std::string_view str) -> std::string_view {
     return string::trim_right(str, [](byte b) { return b == ';'; });
 }
 
+template <typename T, typename... Ts> auto make_vector(Ts&&... es) -> std::vector<T> {
+    std::vector<T> list;
+    list.reserve(sizeof...(es));
+    (list.emplace_back(std::forward<Ts>(es)), ...);
+    return list;
+}
+
 } // namespace porpoise::tests::helpers

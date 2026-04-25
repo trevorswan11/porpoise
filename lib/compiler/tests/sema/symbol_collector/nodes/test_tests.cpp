@@ -5,7 +5,7 @@
 namespace porpoise::tests {
 
 TEST_CASE("Test statement symbol collection") {
-    auto ctx = helpers::test_collector(R"(test "foo" { const foo := bar; })", false);
+    auto ctx = helpers::test_collector(R"(test "foo" { const foo := bar; })", {});
     helpers::test_hollow_symbols(ctx, helpers::TableEntry{"foo", helpers::foo_bar_decl()});
 }
 

@@ -87,13 +87,6 @@ template <ast::LeafNode N> auto test_expr_stmt(std::string_view input, N&& expec
     test_expr_stmt(input, expected.get_token(), std::move(expected));
 }
 
-template <typename T, typename... Ts> auto make_vector(Ts&&... es) -> std::vector<T> {
-    std::vector<T> list;
-    list.reserve(sizeof...(es));
-    (list.emplace_back(std::forward<Ts>(es)), ...);
-    return list;
-}
-
 auto ident_from(std::string_view name) -> ast::IdentifierExpression;
 auto ident_from(const syntax::Token& tok) -> ast::IdentifierExpression;
 

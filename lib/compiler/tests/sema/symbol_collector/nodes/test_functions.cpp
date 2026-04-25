@@ -12,6 +12,7 @@ TEST_CASE("Function hollow types") {
     const sema::types::Key key{sema::TypeKind::FUNCTION, false, 1};
     auto                   ctx = helpers::test_collector(
         "const a := fn(&self, c: type): void { const foo := bar; };",
+        {},
         helpers::TableEntry<ast::DeclStatement>{
             "a",
             ast::DeclStatement{

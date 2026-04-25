@@ -16,13 +16,12 @@ auto format_diagnostic(const opt::Option<std::string>&    message,
     if (message) { ss << ")"; }
 
     // The source and location play nicely with one another
-    if (source_path) {
-        ss << *source_path << ":";
-    } else {
-        ss << " ";
+    if (source_path) { ss << *source_path; }
+    if (location) {
+        ss << (source_path ? ":" : " ");
+        ss << fmt::format("{}", *location);
     }
 
-    if (location) { ss << fmt::format("{}", *location); }
     return ss.str();
 }
 

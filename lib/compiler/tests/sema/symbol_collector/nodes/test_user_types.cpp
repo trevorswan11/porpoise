@@ -12,6 +12,7 @@ TEST_CASE("Struct hollow types") {
     const sema::types::Key key{sema::TypeKind::STRUCT, false, 1};
     auto                   ctx = helpers::test_collector(
         "const a := struct { const foo := bar; };",
+        {},
         helpers::TableEntry<ast::DeclStatement>{
             "a",
             ast::DeclStatement{
@@ -35,6 +36,7 @@ TEST_CASE("Enum hollow types") {
     const sema::types::Key key{sema::TypeKind::ENUM, false, 1};
     auto                   ctx = helpers::test_collector(
         "const a := enum {b};",
+        {},
         helpers::TableEntry<ast::DeclStatement>{
             "a",
             ast::DeclStatement{
@@ -70,6 +72,7 @@ TEST_CASE("Enum hollow types with member") {
     const sema::types::Key key{sema::TypeKind::ENUM, false, 1};
     auto                   ctx = helpers::test_collector(
         "const a := enum {b, static const c := 2; };",
+        {},
         helpers::TableEntry<ast::DeclStatement>{
             "a",
             ast::DeclStatement{
@@ -101,6 +104,7 @@ TEST_CASE("Union hollow types") {
     const sema::types::Key key{sema::TypeKind::UNION, false, 1};
     auto                   ctx = helpers::test_collector(
         "const a := union { b: i32 };",
+        {},
         helpers::TableEntry<ast::DeclStatement>{
             "a",
             ast::DeclStatement{
@@ -139,6 +143,7 @@ TEST_CASE("Union hollow types with member") {
     const sema::types::Key key{sema::TypeKind::UNION, false, 1};
     auto                   ctx = helpers::test_collector(
         "const a := union { b: i32, static const c := 2; };",
+        {},
         helpers::TableEntry<ast::DeclStatement>{
             "a",
             ast::DeclStatement{

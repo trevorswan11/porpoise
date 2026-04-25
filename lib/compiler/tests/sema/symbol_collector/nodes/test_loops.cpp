@@ -10,6 +10,7 @@ namespace operators = syntax::operators;
 TEST_CASE("Do-while loop collection") {
     auto ctx = helpers::test_collector(
         "const a := do { const foo := bar; } while (true);",
+        {},
         helpers::TableEntry<ast::DeclStatement>{
             "a",
             ast::DeclStatement{
@@ -35,6 +36,7 @@ TEST_CASE("For loop collection") {
 
     auto ctx = helpers::test_collector(
         "const a := for (0..5) |i| { const foo := bar; } else c;",
+        {},
         helpers::TableEntry<ast::DeclStatement>{
             "a",
             ast::DeclStatement{
@@ -65,6 +67,7 @@ TEST_CASE("For loop collection") {
 TEST_CASE("Infinite loop collection") {
     auto ctx = helpers::test_collector(
         "const a := loop { const foo := bar; };",
+        {},
         helpers::TableEntry<ast::DeclStatement>{
             "a",
             ast::DeclStatement{
@@ -85,6 +88,7 @@ TEST_CASE("Infinite loop collection") {
 TEST_CASE("While loop collection") {
     auto ctx = helpers::test_collector(
         "const a := while (true) : (i += 1) { const foo := bar; } else c;",
+        {},
         helpers::TableEntry<ast::DeclStatement>{
             "a",
             ast::DeclStatement{

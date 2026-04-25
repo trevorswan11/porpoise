@@ -330,12 +330,12 @@ auto SymbolCollector::visit(const ast::ImportStatement& import_stmt) -> void {
         [this](const ast::LibraryImport& module) {
             const auto name =
                 module.has_alias() ? module.get_alias().get_name() : module.get_name().get_name();
-            auto mod = ctx_.modules.try_get_true_module(std::string{name});
+            auto mod = ctx_.modules.try_get_true_module(module.get_name().materialize());
             return std::pair{name, mod};
         },
         [this](const ast::FileImport& user) {
             const auto name = user.get_alias().get_name();
-            auto       mod  = ctx_.modules.try_get_file_module(std::string{name});
+            auto       mod  = ctx_.modules.try_get_file_module(user.get_file().get_value());
             return std::pair{name, mod};
         },
     });
