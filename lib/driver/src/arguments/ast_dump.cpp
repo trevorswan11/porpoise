@@ -9,42 +9,52 @@
 #include "ast/node.hpp"
 
 #include "sema/analyzer.hpp"
+#include "sema/module/memory_loader.hpp"
 
+#include "sema/module/module.hpp"
 #include "string.hpp"
 
 namespace porpoise::driver {
 
 auto AstDump::run() -> void {
+    const std::filesystem::path stdin_path = "stdin.porp";
     while (true) {
         fmt::print(">>> ");
         line_.clear();
 
         if (!std::getline(std::cin, line_)) { break; }
-        const auto trimmed = string::trim(line_);
+        auto trimmed = string::trim(line_);
         if (trimmed == "exit") { break; }
         if (trimmed.empty()) { continue; }
 
+        sema::mod::MemoryLoader  loader;
+        sema::mod::ModuleManager manager{loader};
+        loader.add(stdin_path, std::string{trimmed});
+
+        sema::Analyzer analyzer{manager};
+        if (!analyzer.analyze(stdin_path)) {
+            fmt::println(std::cerr, "Failed to load input from stdin");
+            break;
+        }
+
         // Parsing
-        parser_.reset(trimmed);
-        auto [ast, parser_errors] = parser_.consume();
-        if (!parser_errors.empty()) {
-            fmt::println(std::cerr, "{}", parser_errors);
+        const auto stdin_mod = *manager.try_get_file_module(stdin_path);
+        if (stdin_mod->is_parser_diagnostics()) {
+            fmt::println(std::cerr, "{}", stdin_mod->get_parser_diagnostics());
             continue;
         } else {
             ast::ASTDumper dumper{std::cout};
-            for (const auto& node : ast) { node->accept(dumper); }
+            for (const auto& node : stdin_mod->tree) { node->accept(dumper); }
         }
 
         // Sema
-        sema::Analyzer analyzer{std::move(ast)};
-        const auto     idx = analyzer.collect_symbols();
-        if (analyzer.has_diagnostics()) {
-            fmt::println(std::cerr, "{}", analyzer.get_diagnostics());
+        if (stdin_mod->is_sema_diagnostics()) {
+            fmt::println(std::cerr, "{}", stdin_mod->get_sema_diagnostics());
             continue;
         } else {
             fmt::println("{} total tables, {} top-level symbols collected",
                          analyzer.get_registry().size(),
-                         analyzer.get_table(idx).size());
+                         analyzer.get_table(stdin_mod->root_table_idx).size());
         }
     }
 }

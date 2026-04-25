@@ -9,8 +9,6 @@
 
 namespace porpoise {
 
-namespace mod { struct Module; } // namespace mod
-
 struct SourceLocation {
     usize line   = 0;
     usize column = 0;

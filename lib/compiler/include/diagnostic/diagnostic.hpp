@@ -6,7 +6,7 @@
 
 #include <fmt/format.h>
 
-#include "module/source_location.hpp"
+#include "diagnostic/source_location.hpp"
 
 #include "enum.hpp"
 #include "option.hpp"

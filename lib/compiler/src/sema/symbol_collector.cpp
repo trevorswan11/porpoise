@@ -2,8 +2,26 @@
 
 #include "ast/ast.hpp"
 #include "ast/visitor.hpp"
+#include "sema/error.hpp"
 
 namespace porpoise::sema {
+
+auto SymbolCollector::collect_symbols(mod::Module& module, const CollectorCtx& ctx)
+    -> mod::ModuleState {
+    if (module.state < mod::ModuleState::SYMBOLS_COLLECTED && !module.root_table_idx) {
+        module.root_table_idx.emplace(ctx.registry.create());
+
+        SymbolCollector collector{module.root_table_idx, ctx};
+        for (const auto& node : module.tree) {
+            node->accept(collector);
+            collector.pass_first();
+        }
+
+        if (!ctx.diagnostics.empty()) { return module.error_out(std::move(ctx.diagnostics)); }
+        module.state = mod::ModuleState::SYMBOLS_COLLECTED;
+    }
+    return module.state;
+}
 
 // Many terminal expressions are skipped on this pass
 #define MAKE_COLLECTOR_NOOPS(X)  \
@@ -75,7 +93,7 @@ auto SymbolCollector::visit(const ast::ForLoopExpression& for_expr) -> void {
     const auto g_expr = in_expr_scope_.guard();
     usize      new_idx;
     {
-        new_idx = registry_.create();
+        new_idx = ctx_.registry.create();
         const Scope s{table_stack_, new_idx, table_idx_};
 
         const auto g_loop = in_loop_scope_.guard();
@@ -84,7 +102,7 @@ auto SymbolCollector::visit(const ast::ForLoopExpression& for_expr) -> void {
     }
     if (for_expr.has_non_break()) { for_expr.get_non_break().accept(*this); }
 
-    last_type_.emplace(pool_[{TypeKind::BLOCK, false, new_idx}]);
+    last_type_.emplace(ctx_.pool[{TypeKind::BLOCK, false, new_idx}]);
     last_type_->set_symbol_table_idx(new_idx);
     for_expr.set_sema_type(*last_type_.take());
 }
@@ -98,7 +116,7 @@ auto SymbolCollector::visit(const ast::FunctionParameter& param) -> void {
 }
 
 auto SymbolCollector::visit(const ast::FunctionExpression& fn) -> void {
-    const auto  new_idx = registry_.create();
+    const auto  new_idx = ctx_.registry.create();
     const Scope s{table_stack_, new_idx, table_idx_};
     const auto  g = fn_guard();
 
@@ -107,7 +125,7 @@ auto SymbolCollector::visit(const ast::FunctionExpression& fn) -> void {
     visit_list(fn.get_parameters());
     if (fn.has_body()) { visit_list(fn.get_body()); }
 
-    last_type_.emplace(pool_[{TypeKind::FUNCTION, false, new_idx}]);
+    last_type_.emplace(ctx_.pool[{TypeKind::FUNCTION, false, new_idx}]);
     last_type_->set_symbol_table_idx(new_idx);
     fn.set_sema_type(*last_type_);
 }
@@ -159,7 +177,7 @@ auto SymbolCollector::visit(const ast::LabelExpression& label) -> void {
 }
 
 auto SymbolCollector::visit(const ast::MatchArm& arm) -> void {
-    const auto  new_idx = registry_.create();
+    const auto  new_idx = ctx_.registry.create();
     const Scope s{table_stack_, new_idx, table_idx_};
 
     if (arm.has_capture_clause() && arm.is_explicit_capture()) {
@@ -167,7 +185,7 @@ auto SymbolCollector::visit(const ast::MatchArm& arm) -> void {
     }
     arm.get_dispatch().accept(*this);
 
-    last_type_.emplace(pool_[{TypeKind::MATCH_ARM, false, new_idx}]);
+    last_type_.emplace(ctx_.pool[{TypeKind::MATCH_ARM, false, new_idx}]);
     last_type_->set_symbol_table_idx(new_idx);
     arm.set_sema_type(*last_type_.take());
 }
@@ -215,7 +233,7 @@ auto SymbolCollector::visit(const ast::WhileLoopExpression& while_expr) -> void 
     const auto g_expr = in_expr_scope_.guard();
     usize      new_idx;
     {
-        new_idx = registry_.create();
+        new_idx = ctx_.registry.create();
         const Scope s{table_stack_, new_idx, table_idx_};
 
         const auto g_loop = in_loop_scope_.guard();
@@ -223,16 +241,16 @@ auto SymbolCollector::visit(const ast::WhileLoopExpression& while_expr) -> void 
     }
     if (while_expr.has_non_break()) { while_expr.get_non_break().accept(*this); }
 
-    last_type_.emplace(pool_[{TypeKind::BLOCK, false, new_idx}]);
+    last_type_.emplace(ctx_.pool[{TypeKind::BLOCK, false, new_idx}]);
     last_type_->set_symbol_table_idx(new_idx);
     while_expr.set_sema_type(*last_type_.take());
 }
 
 auto SymbolCollector::visit(const ast::BlockStatement& block) -> void {
     if (!in_expr_scope_ && table_stack_.size() == 1) {
-        diagnostics_.emplace_back("Cannot have block at the top level",
-                                  Error::ILLEGAL_TOP_LEVEL_STATEMENT,
-                                  block.get_token());
+        ctx_.diagnostics.emplace_back("Cannot have block at the top level",
+                                      Error::ILLEGAL_TOP_LEVEL_STATEMENT,
+                                      block.get_token());
     }
 
     const auto scope_idx = visit_scopes(
@@ -243,18 +261,18 @@ auto SymbolCollector::visit(const ast::BlockStatement& block) -> void {
 
 auto SymbolCollector::visit(const ast::BreakStatement& break_stmt) -> void {
     if (!in_loop_scope_ && !in_label_scope_) {
-        diagnostics_.emplace_back("Cannot break outside of a loop or label",
-                                  Error::ILLEGAL_CONTROL_FLOW,
-                                  break_stmt.get_token());
+        ctx_.diagnostics.emplace_back("Cannot break outside of a loop or label",
+                                      Error::ILLEGAL_CONTROL_FLOW,
+                                      break_stmt.get_token());
     }
     if (break_stmt.has_expression()) { break_stmt.get_expression().accept(*this); }
 }
 
 auto SymbolCollector::visit(const ast::ContinueStatement& continue_stmt) -> void {
     if (!in_loop_scope_) {
-        diagnostics_.emplace_back("Cannot continue outside of a loop",
-                                  Error::ILLEGAL_CONTROL_FLOW,
-                                  continue_stmt.get_token());
+        ctx_.diagnostics.emplace_back("Cannot continue outside of a loop",
+                                      Error::ILLEGAL_CONTROL_FLOW,
+                                      continue_stmt.get_token());
     }
 }
 
@@ -272,12 +290,12 @@ auto SymbolCollector::visit(const ast::DeclStatement& decl) -> void {
                  ast::StructExpression>()) {
         // Certain values cannot be constexpr or non-const to reduce mental overhead
         if (decl.has_modifier(ast::DeclModifiers::CONSTEXPR)) {
-            diagnostics_.emplace_back(
+            ctx_.diagnostics.emplace_back(
                 fmt::format("Top level {}s are implicitly compile time known", expr.display_name()),
                 Error::REDUNDANT_CONSTEXPR,
                 decl.get_token());
         } else if (!decl.has_modifier(ast::DeclModifiers::CONSTANT)) {
-            diagnostics_.emplace_back(
+            ctx_.diagnostics.emplace_back(
                 fmt::format("Top level {}s must be marked const at the top level",
                             expr.display_name()),
                 Error::ILLEGAL_NON_CONST_STATEMENT,
@@ -286,14 +304,14 @@ auto SymbolCollector::visit(const ast::DeclStatement& decl) -> void {
     }
 
     expr.accept(*this);
-    if (last_type_) { registry_.get_from(table_idx_, name).emplace_type(*last_type_.take()); }
+    if (last_type_) { ctx_.registry.get_from(table_idx_, name).emplace_type(*last_type_.take()); }
 }
 
 auto SymbolCollector::visit(const ast::DeferStatement& defer) -> void {
     if (!in_function_scope_) {
-        diagnostics_.emplace_back("Cannot have defer outside of a function's scope",
-                                  Error::ILLEGAL_TOP_LEVEL_STATEMENT,
-                                  defer.get_token());
+        ctx_.diagnostics.emplace_back("Cannot have defer outside of a function's scope",
+                                      Error::ILLEGAL_TOP_LEVEL_STATEMENT,
+                                      defer.get_token());
     }
     defer.get_deferred().accept(*this);
 }
@@ -307,47 +325,64 @@ auto SymbolCollector::visit(const ast::ExpressionStatement& expr) -> void {
 }
 
 auto SymbolCollector::visit(const ast::ImportStatement& import_stmt) -> void {
-    if (registry_.get(table_idx_).is_module()) { import_stmt.mark_public(); }
-    const auto name = import_stmt.match(Overloaded{
-        [](const ast::LibraryImport& module) {
-            return module.has_alias() ? module.get_alias().get_name()
-                                      : module.get_name().get_name();
+    if (ctx_.registry.get(table_idx_).is_module()) { import_stmt.mark_public(); }
+    const auto [alias, mod_result] = import_stmt.match(Overloaded{
+        [this](const ast::LibraryImport& module) {
+            const auto name =
+                module.has_alias() ? module.get_alias().get_name() : module.get_name().get_name();
+            auto mod = ctx_.modules.try_get_true_module(std::string{name});
+            return std::pair{name, mod};
         },
-        [](const ast::FileImport& user) { return user.get_alias().get_name(); },
+        [this](const ast::FileImport& user) {
+            const auto name = user.get_alias().get_name();
+            auto       mod  = ctx_.modules.try_get_file_module(std::string{name});
+            return std::pair{name, mod};
+        },
     });
-    try_result(registry_.insert_into(table_idx_, name, &import_stmt));
+
+    // Only set the table index if the module exists
+    opt::Option<mod::Module&> imported_mod;
+    if (!mod_result) {
+        ctx_.diagnostics.emplace_back(mod_result.error());
+    } else {
+        imported_mod.emplace(**mod_result);
+        Diagnostics diags;
+        collect_symbols(*imported_mod, ctx_.copy(diags));
+    }
+    try_result(
+        ctx_.registry.insert_into(table_idx_, alias, SymbolicImport{&import_stmt, imported_mod}));
 }
 
 auto SymbolCollector::visit(const ast::ModuleStatement& module_stmt) -> void {
-    auto& table = registry_.get(table_idx_);
+    auto& table = ctx_.registry.get(table_idx_);
     if (first_node_) { return table.indicate_module(); }
 
     // Module statements are highly restricted in terms of usage and location
     if (table.is_module()) {
-        diagnostics_.emplace_back("Only one module statement is allowed per file",
-                                  Error::DUPLICATE_MODULE_STATEMENT,
-                                  module_stmt.get_token());
+        ctx_.diagnostics.emplace_back("Only one module statement is allowed per file",
+                                      Error::DUPLICATE_MODULE_STATEMENT,
+                                      module_stmt.get_token());
     } else {
-        diagnostics_.emplace_back("Module indicator must be first statement of file",
-                                  Error::ILLEGAL_MODULE_STATEMENT_LOCATION,
-                                  module_stmt.get_token());
+        ctx_.diagnostics.emplace_back("Module indicator must be first statement of file",
+                                      Error::ILLEGAL_MODULE_STATEMENT_LOCATION,
+                                      module_stmt.get_token());
     }
 }
 
 auto SymbolCollector::visit(const ast::ReturnStatement& return_stmt) -> void {
     if (!in_function_scope_) {
-        diagnostics_.emplace_back("Cannot return outside of a function",
-                                  Error::ILLEGAL_CONTROL_FLOW,
-                                  return_stmt.get_token());
+        ctx_.diagnostics.emplace_back("Cannot return outside of a function",
+                                      Error::ILLEGAL_CONTROL_FLOW,
+                                      return_stmt.get_token());
     }
     if (return_stmt.has_expression()) { return_stmt.get_expression().accept(*this); }
 }
 
 auto SymbolCollector::visit(const ast::TestStatement& test) -> void {
     if (table_idx_ != 0) {
-        diagnostics_.emplace_back("Tests must be at the topmost level of a file",
-                                  Error::ILLEGAL_TEST_LOCATION,
-                                  test.get_token());
+        ctx_.diagnostics.emplace_back("Tests must be at the topmost level of a file",
+                                      Error::ILLEGAL_TEST_LOCATION,
+                                      test.get_token());
     }
 
     // Not a symbol so don't push to the table, track in node instead
@@ -359,7 +394,7 @@ auto SymbolCollector::visit(const ast::TestStatement& test) -> void {
 }
 
 auto SymbolCollector::visit(const ast::UsingStatement& using_stmt) -> void {
-    if (registry_.get(table_idx_).is_module()) { using_stmt.mark_public(); }
+    if (ctx_.registry.get(table_idx_).is_module()) { using_stmt.mark_public(); }
     try_declare(using_stmt.get_alias().get_name(), &using_stmt);
 }
 

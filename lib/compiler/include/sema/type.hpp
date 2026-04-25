@@ -191,7 +191,6 @@ static_assert(std::is_trivially_destructible_v<Type>);
 
 } // namespace porpoise::sema
 
-// https://github.com/martinus/unordered_dense?tab=readme-ov-file#323-specialize-ankerlunordered_densehash
 template <> struct ankerl::unordered_dense::hash<porpoise::sema::types::Key> {
     using is_avalanching = void;
     using Key            = porpoise::sema::types::Key;

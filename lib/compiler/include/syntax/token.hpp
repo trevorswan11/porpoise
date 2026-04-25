@@ -9,7 +9,7 @@
 
 #include "diagnostic/diagnostic.hpp"
 
-#include "module/source_location.hpp"
+#include "diagnostic/source_location.hpp"
 
 #include "option.hpp"
 #include "result.hpp"

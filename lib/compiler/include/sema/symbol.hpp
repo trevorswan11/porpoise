@@ -8,6 +8,7 @@
 #include <ankerl/unordered_dense.h>
 
 #include "sema/error.hpp"
+#include "sema/module/module.hpp"
 
 #include "syntax/token.hpp"
 
@@ -53,7 +54,9 @@ using SymbolicLabel       = opt::NonNull<const ast::LabelExpression>;
 
 struct SymbolicImport {
     opt::NonNull<const ast::ImportStatement> node;
-    usize                                    root_table_idx;
+    opt::Option<mod::Module&>                imported_mod;
+    
+    MAKE_EQ_DELEGATION(SymbolicImport)
 };
 
 // No other nodes can ever be at the top level
@@ -98,7 +101,7 @@ class Symbol {
     MAKE_VARIANT_UNPACKER(label, ast::LabelExpression, SymbolicLabel, node_, *std::get)
 
     MAKE_VARIANT_MATCHER(node_)
-    [[nodiscard]] auto get_node_token() const noexcept -> syntax::Token;
+    [[nodiscard]] auto get_node_token() const noexcept -> const syntax::Token&;
 
     // Can only be true for decls, imports, and type aliases
     [[nodiscard]] auto is_public() const noexcept -> bool;

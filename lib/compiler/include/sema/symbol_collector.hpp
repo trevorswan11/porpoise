@@ -3,6 +3,8 @@
 #include "ast/node.hpp"
 #include "ast/visitor.hpp"
 
+#include "module/module.hpp"
+
 #include "sema/error.hpp"
 #include "sema/pool.hpp"
 #include "sema/symbol.hpp"
@@ -11,6 +13,18 @@
 #include "counter.hpp"
 
 namespace porpoise::sema {
+
+struct CollectorCtx {
+    mod::ModuleManager&  modules;
+    SymbolTableRegistry& registry;
+    TypePool&            pool;
+    Diagnostics&         diagnostics;
+
+    // Creates a new context with a new diagnostics pointer
+    [[nodiscard]] auto copy(Diagnostics& new_diags) const noexcept -> CollectorCtx {
+        return {modules, registry, pool, new_diags};
+    }
+};
 
 // An AST walker that performs 0 type checking
 class SymbolCollector : public ast::Visitor {
@@ -31,13 +45,12 @@ class SymbolCollector : public ast::Visitor {
     };
 
   public:
-    SymbolCollector(usize                table_idx,
-                    SymbolTableRegistry& registry,
-                    TypePool&            pool,
-                    Diagnostics&         diagnostics) noexcept
-        : table_idx_{table_idx}, registry_{registry}, pool_{pool}, diagnostics_{diagnostics} {
+    SymbolCollector(usize table_idx, const CollectorCtx& ctx) noexcept
+        : table_idx_{table_idx}, ctx_{ctx} {
         table_stack_.push(table_idx);
     }
+
+    static auto collect_symbols(mod::Module& module, const CollectorCtx& ctx) -> mod::ModuleState;
 
     MAKE_AST_VISITOR_OVERRIDES()
 
@@ -46,28 +59,28 @@ class SymbolCollector : public ast::Visitor {
   private:
     template <typename... IterPairs>
     [[nodiscard]] auto visit_scopes(TypeKind kind, IterPairs&&... pairs) -> usize {
-        const auto  new_idx = registry_.create();
+        const auto  new_idx = ctx_.registry.create();
         const Scope s{table_stack_, new_idx, table_idx_};
         (..., [&] {
             for (const auto& item : pairs.iterable) { pairs.visitor(item); }
         }());
-        last_type_.emplace(pool_[{kind, false, new_idx}]);
+        last_type_.emplace(ctx_.pool[{kind, false, new_idx}]);
         return new_idx;
     }
 
     // Returns false if the passed result was an error type
     template <typename T = Unit> auto try_result(Result<T, Diagnostic>&& result) -> bool {
         if (!result) {
-            diagnostics_.emplace_back(result.error());
+            ctx_.diagnostics.emplace_back(result.error());
             return false;
         }
         return true;
     }
 
     template <typename SymbolicVariant>
-    auto try_declare(std::string_view name, SymbolicVariant* node) -> bool {
-        return try_result(registry_.is_shadowing(table_stack_, name, node)) &&
-               try_result(registry_.insert_into(table_idx_, name, node));
+    auto try_declare(std::string_view name, SymbolicVariant node) -> bool {
+        return try_result(ctx_.registry.is_shadowing(table_stack_, name, node)) &&
+               try_result(ctx_.registry.insert_into(table_idx_, name, node));
     }
 
     auto loop_guard() noexcept -> std::pair<DefaultCounter::Guard, DefaultCounter::Guard> {
@@ -83,11 +96,9 @@ class SymbolCollector : public ast::Visitor {
     }
 
   private:
-    usize                table_idx_;
-    SymbolTableStack     table_stack_;
-    SymbolTableRegistry& registry_;
-    TypePool&            pool_;
-    Diagnostics&         diagnostics_;
+    usize            table_idx_;
+    SymbolTableStack table_stack_;
+    CollectorCtx     ctx_;
 
     bool               first_node_{true};
     opt::Option<Type&> last_type_;
