@@ -15,28 +15,22 @@ pub const main := fn(args: [][:0]u8): i32 {
 };
 )"};
 
-const std::string_view std_porp{R"(
+constexpr std::string_view std_porp{R"(
 module;
 
 import "io.porp" as io;
 )"};
 
-const std::string_view io_porp{R"(
+constexpr std::string_view io_porp{R"(
 pub const println := fn(str: []u8): void {};
 )"};
 
 TEST_CASE("Full sema pipeline") {
-    const std::string_view   root{"main.porp"};
-    helpers::SemaTestContext ctx{
-        mem::make_box<sema::mod::MemoryLoader>(),
-        helpers::make_vector<MockFile>(MockFile{"std.porp", std_porp, "std"},
-                                       MockFile{"io.porp", io_porp}),
-        root,
-        main_porp};
+    constexpr std::string_view root{"main.porp"};
 
-    auto& analyzer = ctx.analyzer;
-    REQUIRE(analyzer.analyze(root));
-    auto& registry = analyzer.get_registry();
+    auto ctx = helpers::analyze(
+        root, main_porp, MockFile{"std.porp", std_porp, "std"}, MockFile{"io.porp", io_porp});
+    const auto& registry = ctx.analyzer.get_registry();
     REQUIRE(registry.size() == 5);
 
     CHECK(registry.get_from_opt(0, "std"));

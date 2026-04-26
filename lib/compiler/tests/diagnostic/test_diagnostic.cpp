@@ -29,13 +29,13 @@ TEST_CASE("Custom locateable") {
 
 TEST_CASE("Error messages with associated files") {
     const Diagnostic<TestEnum> d{TestEnum::SAD};
-    CHECK("SAD foo.porp" == d.to_string("foo.porp"));
+    CHECK("foo.porp: SAD" == d.to_string("foo.porp"));
 }
 
 TEST_CASE("Locateable Error messages with associated files") {
     SomethingLocationed        l;
     const Diagnostic<TestEnum> d{TestEnum::SAD, l};
-    CHECK("SAD foo.porp:0:42" == d.to_string("foo.porp"));
+    CHECK("foo.porp:0:42: SAD" == d.to_string("foo.porp"));
 }
 
 } // namespace tests

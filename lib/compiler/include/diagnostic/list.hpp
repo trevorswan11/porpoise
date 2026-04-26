@@ -1,6 +1,9 @@
 #pragma once
 
+#include <ostream>
 #include <vector>
+
+#include <fmt/ostream.h>
 
 #include "diagnostic/diagnostic.hpp"
 
@@ -39,9 +42,17 @@ template <DiagnosticType D> class DiagnosticList {
         return self.diagnostics_.at(idx);
     }
 
+    auto print(std::ostream& os) const -> void {
+        for (const auto& diag : diagnostics_) {
+            fmt::println(os, "{}", diag.to_string(source_path_));
+        }
+    }
+
   private:
     opt::Option<std::string> source_path_;
     Diagnostics              diagnostics_;
+
+    friend struct fmt::formatter<porpoise::DiagnosticList<D>>;
 };
 
 } // namespace porpoise

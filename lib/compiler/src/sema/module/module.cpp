@@ -1,7 +1,5 @@
 #include <fmt/format.h>
 
-#include "syntax/parser.hpp"
-
 #include "sema/module/module.hpp"
 
 namespace porpoise::sema::mod {

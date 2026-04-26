@@ -10,8 +10,8 @@
 
 #include "sema/analyzer.hpp"
 #include "sema/module/memory_loader.hpp"
-
 #include "sema/module/module.hpp"
+
 #include "string.hpp"
 
 namespace porpoise::driver {
@@ -40,7 +40,7 @@ auto AstDump::run() -> void {
         // Parsing
         const auto stdin_mod = *manager.try_get_file_module(stdin_path);
         if (stdin_mod->has_parser_diagnostics()) {
-            fmt::println(std::cerr, "{}", stdin_mod->get_parser_diagnostics());
+            stdin_mod->get_parser_diagnostics().print(std::cerr);
             continue;
         } else {
             ast::ASTDumper dumper{std::cout};
@@ -49,7 +49,7 @@ auto AstDump::run() -> void {
 
         // Sema
         if (stdin_mod->has_sema_diagnostics()) {
-            fmt::println(std::cerr, "{}", stdin_mod->get_sema_diagnostics());
+            stdin_mod->get_sema_diagnostics().print(std::cerr);
             continue;
         } else {
             fmt::println("{} total tables, {} top-level symbols collected",

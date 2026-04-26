@@ -29,10 +29,9 @@ struct SemaTestContext {
     opt::NonNull<sema::mod::Module>   root_mod;
 
     // The root is automatically added to the internal loader and can be immediately analyzed
-    explicit SemaTestContext(mem::Box<sema::mod::MemoryLoader> mem_loader,
-                             const std::vector<MockFile>&      imports,
-                             const std::filesystem::path&      root_path,
-                             std::string_view                  input);
+    explicit SemaTestContext(const std::vector<MockFile>& imports,
+                             const std::filesystem::path& root_path,
+                             std::string_view             input);
 };
 
 // Collects the assumed-syntactically-valid input and returns the analyzer and parent table index.
@@ -42,6 +41,21 @@ struct SemaTestContext {
 // Collects the assumed-syntactically-valid input and checks for no errors
 auto collect_and_validate(std::string_view input, const std::vector<MockFile>& imports = {})
     -> std::pair<SemaTestContext, usize>;
+
+// Runs the entire Analyzer on the provided input and checks for errors
+template <typename... Mocks>
+    requires(std::same_as<Mocks, MockFile> && ...)
+auto analyze(std::string_view root_path, std::string_view input, Mocks&&... mocks)
+    -> SemaTestContext {
+    SemaTestContext ctx{
+        helpers::make_vector<MockFile>(std::forward<Mocks>(mocks)...), root_path, input};
+    REQUIRE_FALSE(ctx.root_mod->has_parser_diagnostics());
+
+    auto& analyzer = ctx.analyzer;
+    REQUIRE(analyzer.analyze(root_path));
+    REQUIRE_FALSE(ctx.root_mod->has_sema_diagnostics());
+    return ctx;
+}
 
 // A helper for creating non-node symbols
 template <typename N> struct TableEntry {

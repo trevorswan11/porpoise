@@ -43,7 +43,7 @@ template <typename... Ds>
 auto test_parser_fail(std::string_view failing, Ds&&... expected_diagnostics) -> void {
     syntax::Parser p{failing};
     auto [ast, errors] = p.consume();
-    CHECK(ast.empty());
+    REQUIRE(ast.empty());
 
     std::array expected_arr{std::forward<Ds>(expected_diagnostics)...};
     const auto expected_count = sizeof...(Ds);
@@ -60,7 +60,7 @@ template <ast::LeafNode N> auto test_stmt(std::string_view input, const N& expec
     auto [ast, errors] = p.consume();
 
     check_errors<syntax::ParserDiagnostic>(errors);
-    CHECK(ast.size() == 1);
+    REQUIRE(ast.size() == 1);
 
     const auto  actual{std::move(ast[0])};
     const auto& actual_stmt = helpers::try_into<N>(*actual);
