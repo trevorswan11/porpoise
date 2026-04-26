@@ -236,9 +236,7 @@ constexpr auto PREFIX_FNS = [] {
     }
 
     for (const auto tt : ALL_PRIMITIVES) { fns[tt] = ast::IdentifierExpression::parse; }
-    for (const auto builtin : ALL_BUILTINS) {
-        fns[builtin.second] = ast::IdentifierExpression::parse;
-    }
+    for (const auto& [_, tt] : ALL_BUILTINS) { fns[tt] = ast::IdentifierExpression::parse; }
 
     return fns;
 }();
