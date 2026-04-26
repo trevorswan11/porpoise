@@ -12,7 +12,7 @@ auto Analyzer::analyze(const std::filesystem::path& entry_path) -> Result<Unit, 
 }
 
 auto Analyzer::collect_symbols(mod::Module& module) -> void {
-    Diagnostics diagnostics{module.path};
+    Diagnostics diagnostics{module.path.string()};
     SymbolCollector::collect_symbols(module, {modules_, registry_, pool_, diagnostics});
 }
 
