@@ -28,8 +28,10 @@ struct SemaTestContext {
     sema::Analyzer                    analyzer;
     opt::NonNull<sema::mod::Module>   root_mod;
 
+    // The root is automatically added to the internal loader and can be immediately analyzed
     explicit SemaTestContext(mem::Box<sema::mod::MemoryLoader> mem_loader,
                              const std::vector<MockFile>&      imports,
+                             const std::filesystem::path&      root_path,
                              std::string_view                  input);
 };
 

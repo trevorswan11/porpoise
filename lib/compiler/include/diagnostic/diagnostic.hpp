@@ -40,10 +40,6 @@ template <ScopedEnum E> class Diagnostic {
     Diagnostic(Diagnostic& other, E err) noexcept
         : message_{std::move(other.message_)}, error_{err}, loc_{std::move(other.loc_)} {}
 
-    auto has_msg() const noexcept -> bool { return message_.has_value(); }
-    auto error() const noexcept -> E { return error_; }
-    auto set_err(E err) noexcept -> void { error_ = err; }
-
     [[nodiscard]] auto to_string(const opt::Option<std::string>& source_path = opt::none) const
         -> std::string {
         return detail::format_diagnostic(

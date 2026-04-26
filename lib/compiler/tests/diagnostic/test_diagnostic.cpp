@@ -2,13 +2,42 @@
 
 #include "diagnostic/diagnostic.hpp"
 
-namespace porpoise::tests {
+namespace porpoise {
 
-enum class TestEnum;
+struct SomethingLocationed {};
+
+template <> struct SourceInfo<SomethingLocationed> {
+    static auto get(const SomethingLocationed&) noexcept -> SourceLocation { return {0, 42}; }
+};
+
+namespace tests {
+
+enum class TestEnum {
+    SAD,
+};
 
 TEST_CASE("Diagnostic type checkers") {
     STATIC_CHECK(is_diagnostic_v<Diagnostic<TestEnum>>);
     STATIC_CHECK_FALSE(is_diagnostic_v<TestEnum>);
 }
 
-} // namespace porpoise::tests
+TEST_CASE("Custom locateable") {
+    SomethingLocationed        l;
+    const Diagnostic<TestEnum> d{TestEnum::SAD, l};
+    CHECK("SAD 0:42" == d.to_string());
+}
+
+TEST_CASE("Error messages with associated files") {
+    const Diagnostic<TestEnum> d{TestEnum::SAD};
+    CHECK("SAD foo.porp" == d.to_string("foo.porp"));
+}
+
+TEST_CASE("Locateable Error messages with associated files") {
+    SomethingLocationed        l;
+    const Diagnostic<TestEnum> d{TestEnum::SAD, l};
+    CHECK("SAD foo.porp:0:42" == d.to_string("foo.porp"));
+}
+
+} // namespace tests
+
+} // namespace porpoise

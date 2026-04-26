@@ -1,6 +1,7 @@
 #include <sstream>
 
 #include <fmt/format.h>
+#include <fmt/ostream.h>
 
 #include "diagnostic/diagnostic.hpp"
 
@@ -16,12 +17,8 @@ auto format_diagnostic(const opt::Option<std::string>&    message,
     if (message) { ss << ")"; }
 
     // The source and location play nicely with one another
-    if (source_path) { ss << *source_path; }
-    if (location) {
-        ss << (source_path ? ":" : " ");
-        ss << fmt::format("{}", *location);
-    }
-
+    if (source_path) { fmt::print(ss, " {}", *source_path); }
+    if (location) { fmt::print(ss, "{}{}", source_path ? ":" : " ", *location); }
     return ss.str();
 }
 
