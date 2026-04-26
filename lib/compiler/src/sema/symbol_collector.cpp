@@ -346,7 +346,7 @@ auto SymbolCollector::visit(const ast::ImportStatement& import_stmt) -> void {
         ctx_.diagnostics.emplace_back(mod_result.error());
     } else {
         imported_mod.emplace(**mod_result);
-        Diagnostics diags;
+        Diagnostics diags{imported_mod->path};
         collect_symbols(*imported_mod, ctx_.copy(diags));
     }
     try_result(
