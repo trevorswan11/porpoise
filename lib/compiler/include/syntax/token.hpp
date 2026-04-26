@@ -7,10 +7,12 @@
 #include <fmt/format.h>
 #include <magic_enum/magic_enum.hpp>
 
-#include "diagnostic.hpp"
+#include "diagnostic/diagnostic.hpp"
+
+#include "diagnostic/source_location.hpp"
+
 #include "option.hpp"
 #include "result.hpp"
-#include "source_loc.hpp"
 #include "types.hpp"
 
 namespace porpoise {

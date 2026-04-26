@@ -25,7 +25,7 @@ template <typename T> class Ref {
     // cppcheck-suppress-end noExplicitConstructor
 
     [[nodiscard]] auto     has_value() const noexcept -> bool { return ptr_ != nullptr; }
-    [[nodiscard]] explicit operator bool() const noexcept { return ptr_ != nullptr; }
+    [[nodiscard]] explicit operator bool() const noexcept { return has_value(); }
 
     auto emplace(T& t) noexcept -> void { ptr_ = &t; }
     auto emplace(T* t) noexcept -> void { ptr_ = t; }

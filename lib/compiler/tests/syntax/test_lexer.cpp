@@ -36,7 +36,7 @@ TEST_CASE("Lexing illegal characters") {
     syntax::Lexer l{"月😭🎶"};
     const auto    tokens = l.consume();
 
-    for (size_t i = 0; i < tokens.size(); ++i) {
+    for (usize i = 0; i < tokens.size(); ++i) {
         const auto& token = tokens[i];
         if (i == tokens.size() - 1) {
             CHECK(token.type == TokenType::END);
@@ -49,7 +49,7 @@ TEST_CASE("Lexing illegal characters") {
 TEST_CASE("Lexer over-consumption") {
     syntax::Lexer l{"Lexer"};
     l.consume();
-    for (size_t i = 0; i < 100; ++i) { CHECK(l.advance().type == TokenType::END); }
+    for (usize i = 0; i < 100; ++i) { CHECK(l.advance().type == TokenType::END); }
 }
 
 TEST_CASE("Lexing symbols") {

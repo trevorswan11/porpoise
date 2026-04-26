@@ -8,6 +8,7 @@
 #include <ankerl/unordered_dense.h>
 
 #include "sema/error.hpp"
+#include "sema/module/module.hpp"
 
 #include "syntax/token.hpp"
 
@@ -42,7 +43,6 @@ class LabelExpression;
 namespace sema {
 
 using SymbolicDecl        = opt::NonNull<const ast::DeclStatement>;
-using SymbolicImport      = opt::NonNull<const ast::ImportStatement>;
 using SymbolicUsing       = opt::NonNull<const ast::UsingStatement>;
 using SymbolicUnionField  = opt::NonNull<const ast::UnionField>;
 using SymbolicEnumeration = opt::NonNull<const ast::Enumeration>;
@@ -51,6 +51,13 @@ using SymbolicParam       = opt::NonNull<const ast::FunctionParameter>;
 using SymbolicCapture     = opt::NonNull<const ast::ForLoopCapture>;
 using SymbolicArm         = opt::NonNull<const ast::MatchArm>;
 using SymbolicLabel       = opt::NonNull<const ast::LabelExpression>;
+
+struct SymbolicImport {
+    opt::NonNull<const ast::ImportStatement> node;
+    opt::Option<mod::Module&>                imported_mod;
+
+    MAKE_EQ_DELEGATION(SymbolicImport)
+};
 
 // No other nodes can ever be at the top level
 using SymbolicNode = std::variant<SymbolicDecl,
@@ -83,7 +90,7 @@ class Symbol {
     MAKE_GETTER(node, const SymbolicNode&)
 
     MAKE_VARIANT_UNPACKER(decl_stmt, ast::DeclStatement, SymbolicDecl, node_, *std::get)
-    MAKE_VARIANT_UNPACKER(import_stmt, ast::ImportStatement, SymbolicImport, node_, *std::get)
+    MAKE_VARIANT_UNPACKER(import_stmt, SymbolicImport, SymbolicImport, node_, std::get)
     MAKE_VARIANT_UNPACKER(using_stmt, ast::UsingStatement, SymbolicUsing, node_, *std::get)
     MAKE_VARIANT_UNPACKER(union_field, ast::UnionField, SymbolicUnionField, node_, *std::get)
     MAKE_VARIANT_UNPACKER(enumeration, ast::Enumeration, SymbolicEnumeration, node_, *std::get)
@@ -94,7 +101,7 @@ class Symbol {
     MAKE_VARIANT_UNPACKER(label, ast::LabelExpression, SymbolicLabel, node_, *std::get)
 
     MAKE_VARIANT_MATCHER(node_)
-    [[nodiscard]] auto get_node_token() const noexcept -> syntax::Token;
+    [[nodiscard]] auto get_node_token() const noexcept -> const syntax::Token&;
 
     // Can only be true for decls, imports, and type aliases
     [[nodiscard]] auto is_public() const noexcept -> bool;

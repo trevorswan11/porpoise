@@ -6,6 +6,8 @@
 #include <fmt/format.h>
 #include <fmt/ranges.h>
 
+#include "diagnostic/list.hpp"
+
 #include "string.hpp"
 
 namespace porpoise::tests::helpers {
@@ -16,8 +18,20 @@ template <typename E> auto check_errors(std::span<const E> errors) {
     CHECK(errors.empty());
 }
 
+template <typename D> auto check_errors(DiagnosticList<D>& errors) {
+    if (!errors.empty()) { fmt::println("{}", errors); }
+    CHECK(errors.empty());
+}
+
 constexpr auto trim_semicolons(std::string_view str) -> std::string_view {
     return string::trim_right(str, [](byte b) { return b == ';'; });
+}
+
+template <typename T, typename... Ts> auto make_vector(Ts&&... es) -> std::vector<T> {
+    std::vector<T> list;
+    list.reserve(sizeof...(es));
+    (list.emplace_back(std::forward<Ts>(es)), ...);
+    return list;
 }
 
 } // namespace porpoise::tests::helpers

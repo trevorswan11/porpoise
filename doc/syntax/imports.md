@@ -1,14 +1,15 @@
 # Imports
 - There are two kinds of imports in porpoise
-    - Library imports: These are imports denoted by identifiers and are declared in dedicated `.p` 'module' files
+    - Library imports: These are imports denoted by identifiers and are declared in dedicated 'module' files
     - File imports: These are imports denoted by a string that is a file path, followed by an identifier alias
+- The standard file extension for porpoise files is `.porp`
 - Both file and library imports allow an identifier alias using the `as` keyword, with this being required for user imports
 - An imports publicly available symbols are namespaced behind its name or alias (if applicable), and can be accessed using the `::` operator
 ```porpoise
 import std; // Library import
 import std as stud; // Library import with alias
-import "node.p"; // Illegal, file imports always require alias
-import "node.p" as node; // File import with alias
+import "node.porp"; // Illegal, file imports always require alias
+import "node.porp" as node; // File import with alias
 ```
 - The filepath given to the import should be relative to the asking file, _not_ to a local project 'root'
 - Imports are evaluated lazily
@@ -40,22 +41,22 @@ import "node.p" as node; // File import with alias
 - The file may have the `module;` keyword to forward imports and type aliases
 
 ### Example
-- `std.p` declares
+- `std.porp` declares
 ```porpoise
 module; // Use module keyword at head of file to declare the root of a module
 
-import "io/io.p" as io;
-import "containers/array_list.p" as array_list;
+import "io/io.porp" as io;
+import "containers/array_list.porp" as array_list;
 pub const ArrayList := array_list::ArrayList;
 ...
 ```
 
-- `io/io.p` declares a public function `println` which can be accessed via:
+- `io/io.porp` declares a public function `println` which can be accessed via:
 ```porpoise
 std::io::println(...);
 ```
 
-- `containers/array_list.p` declares a public function `ArrayList` that returns a generically-typed struct
+- `containers/array_list.porp` declares a public function `ArrayList` that returns a generically-typed struct
 ```porpoise
 pub const ArrayList := fn(T: type): type {...};
 ```

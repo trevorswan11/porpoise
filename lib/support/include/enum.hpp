@@ -17,6 +17,9 @@ namespace porpoise {
 template <typename Enum>
 concept ValidEnum = std::is_enum_v<Enum>;
 
+template <typename Enum>
+concept ScopedEnum = std::is_scoped_enum_v<Enum>;
+
 using magic_enum::enum_value;
 
 template <ValidEnum E> consteval auto enum_min_value() { return enum_value<E>(0); }

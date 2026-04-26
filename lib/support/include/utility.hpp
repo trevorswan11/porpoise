@@ -45,6 +45,9 @@ namespace porpoise {
     Type(Type&&) noexcept              = default; \
     auto operator=(Type&&)->Type&      = delete;
 
+#define CONCAT_INNER(a, b) a##b
+#define CONCAT(a, b) CONCAT_INNER(a, b)
+
 namespace detail {
 
 template <typename... Args>

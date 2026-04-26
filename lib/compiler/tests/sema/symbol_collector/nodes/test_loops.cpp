@@ -8,8 +8,9 @@ namespace keywords  = syntax::keywords;
 namespace operators = syntax::operators;
 
 TEST_CASE("Do-while loop collection") {
-    auto analyzer = helpers::test_collector(
+    auto ctx = helpers::test_collector(
         "const a := do { const foo := bar; } while (true);",
+        {},
         helpers::TableEntry<ast::DeclStatement>{
             "a",
             ast::DeclStatement{
@@ -25,7 +26,7 @@ TEST_CASE("Do-while loop collection") {
             opt::none,
             sema::types::Key{sema::TypeKind::BLOCK, false, 1}});
 
-    helpers::test_hollow_symbols(analyzer, helpers::TableEntry{"foo", helpers::foo_bar_decl()});
+    helpers::test_hollow_symbols(ctx, helpers::TableEntry{"foo", helpers::foo_bar_decl()});
 }
 
 TEST_CASE("For loop collection") {
@@ -33,8 +34,9 @@ TEST_CASE("For loop collection") {
         return ast::ForLoopCapture{ast::ForLoopCapture::Valued{{}, helpers::make_ident("i")}};
     };
 
-    auto analyzer = helpers::test_collector(
+    auto ctx = helpers::test_collector(
         "const a := for (0..5) |i| { const foo := bar; } else c;",
+        {},
         helpers::TableEntry<ast::DeclStatement>{
             "a",
             ast::DeclStatement{
@@ -57,14 +59,15 @@ TEST_CASE("For loop collection") {
             opt::none,
             sema::types::Key{sema::TypeKind::BLOCK, false, 1}});
 
-    helpers::test_hollow_symbols(analyzer,
+    helpers::test_hollow_symbols(ctx,
                                  helpers::TableEntry{"i", capture()},
                                  helpers::TableEntry{"foo", helpers::foo_bar_decl()});
 }
 
 TEST_CASE("Infinite loop collection") {
-    auto analyzer = helpers::test_collector(
+    auto ctx = helpers::test_collector(
         "const a := loop { const foo := bar; };",
+        {},
         helpers::TableEntry<ast::DeclStatement>{
             "a",
             ast::DeclStatement{
@@ -79,12 +82,13 @@ TEST_CASE("Infinite loop collection") {
             opt::none,
             sema::types::Key{sema::TypeKind::BLOCK, false, 1}});
 
-    helpers::test_hollow_symbols(analyzer, helpers::TableEntry{"foo", helpers::foo_bar_decl()});
+    helpers::test_hollow_symbols(ctx, helpers::TableEntry{"foo", helpers::foo_bar_decl()});
 }
 
 TEST_CASE("While loop collection") {
-    auto analyzer = helpers::test_collector(
+    auto ctx = helpers::test_collector(
         "const a := while (true) : (i += 1) { const foo := bar; } else c;",
+        {},
         helpers::TableEntry<ast::DeclStatement>{
             "a",
             ast::DeclStatement{
@@ -106,7 +110,7 @@ TEST_CASE("While loop collection") {
             opt::none,
             sema::types::Key{sema::TypeKind::BLOCK, false, 1}});
 
-    helpers::test_hollow_symbols(analyzer, helpers::TableEntry{"foo", helpers::foo_bar_decl()});
+    helpers::test_hollow_symbols(ctx, helpers::TableEntry{"foo", helpers::foo_bar_decl()});
 }
 
 TEST_CASE("Well-placed loop control flow") {
@@ -142,13 +146,13 @@ TEST_CASE("Non-break collected as separate scope") {
 TEST_CASE("Non-break collection shadowing") {
     helpers::test_collector_fail(
         "const a := for (0..5) |i| { const foo := bar; } else { var a: i32; };",
-        sema::Diagnostic{"Attempt to shadow identifier 'a'. Previous declaration here: [1, 1]",
+        sema::Diagnostic{"Attempt to shadow identifier 'a'. Previous declaration here: 1:1",
                          sema::Error::SHADOWING_DECLARATION,
                          std::pair{1uz, 56uz}});
 
     helpers::test_collector_fail(
         "const a := while (true) : (i += 1) { const foo := bar; } else { var a: i32; };",
-        sema::Diagnostic{"Attempt to shadow identifier 'a'. Previous declaration here: [1, 1]",
+        sema::Diagnostic{"Attempt to shadow identifier 'a'. Previous declaration here: 1:1",
                          sema::Error::SHADOWING_DECLARATION,
                          std::pair{1uz, 65uz}});
 }
@@ -156,25 +160,25 @@ TEST_CASE("Non-break collection shadowing") {
 TEST_CASE("Shadowing in loops") {
     helpers::test_collector_fail(
         "const a := for (0..5) |i| { var a: i32; };",
-        sema::Diagnostic{"Attempt to shadow identifier 'a'. Previous declaration here: [1, 1]",
+        sema::Diagnostic{"Attempt to shadow identifier 'a'. Previous declaration here: 1:1",
                          sema::Error::SHADOWING_DECLARATION,
                          std::pair{1uz, 29uz}});
 
     helpers::test_collector_fail(
         "const a := for (0..5) |i| { var i: i32; };",
-        sema::Diagnostic{"Redeclaration of symbol 'i'. Previous declaration here: [1, 24]",
+        sema::Diagnostic{"Redeclaration of symbol 'i'. Previous declaration here: 1:24",
                          sema::Error::IDENTIFIER_REDECLARATION,
                          std::pair{1uz, 29uz}});
 
     helpers::test_collector_fail(
         "const a := loop { var a: i32; };",
-        sema::Diagnostic{"Attempt to shadow identifier 'a'. Previous declaration here: [1, 1]",
+        sema::Diagnostic{"Attempt to shadow identifier 'a'. Previous declaration here: 1:1",
                          sema::Error::SHADOWING_DECLARATION,
                          std::pair{1uz, 19uz}});
 
     helpers::test_collector_fail(
         "const a := while (true) { var a: i32; };",
-        sema::Diagnostic{"Attempt to shadow identifier 'a'. Previous declaration here: [1, 1]",
+        sema::Diagnostic{"Attempt to shadow identifier 'a'. Previous declaration here: 1:1",
                          sema::Error::SHADOWING_DECLARATION,
                          std::pair{1uz, 27uz}});
 }

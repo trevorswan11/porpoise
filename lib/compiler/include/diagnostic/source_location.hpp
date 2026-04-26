@@ -1,6 +1,7 @@
 #pragma once
 
 #include <concepts>
+#include <utility>
 
 #include <fmt/format.h>
 
@@ -39,6 +40,6 @@ template <> struct fmt::formatter<porpoise::SourceLocation> {
     static constexpr auto parse(format_parse_context& ctx) noexcept { return ctx.begin(); }
 
     template <typename F> static auto format(const porpoise::SourceLocation& loc, F& ctx) {
-        return fmt::format_to(ctx.out(), "[{}, {}]", loc.line, loc.column);
+        return fmt::format_to(ctx.out(), "{}:{}", loc.line, loc.column);
     }
 };

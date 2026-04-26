@@ -168,12 +168,11 @@ class Type {
 
     // Intended for use on pass 1 only
     constexpr auto set_symbol_table_idx(usize idx) noexcept -> void {
-        assert(idx != array::SENTINEL_IDX && "Attempt to set sentinel index");
-        scope_table_idx_ = idx;
+        scope_table_idx_.emplace(idx);
     }
 
     [[nodiscard]] constexpr auto has_symbol_table_idx() const noexcept -> bool {
-        return scope_table_idx_ != array::SENTINEL_IDX;
+        return scope_table_idx_;
     }
 
     [[nodiscard]] constexpr auto get_symbol_table_idx() const noexcept -> usize {
@@ -184,7 +183,7 @@ class Type {
 
   private:
     TypeKind              kind_;
-    usize                 scope_table_idx_{array::SENTINEL_IDX};
+    array::Index          scope_table_idx_;
     opt::Option<Resolved> resolved_;
 };
 
@@ -192,7 +191,6 @@ static_assert(std::is_trivially_destructible_v<Type>);
 
 } // namespace porpoise::sema
 
-// https://github.com/martinus/unordered_dense?tab=readme-ov-file#323-specialize-ankerlunordered_densehash
 template <> struct ankerl::unordered_dense::hash<porpoise::sema::types::Key> {
     using is_avalanching = void;
     using Key            = porpoise::sema::types::Key;

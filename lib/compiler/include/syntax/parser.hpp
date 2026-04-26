@@ -2,13 +2,15 @@
 
 #include <string_view>
 #include <utility>
-#include <vector>
 
 #include "ast/node.hpp"
 
 #include "syntax/lexer.hpp"
 #include "syntax/precedence.hpp"
 #include "syntax/token.hpp"
+
+#include "diagnostic/diagnostic.hpp"
+#include "diagnostic/list.hpp"
 
 #include "variant.hpp"
 
@@ -89,7 +91,8 @@ enum class ParserError : u8 {
     ILLEGAL_LABEL_STATEMENT,
 };
 
-using ParserDiagnostic = Diagnostic<ParserError>;
+using ParserDiagnostic  = Diagnostic<ParserError>;
+using ParserDiagnostics = DiagnosticList<ParserDiagnostic>;
 
 template <typename... Args> auto make_parser_err(Args&&... args) -> Err<ParserDiagnostic> {
     return make_err<ParserDiagnostic>(std::forward<Args>(args)...);
@@ -97,8 +100,7 @@ template <typename... Args> auto make_parser_err(Args&&... args) -> Err<ParserDi
 
 class Parser {
   public:
-    using Diagnostics = std::vector<ParserDiagnostic>;
-    using PrefixFn    = Result<mem::Box<ast::Expression>, ParserDiagnostic> (*)(Parser&);
+    using PrefixFn = Result<mem::Box<ast::Expression>, ParserDiagnostic> (*)(Parser&);
     using InfixFn =
         Result<mem::Box<ast::Expression>, ParserDiagnostic> (*)(Parser&, mem::Box<ast::Expression>);
 
@@ -140,7 +142,10 @@ class Parser {
     // Advances the parser, returning the resulting current token.
     // This is a no-op at end of stream.
     auto advance(u8 times = 1) noexcept -> const Token&;
-    auto consume() -> std::pair<ast::AST, Diagnostics>;
+
+    // The provided source path is owned by the diagnostic list
+    auto consume(opt::Option<std::string> source_path = opt::none)
+        -> std::pair<ast::AST, ParserDiagnostics>;
 
     auto get_current_token() const noexcept -> const Token& { return current_token_; }
     auto get_peek_token() const noexcept -> const Token& { return peek_token_; }

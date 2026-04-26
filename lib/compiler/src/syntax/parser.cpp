@@ -30,10 +30,11 @@ auto Parser::advance(u8 times) noexcept -> const Token& {
     return current_token_;
 }
 
-auto Parser::consume() -> std::pair<ast::AST, Diagnostics> {
+auto Parser::consume(opt::Option<std::string> source_path)
+    -> std::pair<ast::AST, ParserDiagnostics> {
     reset(input_);
-    ast::AST    ast;
-    Diagnostics diagnostics;
+    ast::AST          ast;
+    ParserDiagnostics diagnostics{std::move(source_path)};
 
     while (!current_token_is(TokenType::END)) {
         // Advance through any amount of semicolons
