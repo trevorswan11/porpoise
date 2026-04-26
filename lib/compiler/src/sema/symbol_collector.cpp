@@ -11,7 +11,7 @@ auto SymbolCollector::collect_symbols(mod::Module& module, const CollectorCtx& c
     if (module.state < mod::ModuleState::SYMBOLS_COLLECTED && !module.root_table_idx) {
         module.root_table_idx.emplace(ctx.registry.create());
 
-        SymbolCollector collector{module.root_table_idx, ctx};
+        SymbolCollector collector{module, ctx};
         for (const auto& node : module.tree) {
             node->accept(collector);
             collector.pass_first();
@@ -335,7 +335,8 @@ auto SymbolCollector::visit(const ast::ImportStatement& import_stmt) -> void {
         },
         [this](const ast::FileImport& user) {
             const auto name = user.get_alias().get_name();
-            auto       mod  = ctx_.modules.try_get_file_module(user.get_file().get_value());
+            auto       mod  = ctx_.modules.try_get_file_module(user.get_file().get_value(),
+                                                        collecting_.parent_path);
             return std::pair{name, mod};
         },
     });

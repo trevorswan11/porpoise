@@ -10,7 +10,7 @@ namespace porpoise::sema::mod {
 auto FileLoader::load(const std::filesystem::path& path) -> Result<std::string, Error> {
     if (!std::filesystem::exists(path)) {
         return Err{Error::PATH_DOES_NOT_EXIST};
-    } else if (std::filesystem::is_regular_file(path)) {
+    } else if (!std::filesystem::is_regular_file(path)) {
         return Err{Error::PATH_IS_NOT_FILE};
     }
 

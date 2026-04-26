@@ -4,9 +4,17 @@
 
 namespace porpoise::sema::mod {
 
-auto ModuleManager::try_get_file_module(const std::filesystem::path& path)
+auto ModuleManager::try_get_file_module(const std::filesystem::path& path,
+                                        const std::filesystem::path& parent_path)
     -> Result<opt::NonNull<Module>, Diagnostic> {
-    const auto normalized = loader_.normalize(path);
+    assert((parent_path.empty() || parent_path.is_absolute()) &&
+           "Parent path must be absolute or empty");
+    if (!path.is_relative()) {
+        return make_sema_err(fmt::format("Requested file '{}' is absolute", path.string()),
+                             Error::IMPORT_NOT_RELATIVE);
+    };
+
+    const auto normalized = loader_.normalize(parent_path.empty() ? path : parent_path / path);
     if (!normalized) { return make_sema_err(normalized.error()); }
     return try_get(*normalized);
 }
@@ -51,7 +59,7 @@ auto ModuleManager::try_get(const std::filesystem::path& path)
         return make_sema_err(fmt::format("Could not load file: {}", abs_path_str), source.error());
     }
 
-    auto           mod = mem::make_box<Module>(path, std::move(*source));
+    auto           mod = mem::make_box<Module>(path, path.parent_path(), std::move(*source));
     syntax::Parser p{mod->source};
     auto [ast, diagnostics] = p.consume(abs_path_str);
 

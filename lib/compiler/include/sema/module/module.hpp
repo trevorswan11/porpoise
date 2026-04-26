@@ -43,6 +43,7 @@ using DiagnosticListVariant = std::variant<syntax::ParserDiagnostics, sema::Diag
 
 struct Module {
     std::filesystem::path path;
+    std::filesystem::path parent_path;
     std::string           source;
     ast::AST              tree;
     array::Index          root_table_idx;
@@ -74,8 +75,11 @@ class ModuleManager {
 
     MAKE_MOVE_CONSTRUCTABLE_ONLY(ModuleManager)
 
-    // Attempts to load the path from the loader and parse its contents
-    [[nodiscard]] auto try_get_file_module(const std::filesystem::path& path)
+    // Attempts to load the path from the loader and parse its contents.
+    //
+    // Asserts that the path is relative and its parent is absolute
+    [[nodiscard]] auto try_get_file_module(const std::filesystem::path& path,
+                                           const std::filesystem::path& parent_path = {})
         -> Result<opt::NonNull<Module>, Diagnostic>;
 
     // Attempts to load the module from the loader and parse its contents

@@ -27,6 +27,7 @@ enum class Error : u8 {
     FAILED_TO_OPEN_FILE,
     MODULE_ALREADY_EXISTS,
     MODULE_DOES_NOT_EXIST,
+    IMPORT_NOT_RELATIVE,
 };
 
 using Diagnostic  = Diagnostic<Error>;

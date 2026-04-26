@@ -45,9 +45,9 @@ class SymbolCollector : public ast::Visitor {
     };
 
   public:
-    SymbolCollector(usize table_idx, const CollectorCtx& ctx) noexcept
-        : table_idx_{table_idx}, ctx_{ctx} {
-        table_stack_.push(table_idx);
+    SymbolCollector(mod::Module& collecting, const CollectorCtx& ctx) noexcept
+        : collecting_{collecting}, table_idx_{collecting.root_table_idx}, ctx_{ctx} {
+        table_stack_.push(table_idx_);
     }
 
     static auto collect_symbols(mod::Module& module, const CollectorCtx& ctx) -> mod::ModuleState;
@@ -83,12 +83,12 @@ class SymbolCollector : public ast::Visitor {
                try_result(ctx_.registry.insert_into(table_idx_, name, node));
     }
 
-    auto loop_guard() noexcept -> std::pair<DefaultCounter::Guard, DefaultCounter::Guard> {
-        return {in_loop_scope_.guard(), in_expr_scope_.guard()};
-    }
-
     auto fn_guard() noexcept -> std::pair<DefaultCounter::Guard, DefaultCounter::Guard> {
         return {in_function_scope_.guard(), in_expr_scope_.guard()};
+    }
+
+    auto loop_guard() noexcept -> std::pair<DefaultCounter::Guard, DefaultCounter::Guard> {
+        return {in_loop_scope_.guard(), in_expr_scope_.guard()};
     }
 
     auto label_guard() noexcept -> std::pair<DefaultCounter::Guard, DefaultCounter::Guard> {
@@ -96,16 +96,18 @@ class SymbolCollector : public ast::Visitor {
     }
 
   private:
+    mod::Module&     collecting_;
     usize            table_idx_;
     SymbolTableStack table_stack_;
     CollectorCtx     ctx_;
 
     bool               first_node_{true};
     opt::Option<Type&> last_type_;
+
+    DefaultCounter     in_expr_scope_;
     DefaultCounter     in_function_scope_;
     DefaultCounter     in_loop_scope_;
     DefaultCounter     in_label_scope_;
-    DefaultCounter     in_expr_scope_;
 };
 
 } // namespace porpoise::sema
