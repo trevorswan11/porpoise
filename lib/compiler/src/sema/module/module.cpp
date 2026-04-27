@@ -4,12 +4,9 @@
 
 namespace porpoise::sema::mod {
 
-auto Module::print_diagnostics(std::ostream& os) const {
-    if (has_parser_diagnostics()) {
-        get_parser_diagnostics().print(os, *this);
-    } else if (has_sema_diagnostics()) {
-        get_sema_diagnostics().print(os, *this);
-    }
+auto Module::print_diagnostics(std::ostream& os) const -> void {
+    if (!is_errored()) { return; }
+    match([&](const auto& l) { l.print(os, *this); });
 }
 
 auto ModuleManager::try_get_file_module(const std::filesystem::path& path,

@@ -65,7 +65,7 @@ struct Module {
     }
 
     // Prints the modules diagnostics to the stream, doing nothing if an error state is not present
-    auto print_diagnostics(std::ostream& os) const;
+    auto print_diagnostics(std::ostream& os) const -> void;
     auto is_errored() const noexcept -> bool { return state == ModuleState::ERRORED; }
 };
 

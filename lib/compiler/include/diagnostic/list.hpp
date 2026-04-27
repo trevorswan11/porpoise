@@ -25,6 +25,7 @@ auto format_module_diagnostic(std::ostream&                         os,
 
 } // namespace detail
 
+// Stored diagnostics are technically module-agnostic
 template <DiagnosticType D> class DiagnosticList {
   public:
     MAKE_ITERATOR(Diagnostics, std::vector<D>, diagnostics_)
@@ -33,10 +34,7 @@ template <DiagnosticType D> class DiagnosticList {
     DiagnosticList() noexcept = default;
     ~DiagnosticList()         = default;
 
-    DiagnosticList(const DiagnosticList&)                    = delete;
-    auto operator=(const DiagnosticList&) -> DiagnosticList& = delete;
-    DiagnosticList(DiagnosticList&&) noexcept                = default;
-    auto operator=(DiagnosticList&&) -> DiagnosticList&      = default;
+    MAKE_MOVE_ONLY(DiagnosticList)
 
     auto push_back(const D& d) -> void { diagnostics_.push_back(d); }
 
