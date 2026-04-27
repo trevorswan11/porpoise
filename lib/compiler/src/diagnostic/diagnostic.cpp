@@ -1,5 +1,3 @@
-#include <sstream>
-
 #include <fmt/format.h>
 #include <fmt/ostream.h>
 
@@ -7,27 +5,25 @@
 
 namespace porpoise::detail {
 
-auto format_diagnostic(const opt::Option<std::string>&    message,
-                       std::string_view                   error_name,
-                       const opt::Option<std::string>&    source_path,
-                       const opt::Option<SourceLocation>& location) -> std::string {
-    std::stringstream ss;
+auto format_diagnostic(std::ostream&                   os,
+                       FormattableDiagnostic&&         diag,
+                       const opt::Option<std::string>& source_path) -> std::ostream& {
     // The source and location play nicely with one another
     if (source_path) {
-        fmt::print(ss, "{}:", *source_path);
-        if (location) {
-            fmt::print(ss, "{}: ", *location);
+        fmt::print(os, "{}:", *source_path);
+        if (diag.location) {
+            fmt::print(os, "{}: ", *diag.location);
         } else {
-            fmt::print(ss, " ", *location);
+            fmt::print(os, " ");
         }
     }
 
     // The optional message changes position based on source path presence
-    if (message) { ss << *message << " ("; }
-    ss << error_name;
-    if (message) { ss << ")"; }
-    if (!source_path && location) { ss << fmt::format(" {}", *location); }
-    return ss.str();
+    if (diag.message) { os << *diag.message << " ("; }
+    os << diag.error_name;
+    if (diag.message) { os << ")"; }
+    if (!source_path && diag.location) { os << fmt::format(" {}", *diag.location); }
+    return os;
 }
 
 } // namespace porpoise::detail

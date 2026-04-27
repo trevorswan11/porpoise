@@ -44,15 +44,8 @@ auto test_parser_fail(std::string_view failing, Ds&&... expected_diagnostics) ->
     syntax::Parser p{failing};
     auto [ast, errors] = p.consume();
     REQUIRE(ast.empty());
-
-    std::array expected_arr{std::forward<Ds>(expected_diagnostics)...};
-    const auto expected_count = sizeof...(Ds);
-
-    if (errors.size() != expected_count) {
-        for (const auto& e : errors) { fmt::println("{}", e); }
-        CHECK(errors.size() == expected_count);
-    }
-    CHECK(std::ranges::equal(errors, expected_arr));
+    helpers::check_errors_against<syntax::ParserDiagnostic>(
+        errors, std::forward<Ds>(expected_diagnostics)...);
 }
 
 template <ast::LeafNode N> auto test_stmt(std::string_view input, const N& expected) -> void {

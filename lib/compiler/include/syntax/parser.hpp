@@ -142,10 +142,7 @@ class Parser {
     // Advances the parser, returning the resulting current token.
     // This is a no-op at end of stream.
     auto advance(u8 times = 1) noexcept -> const Token&;
-
-    // The provided source path is owned by the diagnostic list
-    auto consume(opt::Option<std::string> source_path = opt::none)
-        -> std::pair<ast::AST, ParserDiagnostics>;
+    auto consume() -> std::pair<ast::AST, ParserDiagnostics>;
 
     auto get_current_token() const noexcept -> const Token& { return current_token_; }
     auto get_peek_token() const noexcept -> const Token& { return peek_token_; }

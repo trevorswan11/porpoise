@@ -57,4 +57,14 @@ TEST_CASE("Self import") {
     CHECK(registry.get_from_opt(0, "self"));
 }
 
+TEST_CASE("Unknown file module") {
+    auto ctx = helpers::analyze_unchecked(helpers::test_file, R"(import "a.porp" as a;)");
+    REQUIRE(ctx.root_mod->has_sema_diagnostics());
+    helpers::check_errors_against<sema::Diagnostic>(
+        ctx.root_mod->get_sema_diagnostics(),
+        sema::Diagnostic{R"(Could not load file: "a.porp")",
+                         sema::Error::PATH_DOES_NOT_EXIST,
+                         std::pair{1uz, 8uz}});
+}
+
 } // namespace porpoise::tests

@@ -2,7 +2,6 @@
 
 #include "ast/ast.hpp"
 #include "ast/visitor.hpp"
-#include "sema/error.hpp"
 
 namespace porpoise::sema {
 
@@ -326,7 +325,8 @@ auto SymbolCollector::visit(const ast::ExpressionStatement& expr) -> void {
 
 auto SymbolCollector::visit(const ast::ImportStatement& import_stmt) -> void {
     if (ctx_.registry.get(table_idx_).is_module()) { import_stmt.mark_public(); }
-    const auto [alias, mod_result] = import_stmt.match(Overloaded{
+
+    auto [alias, mod_result] = import_stmt.match(Overloaded{
         [this](const ast::LibraryImport& module) {
             const auto name =
                 module.has_alias() ? module.get_alias().get_name() : module.get_name().get_name();
@@ -344,10 +344,16 @@ auto SymbolCollector::visit(const ast::ImportStatement& import_stmt) -> void {
     // Only set the table index if the module exists
     opt::Option<mod::Module&> imported_mod;
     if (!mod_result) {
-        ctx_.diagnostics.emplace_back(mod_result.error());
+        // The token is retrieved here to avoid copying it on success
+        ctx_.diagnostics.emplace_back(
+            std::move(mod_result.error()),
+            import_stmt.match(Overloaded{
+                [](const ast::LibraryImport& module) { return module.get_name().get_token(); },
+                [](const ast::FileImport& user) { return user.get_file().get_token(); },
+            }));
     } else {
         imported_mod.emplace(**mod_result);
-        Diagnostics diags{imported_mod->path.string()};
+        Diagnostics diags;
         collect_symbols(*imported_mod, ctx_.copy(diags));
     }
     try_result(

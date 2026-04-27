@@ -42,10 +42,10 @@ struct SemaTestContext {
 auto collect_and_validate(std::string_view input, const std::vector<MockFile>& imports = {})
     -> std::pair<SemaTestContext, usize>;
 
-// Runs the entire Analyzer on the provided input and checks for errors
+// Runs the entire Analyzer on the provided input without checking semantic validity (no errors)
 template <typename... Mocks>
     requires(std::same_as<Mocks, MockFile> && ...)
-auto analyze(std::string_view root_path, std::string_view input, Mocks&&... mocks)
+auto analyze_unchecked(std::string_view root_path, std::string_view input, Mocks&&... mocks)
     -> SemaTestContext {
     SemaTestContext ctx{
         helpers::make_vector<MockFile>(std::forward<Mocks>(mocks)...), root_path, input};
@@ -53,6 +53,15 @@ auto analyze(std::string_view root_path, std::string_view input, Mocks&&... mock
 
     auto& analyzer = ctx.analyzer;
     REQUIRE(analyzer.analyze(root_path));
+    return ctx;
+}
+
+// Runs the entire Analyzer on the provided input and checks for errors
+template <typename... Mocks>
+    requires(std::same_as<Mocks, MockFile> && ...)
+auto analyze(std::string_view root_path, std::string_view input, Mocks&&... mocks)
+    -> SemaTestContext {
+    auto ctx = analyze_unchecked(root_path, input, std::forward<Mocks>(mocks)...);
     REQUIRE_FALSE(ctx.root_mod->has_sema_diagnostics());
     return ctx;
 }
@@ -160,20 +169,13 @@ template <typename... Ds>
 auto test_collector_fail(std::string_view             failing,
                          const std::vector<MockFile>& imports,
                          Ds&&... expected_diagnostics) -> void {
-    const std::array expected_arr{std::forward<Ds>(expected_diagnostics)...};
-    const auto       expected_count = sizeof...(Ds);
-
     auto [ctx, idx] = collect(failing, imports);
     auto test_mod   = ctx.root_mod;
 
     REQUIRE(test_mod->has_sema_diagnostics());
     const auto& errors = test_mod->get_sema_diagnostics();
-
-    if (errors.size() != expected_count) {
-        for (const auto& e : errors) { fmt::println("{}", e); }
-        CHECK(errors.size() == expected_count);
-    }
-    CHECK(std::ranges::equal(errors, expected_arr));
+    helpers::check_errors_against<sema::Diagnostic>(errors,
+                                                    std::forward<Ds>(expected_diagnostics)...);
 }
 
 // Tests a semantically failing input against the expected generated errors

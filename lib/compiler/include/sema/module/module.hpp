@@ -1,6 +1,7 @@
 #pragma once
 
 #include <filesystem>
+#include <ostream>
 #include <string>
 
 #include <ankerl/unordered_dense.h>
@@ -63,6 +64,8 @@ struct Module {
         return state;
     }
 
+    // Prints the modules diagnostics to the stream, doing nothing if an error state is not present
+    auto print_diagnostics(std::ostream& os) const;
     auto is_errored() const noexcept -> bool { return state == ModuleState::ERRORED; }
 };
 

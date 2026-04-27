@@ -1,6 +1,7 @@
 #pragma once
 
 #include <ostream>
+#include <span>
 #include <vector>
 
 #include <fmt/ostream.h>
@@ -13,14 +14,24 @@
 
 namespace porpoise {
 
+namespace sema::mod { struct Module; } // namespace sema::mod
+
+namespace detail {
+
+// Formats the diagnostic with the modules information, falling back to standard formatting
+auto format_module_diagnostic(std::ostream&                         os,
+                              FormattableDiagnostic&&               diag,
+                              opt::Option<const sema::mod::Module&> module) -> std::ostream&;
+
+} // namespace detail
+
 template <DiagnosticType D> class DiagnosticList {
   public:
     MAKE_ITERATOR(Diagnostics, std::vector<D>, diagnostics_)
 
   public:
-    explicit DiagnosticList(opt::Option<std::string> source_path = opt::none)
-        : source_path_{std::move(source_path)} {}
-    ~DiagnosticList() = default;
+    DiagnosticList() noexcept = default;
+    ~DiagnosticList()         = default;
 
     DiagnosticList(const DiagnosticList&)                    = delete;
     auto operator=(const DiagnosticList&) -> DiagnosticList& = delete;
@@ -42,17 +53,17 @@ template <DiagnosticType D> class DiagnosticList {
         return self.diagnostics_.at(idx);
     }
 
-    auto print(std::ostream& os) const -> void {
+    operator std::span<const D>() const { return diagnostics_; }
+
+    // Prints the diagnostics with information from the enclosing module if provided
+    auto print(std::ostream& os, opt::Option<const sema::mod::Module&> module = {}) const -> void {
         for (const auto& diag : diagnostics_) {
-            fmt::println(os, "{}", diag.to_string(source_path_));
+            detail::format_module_diagnostic(os, diag.to_formattable(), module) << "\n";
         }
     }
 
   private:
-    opt::Option<std::string> source_path_;
-    Diagnostics              diagnostics_;
-
-    friend struct fmt::formatter<porpoise::DiagnosticList<D>>;
+    Diagnostics diagnostics_;
 };
 
 } // namespace porpoise

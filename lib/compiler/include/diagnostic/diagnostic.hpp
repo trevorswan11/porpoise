@@ -1,5 +1,7 @@
 #pragma once
 
+#include <ostream>
+#include <sstream>
 #include <utility>
 
 #include <magic_enum/magic_enum.hpp>
@@ -16,10 +18,16 @@ namespace porpoise {
 
 namespace detail {
 
-[[nodiscard]] auto format_diagnostic(const opt::Option<std::string>&    message,
-                                     std::string_view                   error_name,
-                                     const opt::Option<std::string>&    source_path,
-                                     const opt::Option<SourceLocation>& location) -> std::string;
+// A decomposed diagnostic that contains all information for base formatting
+struct FormattableDiagnostic {
+    const opt::Option<std::string>&    message;
+    std::string_view                   error_name;
+    const opt::Option<SourceLocation>& location;
+};
+
+auto format_diagnostic(std::ostream&                   os,
+                       FormattableDiagnostic&&         diag,
+                       const opt::Option<std::string>& source_path) -> std::ostream&;
 
 } // namespace detail
 
@@ -37,17 +45,28 @@ template <ScopedEnum E> class Diagnostic {
 
     template <Locateable T> Diagnostic(E err, T t) : error_{err}, loc_{SourceInfo<T>::get(t)} {}
 
-    Diagnostic(Diagnostic& other, E err) noexcept
+    // Moves the passed diagnostic into a new one with a error code
+    Diagnostic(Diagnostic&& other, E err) noexcept
         : message_{std::move(other.message_)}, error_{err}, loc_{std::move(other.loc_)} {}
+
+    // Moves the passed diagnostic into a new one with a specified source location
+    template <Locateable T>
+    Diagnostic(Diagnostic&& other, const T& t) noexcept
+        : message_{std::move(other.message_)}, error_{other.error_}, loc_{SourceInfo<T>::get(t)} {}
 
     [[nodiscard]] auto to_string(const opt::Option<std::string>& source_path = opt::none) const
         -> std::string {
-        return detail::format_diagnostic(
-            message_, magic_enum::enum_name(error_), source_path, loc_);
+        std::stringstream ss;
+        detail::format_diagnostic(ss, to_formattable(), source_path);
+        return ss.str();
     }
 
     auto operator==(const Diagnostic& other) const noexcept -> bool {
         return message_ == other.message_ && error_ == other.error_ && loc_ == other.loc_;
+    }
+
+    [[nodiscard]] auto to_formattable() const noexcept -> detail::FormattableDiagnostic {
+        return {message_, magic_enum::enum_name(error_), loc_};
     }
 
   private:

@@ -104,10 +104,10 @@ class SymbolCollector : public ast::Visitor {
     bool               first_node_{true};
     opt::Option<Type&> last_type_;
 
-    DefaultCounter     in_expr_scope_;
-    DefaultCounter     in_function_scope_;
-    DefaultCounter     in_loop_scope_;
-    DefaultCounter     in_label_scope_;
+    DefaultCounter in_expr_scope_;
+    DefaultCounter in_function_scope_;
+    DefaultCounter in_loop_scope_;
+    DefaultCounter in_label_scope_;
 };
 
 } // namespace porpoise::sema

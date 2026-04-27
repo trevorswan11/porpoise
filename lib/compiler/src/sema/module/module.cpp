@@ -4,6 +4,14 @@
 
 namespace porpoise::sema::mod {
 
+auto Module::print_diagnostics(std::ostream& os) const {
+    if (has_parser_diagnostics()) {
+        get_parser_diagnostics().print(os, *this);
+    } else if (has_sema_diagnostics()) {
+        get_sema_diagnostics().print(os, *this);
+    }
+}
+
 auto ModuleManager::try_get_file_module(const std::filesystem::path& path,
                                         const std::filesystem::path& parent_path)
     -> Result<opt::NonNull<Module>, Diagnostic> {
@@ -56,12 +64,13 @@ auto ModuleManager::try_get(const std::filesystem::path& path)
     auto       source       = loader_.load(path);
     const auto abs_path_str = path.string();
     if (!source) {
-        return make_sema_err(fmt::format("Could not load file: {}", abs_path_str), source.error());
+        return make_sema_err(fmt::format(R"(Could not load file: "{}")", abs_path_str),
+                             source.error());
     }
 
     auto           mod = mem::make_box<Module>(path, path.parent_path(), std::move(*source));
     syntax::Parser p{mod->source};
-    auto [ast, diagnostics] = p.consume(abs_path_str);
+    auto [ast, diagnostics] = p.consume();
 
     mod->tree        = std::move(ast);
     mod->state       = diagnostics.empty() ? ModuleState::PARSED : ModuleState::ERRORED;
