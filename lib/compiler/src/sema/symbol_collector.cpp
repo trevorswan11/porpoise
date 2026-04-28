@@ -280,22 +280,24 @@ auto SymbolCollector::visit(const ast::DeclStatement& decl) -> void {
 
     // Valued decls should be evaluated to get shallow types
     const auto& expr = decl.get_value();
-    if (expr.any<ast::EnumExpression,
-                 ast::FunctionExpression,
-                 ast::UnionExpression,
-                 ast::StructExpression>()) {
-        // Certain values cannot be constexpr or non-const to reduce mental overhead
+    if (expr.any<ast::EnumExpression, ast::UnionExpression, ast::StructExpression>()) {
         if (decl.has_modifier(ast::DeclModifiers::CONSTEXPR)) {
             ctx_.diagnostics.emplace_back(
-                fmt::format("Top level {}s are implicitly compile time known", expr.display_name()),
+                fmt::format("All {}s are implicitly constexpr", expr.display_name()),
                 Error::REDUNDANT_CONSTEXPR,
                 decl.get_token());
         } else if (!decl.has_modifier(ast::DeclModifiers::CONSTANT)) {
             ctx_.diagnostics.emplace_back(
-                fmt::format("Top level {}s must be marked const at the top level",
-                            expr.display_name()),
+                fmt::format("All {}s must be marked const", expr.display_name()),
                 Error::ILLEGAL_NON_CONST_STATEMENT,
                 decl.get_token());
+        }
+    } else if (expr.is<ast::FunctionExpression>()) {
+        if (!decl.has_modifier(ast::DeclModifiers::CONSTEXPR) &&
+            !decl.has_modifier(ast::DeclModifiers::CONSTANT)) {
+            ctx_.diagnostics.emplace_back("All function declarations must be const or constexpr",
+                                          Error::ILLEGAL_NON_CONST_STATEMENT,
+                                          decl.get_token());
         }
     }
 

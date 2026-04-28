@@ -54,8 +54,11 @@ _ = baz(&mut b);    // Illegal, cannot mutate const
 - Functions can have the `noreturn` return 'type' which signifies that the compiler should not expect a `return` construct in the function body
     - Violating this assumption is a compile time error
 - The return types `noreturn` and `void` cannot have any type modifiers
-- There are no closures
-    - You are able to declare local functions (i.e. functions inside of functions) or anonymous functions (i.e. functions passed directly as a parameter to a function) but they can not access local variables in the enclosing scope
+- You are able to declare local functions (i.e. functions inside of functions) or anonymous functions (i.e. functions passed directly as a parameter to a function)
+- Closures are implicit as they are in rust
+    - A closure implicitly captures referenced values by mutable reference if the value is used in mutable contexts
+    - Non-value objects that can be trivially copied and are not mutated in the closure are copied
+- The type of a closure is not known to the programmer
 
 ## Builtin Functions
 - Builtin functions are prefixed with the `@` symbol and are always camelCase
@@ -82,3 +85,12 @@ const f: fn(bool): i32 = fn(b: bool): i32 { ... };
 ```porpoise
 const f := fn(g: fn(): i32): i32 { ... };
 ```
+
+## Constexpr functions
+- Functions declared and assigned to `constexpr` declarations signal to the compiler that the function may be called at compile time
+    - 'May' meaning that it will be called at compile time at a `constexpr` context
+- There are restrictions imposed on `constexpr` functions that do not apply to normal ones
+    - IO must not be performed (reading from/writing to disk, via threading, printing to stdout, etc)
+    - Heap allocations may not be made
+    - TODO
+- A local function can be declared `constexpr` only if it captures no values

@@ -48,6 +48,10 @@ TEST_CASE("Well-placed function control-flow statements") {
     helpers::collect_and_validate("pub const main := fn(args: [][:0]u8): i32 { defer a = 2; };");
 }
 
+TEST_CASE("Constexpr function declaration") {
+    helpers::collect_and_validate("pub constexpr work := fn(): i32 { return 1; };");
+}
+
 TEST_CASE("Defer statements respect identifier collection rules") {
     helpers::test_collector_fail(
         "pub const main := fn(args: [][:0]u8): i32 { defer { var main: i32; } };",

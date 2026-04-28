@@ -27,8 +27,9 @@ var e: []byte;         // Allowed, e is forward declared and future assignments 
 
 ## Compile-time Constants
 - Compile-time-known constants are declared with the `constexpr` keyword
-- In most cases, `constexpr` values behave identically to `const` constants
-    - The only difference is that `constexpr` values can be used as array sizes, assuming their underlying type is `usize`
+- In most cases, `constexpr` values behave identically to `const` constants with a few key differences
+    - `constexpr` values must be computable at compile time
+    - `constexpr` functions must be callable at compile time (it is safe to call them at runtime as well)
 - A `constexpr` declaration can not be declared `extern`
 
 ## Variables

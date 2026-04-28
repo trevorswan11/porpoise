@@ -16,9 +16,7 @@ pub const main := fn(args: [][:0]u8): i32 {
 )"};
 
 constexpr std::string_view std_porp{R"(
-module;
-
-import "io.porp" as io;
+pub import "io.porp" as io;
 )"};
 
 constexpr std::string_view io_porp{R"(

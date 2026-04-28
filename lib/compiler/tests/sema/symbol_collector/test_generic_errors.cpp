@@ -43,41 +43,38 @@ TEST_CASE("Semantically illegal statements") {
 using namespace std::string_view_literals;
 
 constexpr auto RESTRICTED_INPUTS = std::array{
-    std::pair{"a := fn(): void {};"sv, "function"sv},
     std::pair{"a := struct { const b := 2; };"sv, "struct"sv},
     std::pair{"a := enum { A };"sv, "enum"sv},
     std::pair{"a := union { b: bool };"sv, "union"sv},
 };
 
+TEST_CASE("Redundant constexpr usage for declarations") {
+    for (const auto& [input, desc] : RESTRICTED_INPUTS) {
+        helpers::test_collector_fail(
+            fmt::format("constexpr {}", input),
+            sema::Diagnostic{fmt::format("All {}s are implicitly constexpr", desc),
+                             sema::Error::REDUNDANT_CONSTEXPR,
+                             std::pair{0uz, 0uz}});
+    }
+}
+
 TEST_CASE("Restricted non-const top level declarations") {
     for (const auto& [input, desc] : RESTRICTED_INPUTS) {
         helpers::test_collector_fail(
             fmt::format("var {}", input),
-            sema::Diagnostic{
-                fmt::format("Top level {}s must be marked const at the top level", desc),
-                sema::Error::ILLEGAL_NON_CONST_STATEMENT,
-                std::pair{0uz, 0uz}});
+            sema::Diagnostic{fmt::format("All {}s must be marked const", desc),
+                             sema::Error::ILLEGAL_NON_CONST_STATEMENT,
+                             std::pair{0uz, 0uz}});
     }
 }
 
-TEST_CASE("Restricted non-const top level struct declarations") {
+TEST_CASE("Restricted non-const member types") {
     for (const auto& [input, desc] : RESTRICTED_INPUTS) {
         helpers::test_collector_fail(
             fmt::format("const S := struct {{ var {} }};", input),
-            sema::Diagnostic{
-                fmt::format("Top level {}s must be marked const at the top level", desc),
-                sema::Error::ILLEGAL_NON_CONST_STATEMENT,
-                std::pair{0uz, 20uz}});
-    }
-}
-
-TEST_CASE("Redundant constexpr usage on top level declarations") {
-    for (const auto& [input, desc] : RESTRICTED_INPUTS) {
-        helpers::test_collector_fail(
-            fmt::format("constexpr {}", input),
-            sema::Diagnostic{fmt::format("Top level {}s are implicitly compile time known", desc),
-                             sema::Error::REDUNDANT_CONSTEXPR,
-                             std::pair{0uz, 0uz}});
+            sema::Diagnostic{fmt::format("All {}s must be marked const", desc),
+                             sema::Error::ILLEGAL_NON_CONST_STATEMENT,
+                             std::pair{0uz, 20uz}});
     }
 }
 
