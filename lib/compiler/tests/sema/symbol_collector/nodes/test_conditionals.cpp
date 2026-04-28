@@ -134,13 +134,13 @@ TEST_CASE("If expression inner shadowing") {
         "const a := if (b) { var a: i32; };",
         sema::Diagnostic{"Attempt to shadow identifier 'a'. Previous declaration here: 1:1",
                          sema::Error::SHADOWING_DECLARATION,
-                         std::pair{1uz, 21uz}});
+                         std::pair{0uz, 20uz}});
 
     helpers::test_collector_fail(
         "const a := if (b) { var c: i32; } else { var a: i32; };",
         sema::Diagnostic{"Attempt to shadow identifier 'a'. Previous declaration here: 1:1",
                          sema::Error::SHADOWING_DECLARATION,
-                         std::pair{1uz, 42uz}});
+                         std::pair{0uz, 41uz}});
 }
 
 TEST_CASE("Match shadowing assignee") {
@@ -148,19 +148,19 @@ TEST_CASE("Match shadowing assignee") {
         "const a := match (c) { b => |a| b; };",
         sema::Diagnostic{"Attempt to shadow identifier 'a'. Previous declaration here: 1:1",
                          sema::Error::SHADOWING_DECLARATION,
-                         std::pair{1uz, 24uz}});
+                         std::pair{0uz, 23uz}});
 
     helpers::test_collector_fail(
         "const a := match (c) { b => { var a: i32; } };",
         sema::Diagnostic{"Attempt to shadow identifier 'a'. Previous declaration here: 1:1",
                          sema::Error::SHADOWING_DECLARATION,
-                         std::pair{1uz, 31uz}});
+                         std::pair{0uz, 30uz}});
 
     helpers::test_collector_fail(
         "const a := match (b) { c => d; } else { var a: i32; };",
         sema::Diagnostic{"Attempt to shadow identifier 'a'. Previous declaration here: 1:1",
                          sema::Error::SHADOWING_DECLARATION,
-                         std::pair{1uz, 41uz}});
+                         std::pair{0uz, 40uz}});
 }
 
 TEST_CASE("Match dispatch shadowing") {
@@ -168,7 +168,7 @@ TEST_CASE("Match dispatch shadowing") {
         "const a := match (c) { b => |c| { var c: i32; } };",
         sema::Diagnostic{"Attempt to shadow identifier 'c'. Previous declaration here: 1:24",
                          sema::Error::SHADOWING_DECLARATION,
-                         std::pair{1uz, 35uz}});
+                         std::pair{0uz, 34uz}});
 }
 
 } // namespace porpoise::tests

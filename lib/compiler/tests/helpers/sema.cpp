@@ -35,7 +35,6 @@ auto collect_and_validate(std::string_view input, const std::vector<MockFile>& i
     auto [ctx, idx] = collect(input, imports);
     if (ctx.root_mod->has_sema_diagnostics()) {
         check_errors<sema::Diagnostic>(ctx.root_mod->get_sema_diagnostics());
-        CHECK(ctx.root_mod->has_sema_diagnostics());
     }
     return {std::move(ctx), idx};
 }

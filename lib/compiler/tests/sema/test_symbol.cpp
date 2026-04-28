@@ -31,12 +31,12 @@ TEST_CASE("Basic table operations") {
 
 TEST_CASE("Multiple table import") {
     sema::SymbolTable          table;
-    const std::string_view     module_name{"a"};
-    const ast::ImportStatement module_import{
+    const std::string_view     library_name{"a"};
+    const ast::ImportStatement library_import{
         syntax::Token{syntax::keywords::IMPORT},
-        ast::LibraryImport{helpers::make_ident(module_name), {}}};
-    const sema::SymbolicImport module_sym{&module_import, opt::none};
-    CHECK(table.insert(module_name, module_sym));
+        ast::LibraryImport{helpers::make_ident(library_name), {}}};
+    const sema::SymbolicImport library_sym{&library_import, opt::none};
+    CHECK(table.insert(library_name, library_sym));
 
     const std::string_view     user_name{"node"};
     const std::string          user_file{"node.p"};
@@ -48,8 +48,8 @@ TEST_CASE("Multiple table import") {
     CHECK(table.insert(user_name, user_sym));
 
     CHECK(table.size() == 2);
-    CHECK(table.has(module_name));
-    CHECK(table.get(module_name) == sema::Symbol{module_name, module_sym});
+    CHECK(table.has(library_name));
+    CHECK(table.get(library_name) == sema::Symbol{library_name, library_sym});
     CHECK(table.has(user_name));
     CHECK(table.get(user_name) == sema::Symbol{user_name, user_sym});
 

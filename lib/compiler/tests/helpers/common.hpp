@@ -1,12 +1,12 @@
 #pragma once
 
+#include <algorithm>
 #include <span>
 
 #include <catch2/catch_test_macros.hpp>
+
 #include <fmt/format.h>
 #include <fmt/ranges.h>
-
-#include "diagnostic/list.hpp"
 
 #include "string.hpp"
 
@@ -18,9 +18,24 @@ template <typename E> auto check_errors(std::span<const E> errors) {
     CHECK(errors.empty());
 }
 
-template <typename D> auto check_errors(DiagnosticList<D>& errors) {
-    if (!errors.empty()) { fmt::println("{}", errors); }
-    CHECK(errors.empty());
+// Checks if the error list is matches the expected, dumping the list's contents otherwise.
+template <typename E, typename... Es>
+auto check_errors_against(std::span<const E> errors, Es&&... expected_errors) {
+    const std::array expected_arr{std::forward<Es>(expected_errors)...};
+    constexpr auto   expected_count = sizeof...(Es);
+
+    if constexpr (expected_count == 0) {
+        check_errors<E>(errors);
+    } else {
+        if (errors.size() != expected_count) {
+            for (const auto& e : errors) { fmt::println("{}", e); }
+            CHECK(errors.size() == expected_count);
+        }
+
+        const auto ranges_eq = std::ranges::equal(errors, expected_arr);
+        if (!ranges_eq) { fmt::println("{}", errors); }
+        CHECK(ranges_eq);
+    }
 }
 
 constexpr auto trim_semicolons(std::string_view str) -> std::string_view {

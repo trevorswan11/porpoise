@@ -155,6 +155,36 @@ auto nullable_boxes_eq(const mem::NullableBox<T>& a, const mem::NullableBox<T>& 
     return nullable_boxes_eq<T>(a, b, [](const auto& ae, const auto& be) { return ae == be; });
 }
 
+// A non-null pointer for use when a reference is inappropriate.
+template <typename T>
+    requires(!std::is_reference_v<T>)
+class NonNull {
+  public:
+    // cppcheck-suppress-begin noExplicitConstructor
+    NonNull(T* ptr) noexcept : ptr_{ptr} {
+        assert(ptr_ && "Attempt to create NonNull from nullptr");
+    }
+
+    NonNull(opt::Ref<T> opt) : ptr_{&opt.value()} {}
+    NonNull(opt::None) = delete;
+    NonNull(T&&)       = delete;
+
+    template <typename U>
+        requires(std::convertible_to<U*, T*>)
+    NonNull(const NonNull<U>& other) noexcept : ptr_{other.get()} {}
+    // cppcheck-suppress-end noExplicitConstructor
+
+    auto operator->() const noexcept -> T* { return ptr_; }
+    auto operator*() const noexcept -> T& { return *ptr_; }
+    auto get() const noexcept -> T* { return ptr_; }
+
+    explicit operator T() const noexcept { return *ptr_; }
+    bool     operator==(const NonNull<T>&) const noexcept = default;
+
+  private:
+    T* ptr_;
+};
+
 } // namespace mem
 
 template <typename T, typename D> class opt::Ref<mem::Box<T, D>&> {

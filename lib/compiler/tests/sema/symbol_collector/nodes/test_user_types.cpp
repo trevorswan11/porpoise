@@ -164,36 +164,62 @@ TEST_CASE("Union hollow types with member") {
         ctx, helpers::TableEntry{"b", field()}, helpers::TableEntry{"c", member()});
 }
 
+TEST_CASE("Public using query") {
+    const auto test = [](bool is_public) {
+        const auto input = fmt::format("{} using I = i32;", is_public ? "pub" : "");
+
+        auto ctx = helpers::test_collector(
+            input,
+            {},
+            helpers::TableEntry{
+                "I",
+                ast::UsingStatement{syntax::Token{is_public ? keywords::PUBLIC : keywords::USING},
+                                    helpers::make_ident("I"),
+                                    ast::ExplicitType{
+                                        mods::BASE,
+                                        helpers::make_ident("i32"),
+                                    }}});
+
+        auto&       table     = ctx.analyzer.get_table(ctx.root_mod->root_table_idx);
+        const auto& int_alias = table.get_opt("I");
+        REQUIRE(int_alias);
+        CHECK(int_alias->is_public() == is_public);
+    };
+
+    test(true);
+    test(false);
+}
+
 TEST_CASE("Shadowing member/field declarations") {
     helpers::test_collector_fail(
         "const a := struct { const a := 2; };",
         sema::Diagnostic{"Attempt to shadow identifier 'a'. Previous declaration here: 1:1",
                          sema::Error::SHADOWING_DECLARATION,
-                         std::pair{1uz, 21uz}});
+                         std::pair{0uz, 20uz}});
 
     helpers::test_collector_fail(
         "const a := enum {a};",
         sema::Diagnostic{"Attempt to shadow identifier 'a'. Previous declaration here: 1:1",
                          sema::Error::SHADOWING_DECLARATION,
-                         std::pair{1uz, 18uz}});
+                         std::pair{0uz, 17uz}});
 
     helpers::test_collector_fail(
         "const a := enum {b static const a := 2; };",
         sema::Diagnostic{"Attempt to shadow identifier 'a'. Previous declaration here: 1:1",
                          sema::Error::SHADOWING_DECLARATION,
-                         std::pair{1uz, 20uz}});
+                         std::pair{0uz, 19uz}});
 
     helpers::test_collector_fail(
         "const a := union { a: i32 };",
         sema::Diagnostic{"Attempt to shadow identifier 'a'. Previous declaration here: 1:1",
                          sema::Error::SHADOWING_DECLARATION,
-                         std::pair{1uz, 20uz}});
+                         std::pair{0uz, 19uz}});
 
     helpers::test_collector_fail(
         "const a := union { b: i32 static const a := 2; };",
         sema::Diagnostic{"Attempt to shadow identifier 'a'. Previous declaration here: 1:1",
                          sema::Error::SHADOWING_DECLARATION,
-                         std::pair{1uz, 27uz}});
+                         std::pair{0uz, 26uz}});
 }
 
 } // namespace porpoise::tests

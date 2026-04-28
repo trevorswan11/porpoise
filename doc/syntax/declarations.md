@@ -27,8 +27,9 @@ var e: []byte;         // Allowed, e is forward declared and future assignments 
 
 ## Compile-time Constants
 - Compile-time-known constants are declared with the `constexpr` keyword
-- In most cases, `constexpr` values behave identically to `const` constants
-    - The only difference is that `constexpr` values can be used as array sizes, assuming their underlying type is `usize`
+- In most cases, `constexpr` values behave identically to `const` constants with a few key differences
+    - `constexpr` values must be computable at compile time
+    - `constexpr` functions must be callable at compile time (it is safe to call them at runtime as well)
 - A `constexpr` declaration can not be declared `extern`
 
 ## Variables
@@ -72,9 +73,11 @@ a = (b = 6);
 
 ## Type Aliasing
 - Type aliases can be declared with the `using` keyword
+- An alias can be marked public in order to expose it to the outside world when the enclosing file is imported
 - This is very similar to C++, for example:
 ```porpoise
-using MyBool = bool;
+using MyBool = bool; // Private to this file
+pub using MyPublicBool = bool; // Publically accessible via namespacig when imported
 ```
 - Note that this is an _alias_, so there is no difference between using the aliased type and handwriting the entire raw type
 - The most common use cases for this are for saving keystrokes for long types and for passing complex types to functions at the call site

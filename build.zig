@@ -178,6 +178,25 @@ const TestArtifacts = struct {
 const version_str = zon.version;
 const version = std.SemanticVersion.parse(version_str) catch @compileError("Malformed version");
 
+fn makeConfigHeader(b: *std.Build, target: std.Build.ResolvedTarget) *std.Build.Step.ConfigHeader {
+    const git_hash = std.mem.trimEnd(u8, b.run(&.{ "git", "rev-parse", "HEAD" }), " \r\n");
+    var out_code: u8 = undefined;
+    const git_tag_raw = b.runAllowFail(&.{ "git", "describe", "--tags", "--abbrev=0" }, &out_code, .ignore) catch "";
+    const git_tag = std.mem.trimEnd(u8, git_tag_raw, " \r\n");
+
+    return b.addConfigHeader(.{}, .{
+        .VERSION_STR = version_str,
+        .VERSION_MAJOR = @as(i64, version.major),
+        .VERSION_MINOR = @as(i64, version.minor),
+        .VERSION_PATCH = @as(i64, version.patch),
+        .VERSION_PRE = version.pre orelse "",
+        .GIT_INFO = b.fmt("git-{s}{s}{s}", .{ git_hash, if (git_tag_raw.len == 0) "" else "-", git_tag }),
+        .PLATFORM_WINDOWS = target.result.os.tag == .windows,
+        .PLATFORM_LINUX = target.result.os.tag == .linux,
+        .PLATFORM_APPLE = target.result.os.tag == .macos,
+    });
+}
+
 fn addArtifacts(b: *std.Build, config: struct {
     target: ?std.Build.ResolvedTarget = null,
     optimize: std.builtin.OptimizeMode,
@@ -196,6 +215,7 @@ fn addArtifacts(b: *std.Build, config: struct {
     cppcheck: ?*std.Build.Step.Compile,
 } {
     const target = config.target orelse b.graph.host;
+    const config_h = makeConfigHeader(b, target);
     const building_for_host = config.target == null;
 
     const magic_enum = b.dependency("magic_enum", .{});
@@ -230,6 +250,7 @@ fn addArtifacts(b: *std.Build, config: struct {
                 .files = try collectFiles(b, ProjectPaths.support.src, .{}),
                 .flags = config.cxx_flags,
             },
+            .config_headers = &.{config_h},
             .link_libraries = &.{fmt_dep.artifact},
         }),
     });
@@ -256,6 +277,7 @@ fn addArtifacts(b: *std.Build, config: struct {
                 b.path(ProjectPaths.support.inc),
             },
             .system_include_paths = &system_includes,
+            .config_headers = &.{config_h},
             .link_libraries = &.{ libsupport, fmt_dep.artifact },
             .cxx = .{
                 .files = try collectFiles(b, ProjectPaths.compiler.src, .{}),
@@ -267,20 +289,6 @@ fn addArtifacts(b: *std.Build, config: struct {
     if (config.cdb_steps) |cdb_steps| try cdb_steps.append(b.allocator, &libcompiler.step);
 
     // The user-facing library
-    const git_hash = std.mem.trimEnd(u8, b.run(&.{ "git", "rev-parse", "HEAD" }), " \r\n");
-    var out_code: u8 = undefined;
-    const git_tag_raw = b.runAllowFail(&.{ "git", "describe", "--tags", "--abbrev=0" }, &out_code, .ignore) catch "";
-    const git_tag = std.mem.trimEnd(u8, git_tag_raw, " \r\n");
-
-    const version_header = b.addConfigHeader(.{}, .{
-        .VERSION_STR = version_str,
-        .VERSION_MAJOR = @as(i64, version.major),
-        .VERSION_MINOR = @as(i64, version.minor),
-        .VERSION_PATCH = @as(i64, version.patch),
-        .VERSION_PRE = version.pre orelse "",
-        .GIT_INFO = b.fmt("git-{s}{s}{s}", .{ git_hash, if (git_tag_raw.len == 0) "" else "-", git_tag }),
-    });
-
     const libdriver = b.addLibrary(.{
         .name = "driver",
         .root_module = createModule(b, .{
@@ -292,7 +300,7 @@ fn addArtifacts(b: *std.Build, config: struct {
                 b.path(ProjectPaths.support.inc),
             },
             .system_include_paths = &system_includes,
-            .config_headers = &.{version_header},
+            .config_headers = &.{config_h},
             .link_libraries = &.{ libcompiler, fmt_dep.artifact },
             .cxx = .{
                 .files = try collectFiles(b, ProjectPaths.driver.src, .{
@@ -371,6 +379,7 @@ fn addArtifacts(b: *std.Build, config: struct {
                 }),
                 .flags = config.cxx_flags,
             },
+            .config_headers = &.{config_h},
             .link_libraries = &.{ libsupport, catch2_dep.artifact, fmt_dep.artifact },
         }, .{
             .name = "support_tests",
@@ -398,6 +407,7 @@ fn addArtifacts(b: *std.Build, config: struct {
                 }),
                 .flags = config.cxx_flags,
             },
+            .config_headers = &.{config_h},
             .link_libraries = &.{ libcompiler, catch2_dep.artifact, fmt_dep.artifact },
         }, .{
             .name = "compiler_tests",
@@ -426,6 +436,7 @@ fn addArtifacts(b: *std.Build, config: struct {
                 }),
                 .flags = config.cxx_flags,
             },
+            .config_headers = &.{config_h},
             .link_libraries = &.{ libcompiler, libdriver, catch2_dep.artifact, fmt_dep.artifact },
         }, .{
             .name = "driver_tests",

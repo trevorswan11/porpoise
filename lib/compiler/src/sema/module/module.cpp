@@ -4,15 +4,28 @@
 
 namespace porpoise::sema::mod {
 
-auto ModuleManager::try_get_file_module(const std::filesystem::path& path)
-    -> Result<opt::NonNull<Module>, Diagnostic> {
-    const auto normalized = loader_.normalize(path);
+auto Module::print_diagnostics(std::ostream& os) const -> void {
+    if (!is_errored()) { return; }
+    match([&](const auto& l) { l.print(os, *this); });
+}
+
+auto ModuleManager::try_get_file_module(const std::filesystem::path& path,
+                                        const std::filesystem::path& parent_path)
+    -> Result<mem::NonNull<Module>, Diagnostic> {
+    assert((parent_path.empty() || parent_path.is_absolute()) &&
+           "Parent path must be absolute or empty");
+    if (!path.is_relative()) {
+        return make_sema_err(fmt::format("Requested file '{}' is absolute", path.string()),
+                             Error::IMPORT_NOT_RELATIVE);
+    };
+
+    const auto normalized = loader_.normalize(parent_path.empty() ? path : parent_path / path);
     if (!normalized) { return make_sema_err(normalized.error()); }
     return try_get(*normalized);
 }
 
-auto ModuleManager::try_get_true_module(const std::string& name)
-    -> Result<opt::NonNull<Module>, Diagnostic> {
+auto ModuleManager::try_get_library_module(const std::string& name)
+    -> Result<mem::NonNull<Module>, Diagnostic> {
     auto it = module_lut_.find(name);
     if (it == module_lut_.end()) {
         return make_sema_err(fmt::format("Unknown module '{}'", name),
@@ -42,18 +55,19 @@ auto ModuleManager::add_porpoise_module(const std::string& name, const std::file
 }
 
 auto ModuleManager::try_get(const std::filesystem::path& path)
-    -> Result<opt::NonNull<Module>, Diagnostic> {
+    -> Result<mem::NonNull<Module>, Diagnostic> {
     // Prevent re-parsing by checking the map, safe as pointers are stable
     if (auto it = modules_.find(path); it != modules_.end()) { return it->second.get(); }
     auto       source       = loader_.load(path);
     const auto abs_path_str = path.string();
     if (!source) {
-        return make_sema_err(fmt::format("Could not load file: {}", abs_path_str), source.error());
+        return make_sema_err(fmt::format(R"(Could not load file: "{}")", abs_path_str),
+                             source.error());
     }
 
-    auto           mod = mem::make_box<Module>(path, std::move(*source));
+    auto mod = mem::make_box<Module>(path, path.parent_path(), SourceFile{std::move(*source)});
     syntax::Parser p{mod->source};
-    auto [ast, diagnostics] = p.consume(abs_path_str);
+    auto [ast, diagnostics] = p.consume();
 
     mod->tree        = std::move(ast);
     mod->state       = diagnostics.empty() ? ModuleState::PARSED : ModuleState::ERRORED;

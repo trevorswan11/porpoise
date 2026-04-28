@@ -7,21 +7,16 @@
 #include "syntax/operators.hpp"
 #include "syntax/token.hpp"
 
-namespace porpoise::syntax {
+#include "string.hpp"
 
-Lexer::Snapshot::Snapshot(const Lexer& l) noexcept
-    : pos_{l.pos_}, peek_pos_{l.peek_pos_}, current_byte_{l.current_byte_}, line_no_{l.line_no_},
-      col_no_{l.col_no_} {}
+namespace porpoise::syntax {
 
 auto Lexer::reset(std::string_view input) noexcept -> void { *this = Lexer{input}; }
 
 auto Lexer::advance() noexcept -> Token {
     skip_whitespace();
 
-    const auto start_line = line_no_;
-    const auto start_col  = col_no_;
-
-    Token      token{{}, {}, start_line, start_col};
+    Token      token{{}, {}, line_no_, col_no_};
     const auto maybe_operator = read_operator();
 
     if (maybe_operator) {
@@ -36,7 +31,7 @@ auto Lexer::advance() noexcept -> Token {
 
     const auto maybe_misc_token_type = token_type::misc_from_char(current_byte_);
     if (maybe_misc_token_type) {
-        token.slice = input_.substr(pos_, 1);
+        token.slice = string::substr(input_, pos_, 1);
         token.type  = *maybe_misc_token_type;
     } else if (current_byte_ == '@') {
         token.slice = read_ident(true);
@@ -53,7 +48,7 @@ auto Lexer::advance() noexcept -> Token {
     } else if (current_byte_ == '\'') {
         return read_byte_literal();
     } else {
-        token.slice = input_.substr(pos_, 1);
+        token.slice = string::substr(input_, pos_, 1);
         token.type  = TokenType::ILLEGAL;
     }
 
@@ -117,7 +112,7 @@ auto Lexer::read_operator() const noexcept -> opt::Option<Token> {
 
     // Try extending from length 1 up to the max operator size
     for (usize len = 1; len <= MAX_OPERATOR_LEN && pos_ + len <= input_.size(); ++len) {
-        const auto op = get_operator(input_.substr(pos_, len));
+        const auto op = get_operator(string::substr(input_, pos_, len));
         if (op) {
             matched_type = op->second;
             max_len      = len;
@@ -126,7 +121,7 @@ auto Lexer::read_operator() const noexcept -> opt::Option<Token> {
 
     // We cannot greedily consume the lexer here since the next token instruction handles that
     if (max_len == 0) { return opt::none; }
-    return Token{matched_type, input_.substr(pos_, max_len), start_line, start_col};
+    return Token{matched_type, string::substr(input_, pos_, max_len), start_line, start_col};
 }
 
 auto Lexer::read_ident(bool builtin) noexcept -> std::string_view {
@@ -139,7 +134,7 @@ auto Lexer::read_ident(bool builtin) noexcept -> std::string_view {
         passed_first = true;
     }
 
-    return input_.substr(start, pos_ - start);
+    return string::substr(input_, start, pos_ - start);
 }
 
 enum class NumberSuffix : u8 {
@@ -232,7 +227,8 @@ auto Lexer::read_number() noexcept -> Token {
 
     // Quick non-base-10 length validation
     if (base != Base::DECIMAL && pos_ - start <= 2) {
-        return {TokenType::ILLEGAL, input_.substr(start, pos_ - start), start_line, start_col};
+        return {
+            TokenType::ILLEGAL, string::substr(input_, start, pos_ - start), start_line, start_col};
     }
 
     NumberSuffix suffix{};
@@ -262,20 +258,20 @@ auto Lexer::read_number() noexcept -> Token {
     // Total validation
     const auto length = pos_ - start;
     auto       type{TokenType::ILLEGAL};
-    if (length == 0) { return {type, input_.substr(start, 1), start_line, start_col}; }
+    if (length == 0) { return {type, string::substr(input_, start, 1), start_line, start_col}; }
 
     if (input_[pos_ - 1] == '.') {
-        return {type, input_.substr(start, length), start_line, start_col};
+        return {type, string::substr(input_, start, length), start_line, start_col};
     }
 
     if (passed_decimal && (base != Base::DECIMAL)) {
-        return {type, input_.substr(start, length), start_line, start_col};
+        return {type, string::substr(input_, start, length), start_line, start_col};
     }
 
     // Determine the input type
     if (passed_decimal || passed_exponent || forced_float) {
         if (base != Base::DECIMAL) {
-            return {type, input_.substr(start, length), start_line, start_col};
+            return {type, string::substr(input_, start, length), start_line, start_col};
         }
         type = forced_float ? TokenType::F32 : TokenType::F64;
     } else {
@@ -301,7 +297,7 @@ auto Lexer::read_number() noexcept -> Token {
         type = static_cast<TokenType>(std::to_underlying(type) + offset);
     }
 
-    return {type, input_.substr(start, length), start_line, start_col};
+    return {type, string::substr(input_, start, length), start_line, start_col};
 }
 
 auto Lexer::read_escape() noexcept -> byte {
@@ -333,14 +329,14 @@ auto Lexer::read_string() noexcept -> Token {
     if (current_byte_ == '\0') {
         return {
             TokenType::ILLEGAL,
-            input_.substr(start, pos_ - start),
+            string::substr(input_, start, pos_ - start),
             start_line,
             start_col,
         };
     }
     read_character();
 
-    return {TokenType::STRING, input_.substr(start, pos_ - start), start_line, start_col};
+    return {TokenType::STRING, string::substr(input_, start, pos_ - start), start_line, start_col};
 }
 
 // Reads a multiline string from the token, assuming the '\\' operator has been consumed
@@ -386,7 +382,7 @@ auto Lexer::read_multiline_string() noexcept -> Token {
 
     return {
         TokenType::MULTILINE_STRING,
-        input_.substr(start, end_pos - start),
+        string::substr(input_, start, end_pos - start),
         start_line,
         start_col,
     };
@@ -408,7 +404,8 @@ auto Lexer::read_byte_literal() noexcept -> Token {
     } else if (current_byte_ != '\'' && current_byte_ != '\n' && current_byte_ != '\r') {
         read_character();
     } else {
-        return {TokenType::ILLEGAL, input_.substr(start, pos_ - start), start_line, start_col};
+        return {
+            TokenType::ILLEGAL, string::substr(input_, start, pos_ - start), start_line, start_col};
     }
 
     // The next character MUST be closing ', otherwise illegally consume like a comment
@@ -427,14 +424,14 @@ auto Lexer::read_byte_literal() noexcept -> Token {
 
         return {
             TokenType::ILLEGAL,
-            input_.substr(start, illegal_end - start),
+            string::substr(input_, start, illegal_end - start),
             start_line,
             start_col,
         };
     }
     read_character();
 
-    return {TokenType::U8, input_.substr(start, pos_ - start), start_line, start_col};
+    return {TokenType::U8, string::substr(input_, start, pos_ - start), start_line, start_col};
 }
 
 // Reads a comment from the token, assuming the '//' operator has been consumed
@@ -444,7 +441,7 @@ auto Lexer::read_comment() noexcept -> Token {
     const auto start_col  = col_no_;
     while (current_byte_ != '\n' && current_byte_ != '\0') { read_character(); }
 
-    return {TokenType::COMMENT, input_.substr(start, pos_ - start), start_line, start_col};
+    return {TokenType::COMMENT, string::substr(input_, start, pos_ - start), start_line, start_col};
 }
 
 } // namespace porpoise::syntax

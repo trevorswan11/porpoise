@@ -52,23 +52,23 @@ TEST_CASE("Incorrectly terminated jumps") {
         helpers::test_parser_fail(input,
                                   syntax::ParserDiagnostic{"Expected token SEMICOLON, found END",
                                                            syntax::ParserError::UNEXPECTED_TOKEN,
-                                                           std::pair{1uz, input.size() + 1}});
+                                                           std::pair{0uz, input.size()}});
     }
 
     helpers::test_parser_fail(
         "return return",
         syntax::ParserDiagnostic{"No prefix parse function for RETURN(return) found",
                                  syntax::ParserError::MISSING_PREFIX_PARSER,
-                                 std::pair{1uz, 8uz}});
+                                 std::pair{0uz, 7uz}});
 }
 
 TEST_CASE("Illegal continue/break control flow") {
     helpers::test_parser_fail("continue 4;",
-                              syntax::ParserDiagnostic{syntax::ParserError::VALUED_CONTINUE, 1, 1});
+                              syntax::ParserDiagnostic{syntax::ParserError::VALUED_CONTINUE, 0, 0});
 
     helpers::test_parser_fail(
         "break 4;",
-        syntax::ParserDiagnostic{syntax::ParserError::VALUED_BREAK_MISSING_LABEL, 1, 1});
+        syntax::ParserDiagnostic{syntax::ParserError::VALUED_BREAK_MISSING_LABEL, 0, 0});
 }
 
 } // namespace porpoise::tests

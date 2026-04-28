@@ -1,5 +1,3 @@
-#include <string>
-
 #include <catch2/catch_test_macros.hpp>
 
 #include "string.hpp"
@@ -27,12 +25,34 @@ TEST_CASE("Left trim spaces") {
     CHECK(string::trim_left("        ") == "");
 }
 
-TEST_CASE("Right trim spaces") {
-    CHECK(string::trim_right("") == "");
-    CHECK(string::trim_right("the") == "the");
-    CHECK(string::trim_right("the    ") == "the");
-    CHECK(string::trim_right("    the    ") == "    the");
-    CHECK(string::trim_right("        ") == "");
+TEST_CASE("Counting left trim") {
+    usize count = 0;
+    CHECK(string::trim_left("", count) == "");
+    CHECK(count == 0);
+
+    CHECK(string::trim_left("the", (count = 0, count)) == "the");
+    CHECK(count == 0);
+
+    CHECK(string::trim_left("    the", (count = 0, count)) == "the");
+    CHECK(count == 4);
+
+    CHECK(string::trim_left("        ", (count = 0, count)) == "");
+    CHECK(count == 8);
+}
+
+TEST_CASE("Counting right trim") {
+    usize count = 0;
+    CHECK(string::trim_right("", count) == "");
+    CHECK(count == 0);
+
+    CHECK(string::trim_right("the", (count = 0, count)) == "the");
+    CHECK(count == 0);
+
+    CHECK(string::trim_right("the    ", (count = 0, count)) == "the");
+    CHECK(count == 4);
+
+    CHECK(string::trim_right("        ", (count = 0, count)) == "");
+    CHECK(count == 8);
 }
 
 TEST_CASE("Trim spaces") {
@@ -42,6 +62,27 @@ TEST_CASE("Trim spaces") {
     CHECK(string::trim("    the") == "the");
     CHECK(string::trim("    the    ") == "the");
     CHECK(string::trim("        ") == "");
+}
+
+TEST_CASE("Counting trim") {
+    usize count = 0;
+    CHECK(string::trim("", count) == "");
+    CHECK(count == 0);
+
+    CHECK(string::trim("the", (count = 0, count)) == "the");
+    CHECK(count == 0);
+
+    CHECK(string::trim("the    ", (count = 0, count)) == "the");
+    CHECK(count == 4);
+
+    CHECK(string::trim("    the", (count = 0, count)) == "the");
+    CHECK(count == 4);
+
+    CHECK(string::trim("    the    ", (count = 0, count)) == "the");
+    CHECK(count == 8);
+
+    CHECK(string::trim("        ", (count = 0, count)) == "");
+    CHECK(count == 8);
 }
 
 TEST_CASE("Trim pred") {

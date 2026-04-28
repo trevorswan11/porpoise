@@ -32,7 +32,9 @@ auto ImportStatement::accept(Visitor& v) const -> void { v.visit(*this); }
 
 auto ImportStatement::parse(syntax::Parser& parser)
     -> Result<mem::Box<Statement>, syntax::ParserDiagnostic> {
+    // A start token of public is guaranteed to be followed by an import
     const auto start_token = parser.get_current_token();
+    if (parser.current_token_is(syntax::TokenType::PUBLIC)) { parser.advance(); }
 
     auto imported_core = TRY( // cppcheck-suppress internalAstError
         ([&] -> Result<std::variant<mem::Box<IdentifierExpression>, mem::Box<StringExpression>>,
@@ -101,8 +103,7 @@ auto ImportStatement::is_equal(const Node& other) const noexcept -> bool {
                               return v == std::get<FileImport>(other_imported);
                           },
                       },
-                      imported_) &&
-           public_ == casted.public_;
+                      imported_);
 }
 
 } // namespace porpoise::ast

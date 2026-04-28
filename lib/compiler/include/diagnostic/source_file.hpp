@@ -1,0 +1,64 @@
+#pragma once
+
+#include <string>
+#include <string_view>
+#include <vector>
+
+#include "diagnostic/source_location.hpp"
+
+#include "iterator.hpp"
+#include "option.hpp"
+#include "utility.hpp"
+
+namespace porpoise {
+
+// A map from 0-indexed line number to the start of the line
+class LineOffsets {
+  public:
+    MAKE_ITERATOR(Offsets, std::vector<usize>, offsets_)
+
+  public:
+    explicit LineOffsets(std::string_view input);
+    ~LineOffsets() = default;
+
+    MAKE_MOVE_ONLY(LineOffsets)
+
+    [[nodiscard]] auto operator[](usize line) const noexcept -> usize { return offsets_[line]; }
+    [[nodiscard]] auto at(usize line) const -> usize { return offsets_.at(line); }
+
+  private:
+    Offsets offsets_;
+};
+
+// A source file with efficient source location seeking for diagnostic reporting
+class SourceFile {
+  public:
+    explicit SourceFile(std::string source) noexcept
+        : source_{std::move(source)}, offsets_{source} {}
+    explicit SourceFile(std::string_view source) : source_{std::string{source}}, offsets_{source} {}
+
+    ~SourceFile() = default;
+
+    MAKE_MOVE_ONLY(SourceFile)
+
+    // Returns the trimmed relevant line in the source along with a caret to the column if possible
+    [[nodiscard]] auto get_diagnostic_strings(const SourceLocation& loc) const
+        -> std::pair<std::string_view, opt::Option<std::string>>;
+
+    // Extracts the source location from the locateable value to retrieve the diagnostic
+    template <Locateable T> [[nodiscard]] auto get_diagnostic_strings(const T& t) const {
+        return get_diagnostic_strings(SourceInfo<T>::get(t));
+    }
+
+    operator std::string_view() const noexcept { return source_; }
+    operator const std::string&() const noexcept { return source_; }
+
+    auto empty() const noexcept -> bool { return source_.empty(); }
+    auto size() const noexcept -> usize { return source_.size(); }
+
+  private:
+    std::string source_;
+    LineOffsets offsets_;
+};
+
+} // namespace porpoise

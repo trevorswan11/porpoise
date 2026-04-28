@@ -62,7 +62,6 @@ namespace porpoise::ast {
     X(DiscardStatement)     \
     X(ExpressionStatement)  \
     X(ImportStatement)      \
-    X(ModuleStatement)      \
     X(ReturnStatement)      \
     X(TestStatement)        \
     X(UsingStatement)

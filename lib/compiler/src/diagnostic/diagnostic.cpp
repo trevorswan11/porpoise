@@ -1,33 +1,40 @@
-#include <sstream>
-
+#include <fmt/color.h>
 #include <fmt/format.h>
 #include <fmt/ostream.h>
 
 #include "diagnostic/diagnostic.hpp"
 
+#include "utility.hpp"
+
 namespace porpoise::detail {
 
-auto format_diagnostic(const opt::Option<std::string>&    message,
-                       std::string_view                   error_name,
-                       const opt::Option<std::string>&    source_path,
-                       const opt::Option<SourceLocation>& location) -> std::string {
-    std::stringstream ss;
+auto format_diagnostic(std::ostream&                   os,
+                       FormattableDiagnostic&&         diag,
+                       const opt::Option<std::string>& source_path,
+                       opt::Option<bool>               in_terminal) -> std::ostream& {
+    const auto tty = in_terminal.value_or(is_tty());
+
     // The source and location play nicely with one another
     if (source_path) {
-        fmt::print(ss, "{}:", *source_path);
-        if (location) {
-            fmt::print(ss, "{}: ", *location);
+        const auto& local_style = tty ? style::SOURCE : style::BASE;
+        os << fmt::format(local_style, "{}:", *source_path);
+        if (diag.location) {
+            os << fmt::format(local_style, "{}: ", *diag.location);
         } else {
-            fmt::print(ss, " ", *location);
+            fmt::print(os, " ");
         }
     }
 
+    // Here the buffer should be "file:loc: " to print level if present
+    if (diag.level) {
+        const auto name = level_name(*diag.level);
+        os << fmt::format(tty ? level_style(*diag.level) : style::BASE, "{}:", name);
+    }
+
     // The optional message changes position based on source path presence
-    if (message) { ss << *message << " ("; }
-    ss << error_name;
-    if (message) { ss << ")"; }
-    if (!source_path && location) { ss << fmt::format(" {}", *location); }
-    return ss.str();
+    if (diag.message) { fmt::print(os, " {}", *diag.message); }
+    if (!source_path && diag.location) { os << fmt::format(" {}", *diag.location); }
+    return os;
 }
 
 } // namespace porpoise::detail

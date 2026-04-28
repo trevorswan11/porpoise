@@ -592,6 +592,11 @@ MAKE_BASIC_STMT_DUMP(ExpressionStatement, Expr, get_expression())
 auto ASTDumper::visit(const ImportStatement& import_stmt) -> void {
     fmt::println(out_, "ImportStatement");
     {
+        const Indent::Guard g{indent_, false};
+        fmt::println(out_, "{}Public: {}", indent_.current_branch(), import_stmt.is_public());
+    }
+
+    {
         const Indent::Guard g{indent_, !import_stmt.has_alias()};
         if (import_stmt.is_library_import()) {
             fmt::print(out_, "{}Library: ", indent_.current_branch());
@@ -612,8 +617,6 @@ auto ASTDumper::visit(const ImportStatement& import_stmt) -> void {
         }
     }
 }
-
-auto ASTDumper::visit(const ModuleStatement&) -> void { fmt::println(out_, "ModuleStatement"); }
 
 auto ASTDumper::visit(const ReturnStatement& return_stmt) -> void {
     fmt::println(out_, "ReturnStatement");
@@ -642,6 +645,7 @@ auto ASTDumper::visit(const UsingStatement& using_stmt) -> void {
     fmt::println(out_, "UsingStatement");
     {
         const Indent::Guard g{indent_, false};
+        fmt::println(out_, "{}Public: {}", indent_.current_branch(), using_stmt.is_public());
         fmt::print(out_, "{}Alias: ", indent_.current_branch());
         using_stmt.get_alias().accept(*this);
     }

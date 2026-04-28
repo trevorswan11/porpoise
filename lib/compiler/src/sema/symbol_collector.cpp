@@ -2,7 +2,6 @@
 
 #include "ast/ast.hpp"
 #include "ast/visitor.hpp"
-#include "sema/error.hpp"
 
 namespace porpoise::sema {
 
@@ -11,11 +10,8 @@ auto SymbolCollector::collect_symbols(mod::Module& module, const CollectorCtx& c
     if (module.state < mod::ModuleState::SYMBOLS_COLLECTED && !module.root_table_idx) {
         module.root_table_idx.emplace(ctx.registry.create());
 
-        SymbolCollector collector{module.root_table_idx, ctx};
-        for (const auto& node : module.tree) {
-            node->accept(collector);
-            collector.pass_first();
-        }
+        SymbolCollector collector{module, ctx};
+        for (const auto& node : module.tree) { node->accept(collector); }
 
         if (!ctx.diagnostics.empty()) { return module.error_out(std::move(ctx.diagnostics)); }
         module.state = mod::ModuleState::SYMBOLS_COLLECTED;
@@ -284,22 +280,24 @@ auto SymbolCollector::visit(const ast::DeclStatement& decl) -> void {
 
     // Valued decls should be evaluated to get shallow types
     const auto& expr = decl.get_value();
-    if (expr.any<ast::EnumExpression,
-                 ast::FunctionExpression,
-                 ast::UnionExpression,
-                 ast::StructExpression>()) {
-        // Certain values cannot be constexpr or non-const to reduce mental overhead
+    if (expr.any<ast::EnumExpression, ast::UnionExpression, ast::StructExpression>()) {
         if (decl.has_modifier(ast::DeclModifiers::CONSTEXPR)) {
             ctx_.diagnostics.emplace_back(
-                fmt::format("Top level {}s are implicitly compile time known", expr.display_name()),
+                fmt::format("All {}s are implicitly constexpr", expr.display_name()),
                 Error::REDUNDANT_CONSTEXPR,
                 decl.get_token());
         } else if (!decl.has_modifier(ast::DeclModifiers::CONSTANT)) {
             ctx_.diagnostics.emplace_back(
-                fmt::format("Top level {}s must be marked const at the top level",
-                            expr.display_name()),
+                fmt::format("All {}s must be marked const", expr.display_name()),
                 Error::ILLEGAL_NON_CONST_STATEMENT,
                 decl.get_token());
+        }
+    } else if (expr.is<ast::FunctionExpression>()) {
+        if (!decl.has_modifier(ast::DeclModifiers::CONSTEXPR) &&
+            !decl.has_modifier(ast::DeclModifiers::CONSTANT)) {
+            ctx_.diagnostics.emplace_back("All function declarations must be const or constexpr",
+                                          Error::ILLEGAL_NON_CONST_STATEMENT,
+                                          decl.get_token());
         }
     }
 
@@ -325,17 +323,17 @@ auto SymbolCollector::visit(const ast::ExpressionStatement& expr) -> void {
 }
 
 auto SymbolCollector::visit(const ast::ImportStatement& import_stmt) -> void {
-    if (ctx_.registry.get(table_idx_).is_module()) { import_stmt.mark_public(); }
-    const auto [alias, mod_result] = import_stmt.match(Overloaded{
+    auto [alias, mod_result] = import_stmt.match(Overloaded{
         [this](const ast::LibraryImport& module) {
             const auto name =
                 module.has_alias() ? module.get_alias().get_name() : module.get_name().get_name();
-            auto mod = ctx_.modules.try_get_true_module(module.get_name().materialize());
+            auto mod = ctx_.modules.try_get_library_module(module.get_name().materialize());
             return std::pair{name, mod};
         },
         [this](const ast::FileImport& user) {
             const auto name = user.get_alias().get_name();
-            auto       mod  = ctx_.modules.try_get_file_module(user.get_file().get_value());
+            auto       mod  = ctx_.modules.try_get_file_module(user.get_file().get_value(),
+                                                        collecting_.parent_path);
             return std::pair{name, mod};
         },
     });
@@ -343,30 +341,20 @@ auto SymbolCollector::visit(const ast::ImportStatement& import_stmt) -> void {
     // Only set the table index if the module exists
     opt::Option<mod::Module&> imported_mod;
     if (!mod_result) {
-        ctx_.diagnostics.emplace_back(mod_result.error());
+        // The token is retrieved here to avoid copying it on success
+        ctx_.diagnostics.emplace_back(
+            std::move(mod_result.error()),
+            import_stmt.match(Overloaded{
+                [](const ast::LibraryImport& module) { return module.get_name().get_token(); },
+                [](const ast::FileImport& user) { return user.get_file().get_token(); },
+            }));
     } else {
         imported_mod.emplace(**mod_result);
-        Diagnostics diags{imported_mod->path.string()};
+        Diagnostics diags;
         collect_symbols(*imported_mod, ctx_.copy(diags));
     }
     try_result(
         ctx_.registry.insert_into(table_idx_, alias, SymbolicImport{&import_stmt, imported_mod}));
-}
-
-auto SymbolCollector::visit(const ast::ModuleStatement& module_stmt) -> void {
-    auto& table = ctx_.registry.get(table_idx_);
-    if (first_node_) { return table.indicate_module(); }
-
-    // Module statements are highly restricted in terms of usage and location
-    if (table.is_module()) {
-        ctx_.diagnostics.emplace_back("Only one module statement is allowed per file",
-                                      Error::DUPLICATE_MODULE_STATEMENT,
-                                      module_stmt.get_token());
-    } else {
-        ctx_.diagnostics.emplace_back("Module indicator must be first statement of file",
-                                      Error::ILLEGAL_MODULE_STATEMENT_LOCATION,
-                                      module_stmt.get_token());
-    }
 }
 
 auto SymbolCollector::visit(const ast::ReturnStatement& return_stmt) -> void {
@@ -394,7 +382,6 @@ auto SymbolCollector::visit(const ast::TestStatement& test) -> void {
 }
 
 auto SymbolCollector::visit(const ast::UsingStatement& using_stmt) -> void {
-    if (ctx_.registry.get(table_idx_).is_module()) { using_stmt.mark_public(); }
     try_declare(using_stmt.get_alias().get_name(), &using_stmt);
 }
 

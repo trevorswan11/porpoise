@@ -19,22 +19,16 @@ auto Parser::reset(std::string_view input) noexcept -> void { *this = Parser{inp
 
 auto Parser::advance(u8 times) noexcept -> const Token& {
     for (u8 i = 0; i < times; ++i) {
-        if (current_token_.type == TokenType::END &&
-            (input_.empty() && current_token_.is_at_start())) {
-            break;
-        }
-
         current_token_ = peek_token_;
         peek_token_    = lexer_.advance();
     }
     return current_token_;
 }
 
-auto Parser::consume(opt::Option<std::string> source_path)
-    -> std::pair<ast::AST, ParserDiagnostics> {
+auto Parser::consume() -> std::pair<ast::AST, ParserDiagnostics> {
     reset(input_);
     ast::AST          ast;
-    ParserDiagnostics diagnostics{std::move(source_path)};
+    ParserDiagnostics diagnostics;
 
     while (!current_token_is(TokenType::END)) {
         // Advance through any amount of semicolons
@@ -103,7 +97,17 @@ auto Parser::get_peek_precedence() const noexcept -> std::pair<Precedence, opt::
 
 auto Parser::parse_statement(bool require_semicolon)
     -> Result<mem::Box<ast::Statement>, ParserDiagnostic> {
-    if (current_token_.is_decl_token()) { return ast::DeclStatement::parse(*this); }
+    // Not all decls are public so the condition needs to be rechecked
+    if (current_token_.type == TokenType::PUBLIC) {
+        switch (peek_token_.type) {
+        case TokenType::IMPORT: return ast::ImportStatement::parse(*this);
+        case TokenType::USING:  return ast::UsingStatement::parse(*this);
+        default:                return ast::DeclStatement::parse(*this);
+        }
+    } else if (current_token_.is_decl_token()) {
+        return ast::DeclStatement::parse(*this);
+    }
+
     switch (current_token_.type) {
     case TokenType::LBRACE:     return ast::BlockStatement::parse(*this);
     case TokenType::BREAK:      return ast::BreakStatement::parse(*this);
@@ -111,7 +115,6 @@ auto Parser::parse_statement(bool require_semicolon)
     case TokenType::DEFER:      return ast::DeferStatement::parse(*this);
     case TokenType::UNDERSCORE: return ast::DiscardStatement::parse(*this);
     case TokenType::IMPORT:     return ast::ImportStatement::parse(*this);
-    case TokenType::MODULE:     return ast::ModuleStatement::parse(*this);
     case TokenType::RETURN:     return ast::ReturnStatement::parse(*this);
     case TokenType::TEST:       return ast::TestStatement::parse(*this);
     case TokenType::USING:      return ast::UsingStatement::parse(*this);
@@ -236,9 +239,7 @@ constexpr auto PREFIX_FNS = [] {
     }
 
     for (const auto tt : ALL_PRIMITIVES) { fns[tt] = ast::IdentifierExpression::parse; }
-    for (const auto builtin : ALL_BUILTINS) {
-        fns[builtin.second] = ast::IdentifierExpression::parse;
-    }
+    for (const auto& [_, tt] : ALL_BUILTINS) { fns[tt] = ast::IdentifierExpression::parse; }
 
     return fns;
 }();

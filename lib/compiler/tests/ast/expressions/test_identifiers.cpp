@@ -26,7 +26,7 @@ TEST_CASE("Non-terminated identifier") {
     helpers::test_parser_fail(
         "foobar",
         syntax::ParserDiagnostic{
-            "Expected token SEMICOLON, found END", syntax::ParserError::UNEXPECTED_TOKEN, 1, 7});
+            "Expected token SEMICOLON, found END", syntax::ParserError::UNEXPECTED_TOKEN, 0, 6});
 }
 
 TEST_CASE("Builtin identifiers") {

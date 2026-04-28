@@ -1,5 +1,6 @@
 # Structs
-- Structs are defined using the standard declaration syntax
+- Structs are defined using the standard declaration syntax or with a `using` statement
+    - In the event that the standard declaration syntax is used, it must be `const`
 - Struct definitions must be `const`
 - Struct members are simply declarations
     - Members cannot be marked `extern` or `export`

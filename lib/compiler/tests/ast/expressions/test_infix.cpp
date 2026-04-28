@@ -346,7 +346,7 @@ TEST_CASE("Illegal infix node") {
         "a and import std;",
         syntax::ParserDiagnostic{"No prefix parse function for IMPORT(import) found",
                                  syntax::ParserError::MISSING_PREFIX_PARSER,
-                                 std::pair{1uz, 7uz}});
+                                 std::pair{0uz, 6uz}});
 }
 
 TEST_CASE("Non-terminated infix") {
@@ -354,9 +354,9 @@ TEST_CASE("Non-terminated infix") {
         "a and;",
         syntax::ParserDiagnostic{"No prefix parse function for SEMICOLON(;) found",
                                  syntax::ParserError::MISSING_PREFIX_PARSER,
-                                 std::pair{1uz, 6uz}});
+                                 std::pair{0uz, 5uz}});
     helpers::test_parser_fail(
-        "a and", syntax::ParserDiagnostic{syntax::ParserError::INFIX_MISSING_RHS, 1, 3});
+        "a and", syntax::ParserDiagnostic{syntax::ParserError::INFIX_MISSING_RHS, 0, 2});
 }
 
 } // namespace porpoise::tests

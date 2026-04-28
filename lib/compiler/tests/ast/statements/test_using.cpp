@@ -28,11 +28,10 @@ TEST_CASE("Well formed using statement") {
 
 TEST_CASE("User defined type alias") {
     helpers::test_stmt(
-        "using U = union { a: enum { A } };",
+        "pub using U = union { a: enum { A } };",
         ast::UsingStatement{
-            syntax::Token{keywords::USING},
+            syntax::Token{keywords::PUBLIC},
             helpers::make_ident("U"),
-
             ast::ExplicitType{
                 mods::BASE,
                 mem::make_box<ast::UnionExpression>(
@@ -53,21 +52,21 @@ TEST_CASE("Missing alias") {
     helpers::test_parser_fail(
         "using &[0x2uz][N]*E;",
         syntax::ParserDiagnostic{
-            "Expected token IDENT, found BW_AND", syntax::ParserError::UNEXPECTED_TOKEN, 1, 7});
+            "Expected token IDENT, found BW_AND", syntax::ParserError::UNEXPECTED_TOKEN, 0, 6});
 }
 
 TEST_CASE("Missing type") {
     helpers::test_parser_fail(
         "using T;",
         syntax::ParserDiagnostic{
-            "Expected token ASSIGN, found SEMICOLON", syntax::ParserError::UNEXPECTED_TOKEN, 1, 8});
+            "Expected token ASSIGN, found SEMICOLON", syntax::ParserError::UNEXPECTED_TOKEN, 0, 7});
 }
 
 TEST_CASE("Illegal identifier alias") {
     helpers::test_parser_fail(
         "using type = T;",
         syntax::ParserDiagnostic{
-            "Expected token IDENT, found TYPE_TYPE", syntax::ParserError::UNEXPECTED_TOKEN, 1, 7});
+            "Expected token IDENT, found TYPE_TYPE", syntax::ParserError::UNEXPECTED_TOKEN, 0, 6});
 }
 
 } // namespace porpoise::tests

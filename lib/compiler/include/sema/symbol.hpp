@@ -42,18 +42,18 @@ class LabelExpression;
 
 namespace sema {
 
-using SymbolicDecl        = opt::NonNull<const ast::DeclStatement>;
-using SymbolicUsing       = opt::NonNull<const ast::UsingStatement>;
-using SymbolicUnionField  = opt::NonNull<const ast::UnionField>;
-using SymbolicEnumeration = opt::NonNull<const ast::Enumeration>;
-using SymbolicSelfParam   = opt::NonNull<const ast::SelfParameter>;
-using SymbolicParam       = opt::NonNull<const ast::FunctionParameter>;
-using SymbolicCapture     = opt::NonNull<const ast::ForLoopCapture>;
-using SymbolicArm         = opt::NonNull<const ast::MatchArm>;
-using SymbolicLabel       = opt::NonNull<const ast::LabelExpression>;
+using SymbolicDecl        = mem::NonNull<const ast::DeclStatement>;
+using SymbolicUsing       = mem::NonNull<const ast::UsingStatement>;
+using SymbolicUnionField  = mem::NonNull<const ast::UnionField>;
+using SymbolicEnumeration = mem::NonNull<const ast::Enumeration>;
+using SymbolicSelfParam   = mem::NonNull<const ast::SelfParameter>;
+using SymbolicParam       = mem::NonNull<const ast::FunctionParameter>;
+using SymbolicCapture     = mem::NonNull<const ast::ForLoopCapture>;
+using SymbolicArm         = mem::NonNull<const ast::MatchArm>;
+using SymbolicLabel       = mem::NonNull<const ast::LabelExpression>;
 
 struct SymbolicImport {
-    opt::NonNull<const ast::ImportStatement> node;
+    mem::NonNull<const ast::ImportStatement> node;
     opt::Option<mod::Module&>                imported_mod;
 
     MAKE_EQ_DELEGATION(SymbolicImport)
@@ -135,7 +135,6 @@ class SymbolTable {
     MAKE_MOVE_CONSTRUCTABLE_ONLY(SymbolTable)
 
     auto insert(std::string_view name, SymbolicNode node) -> Result<Unit, Diagnostic>;
-
     auto reserve(usize cap) -> void { symbols_.reserve(cap); }
 
     [[nodiscard]] auto has(std::string_view name) const noexcept -> bool {
@@ -161,13 +160,8 @@ class SymbolTable {
         return ReturnType{it->second};
     }
 
-    // Treat this symbol table as an importable module in future passes
-    auto indicate_module() noexcept -> void { is_module_ = true; }
-    auto is_module() const noexcept -> bool { return is_module_; }
-
   private:
     Table symbols_;
-    bool  is_module_{false};
 };
 
 class SymbolTableStack {

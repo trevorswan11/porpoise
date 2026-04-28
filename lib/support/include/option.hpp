@@ -79,33 +79,4 @@ template <typename T> auto safe_eq(const Option<T>& a, const Option<T>& b) noexc
     [[nodiscard]] auto get_##name() const noexcept -> const ReturnType& { return deref member; } \
     [[nodiscard]] auto has_##name() const noexcept -> bool { return member.has_value(); }
 
-// A non-null pointer for use when a reference is inappropriate.
-template <typename T>
-    requires(!std::is_reference_v<T>)
-class NonNull {
-  public:
-    // cppcheck-suppress-begin noExplicitConstructor
-    NonNull(T* ptr) noexcept : ptr_{ptr} {
-        assert(ptr_ && "Attempt to create NonNull from nullptr");
-    }
-    NonNull(Ref<T> opt) : ptr_{&opt.value()} {}
-    NonNull(None) = delete;
-    NonNull(T&&)  = delete;
-
-    template <typename U>
-        requires(std::convertible_to<U*, T*>)
-    NonNull(const NonNull<U>& other) noexcept : ptr_{other.get()} {}
-    // cppcheck-suppress-end noExplicitConstructor
-
-    auto operator->() const noexcept -> T* { return ptr_; }
-    auto operator*() const noexcept -> T& { return *ptr_; }
-    auto get() const noexcept -> T* { return ptr_; }
-
-    explicit operator T() const noexcept { return *ptr_; }
-    bool     operator==(const NonNull<T>&) const noexcept = default;
-
-  private:
-    T* ptr_;
-};
-
 } // namespace porpoise::opt

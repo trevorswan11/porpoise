@@ -1,9 +1,12 @@
 #pragma once
 
+#include <ostream>
+#include <sstream>
 #include <utility>
 
 #include <magic_enum/magic_enum.hpp>
 
+#include <fmt/color.h>
 #include <fmt/format.h>
 
 #include "diagnostic/source_location.hpp"
@@ -14,12 +17,52 @@
 
 namespace porpoise {
 
+enum class DiagnosticLevel : u8 {
+    ERROR,
+    WARNING,
+};
+
 namespace detail {
 
-[[nodiscard]] auto format_diagnostic(const opt::Option<std::string>&    message,
-                                     std::string_view                   error_name,
-                                     const opt::Option<std::string>&    source_path,
-                                     const opt::Option<SourceLocation>& location) -> std::string;
+namespace style {
+
+constexpr auto BASE    = fmt::text_style{};
+constexpr auto SOURCE  = fmt::fg(fmt::color::white) | fmt::emphasis::bold;
+constexpr auto ERROR   = fmt::fg(fmt::color::red);
+constexpr auto WARNING = fmt::fg(fmt::color::light_yellow);
+constexpr auto CARET   = fmt::fg(fmt::color::green);
+
+} // namespace style
+
+// Returns the level fit for diagnostic printing
+[[nodiscard]] constexpr auto level_name(DiagnosticLevel level) noexcept -> std::string_view {
+    switch (level) {
+    case DiagnosticLevel::ERROR:   return "error";
+    case DiagnosticLevel::WARNING: return "warning";
+    default:                       return "";
+    }
+}
+
+// Returns the level's style for diagnostic printing
+[[nodiscard]] constexpr auto level_style(DiagnosticLevel level) noexcept {
+    switch (level) {
+    case DiagnosticLevel::ERROR:   return style::ERROR;
+    case DiagnosticLevel::WARNING: return style::WARNING;
+    default:                       return style::BASE;
+    }
+}
+
+// A decomposed diagnostic that contains all information for base formatting
+struct FormattableDiagnostic {
+    const opt::Option<std::string>&     message;
+    const opt::Option<SourceLocation>&  location;
+    const opt::Option<DiagnosticLevel>& level;
+};
+
+auto format_diagnostic(std::ostream&                   os,
+                       FormattableDiagnostic&&         diag,
+                       const opt::Option<std::string>& source_path,
+                       opt::Option<bool>               in_terminal) -> std::ostream&;
 
 } // namespace detail
 
@@ -37,23 +80,39 @@ template <ScopedEnum E> class Diagnostic {
 
     template <Locateable T> Diagnostic(E err, T t) : error_{err}, loc_{SourceInfo<T>::get(t)} {}
 
-    Diagnostic(Diagnostic& other, E err) noexcept
+    // Moves the passed diagnostic into a new one with a error code
+    Diagnostic(Diagnostic&& other, E err) noexcept
         : message_{std::move(other.message_)}, error_{err}, loc_{std::move(other.loc_)} {}
 
-    [[nodiscard]] auto to_string(const opt::Option<std::string>& source_path = opt::none) const
-        -> std::string {
-        return detail::format_diagnostic(
-            message_, magic_enum::enum_name(error_), source_path, loc_);
+    // Moves the passed diagnostic into a new one with a specified source location
+    template <Locateable T>
+    Diagnostic(Diagnostic&& other, const T& t) noexcept
+        : message_{std::move(other.message_)}, error_{other.error_}, loc_{SourceInfo<T>::get(t)} {}
+
+    [[nodiscard]] auto to_string(const opt::Option<std::string>& source_path = opt::none,
+                                 opt::Option<bool> in_terminal = opt::none) const -> std::string {
+        std::stringstream ss;
+        detail::format_diagnostic(ss, to_formattable(), source_path, in_terminal);
+        return ss.str();
     }
 
     auto operator==(const Diagnostic& other) const noexcept -> bool {
         return message_ == other.message_ && error_ == other.error_ && loc_ == other.loc_;
     }
 
+    [[nodiscard]] auto to_formattable() const noexcept -> detail::FormattableDiagnostic {
+        return {message_, loc_, level_};
+    }
+
+    // Diagnostics are always ERROR by default, see `unset_level`
+    auto set_level(DiagnosticLevel level) noexcept -> void { level_.emplace(level); }
+    auto unset_level() noexcept -> void { level_.reset(); }
+
   private:
-    opt::Option<std::string>    message_{};
-    E                           error_;
-    opt::Option<SourceLocation> loc_{};
+    opt::Option<std::string>     message_{};
+    E                            error_;
+    opt::Option<SourceLocation>  loc_{};
+    opt::Option<DiagnosticLevel> level_{DiagnosticLevel::ERROR};
 };
 
 template <typename T> struct is_diagnostic : std::false_type {};

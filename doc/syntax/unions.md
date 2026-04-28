@@ -1,6 +1,7 @@
 # Unions
 - Unions in porpoise act very similar to tagged unions in other languages
-- Unions are defined using the standard declaration syntax
+- Unions are defined using the standard declaration syntax or with a `using` statement
+    - In the event that the standard declaration syntax is used, it must be `const`
 - A union is defined by a a comma separated list of key-value pairs, where:
     - Each key is an identifier which is used for the active tag
     - Each value is a type for said identifier

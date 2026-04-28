@@ -23,7 +23,10 @@ auto UsingStatement::accept(Visitor& v) const -> void { v.visit(*this); }
 
 auto UsingStatement::parse(syntax::Parser& parser)
     -> Result<mem::Box<Statement>, syntax::ParserDiagnostic> {
+    // A start token of public is guaranteed to be followed by an import
     const auto start_token = parser.get_current_token();
+    if (parser.current_token_is(syntax::TokenType::PUBLIC)) { parser.advance(); }
+
     TRY(parser.expect_peek(syntax::TokenType::IDENT));
     auto alias = downcast<IdentifierExpression>(TRY(IdentifierExpression::parse(parser)));
 
@@ -36,7 +39,7 @@ auto UsingStatement::parse(syntax::Parser& parser)
 
 auto UsingStatement::is_equal(const Node& other) const noexcept -> bool {
     const auto& casted = as<UsingStatement>(other);
-    return *alias_ == *casted.alias_ && type_ == casted.type_ && public_ == casted.public_;
+    return *alias_ == *casted.alias_ && type_ == casted.type_;
 }
 
 } // namespace porpoise::ast

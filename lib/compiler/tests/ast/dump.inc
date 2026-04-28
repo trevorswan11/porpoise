@@ -36,8 +36,10 @@ ReturnStatement
     └─ Enumerations:
         └─ Name: IdentifierExpression: RED
 ImportStatement
+├─ Public: false
 └─ Library: IdentifierExpression: std
 ImportStatement
+├─ Public: true
 ├─ File: StringExpression: ast/node.p
 └─ Alias: IdentifierExpression: node
 DiscardStatement
@@ -231,6 +233,7 @@ ExpressionStatement
         ├─ IdentifierExpression: a
         └─ USizeExpression: 4
 UsingStatement
+├─ Public: false
 ├─ Alias: IdentifierExpression: T
 └─ Type: ExplicitType (modifier: BASE)
     └─ IdentifierExpression: i32 (primitive)
@@ -274,7 +277,7 @@ ExpressionStatement
 ExpressionStatement
 └─ Expr: U32Expression: 3
 ExpressionStatement
-└─ Expr: U8Expression: a
+└─ Expr: U8Expression: 97
 ExpressionStatement
 └─ Expr: F32Expression: 2.3
 ExpressionStatement
@@ -390,6 +393,7 @@ TestStatement
 ├─ Description: dump
 └─ Block: BlockStatement
     ├─ ImportStatement
+    │   ├─ Public: false
     │   └─ Library: IdentifierExpression: other
     └─ ExpressionStatement
         └─ Expr: CallExpression

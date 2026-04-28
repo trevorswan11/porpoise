@@ -1,6 +1,7 @@
 #pragma once
 
 #include <filesystem>
+#include <ostream>
 #include <string>
 
 #include <ankerl/unordered_dense.h>
@@ -11,6 +12,8 @@
 #include "sema/module/source_loader.hpp"
 
 #include "syntax/parser.hpp"
+
+#include "diagnostic/source_file.hpp"
 
 #include "array.hpp"
 #include "memory.hpp"
@@ -43,7 +46,8 @@ using DiagnosticListVariant = std::variant<syntax::ParserDiagnostics, sema::Diag
 
 struct Module {
     std::filesystem::path path;
-    std::string           source;
+    std::filesystem::path parent_path;
+    SourceFile            source;
     ast::AST              tree;
     array::Index          root_table_idx;
     ModuleState           state;
@@ -62,6 +66,8 @@ struct Module {
         return state;
     }
 
+    // Prints the modules diagnostics to the stream, doing nothing if an error state is not present
+    auto print_diagnostics(std::ostream& os) const -> void;
     auto is_errored() const noexcept -> bool { return state == ModuleState::ERRORED; }
 };
 
@@ -74,22 +80,25 @@ class ModuleManager {
 
     MAKE_MOVE_CONSTRUCTABLE_ONLY(ModuleManager)
 
-    // Attempts to load the path from the loader and parse its contents
-    [[nodiscard]] auto try_get_file_module(const std::filesystem::path& path)
-        -> Result<opt::NonNull<Module>, Diagnostic>;
+    // Attempts to load the path from the loader and parse its contents.
+    //
+    // Asserts that the path is relative and its parent is absolute
+    [[nodiscard]] auto try_get_file_module(const std::filesystem::path& path,
+                                           const std::filesystem::path& parent_path = {})
+        -> Result<mem::NonNull<Module>, Diagnostic>;
 
     // Attempts to load the module from the loader and parse its contents
-    [[nodiscard]] auto try_get_true_module(const std::string& name)
-        -> Result<opt::NonNull<Module>, Diagnostic>;
+    [[nodiscard]] auto try_get_library_module(const std::string& name)
+        -> Result<mem::NonNull<Module>, Diagnostic>;
 
-    // Adds a true module and its underlying path to the lookup table
+    // Adds a library module and its underlying path to the lookup table
     [[nodiscard]] auto add_porpoise_module(const std::string&           name,
                                            const std::filesystem::path& path)
         -> Result<Unit, Diagnostic>;
 
   private:
     [[nodiscard]] auto try_get(const std::filesystem::path& path)
-        -> Result<opt::NonNull<Module>, Diagnostic>;
+        -> Result<mem::NonNull<Module>, Diagnostic>;
 
   private:
     SourceLoader&                                                         loader_;

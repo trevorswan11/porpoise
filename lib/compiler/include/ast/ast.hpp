@@ -36,7 +36,6 @@
 #include "ast/statements/discard.hpp"
 #include "ast/statements/expression.hpp"
 #include "ast/statements/import.hpp"
-#include "ast/statements/module.hpp"
 #include "ast/statements/return.hpp"
 #include "ast/statements/test.hpp"
 #include "ast/statements/using.hpp"

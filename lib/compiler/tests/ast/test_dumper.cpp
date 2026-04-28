@@ -17,7 +17,7 @@ constexpr std::string_view input{R"(
     continue;
     return enum { RED };
     import std;
-    import "ast/node.p" as node;
+    pub import "ast/node.p" as node;
     _ = enum { RED };
     constexpr SIZE := 2uz;
     { a; b; 2; c; };
@@ -62,7 +62,7 @@ constexpr std::string_view input{R"(
 )"};
 
 constexpr std::string_view expected{
-#include "dump.inc"
+#include "ast/dump.inc"
 };
 
 TEST_CASE("Comprehensive dump") {

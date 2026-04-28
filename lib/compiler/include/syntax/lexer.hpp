@@ -44,7 +44,9 @@ class Lexer {
 
     class Snapshot {
       public:
-        explicit Snapshot(const Lexer& l) noexcept;
+        explicit Snapshot(const Lexer& l) noexcept
+            : pos_{l.pos_}, peek_pos_{l.peek_pos_}, current_byte_{l.current_byte_},
+              line_no_{l.line_no_}, col_no_{l.col_no_} {}
 
       private:
         usize pos_;
@@ -58,7 +60,11 @@ class Lexer {
 
   public:
     Lexer() noexcept = default;
-    explicit Lexer(std::string_view input) noexcept : input_{input} { read_character(); }
+    explicit Lexer(std::string_view input) noexcept : input_{input} {
+        // `read_character` advances the column but it isn't consuming here so we reset it
+        read_character();
+        col_no_ = 0;
+    }
 
     auto reset(std::string_view input = {}) noexcept -> void;
     auto advance() noexcept -> Token;
@@ -72,6 +78,7 @@ class Lexer {
     static auto lu_builtin(std::string_view ident) noexcept -> TokenType;
     static auto lu_ident(std::string_view ident) noexcept -> TokenType;
 
+    // Reads n characters from the input stream
     auto read_character(u8 n = 1) noexcept -> void;
     auto read_operator() const noexcept -> opt::Option<Token>;
     auto read_ident(bool builtin) noexcept -> std::string_view;
@@ -97,7 +104,7 @@ class Lexer {
     usize            peek_pos_{0};
     byte             current_byte_{0};
 
-    usize line_no_{1};
+    usize line_no_{0};
     usize col_no_{0};
 
     friend class Parser;

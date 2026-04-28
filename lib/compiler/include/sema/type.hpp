@@ -8,6 +8,7 @@
 
 #include "array.hpp"
 #include "hash.hpp"
+#include "memory.hpp"
 #include "option.hpp"
 #include "types.hpp"
 #include "utility.hpp"
@@ -47,26 +48,26 @@ namespace types {
 using PrimitiveType = Unit;
 
 struct Slice {
-    opt::NonNull<Type> underlying;
+    mem::NonNull<Type> underlying;
     bool               null_terminated;
 };
 
 struct Array {
-    opt::NonNull<Type> underlying;
+    mem::NonNull<Type> underlying;
     usize              len;
     bool               null_terminated;
 };
 
 struct Pointer {
-    opt::NonNull<Type> underlying;
+    mem::NonNull<Type> underlying;
 };
 
 struct Reference {
-    opt::NonNull<Type> underlying;
+    mem::NonNull<Type> underlying;
 };
 
 struct Enum {
-    opt::NonNull<Type> underlying;
+    mem::NonNull<Type> underlying;
 };
 
 struct Struct {
@@ -74,8 +75,8 @@ struct Struct {
 };
 
 struct Function {
-    std::span<opt::NonNull<Type>> params;
-    opt::NonNull<Type>            return_type;
+    std::span<mem::NonNull<Type>> params;
+    mem::NonNull<Type>            return_type;
 };
 
 template <typename T>

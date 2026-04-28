@@ -148,7 +148,6 @@ enum class TokenType : u8 {
     DO,
     AS,
     DEFER,
-    MODULE,
     TEST,
 
     I32_TYPE,
@@ -314,7 +313,6 @@ struct Token {
     explicit Token(std::pair<std::string_view, TokenType> tok) noexcept
         : type{tok.second}, slice{tok.first} {}
 
-    [[nodiscard]] auto is_at_start() const noexcept -> bool { return line == 0 && column == 0; }
     [[nodiscard]] auto promote() const -> Result<std::string, TokenDiagnostic>;
     [[nodiscard]] auto is_primitive() const noexcept -> bool;
     [[nodiscard]] auto is_builtin() const noexcept -> bool;
@@ -341,7 +339,11 @@ template <> struct fmt::formatter<porpoise::syntax::Token> {
     static constexpr auto parse(format_parse_context& ctx) noexcept { return ctx.begin(); }
 
     template <typename F> static auto format(const porpoise::syntax::Token& t, F& ctx) {
-        return fmt::format_to(
-            ctx.out(), "{}({}) [{}, {}]", magic_enum::enum_name(t.type), t.slice, t.line, t.column);
+        return fmt::format_to(ctx.out(),
+                              "{}({}) [{}, {}]",
+                              magic_enum::enum_name(t.type),
+                              t.slice,
+                              t.line + 1,
+                              t.column + 1);
     }
 };
