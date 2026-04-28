@@ -12,7 +12,7 @@ class SourceLoader {
   public:
     virtual ~SourceLoader() = default;
     [[nodiscard]] virtual auto load(const std::filesystem::path& path)
-        -> Result<std::string, Error> = 0;
+        -> Result<std::string, Diagnostic> = 0;
 
     // Normalizes the path to behave as required by the loader
     [[nodiscard]] virtual auto normalize(const std::filesystem::path& path)

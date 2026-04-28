@@ -7,15 +7,20 @@
 
 namespace porpoise::sema::mod {
 
-auto FileLoader::load(const std::filesystem::path& path) -> Result<std::string, Error> {
+auto FileLoader::load(const std::filesystem::path& path) -> Result<std::string, Diagnostic> {
     if (!std::filesystem::exists(path)) {
-        return Err{Error::PATH_DOES_NOT_EXIST};
+        return make_sema_err(fmt::format("Path '{}' does not exist", path.string()),
+                             Error::PATH_DOES_NOT_EXIST);
     } else if (!std::filesystem::is_regular_file(path)) {
-        return Err{Error::PATH_IS_NOT_FILE};
+        return make_sema_err(fmt::format("Path '{}' is not a file", path.string()),
+                             Error::PATH_IS_NOT_FILE);
     }
 
-    std::ifstream file{path, std::ios::in | std::ios::binary};
-    if (!file.is_open()) { return Err{Error::FAILED_TO_OPEN_FILE}; }
+    std::ifstream file{path, std::ios::in};
+    if (!file.is_open()) {
+        return make_sema_err(fmt::format("Failed to open file at path: '{}'", path.string()),
+                             Error::FAILED_TO_OPEN_FILE);
+    }
     std::stringstream buf;
     buf << file.rdbuf();
     return buf.str();

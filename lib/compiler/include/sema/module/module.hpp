@@ -17,7 +17,6 @@
 
 #include "array.hpp"
 #include "memory.hpp"
-#include "option.hpp"
 #include "result.hpp"
 #include "utility.hpp"
 
@@ -92,8 +91,8 @@ class ModuleManager {
         -> Result<mem::NonNull<Module>, Diagnostic>;
 
     // Adds a library module and its underlying path to the lookup table
-    [[nodiscard]] auto add_porpoise_module(const std::string&           name,
-                                           const std::filesystem::path& path)
+    [[nodiscard]] auto add_library_module(const std::string&           name,
+                                          const std::filesystem::path& path)
         -> Result<Unit, Diagnostic>;
 
   private:

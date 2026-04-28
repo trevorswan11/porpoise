@@ -16,7 +16,7 @@ auto ModuleManager::try_get_file_module(const std::filesystem::path& path,
            "Parent path must be absolute or empty");
     if (!path.is_relative()) {
         return make_sema_err(fmt::format("Requested file '{}' is absolute", path.string()),
-                             Error::IMPORT_NOT_RELATIVE);
+                             Error::MODULE_PATH_NOT_RELATIVE);
     };
 
     const auto normalized = loader_.normalize(parent_path.empty() ? path : parent_path / path);
@@ -34,20 +34,19 @@ auto ModuleManager::try_get_library_module(const std::string& name)
     return try_get(it->second);
 }
 
-auto ModuleManager::add_porpoise_module(const std::string& name, const std::filesystem::path& path)
+auto ModuleManager::add_library_module(const std::string& name, const std::filesystem::path& path)
     -> Result<Unit, Diagnostic> {
     const auto normalized = loader_.normalize(path);
     if (!normalized) { return make_sema_err(normalized.error()); }
 
     if (auto it = module_lut_.find(name); it != module_lut_.end()) {
         if (it->second == normalized) { return Unit{}; }
-        return make_sema_err(
-            fmt::format(
-                "Attempt to add duplicate module {} from {} which already exists at path {}",
-                name,
-                normalized->string(),
-                it->second.string()),
-            Error::MODULE_ALREADY_EXISTS);
+        return make_sema_err(fmt::format("Attempt to add duplicate module '{}' from path '{}' "
+                                         "which already exists at path '{}'",
+                                         name,
+                                         path.string(),
+                                         it->second.string()),
+                             Error::MODULE_ALREADY_EXISTS);
     }
 
     module_lut_.emplace(name, *normalized);
@@ -58,14 +57,10 @@ auto ModuleManager::try_get(const std::filesystem::path& path)
     -> Result<mem::NonNull<Module>, Diagnostic> {
     // Prevent re-parsing by checking the map, safe as pointers are stable
     if (auto it = modules_.find(path); it != modules_.end()) { return it->second.get(); }
-    auto       source       = loader_.load(path);
+    auto       source       = TRY(loader_.load(path));
     const auto abs_path_str = path.string();
-    if (!source) {
-        return make_sema_err(fmt::format(R"(Could not load file: "{}")", abs_path_str),
-                             source.error());
-    }
 
-    auto mod = mem::make_box<Module>(path, path.parent_path(), SourceFile{std::move(*source)});
+    auto mod = mem::make_box<Module>(path, path.parent_path(), SourceFile{std::move(source)});
     syntax::Parser p{mod->source};
     auto [ast, diagnostics] = p.consume();
 

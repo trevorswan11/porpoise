@@ -18,14 +18,6 @@ TEST_CASE("Is space") {
 }
 
 TEST_CASE("Left trim spaces") {
-    CHECK(string::trim_left("") == "");
-    CHECK(string::trim_left("the") == "the");
-    CHECK(string::trim_left("    the") == "the");
-    CHECK(string::trim_left("    the    ") == "the    ");
-    CHECK(string::trim_left("        ") == "");
-}
-
-TEST_CASE("Counting left trim") {
     usize count = 0;
     CHECK(string::trim_left("", count) == "");
     CHECK(count == 0);
@@ -40,7 +32,7 @@ TEST_CASE("Counting left trim") {
     CHECK(count == 8);
 }
 
-TEST_CASE("Counting right trim") {
+TEST_CASE("Right trim spaces") {
     usize count = 0;
     CHECK(string::trim_right("", count) == "");
     CHECK(count == 0);
@@ -56,15 +48,6 @@ TEST_CASE("Counting right trim") {
 }
 
 TEST_CASE("Trim spaces") {
-    CHECK(string::trim("") == "");
-    CHECK(string::trim("the") == "the");
-    CHECK(string::trim("the    ") == "the");
-    CHECK(string::trim("    the") == "the");
-    CHECK(string::trim("    the    ") == "the");
-    CHECK(string::trim("        ") == "");
-}
-
-TEST_CASE("Counting trim") {
     usize count = 0;
     CHECK(string::trim("", count) == "");
     CHECK(count == 0);
@@ -88,6 +71,13 @@ TEST_CASE("Counting trim") {
 TEST_CASE("Trim pred") {
     CHECK(string::trim("theasdaefae",
                        [](byte b) { return std::string_view{"asdaefae"}.contains(b); }) == "th");
+}
+
+TEST_CASE("String view substrings") {
+    constexpr std::string_view str{"abcdefghijk"};
+    CHECK(string::substr(str, 2) == "cdefghijk");
+    CHECK(string::substr(str, 2, 7) == "cdefghi");
+    CHECK(string::substr(str, 100) == "");
 }
 
 } // namespace porpoise::tests

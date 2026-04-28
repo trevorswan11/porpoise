@@ -11,7 +11,7 @@ SemaTestContext::SemaTestContext(const std::vector<MockFile>& imports,
           for (const auto& mock : imports) {
               loader->add(mock.path, std::string{mock.source});
               if (mock.name) {
-                  REQUIRE(manager.add_porpoise_module(std::string{*mock.name}, mock.path));
+                  REQUIRE(manager.add_library_module(std::string{*mock.name}, mock.path));
               }
           }
 
