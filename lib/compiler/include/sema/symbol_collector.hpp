@@ -54,8 +54,6 @@ class SymbolCollector : public ast::Visitor {
 
     MAKE_AST_VISITOR_OVERRIDES()
 
-    auto pass_first() noexcept -> void { first_node_ = false; }
-
   private:
     template <typename... IterPairs>
     [[nodiscard]] auto visit_scopes(TypeKind kind, IterPairs&&... pairs) -> usize {
@@ -96,12 +94,10 @@ class SymbolCollector : public ast::Visitor {
     }
 
   private:
-    mod::Module&     collecting_;
-    usize            table_idx_;
-    SymbolTableStack table_stack_;
-    CollectorCtx     ctx_;
-
-    bool               first_node_{true};
+    mod::Module&       collecting_;
+    usize              table_idx_;
+    SymbolTableStack   table_stack_;
+    CollectorCtx       ctx_;
     opt::Option<Type&> last_type_;
 
     DefaultCounter in_expr_scope_;

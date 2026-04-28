@@ -24,7 +24,7 @@ auto ModuleManager::try_get_file_module(const std::filesystem::path& path,
     return try_get(*normalized);
 }
 
-auto ModuleManager::try_get_true_module(const std::string& name)
+auto ModuleManager::try_get_library_module(const std::string& name)
     -> Result<opt::NonNull<Module>, Diagnostic> {
     auto it = module_lut_.find(name);
     if (it == module_lut_.end()) {

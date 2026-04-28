@@ -6,8 +6,8 @@ namespace porpoise::tests {
 
 using MockFile = helpers::MockFile;
 
-constexpr std::string_view a_porp{R"(module; import "b.porp" as b;)"};
-constexpr std::string_view b_porp{R"(module; import "a.porp" as a;)"};
+constexpr std::string_view a_porp{R"(pub import "b.porp" as b;)"};
+constexpr std::string_view b_porp{R"(pub import "a.porp" as a;)"};
 
 TEST_CASE("Circular imports") {
     constexpr std::string_view root{"a.porp"};
@@ -26,7 +26,7 @@ import "b.porp" as b;
 )"};
 
 constexpr std::string_view diamond{R"(import std;)"};
-constexpr std::string_view std_porp{R"(module;)"};
+constexpr std::string_view std_porp{R"(pub import "io.porp" as io;)"};
 
 TEST_CASE("Diamond dependencies") {
     constexpr std::string_view root{"main.porp"};
@@ -42,7 +42,7 @@ TEST_CASE("Diamond dependencies") {
     CHECK(registry.get_from_opt(0, "a"));
     CHECK(registry.get_from_opt(0, "b"));
     CHECK(registry.get_from_opt(1, "std"));
-    CHECK(registry.get(2).empty());
+    CHECK(registry.get_from_opt(2, "io"));
     CHECK(registry.get_from_opt(3, "std"));
 }
 

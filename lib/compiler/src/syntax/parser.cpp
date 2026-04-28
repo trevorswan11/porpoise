@@ -97,7 +97,17 @@ auto Parser::get_peek_precedence() const noexcept -> std::pair<Precedence, opt::
 
 auto Parser::parse_statement(bool require_semicolon)
     -> Result<mem::Box<ast::Statement>, ParserDiagnostic> {
-    if (current_token_.is_decl_token()) { return ast::DeclStatement::parse(*this); }
+    // Not all decls are public so the condition needs to be rechecked
+    if (current_token_.type == TokenType::PUBLIC) {
+        switch (peek_token_.type) {
+        case TokenType::IMPORT: return ast::ImportStatement::parse(*this);
+        case TokenType::USING:  return ast::UsingStatement::parse(*this);
+        default:                return ast::DeclStatement::parse(*this);
+        }
+    } else if (current_token_.is_decl_token()) {
+        return ast::DeclStatement::parse(*this);
+    }
+
     switch (current_token_.type) {
     case TokenType::LBRACE:     return ast::BlockStatement::parse(*this);
     case TokenType::BREAK:      return ast::BreakStatement::parse(*this);
@@ -105,7 +115,6 @@ auto Parser::parse_statement(bool require_semicolon)
     case TokenType::DEFER:      return ast::DeferStatement::parse(*this);
     case TokenType::UNDERSCORE: return ast::DiscardStatement::parse(*this);
     case TokenType::IMPORT:     return ast::ImportStatement::parse(*this);
-    case TokenType::MODULE:     return ast::ModuleStatement::parse(*this);
     case TokenType::RETURN:     return ast::ReturnStatement::parse(*this);
     case TokenType::TEST:       return ast::TestStatement::parse(*this);
     case TokenType::USING:      return ast::UsingStatement::parse(*this);

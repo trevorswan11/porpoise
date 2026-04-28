@@ -88,10 +88,10 @@ class ModuleManager {
         -> Result<opt::NonNull<Module>, Diagnostic>;
 
     // Attempts to load the module from the loader and parse its contents
-    [[nodiscard]] auto try_get_true_module(const std::string& name)
+    [[nodiscard]] auto try_get_library_module(const std::string& name)
         -> Result<opt::NonNull<Module>, Diagnostic>;
 
-    // Adds a true module and its underlying path to the lookup table
+    // Adds a library module and its underlying path to the lookup table
     [[nodiscard]] auto add_porpoise_module(const std::string&           name,
                                            const std::filesystem::path& path)
         -> Result<Unit, Diagnostic>;

@@ -11,10 +11,7 @@ auto SymbolCollector::collect_symbols(mod::Module& module, const CollectorCtx& c
         module.root_table_idx.emplace(ctx.registry.create());
 
         SymbolCollector collector{module, ctx};
-        for (const auto& node : module.tree) {
-            node->accept(collector);
-            collector.pass_first();
-        }
+        for (const auto& node : module.tree) { node->accept(collector); }
 
         if (!ctx.diagnostics.empty()) { return module.error_out(std::move(ctx.diagnostics)); }
         module.state = mod::ModuleState::SYMBOLS_COLLECTED;
@@ -324,13 +321,11 @@ auto SymbolCollector::visit(const ast::ExpressionStatement& expr) -> void {
 }
 
 auto SymbolCollector::visit(const ast::ImportStatement& import_stmt) -> void {
-    if (ctx_.registry.get(table_idx_).is_module()) { import_stmt.mark_public(); }
-
     auto [alias, mod_result] = import_stmt.match(Overloaded{
         [this](const ast::LibraryImport& module) {
             const auto name =
                 module.has_alias() ? module.get_alias().get_name() : module.get_name().get_name();
-            auto mod = ctx_.modules.try_get_true_module(module.get_name().materialize());
+            auto mod = ctx_.modules.try_get_library_module(module.get_name().materialize());
             return std::pair{name, mod};
         },
         [this](const ast::FileImport& user) {
@@ -360,22 +355,6 @@ auto SymbolCollector::visit(const ast::ImportStatement& import_stmt) -> void {
         ctx_.registry.insert_into(table_idx_, alias, SymbolicImport{&import_stmt, imported_mod}));
 }
 
-auto SymbolCollector::visit(const ast::ModuleStatement& module_stmt) -> void {
-    auto& table = ctx_.registry.get(table_idx_);
-    if (first_node_) { return table.indicate_module(); }
-
-    // Module statements are highly restricted in terms of usage and location
-    if (table.is_module()) {
-        ctx_.diagnostics.emplace_back("Only one module statement is allowed per file",
-                                      Error::DUPLICATE_MODULE_STATEMENT,
-                                      module_stmt.get_token());
-    } else {
-        ctx_.diagnostics.emplace_back("Module indicator must be first statement of file",
-                                      Error::ILLEGAL_MODULE_STATEMENT_LOCATION,
-                                      module_stmt.get_token());
-    }
-}
-
 auto SymbolCollector::visit(const ast::ReturnStatement& return_stmt) -> void {
     if (!in_function_scope_) {
         ctx_.diagnostics.emplace_back("Cannot return outside of a function",
@@ -401,7 +380,6 @@ auto SymbolCollector::visit(const ast::TestStatement& test) -> void {
 }
 
 auto SymbolCollector::visit(const ast::UsingStatement& using_stmt) -> void {
-    if (ctx_.registry.get(table_idx_).is_module()) { using_stmt.mark_public(); }
     try_declare(using_stmt.get_alias().get_name(), &using_stmt);
 }
 

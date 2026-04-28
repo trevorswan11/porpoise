@@ -28,8 +28,9 @@ class UsingStatement : public StmtBase<UsingStatement> {
     MAKE_GETTER(alias, const IdentifierExpression&, *)
     MAKE_GETTER(type, const ExplicitType&)
 
-    auto               mark_public() const noexcept -> void { public_ = true; }
-    [[nodiscard]] auto is_public() const noexcept -> bool { return public_; }
+    [[nodiscard]] auto is_public() const noexcept -> bool {
+        return start_token_.type == syntax::TokenType::PUBLIC;
+    }
 
   protected:
     auto is_equal(const Node& other) const noexcept -> bool override;
@@ -37,7 +38,6 @@ class UsingStatement : public StmtBase<UsingStatement> {
   private:
     mem::Box<IdentifierExpression> alias_;
     ExplicitType                   type_;
-    mutable bool                   public_{false}; // Updated in sema
 };
 
 } // namespace porpoise::ast

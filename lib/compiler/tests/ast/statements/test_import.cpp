@@ -7,8 +7,6 @@ namespace porpoise::tests {
 namespace keywords = syntax::keywords;
 
 TEST_CASE("Library imports") {
-    helpers::test_stmt("module;", ast::ModuleStatement{syntax::Token{keywords::MODULE}});
-
     helpers::test_stmt("import std;",
                        ast::ImportStatement{syntax::Token{keywords::IMPORT},
                                             ast::LibraryImport{helpers::make_ident("std"), {}}});
@@ -26,17 +24,6 @@ TEST_CASE("File imports") {
             syntax::Token{keywords::IMPORT},
             ast::FileImport{helpers::make_primitive<ast::StringExpression>(R"("ast/node.p")"),
                             helpers::make_ident("node")}});
-}
-
-TEST_CASE("Incorrect module statement") {
-    helpers::test_parser_fail(
-        "module",
-        syntax::ParserDiagnostic{
-            "Expected token SEMICOLON, found END", syntax::ParserError::UNEXPECTED_TOKEN, 0, 6});
-    helpers::test_parser_fail(
-        "module std;",
-        syntax::ParserDiagnostic{
-            "Expected token SEMICOLON, found IDENT", syntax::ParserError::UNEXPECTED_TOKEN, 0, 7});
 }
 
 TEST_CASE("Incorrect library imports") {

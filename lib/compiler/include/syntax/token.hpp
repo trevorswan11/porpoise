@@ -148,7 +148,6 @@ enum class TokenType : u8 {
     DO,
     AS,
     DEFER,
-    MODULE,
     TEST,
 
     I32_TYPE,

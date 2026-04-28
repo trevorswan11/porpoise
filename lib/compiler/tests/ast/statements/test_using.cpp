@@ -28,11 +28,10 @@ TEST_CASE("Well formed using statement") {
 
 TEST_CASE("User defined type alias") {
     helpers::test_stmt(
-        "using U = union { a: enum { A } };",
+        "pub using U = union { a: enum { A } };",
         ast::UsingStatement{
-            syntax::Token{keywords::USING},
+            syntax::Token{keywords::PUBLIC},
             helpers::make_ident("U"),
-
             ast::ExplicitType{
                 mods::BASE,
                 mem::make_box<ast::UnionExpression>(

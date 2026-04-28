@@ -164,6 +164,32 @@ TEST_CASE("Union hollow types with member") {
         ctx, helpers::TableEntry{"b", field()}, helpers::TableEntry{"c", member()});
 }
 
+TEST_CASE("Public using query") {
+    const auto test = [](bool is_public) {
+        const auto input = fmt::format("{} using I = i32;", is_public ? "pub" : "");
+
+        auto ctx = helpers::test_collector(
+            input,
+            {},
+            helpers::TableEntry{
+                "I",
+                ast::UsingStatement{syntax::Token{is_public ? keywords::PUBLIC : keywords::USING},
+                                    helpers::make_ident("I"),
+                                    ast::ExplicitType{
+                                        mods::BASE,
+                                        helpers::make_ident("i32"),
+                                    }}});
+
+        auto&       table     = ctx.analyzer.get_table(ctx.root_mod->root_table_idx);
+        const auto& int_alias = table.get_opt("I");
+        REQUIRE(int_alias);
+        CHECK(int_alias->is_public() == is_public);
+    };
+
+    test(true);
+    test(false);
+}
+
 TEST_CASE("Shadowing member/field declarations") {
     helpers::test_collector_fail(
         "const a := struct { const a := 2; };",

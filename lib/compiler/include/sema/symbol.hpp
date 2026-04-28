@@ -135,7 +135,6 @@ class SymbolTable {
     MAKE_MOVE_CONSTRUCTABLE_ONLY(SymbolTable)
 
     auto insert(std::string_view name, SymbolicNode node) -> Result<Unit, Diagnostic>;
-
     auto reserve(usize cap) -> void { symbols_.reserve(cap); }
 
     [[nodiscard]] auto has(std::string_view name) const noexcept -> bool {
@@ -161,13 +160,8 @@ class SymbolTable {
         return ReturnType{it->second};
     }
 
-    // Treat this symbol table as an importable module in future passes
-    auto indicate_module() noexcept -> void { is_module_ = true; }
-    auto is_module() const noexcept -> bool { return is_module_; }
-
   private:
     Table symbols_;
-    bool  is_module_{false};
 };
 
 class SymbolTableStack {

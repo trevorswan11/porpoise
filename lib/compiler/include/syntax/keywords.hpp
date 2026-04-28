@@ -58,7 +58,6 @@ constexpr Keyword STATIC{"static", TokenType::STATIC};
 constexpr Keyword NORETURN{"noreturn", TokenType::NORETURN};
 constexpr Keyword NULLPTR{"nullptr", TokenType::NULLPTR};
 constexpr Keyword USING{"using", TokenType::USING};
-constexpr Keyword MODULE{"module", TokenType::MODULE};
 constexpr Keyword TEST{"test", TokenType::TEST};
 
 namespace builtins {
@@ -114,7 +113,7 @@ constexpr auto ALL_KEYWORDS = [] {
         keywords::AS,        keywords::PUBLIC,       keywords::EXTERN,
         keywords::EXPORT,    keywords::PACKED,       keywords::VOLATILE,
         keywords::STATIC,    keywords::NORETURN,     keywords::NULLPTR,
-        keywords::USING,     keywords::MODULE,       keywords::TEST,
+        keywords::USING,     keywords::TEST,
     };
 
     std::ranges::sort(all_keywords, {}, &Keyword::first);

@@ -72,9 +72,11 @@ a = (b = 6);
 
 ## Type Aliasing
 - Type aliases can be declared with the `using` keyword
+- An alias can be marked public in order to expose it to the outside world when the enclosing file is imported
 - This is very similar to C++, for example:
 ```porpoise
-using MyBool = bool;
+using MyBool = bool; // Private to this file
+pub using MyPublicBool = bool; // Publically accessible via namespacig when imported
 ```
 - Note that this is an _alias_, so there is no difference between using the aliased type and handwriting the entire raw type
 - The most common use cases for this are for saving keystrokes for long types and for passing complex types to functions at the call site
