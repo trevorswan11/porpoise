@@ -42,18 +42,18 @@ class LabelExpression;
 
 namespace sema {
 
-using SymbolicDecl        = opt::NonNull<const ast::DeclStatement>;
-using SymbolicUsing       = opt::NonNull<const ast::UsingStatement>;
-using SymbolicUnionField  = opt::NonNull<const ast::UnionField>;
-using SymbolicEnumeration = opt::NonNull<const ast::Enumeration>;
-using SymbolicSelfParam   = opt::NonNull<const ast::SelfParameter>;
-using SymbolicParam       = opt::NonNull<const ast::FunctionParameter>;
-using SymbolicCapture     = opt::NonNull<const ast::ForLoopCapture>;
-using SymbolicArm         = opt::NonNull<const ast::MatchArm>;
-using SymbolicLabel       = opt::NonNull<const ast::LabelExpression>;
+using SymbolicDecl        = mem::NonNull<const ast::DeclStatement>;
+using SymbolicUsing       = mem::NonNull<const ast::UsingStatement>;
+using SymbolicUnionField  = mem::NonNull<const ast::UnionField>;
+using SymbolicEnumeration = mem::NonNull<const ast::Enumeration>;
+using SymbolicSelfParam   = mem::NonNull<const ast::SelfParameter>;
+using SymbolicParam       = mem::NonNull<const ast::FunctionParameter>;
+using SymbolicCapture     = mem::NonNull<const ast::ForLoopCapture>;
+using SymbolicArm         = mem::NonNull<const ast::MatchArm>;
+using SymbolicLabel       = mem::NonNull<const ast::LabelExpression>;
 
 struct SymbolicImport {
-    opt::NonNull<const ast::ImportStatement> node;
+    mem::NonNull<const ast::ImportStatement> node;
     opt::Option<mod::Module&>                imported_mod;
 
     MAKE_EQ_DELEGATION(SymbolicImport)

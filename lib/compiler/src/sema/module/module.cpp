@@ -11,7 +11,7 @@ auto Module::print_diagnostics(std::ostream& os) const -> void {
 
 auto ModuleManager::try_get_file_module(const std::filesystem::path& path,
                                         const std::filesystem::path& parent_path)
-    -> Result<opt::NonNull<Module>, Diagnostic> {
+    -> Result<mem::NonNull<Module>, Diagnostic> {
     assert((parent_path.empty() || parent_path.is_absolute()) &&
            "Parent path must be absolute or empty");
     if (!path.is_relative()) {
@@ -25,7 +25,7 @@ auto ModuleManager::try_get_file_module(const std::filesystem::path& path,
 }
 
 auto ModuleManager::try_get_library_module(const std::string& name)
-    -> Result<opt::NonNull<Module>, Diagnostic> {
+    -> Result<mem::NonNull<Module>, Diagnostic> {
     auto it = module_lut_.find(name);
     if (it == module_lut_.end()) {
         return make_sema_err(fmt::format("Unknown module '{}'", name),
@@ -55,7 +55,7 @@ auto ModuleManager::add_porpoise_module(const std::string& name, const std::file
 }
 
 auto ModuleManager::try_get(const std::filesystem::path& path)
-    -> Result<opt::NonNull<Module>, Diagnostic> {
+    -> Result<mem::NonNull<Module>, Diagnostic> {
     // Prevent re-parsing by checking the map, safe as pointers are stable
     if (auto it = modules_.find(path); it != modules_.end()) { return it->second.get(); }
     auto       source       = loader_.load(path);

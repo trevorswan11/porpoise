@@ -85,11 +85,11 @@ class ModuleManager {
     // Asserts that the path is relative and its parent is absolute
     [[nodiscard]] auto try_get_file_module(const std::filesystem::path& path,
                                            const std::filesystem::path& parent_path = {})
-        -> Result<opt::NonNull<Module>, Diagnostic>;
+        -> Result<mem::NonNull<Module>, Diagnostic>;
 
     // Attempts to load the module from the loader and parse its contents
     [[nodiscard]] auto try_get_library_module(const std::string& name)
-        -> Result<opt::NonNull<Module>, Diagnostic>;
+        -> Result<mem::NonNull<Module>, Diagnostic>;
 
     // Adds a library module and its underlying path to the lookup table
     [[nodiscard]] auto add_porpoise_module(const std::string&           name,
@@ -98,7 +98,7 @@ class ModuleManager {
 
   private:
     [[nodiscard]] auto try_get(const std::filesystem::path& path)
-        -> Result<opt::NonNull<Module>, Diagnostic>;
+        -> Result<mem::NonNull<Module>, Diagnostic>;
 
   private:
     SourceLoader&                                                         loader_;

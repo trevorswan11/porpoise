@@ -122,40 +122,4 @@ TEST_CASE("Safe optional custom equality") {
     }));
 }
 
-TEST_CASE("opt::NonNull construction checks") {
-    STATIC_CHECK_FALSE(std::is_constructible_v<opt::NonNull<i32>, i32&&>);
-    STATIC_CHECK_FALSE(std::is_constructible_v<opt::NonNull<i32>, opt::None>);
-    STATIC_CHECK(std::is_trivially_copyable_v<opt::NonNull<i32>>);
-}
-
-TEST_CASE("opt::NonNull basic usage") {
-    i32                     val = 42;
-    const opt::NonNull<i32> ptr{&val};
-
-    CHECK(*ptr == 42);
-    CHECK(ptr.get() == &val);
-    CHECK(static_cast<i32>(ptr) == 42);
-}
-
-TEST_CASE("opt::NonNull from OptRef") {
-    i32                 val = 10;
-    const opt::Ref<i32> opt{val};
-
-    const opt::NonNull<i32> ptr{opt};
-    CHECK(*ptr == 10);
-
-    const opt::Ref<i32> empty;
-    CHECK_THROWS_AS(opt::NonNull<i32>{empty}, std::bad_optional_access);
-}
-
-TEST_CASE("opt::NonNull conversions") {
-    helpers::Derived                     d;
-    const opt::NonNull<helpers::Derived> d_ptr{&d};
-
-    opt::NonNull<helpers::Base> b_ptr{d_ptr};
-    CHECK(b_ptr->x == 10);
-    opt::NonNull<const helpers::Derived> cd_ptr{d_ptr};
-    CHECK(cd_ptr->y == 20);
-}
-
 } // namespace porpoise::tests

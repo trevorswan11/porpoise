@@ -26,7 +26,7 @@ struct SemaTestContext {
     mem::Box<sema::mod::MemoryLoader> loader;
     sema::mod::ModuleManager          manager;
     sema::Analyzer                    analyzer;
-    opt::NonNull<sema::mod::Module>   root_mod;
+    mem::NonNull<sema::mod::Module>   root_mod;
 
     // The root is automatically added to the internal loader and can be immediately analyzed
     explicit SemaTestContext(const std::vector<MockFile>& imports,
