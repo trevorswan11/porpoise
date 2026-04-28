@@ -67,4 +67,6 @@ TEST_CASE("Unknown file module") {
                          std::pair{0uz, 7uz}});
 }
 
+TEST_CASE("Module diagnostic printing") {}
+
 } // namespace porpoise::tests

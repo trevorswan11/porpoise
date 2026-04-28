@@ -1,8 +1,10 @@
 #pragma once
 
+#include <config.h>
+
 #include "arguments/ast_dump.hpp"
 
-#ifdef _WIN32
+#ifdef PLATFORM_WINDOWS
 #    include "platform/win32.hpp"
 #endif
 
@@ -30,7 +32,7 @@ class Parser {
 
     Parsed parsed_;
 
-#ifdef _WIN32
+#ifdef PLATFORM_WINDOWS
     driver::win32::RichConsole console_;
 #endif
 };

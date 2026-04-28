@@ -21,7 +21,8 @@ namespace detail {
 // Formats the diagnostic with the modules information, falling back to standard formatting
 auto format_module_diagnostic(std::ostream&                         os,
                               FormattableDiagnostic&&               diag,
-                              opt::Option<const sema::mod::Module&> module) -> std::ostream&;
+                              opt::Option<const sema::mod::Module&> module,
+                              opt::Option<bool>                     in_terminal) -> std::ostream&;
 
 } // namespace detail
 
@@ -54,9 +55,10 @@ template <DiagnosticType D> class DiagnosticList {
     operator std::span<const D>() const { return diagnostics_; }
 
     // Prints the diagnostics with information from the enclosing module if provided
-    auto print(std::ostream& os, opt::Option<const sema::mod::Module&> module = {}) const -> void {
+    auto print(std::ostream& os, opt::Option<const sema::mod::Module&> module = opt::none) const
+        -> void {
         for (const auto& diag : diagnostics_) {
-            detail::format_module_diagnostic(os, diag.to_formattable(), module) << "\n";
+            detail::format_module_diagnostic(os, diag.to_formattable(), module, opt::none) << "\n";
         }
     }
 

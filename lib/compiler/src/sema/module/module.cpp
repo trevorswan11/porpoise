@@ -65,7 +65,7 @@ auto ModuleManager::try_get(const std::filesystem::path& path)
                              source.error());
     }
 
-    auto           mod = mem::make_box<Module>(path, path.parent_path(), std::move(*source));
+    auto mod = mem::make_box<Module>(path, path.parent_path(), SourceFile{std::move(*source)});
     syntax::Parser p{mod->source};
     auto [ast, diagnostics] = p.consume();
 

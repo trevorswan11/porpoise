@@ -25,8 +25,9 @@ auto SourceFile::get_diagnostic_strings(const SourceLocation& loc) const
     substr        = string::trim_right(substr);
 
     // Adjust the column number based on skipped spaces
-    if (loc.column < skipped || loc.column > substr.size()) { return {substr, opt::none}; }
+    if (loc.column < skipped) { return {substr, opt::none}; }
     const auto true_col = loc.column - skipped;
+    if (true_col + 1 > substr.size()) { return {substr, opt::none}; }
 
     // The caret gets put one after the column size since the location in 0-indexed
     std::string caret_line;

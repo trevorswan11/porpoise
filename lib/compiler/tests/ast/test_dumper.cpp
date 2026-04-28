@@ -62,7 +62,7 @@ constexpr std::string_view input{R"(
 )"};
 
 constexpr std::string_view expected{
-#include "dump.inc"
+#include "ast/dump.inc"
 };
 
 TEST_CASE("Comprehensive dump") {

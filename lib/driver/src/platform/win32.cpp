@@ -1,5 +1,7 @@
+#include <config.h>
+
 // I hate that this exists, made with the help of Gemini because microslop
-#ifdef _WIN32
+#ifdef PLATFORM_WINDOWS
 #    include <atomic>
 #    include <windows.h>
 

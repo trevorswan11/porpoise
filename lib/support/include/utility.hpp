@@ -1,12 +1,13 @@
 #pragma once
 
 #include <cassert>
-#include <cstdio>
 #include <exception>
+#include <iostream>
 #include <source_location>
 #include <utility> // IWYU pragma: export
 
 #include <fmt/format.h>
+#include <fmt/ostream.h>
 
 namespace porpoise {
 
@@ -54,11 +55,13 @@ namespace porpoise {
 #define CONCAT_INNER(a, b) a##b
 #define CONCAT(a, b) CONCAT_INNER(a, b)
 
+[[nodiscard]] auto is_tty() noexcept -> bool;
+
 namespace detail {
 
 template <typename... Args>
 auto todo_impl(std::source_location loc, [[maybe_unused]] Args&&... args) noexcept -> void {
-    fmt::println(stderr, "TODO: {}:{}:{}", loc.file_name(), loc.line(), loc.column());
+    fmt::println(std::cerr, "TODO: {}:{}:{}", loc.file_name(), loc.line(), loc.column());
     assert(false && "TODO");
     std::terminate();
 }

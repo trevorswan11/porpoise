@@ -13,6 +13,8 @@
 
 #include "syntax/parser.hpp"
 
+#include "diagnostic/source_file.hpp"
+
 #include "array.hpp"
 #include "memory.hpp"
 #include "option.hpp"
@@ -45,7 +47,7 @@ using DiagnosticListVariant = std::variant<syntax::ParserDiagnostics, sema::Diag
 struct Module {
     std::filesystem::path path;
     std::filesystem::path parent_path;
-    std::string           source;
+    SourceFile            source;
     ast::AST              tree;
     array::Index          root_table_idx;
     ModuleState           state;
