@@ -8,7 +8,7 @@ namespace porpoise::driver::win32 {
 //
 // Can be safely created and destroyed multiple times on multiple threads
 class RichConsole {
-#ifdef PLATFORM_WINDOWS
+#if PLATFORM_WINDOWS
   public:
     RichConsole() noexcept;
     ~RichConsole();

@@ -4,7 +4,7 @@
 
 #include "arguments/ast_dump.hpp"
 
-#ifdef PLATFORM_WINDOWS
+#if PLATFORM_WINDOWS
 #    include "platform/win32.hpp"
 #endif
 
@@ -32,7 +32,7 @@ class Parser {
 
     Parsed parsed_;
 
-#ifdef PLATFORM_WINDOWS
+#if PLATFORM_WINDOWS
     driver::win32::RichConsole console_;
 #endif
 };
