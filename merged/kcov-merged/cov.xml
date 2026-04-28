@@ -1,0 +1,4034 @@
+<?xml version="1.0" ?>
+<!DOCTYPE coverage SYSTEM 'http://cobertura.sourceforge.net/xml/coverage-04.dtd'>
+<coverage line-rate="0.970" lines-covered="3467" lines-valid="3573" branch-rate="1.0" branches-covered="1.0" branches-rate="1.0" complexity="1.0" version="1.9" timestamp="1777409919">
+	<sources>
+		<source>/home/runner/work/porpoise/porpoise/</source>
+	</sources>
+	<packages>
+		<package name="" line-rate="0.970" lines-covered="3467" lines-valid="3573" branch-rate="1.0" complexity="1.0">
+			<classes>
+				<class name="match_hpp__112" filename="lib/compiler/include/ast/expressions/match.hpp" branch-rate="1.0" complexity="1.0" line-rate="1.000">
+					<lines>
+						<line number="25" hits="1"/>
+						<line number="29" hits="1"/>
+						<line number="30" hits="1"/>
+						<line number="31" hits="1"/>
+						<line number="41" hits="1"/>
+						<line number="42" hits="1"/>
+						<line number="43" hits="1"/>
+						<line number="46" hits="1"/>
+						<line number="48" hits="1"/>
+						<line number="68" hits="1"/>
+						<line number="74" hits="1"/>
+						<line number="75" hits="1"/>
+						<line number="76" hits="1"/>
+					</lines>
+				</class>
+				<class name="scope_resolve_hpp__113" filename="lib/compiler/include/ast/expressions/scope_resolve.hpp" branch-rate="1.0" complexity="1.0" line-rate="1.000">
+					<lines>
+						<line number="21" hits="1"/>
+						<line number="27" hits="1"/>
+						<line number="28" hits="1"/>
+					</lines>
+				</class>
+				<class name="discard_cpp__114" filename="lib/compiler/src/ast/statements/discard.cpp" branch-rate="1.0" complexity="1.0" line-rate="1.000">
+					<lines>
+						<line number="7" hits="1"/>
+						<line number="10" hits="1"/>
+						<line number="11" hits="1"/>
+						<line number="13" hits="1"/>
+						<line number="14" hits="1"/>
+						<line number="15" hits="1"/>
+						<line number="16" hits="1"/>
+						<line number="17" hits="1"/>
+						<line number="20" hits="1"/>
+						<line number="21" hits="1"/>
+						<line number="23" hits="1"/>
+						<line number="24" hits="1"/>
+						<line number="25" hits="1"/>
+						<line number="26" hits="1"/>
+						<line number="27" hits="1"/>
+					</lines>
+				</class>
+				<class name="test_hpp__115" filename="lib/compiler/include/ast/statements/test.hpp" branch-rate="1.0" complexity="1.0" line-rate="1.000">
+					<lines>
+						<line number="28" hits="1"/>
+						<line number="29" hits="1"/>
+					</lines>
+				</class>
+				<class name="discard_hpp__116" filename="lib/compiler/include/ast/statements/discard.hpp" branch-rate="1.0" complexity="1.0" line-rate="1.000">
+					<lines>
+						<line number="11" hits="1"/>
+						<line number="17" hits="1"/>
+						<line number="25" hits="1"/>
+						<line number="28" hits="1"/>
+						<line number="29" hits="1"/>
+						<line number="30" hits="1"/>
+					</lines>
+				</class>
+				<class name="struct_cpp__117" filename="lib/compiler/src/ast/expressions/struct.cpp" branch-rate="1.0" complexity="1.0" line-rate="1.000">
+					<lines>
+						<line number="11" hits="1"/>
+						<line number="12" hits="1"/>
+						<line number="14" hits="1"/>
+						<line number="17" hits="1"/>
+						<line number="18" hits="1"/>
+						<line number="19" hits="1"/>
+						<line number="20" hits="1"/>
+						<line number="21" hits="1"/>
+						<line number="22" hits="1"/>
+						<line number="25" hits="1"/>
+						<line number="26" hits="1"/>
+						<line number="27" hits="1"/>
+						<line number="28" hits="1"/>
+						<line number="29" hits="1"/>
+						<line number="30" hits="1"/>
+						<line number="32" hits="1"/>
+						<line number="33" hits="1"/>
+						<line number="34" hits="1"/>
+						<line number="35" hits="1"/>
+						<line number="37" hits="1"/>
+					</lines>
+				</class>
+				<class name="type_modifiers_hpp__118" filename="lib/compiler/include/ast/expressions/type_modifiers.hpp" branch-rate="1.0" complexity="1.0" line-rate="1.000">
+					<lines>
+						<line number="32" hits="1"/>
+						<line number="34" hits="1"/>
+						<line number="36" hits="1"/>
+						<line number="37" hits="1"/>
+						<line number="38" hits="1"/>
+						<line number="42" hits="1"/>
+						<line number="50" hits="1"/>
+						<line number="51" hits="1"/>
+						<line number="52" hits="1"/>
+						<line number="53" hits="1"/>
+						<line number="56" hits="1"/>
+						<line number="57" hits="1"/>
+						<line number="80" hits="1"/>
+						<line number="82" hits="1"/>
+						<line number="83" hits="1"/>
+						<line number="84" hits="1"/>
+						<line number="85" hits="1"/>
+						<line number="86" hits="1"/>
+						<line number="87" hits="1"/>
+					</lines>
+				</class>
+				<class name="enum_hpp__119" filename="lib/compiler/include/ast/expressions/enum.hpp" branch-rate="1.0" complexity="1.0" line-rate="1.000">
+					<lines>
+						<line number="19" hits="1"/>
+						<line number="23" hits="1"/>
+						<line number="24" hits="1"/>
+						<line number="27" hits="1"/>
+						<line number="48" hits="1"/>
+						<line number="54" hits="1"/>
+						<line number="55" hits="1"/>
+						<line number="56" hits="1"/>
+						<line number="57" hits="1"/>
+					</lines>
+				</class>
+				<class name="match_cpp__120" filename="lib/compiler/src/ast/expressions/match.cpp" branch-rate="1.0" complexity="1.0" line-rate="1.000">
+					<lines>
+						<line number="11" hits="1"/>
+						<line number="14" hits="1"/>
+						<line number="15" hits="1"/>
+						<line number="17" hits="1"/>
+						<line number="19" hits="1"/>
+						<line number="20" hits="1"/>
+						<line number="21" hits="1"/>
+						<line number="22" hits="1"/>
+						<line number="23" hits="1"/>
+						<line number="24" hits="1"/>
+						<line number="25" hits="1"/>
+						<line number="26" hits="1"/>
+						<line number="27" hits="1"/>
+						<line number="28" hits="1"/>
+						<line number="30" hits="1"/>
+						<line number="31" hits="1"/>
+						<line number="32" hits="1"/>
+						<line number="33" hits="1"/>
+						<line number="40" hits="1"/>
+						<line number="41" hits="1"/>
+						<line number="42" hits="1"/>
+						<line number="44" hits="1"/>
+						<line number="47" hits="1"/>
+						<line number="48" hits="1"/>
+						<line number="51" hits="1"/>
+						<line number="52" hits="1"/>
+						<line number="53" hits="1"/>
+						<line number="54" hits="1"/>
+						<line number="57" hits="1"/>
+						<line number="58" hits="1"/>
+						<line number="60" hits="1"/>
+						<line number="61" hits="1"/>
+						<line number="62" hits="1"/>
+						<line number="63" hits="1"/>
+						<line number="66" hits="1"/>
+						<line number="68" hits="1"/>
+						<line number="69" hits="1"/>
+						<line number="70" hits="1"/>
+						<line number="72" hits="1"/>
+						<line number="73" hits="1"/>
+						<line number="76" hits="1"/>
+						<line number="77" hits="1"/>
+						<line number="78" hits="1"/>
+						<line number="81" hits="1"/>
+						<line number="82" hits="1"/>
+						<line number="83" hits="1"/>
+						<line number="84" hits="1"/>
+						<line number="85" hits="1"/>
+						<line number="86" hits="1"/>
+						<line number="87" hits="1"/>
+						<line number="89" hits="1"/>
+						<line number="90" hits="1"/>
+						<line number="93" hits="1"/>
+						<line number="95" hits="1"/>
+						<line number="96" hits="1"/>
+						<line number="97" hits="1"/>
+						<line number="98" hits="1"/>
+						<line number="100" hits="1"/>
+						<line number="102" hits="1"/>
+						<line number="104" hits="1"/>
+						<line number="106" hits="1"/>
+						<line number="107" hits="1"/>
+						<line number="108" hits="1"/>
+						<line number="109" hits="1"/>
+						<line number="110" hits="1"/>
+					</lines>
+				</class>
+				<class name="memory_loader_hpp__121" filename="lib/compiler/include/sema/module/memory_loader.hpp" branch-rate="1.0" complexity="1.0" line-rate="1.000">
+					<lines>
+						<line number="12" hits="1"/>
+						<line number="21" hits="1"/>
+						<line number="22" hits="1"/>
+					</lines>
+				</class>
+				<class name="enum_cpp__122" filename="lib/compiler/src/ast/expressions/enum.cpp" branch-rate="1.0" complexity="1.0" line-rate="1.000">
+					<lines>
+						<line number="13" hits="1"/>
+						<line number="14" hits="1"/>
+						<line number="16" hits="1"/>
+						<line number="18" hits="1"/>
+						<line number="19" hits="1"/>
+						<line number="22" hits="1"/>
+						<line number="23" hits="1"/>
+						<line number="30" hits="1"/>
+						<line number="31" hits="1"/>
+						<line number="32" hits="1"/>
+						<line number="34" hits="1"/>
+						<line number="37" hits="1"/>
+						<line number="38" hits="1"/>
+						<line number="40" hits="1"/>
+						<line number="41" hits="1"/>
+						<line number="42" hits="1"/>
+						<line number="43" hits="1"/>
+						<line number="44" hits="1"/>
+						<line number="45" hits="1"/>
+						<line number="46" hits="1"/>
+						<line number="48" hits="1"/>
+						<line number="49" hits="1"/>
+						<line number="50" hits="1"/>
+						<line number="51" hits="1"/>
+						<line number="53" hits="1"/>
+						<line number="54" hits="1"/>
+						<line number="56" hits="1"/>
+						<line number="57" hits="1"/>
+						<line number="58" hits="1"/>
+						<line number="59" hits="1"/>
+						<line number="60" hits="1"/>
+						<line number="61" hits="1"/>
+						<line number="64" hits="1"/>
+						<line number="65" hits="1"/>
+						<line number="66" hits="1"/>
+						<line number="68" hits="1"/>
+						<line number="69" hits="1"/>
+						<line number="72" hits="1"/>
+						<line number="73" hits="1"/>
+						<line number="75" hits="1"/>
+						<line number="77" hits="1"/>
+						<line number="79" hits="1"/>
+						<line number="80" hits="1"/>
+						<line number="81" hits="1"/>
+						<line number="82" hits="1"/>
+						<line number="83" hits="1"/>
+						<line number="84" hits="1"/>
+					</lines>
+				</class>
+				<class name="lexer_hpp__123" filename="lib/compiler/include/syntax/lexer.hpp" branch-rate="1.0" complexity="1.0" line-rate="1.000">
+					<lines>
+						<line number="48" hits="1"/>
+						<line number="49" hits="1"/>
+						<line number="63" hits="1"/>
+						<line number="65" hits="1"/>
+						<line number="66" hits="1"/>
+						<line number="67" hits="1"/>
+						<line number="93" hits="1"/>
+						<line number="94" hits="1"/>
+						<line number="95" hits="1"/>
+						<line number="96" hits="1"/>
+						<line number="97" hits="1"/>
+						<line number="98" hits="1"/>
+						<line number="99" hits="1"/>
+						<line number="103" hits="1"/>
+						<line number="104" hits="1"/>
+						<line number="105" hits="1"/>
+						<line number="107" hits="1"/>
+						<line number="108" hits="1"/>
+					</lines>
+				</class>
+				<class name="type_hpp__124" filename="lib/compiler/include/ast/expressions/type.hpp" branch-rate="1.0" complexity="1.0" line-rate="1.000">
+					<lines>
+						<line number="33" hits="1"/>
+						<line number="35" hits="1"/>
+						<line number="36" hits="1"/>
+						<line number="37" hits="1"/>
+						<line number="40" hits="1"/>
+						<line number="73" hits="1"/>
+						<line number="79" hits="1"/>
+						<line number="81" hits="1"/>
+						<line number="92" hits="1"/>
+						<line number="95" hits="1"/>
+						<line number="116" hits="1"/>
+					</lines>
+				</class>
+				<class name="identifier_hpp__125" filename="lib/compiler/include/ast/expressions/identifier.hpp" branch-rate="1.0" complexity="1.0" line-rate="1.000">
+					<lines>
+						<line number="14" hits="1"/>
+						<line number="20" hits="1"/>
+						<line number="22" hits="1"/>
+						<line number="28" hits="1"/>
+						<line number="29" hits="1"/>
+						<line number="32" hits="1"/>
+						<line number="38" hits="1"/>
+						<line number="40" hits="1"/>
+						<line number="41" hits="1"/>
+					</lines>
+				</class>
+				<class name="break_cpp__126" filename="lib/compiler/src/ast/statements/break.cpp" branch-rate="1.0" complexity="1.0" line-rate="1.000">
+					<lines>
+						<line number="11" hits="1"/>
+						<line number="12" hits="1"/>
+						<line number="14" hits="1"/>
+						<line number="17" hits="1"/>
+						<line number="18" hits="1"/>
+						<line number="21" hits="1"/>
+						<line number="22" hits="1"/>
+						<line number="23" hits="1"/>
+						<line number="24" hits="1"/>
+						<line number="25" hits="1"/>
+						<line number="26" hits="1"/>
+						<line number="27" hits="1"/>
+						<line number="30" hits="1"/>
+						<line number="31" hits="1"/>
+						<line number="32" hits="1"/>
+						<line number="33" hits="1"/>
+						<line number="34" hits="1"/>
+						<line number="35" hits="1"/>
+						<line number="37" hits="1"/>
+						<line number="38" hits="1"/>
+						<line number="40" hits="1"/>
+						<line number="41" hits="1"/>
+						<line number="42" hits="1"/>
+						<line number="44" hits="1"/>
+						<line number="45" hits="1"/>
+						<line number="46" hits="1"/>
+						<line number="47" hits="1"/>
+					</lines>
+				</class>
+				<class name="expression_hpp__127" filename="lib/compiler/include/ast/statements/expression.hpp" branch-rate="1.0" complexity="1.0" line-rate="1.000">
+					<lines>
+						<line number="11" hits="1"/>
+						<line number="17" hits="1"/>
+						<line number="19" hits="1"/>
+						<line number="25" hits="1"/>
+						<line number="28" hits="1"/>
+						<line number="29" hits="1"/>
+						<line number="30" hits="1"/>
+					</lines>
+				</class>
+				<class name="while_cpp__128" filename="lib/compiler/src/ast/expressions/while.cpp" branch-rate="1.0" complexity="1.0" line-rate="1.000">
+					<lines>
+						<line number="13" hits="1"/>
+						<line number="14" hits="1"/>
+						<line number="15" hits="1"/>
+						<line number="16" hits="1"/>
+						<line number="18" hits="1"/>
+						<line number="21" hits="1"/>
+						<line number="22" hits="1"/>
+						<line number="25" hits="1"/>
+						<line number="26" hits="1"/>
+						<line number="27" hits="1"/>
+						<line number="28" hits="1"/>
+						<line number="31" hits="1"/>
+						<line number="32" hits="1"/>
+						<line number="35" hits="1"/>
+						<line number="36" hits="1"/>
+						<line number="37" hits="1"/>
+						<line number="38" hits="1"/>
+						<line number="39" hits="1"/>
+						<line number="42" hits="1"/>
+						<line number="43" hits="1"/>
+						<line number="44" hits="1"/>
+						<line number="48" hits="1"/>
+						<line number="49" hits="1"/>
+						<line number="50" hits="1"/>
+						<line number="53" hits="1"/>
+						<line number="54" hits="1"/>
+						<line number="56" hits="1"/>
+						<line number="59" hits="1"/>
+						<line number="60" hits="1"/>
+						<line number="63" hits="1"/>
+						<line number="68" hits="1"/>
+						<line number="70" hits="1"/>
+						<line number="71" hits="1"/>
+						<line number="72" hits="1"/>
+						<line number="73" hits="1"/>
+						<line number="74" hits="1"/>
+					</lines>
+				</class>
+				<class name="lexer_cpp__129" filename="lib/compiler/src/syntax/lexer.cpp" branch-rate="1.0" complexity="1.0" line-rate="0.982">
+					<lines>
+						<line number="14" hits="1"/>
+						<line number="16" hits="1"/>
+						<line number="17" hits="1"/>
+						<line number="19" hits="1"/>
+						<line number="20" hits="1"/>
+						<line number="22" hits="1"/>
+						<line number="23" hits="1"/>
+						<line number="24" hits="1"/>
+						<line number="26" hits="1"/>
+						<line number="27" hits="1"/>
+						<line number="29" hits="1"/>
+						<line number="32" hits="1"/>
+						<line number="33" hits="1"/>
+						<line number="34" hits="1"/>
+						<line number="35" hits="1"/>
+						<line number="36" hits="1"/>
+						<line number="37" hits="1"/>
+						<line number="38" hits="1"/>
+						<line number="39" hits="1"/>
+						<line number="40" hits="1"/>
+						<line number="41" hits="1"/>
+						<line number="42" hits="1"/>
+						<line number="43" hits="1"/>
+						<line number="44" hits="1"/>
+						<line number="45" hits="1"/>
+						<line number="46" hits="1"/>
+						<line number="47" hits="1"/>
+						<line number="48" hits="1"/>
+						<line number="49" hits="1"/>
+						<line number="51" hits="1"/>
+						<line number="52" hits="1"/>
+						<line number="55" hits="1"/>
+						<line number="56" hits="1"/>
+						<line number="57" hits="1"/>
+						<line number="59" hits="1"/>
+						<line number="60" hits="1"/>
+						<line number="62" hits="1"/>
+						<line number="63" hits="1"/>
+						<line number="65" hits="1"/>
+						<line number="66" hits="1"/>
+						<line number="68" hits="1"/>
+						<line number="69" hits="1"/>
+						<line number="70" hits="1"/>
+						<line number="72" hits="1"/>
+						<line number="73" hits="1"/>
+						<line number="74" hits="1"/>
+						<line number="75" hits="1"/>
+						<line number="78" hits="1"/>
+						<line number="79" hits="1"/>
+						<line number="80" hits="1"/>
+						<line number="81" hits="1"/>
+						<line number="84" hits="1"/>
+						<line number="85" hits="1"/>
+						<line number="86" hits="1"/>
+						<line number="87" hits="1"/>
+						<line number="88" hits="1"/>
+						<line number="89" hits="1"/>
+						<line number="92" hits="1"/>
+						<line number="93" hits="1"/>
+						<line number="94" hits="1"/>
+						<line number="95" hits="1"/>
+						<line number="96" hits="1"/>
+						<line number="99" hits="1"/>
+						<line number="100" hits="1"/>
+						<line number="102" hits="1"/>
+						<line number="104" hits="1"/>
+						<line number="105" hits="1"/>
+						<line number="106" hits="1"/>
+						<line number="108" hits="1"/>
+						<line number="110" hits="1"/>
+						<line number="111" hits="1"/>
+						<line number="114" hits="1"/>
+						<line number="115" hits="1"/>
+						<line number="116" hits="1"/>
+						<line number="117" hits="1"/>
+						<line number="118" hits="1"/>
+						<line number="120" hits="1"/>
+						<line number="123" hits="1"/>
+						<line number="124" hits="1"/>
+						<line number="125" hits="1"/>
+						<line number="127" hits="1"/>
+						<line number="128" hits="1"/>
+						<line number="130" hits="1"/>
+						<line number="131" hits="1"/>
+						<line number="132" hits="1"/>
+						<line number="133" hits="1"/>
+						<line number="134" hits="1"/>
+						<line number="137" hits="1"/>
+						<line number="146" hits="1"/>
+						<line number="147" hits="1"/>
+						<line number="148" hits="1"/>
+						<line number="151" hits="1"/>
+						<line number="152" hits="1"/>
+						<line number="155" hits="1"/>
+						<line number="156" hits="1"/>
+						<line number="159" hits="1"/>
+						<line number="160" hits="1"/>
+						<line number="161" hits="1"/>
+						<line number="162" hits="1"/>
+						<line number="163" hits="1"/>
+						<line number="164" hits="1"/>
+						<line number="165" hits="1"/>
+						<line number="168" hits="1"/>
+						<line number="169" hits="1"/>
+						<line number="170" hits="1"/>
+						<line number="171" hits="1"/>
+						<line number="172" hits="1"/>
+						<line number="173" hits="1"/>
+						<line number="174" hits="1"/>
+						<line number="175" hits="1"/>
+						<line number="176" hits="1"/>
+						<line number="177" hits="1"/>
+						<line number="178" hits="1"/>
+						<line number="180" hits="1"/>
+						<line number="183" hits="1"/>
+						<line number="184" hits="1"/>
+						<line number="187" hits="1"/>
+						<line number="188" hits="1"/>
+						<line number="189" hits="1"/>
+						<line number="191" hits="1"/>
+						<line number="192" hits="1"/>
+						<line number="193" hits="1"/>
+						<line number="194" hits="1"/>
+						<line number="195" hits="1"/>
+						<line number="198" hits="1"/>
+						<line number="200" hits="1"/>
+						<line number="201" hits="1"/>
+						<line number="203" hits="1"/>
+						<line number="204" hits="1"/>
+						<line number="206" hits="1"/>
+						<line number="210" hits="1"/>
+						<line number="211" hits="1"/>
+						<line number="212" hits="1"/>
+						<line number="214" hits="1"/>
+						<line number="215" hits="1"/>
+						<line number="216" hits="1"/>
+						<line number="220" hits="1"/>
+						<line number="221" hits="1"/>
+						<line number="222" hits="1"/>
+						<line number="225" hits="1"/>
+						<line number="229" hits="1"/>
+						<line number="230" hits="1"/>
+						<line number="231" hits="1"/>
+						<line number="234" hits="1"/>
+						<line number="235" hits="1"/>
+						<line number="236" hits="1"/>
+						<line number="237" hits="1"/>
+						<line number="238" hits="1"/>
+						<line number="239" hits="1"/>
+						<line number="240" hits="1"/>
+						<line number="241" hits="1"/>
+						<line number="242" hits="1"/>
+						<line number="243" hits="1"/>
+						<line number="244" hits="1"/>
+						<line number="247" hits="1"/>
+						<line number="248" hits="1"/>
+						<line number="249" hits="1"/>
+						<line number="250" hits="1"/>
+						<line number="251" hits="1"/>
+						<line number="252" hits="1"/>
+						<line number="253" hits="1"/>
+						<line number="255" hits="1"/>
+						<line number="256" hits="1"/>
+						<line number="259" hits="1"/>
+						<line number="260" hits="1"/>
+						<line number="261" hits="1"/>
+						<line number="263" hits="1"/>
+						<line number="264" hits="0"/>
+						<line number="267" hits="1"/>
+						<line number="268" hits="0"/>
+						<line number="272" hits="1"/>
+						<line number="273" hits="1"/>
+						<line number="274" hits="0"/>
+						<line number="276" hits="1"/>
+						<line number="277" hits="1"/>
+						<line number="279" hits="1"/>
+						<line number="280" hits="1"/>
+						<line number="281" hits="1"/>
+						<line number="282" hits="1"/>
+						<line number="283" hits="1"/>
+						<line number="284" hits="1"/>
+						<line number="285" hits="1"/>
+						<line number="286" hits="1"/>
+						<line number="287" hits="1"/>
+						<line number="288" hits="1"/>
+						<line number="292" hits="1"/>
+						<line number="293" hits="1"/>
+						<line number="294" hits="1"/>
+						<line number="297" hits="1"/>
+						<line number="300" hits="1"/>
+						<line number="301" hits="1"/>
+						<line number="303" hits="1"/>
+						<line number="304" hits="1"/>
+						<line number="306" hits="1"/>
+						<line number="307" hits="1"/>
+						<line number="308" hits="1"/>
+						<line number="309" hits="1"/>
+						<line number="310" hits="1"/>
+						<line number="311" hits="1"/>
+						<line number="312" hits="1"/>
+						<line number="313" hits="1"/>
+						<line number="314" hits="1"/>
+						<line number="316" hits="1"/>
+						<line number="318" hits="1"/>
+						<line number="319" hits="1"/>
+						<line number="320" hits="1"/>
+						<line number="321" hits="1"/>
+						<line number="322" hits="1"/>
+						<line number="324" hits="1"/>
+						<line number="325" hits="1"/>
+						<line number="326" hits="1"/>
+						<line number="329" hits="1"/>
+						<line number="330" hits="1"/>
+						<line number="332" hits="1"/>
+						<line number="333" hits="1"/>
+						<line number="334" hits="1"/>
+						<line number="337" hits="1"/>
+						<line number="339" hits="1"/>
+						<line number="340" hits="1"/>
+						<line number="343" hits="1"/>
+						<line number="344" hits="1"/>
+						<line number="345" hits="1"/>
+						<line number="346" hits="1"/>
+						<line number="347" hits="1"/>
+						<line number="349" hits="1"/>
+						<line number="351" hits="1"/>
+						<line number="352" hits="1"/>
+						<line number="356" hits="1"/>
+						<line number="357" hits="1"/>
+						<line number="358" hits="0"/>
+						<line number="361" hits="1"/>
+						<line number="362" hits="1"/>
+						<line number="363" hits="1"/>
+						<line number="364" hits="1"/>
+						<line number="368" hits="1"/>
+						<line number="369" hits="1"/>
+						<line number="370" hits="1"/>
+						<line number="374" hits="1"/>
+						<line number="375" hits="1"/>
+						<line number="376" hits="0"/>
+						<line number="380" hits="1"/>
+						<line number="383" hits="1"/>
+						<line number="385" hits="1"/>
+						<line number="386" hits="1"/>
+						<line number="387" hits="1"/>
+						<line number="394" hits="1"/>
+						<line number="395" hits="1"/>
+						<line number="396" hits="1"/>
+						<line number="397" hits="1"/>
+						<line number="398" hits="1"/>
+						<line number="401" hits="1"/>
+						<line number="402" hits="1"/>
+						<line number="403" hits="1"/>
+						<line number="404" hits="1"/>
+						<line number="405" hits="1"/>
+						<line number="406" hits="1"/>
+						<line number="407" hits="1"/>
+						<line number="408" hits="1"/>
+						<line number="412" hits="1"/>
+						<line number="413" hits="1"/>
+						<line number="414" hits="1"/>
+						<line number="415" hits="1"/>
+						<line number="416" hits="1"/>
+						<line number="417" hits="1"/>
+						<line number="420" hits="1"/>
+						<line number="421" hits="1"/>
+						<line number="422" hits="1"/>
+						<line number="425" hits="1"/>
+						<line number="427" hits="1"/>
+						<line number="428" hits="1"/>
+						<line number="429" hits="1"/>
+						<line number="432" hits="1"/>
+						<line number="434" hits="1"/>
+						<line number="435" hits="1"/>
+						<line number="438" hits="1"/>
+						<line number="439" hits="1"/>
+						<line number="440" hits="1"/>
+						<line number="441" hits="1"/>
+						<line number="442" hits="1"/>
+						<line number="444" hits="1"/>
+					</lines>
+				</class>
+				<class name="diagnostic_hpp__130" filename="lib/compiler/include/diagnostic/diagnostic.hpp" branch-rate="1.0" complexity="1.0" line-rate="0.676">
+					<lines>
+						<line number="38" hits="1"/>
+						<line number="39" hits="1"/>
+						<line number="40" hits="1"/>
+						<line number="41" hits="0"/>
+						<line number="42" hits="0"/>
+						<line number="44" hits="1"/>
+						<line number="47" hits="0"/>
+						<line number="48" hits="0"/>
+						<line number="49" hits="0"/>
+						<line number="50" hits="0"/>
+						<line number="51" hits="0"/>
+						<line number="53" hits="0"/>
+						<line number="69" hits="1"/>
+						<line number="71" hits="1"/>
+						<line number="72" hits="1"/>
+						<line number="74" hits="1"/>
+						<line number="75" hits="1"/>
+						<line number="79" hits="1"/>
+						<line number="81" hits="1"/>
+						<line number="85" hits="1"/>
+						<line number="90" hits="1"/>
+						<line number="93" hits="1"/>
+						<line number="94" hits="1"/>
+						<line number="95" hits="1"/>
+						<line number="96" hits="1"/>
+						<line number="97" hits="1"/>
+						<line number="99" hits="1"/>
+						<line number="100" hits="1"/>
+						<line number="103" hits="1"/>
+						<line number="104" hits="1"/>
+						<line number="112" hits="1"/>
+						<line number="114" hits="1"/>
+						<line number="115" hits="1"/>
+						<line number="128" hits="0"/>
+						<line number="130" hits="0"/>
+						<line number="131" hits="0"/>
+						<line number="132" hits="0"/>
+					</lines>
+				</class>
+				<class name="expression_cpp__131" filename="lib/compiler/src/ast/statements/expression.cpp" branch-rate="1.0" complexity="1.0" line-rate="0.923">
+					<lines>
+						<line number="7" hits="1"/>
+						<line number="10" hits="1"/>
+						<line number="11" hits="1"/>
+						<line number="12" hits="1"/>
+						<line number="14" hits="1"/>
+						<line number="15" hits="1"/>
+						<line number="16" hits="1"/>
+						<line number="17" hits="1"/>
+						<line number="18" hits="1"/>
+						<line number="19" hits="0"/>
+						<line number="20" hits="1"/>
+						<line number="21" hits="1"/>
+						<line number="22" hits="1"/>
+					</lines>
+				</class>
+				<class name="identifier_cpp__132" filename="lib/compiler/src/ast/expressions/identifier.cpp" branch-rate="1.0" complexity="1.0" line-rate="1.000">
+					<lines>
+						<line number="7" hits="1"/>
+						<line number="11" hits="1"/>
+						<line number="12" hits="1"/>
+						<line number="13" hits="1"/>
+						<line number="14" hits="1"/>
+						<line number="17" hits="1"/>
+						<line number="18" hits="1"/>
+					</lines>
+				</class>
+				<class name="union_hpp__133" filename="lib/compiler/include/ast/expressions/union.hpp" branch-rate="1.0" complexity="1.0" line-rate="1.000">
+					<lines>
+						<line number="19" hits="1"/>
+						<line number="23" hits="1"/>
+						<line number="24" hits="1"/>
+						<line number="27" hits="1"/>
+						<line number="45" hits="1"/>
+						<line number="51" hits="1"/>
+						<line number="52" hits="1"/>
+						<line number="53" hits="1"/>
+					</lines>
+				</class>
+				<class name="dumper_hpp__134" filename="lib/compiler/include/ast/dumper.hpp" branch-rate="1.0" complexity="1.0" line-rate="1.000">
+					<lines>
+						<line number="15" hits="1"/>
+						<line number="17" hits="1"/>
+						<line number="22" hits="1"/>
+						<line number="23" hits="1"/>
+						<line number="24" hits="1"/>
+						<line number="25" hits="1"/>
+						<line number="26" hits="1"/>
+						<line number="27" hits="1"/>
+						<line number="29" hits="1"/>
+						<line number="30" hits="1"/>
+						<line number="31" hits="1"/>
+						<line number="32" hits="1"/>
+						<line number="33" hits="1"/>
+						<line number="34" hits="1"/>
+					</lines>
+				</class>
+				<class name="initializer_hpp__135" filename="lib/compiler/include/ast/expressions/initializer.hpp" branch-rate="1.0" complexity="1.0" line-rate="1.000">
+					<lines>
+						<line number="18" hits="1"/>
+						<line number="22" hits="1"/>
+						<line number="23" hits="1"/>
+						<line number="25" hits="1"/>
+						<line number="42" hits="1"/>
+						<line number="53" hits="1"/>
+						<line number="54" hits="1"/>
+						<line number="55" hits="1"/>
+					</lines>
+				</class>
+				<class name="primitive_hpp__136" filename="lib/compiler/include/ast/expressions/primitive.hpp" branch-rate="1.0" complexity="1.0" line-rate="0.982">
+					<lines>
+						<line number="24" hits="1"/>
+						<line number="25" hits="1"/>
+						<line number="26" hits="1"/>
+						<line number="27" hits="1"/>
+						<line number="32" hits="1"/>
+						<line number="34" hits="1"/>
+						<line number="38" hits="1"/>
+						<line number="39" hits="1"/>
+						<line number="41" hits="1"/>
+						<line number="44" hits="1"/>
+						<line number="45" hits="1"/>
+						<line number="46" hits="1"/>
+						<line number="48" hits="1"/>
+						<line number="54" hits="1"/>
+						<line number="59" hits="1"/>
+						<line number="60" hits="1"/>
+						<line number="61" hits="1"/>
+						<line number="62" hits="1"/>
+						<line number="64" hits="1"/>
+						<line number="70" hits="1"/>
+						<line number="72" hits="1"/>
+						<line number="75" hits="1"/>
+						<line number="76" hits="1"/>
+						<line number="77" hits="1"/>
+						<line number="84" hits="1"/>
+						<line number="89" hits="1"/>
+						<line number="98" hits="1"/>
+						<line number="103" hits="1"/>
+						<line number="104" hits="1"/>
+						<line number="109" hits="1"/>
+						<line number="114" hits="1"/>
+						<line number="115" hits="1"/>
+						<line number="120" hits="1"/>
+						<line number="125" hits="1"/>
+						<line number="131" hits="1"/>
+						<line number="136" hits="1"/>
+						<line number="137" hits="1"/>
+						<line number="142" hits="1"/>
+						<line number="147" hits="1"/>
+						<line number="153" hits="1"/>
+						<line number="158" hits="1"/>
+						<line number="159" hits="1"/>
+						<line number="164" hits="1"/>
+						<line number="169" hits="1"/>
+						<line number="178" hits="1"/>
+						<line number="183" hits="1"/>
+						<line number="191" hits="1"/>
+						<line number="196" hits="1"/>
+						<line number="197" hits="1"/>
+						<line number="204" hits="1"/>
+						<line number="209" hits="1"/>
+						<line number="216" hits="0"/>
+						<line number="220" hits="1"/>
+						<line number="225" hits="1"/>
+						<line number="239" hits="1"/>
+						<line number="241" hits="1"/>
+						<line number="242" hits="1"/>
+					</lines>
+				</class>
+				<class name="parser_cpp__137" filename="lib/compiler/src/syntax/parser.cpp" branch-rate="1.0" complexity="1.0" line-rate="0.992">
+					<lines>
+						<line number="16" hits="1"/>
+						<line number="18" hits="1"/>
+						<line number="20" hits="1"/>
+						<line number="21" hits="1"/>
+						<line number="22" hits="1"/>
+						<line number="23" hits="1"/>
+						<line number="25" hits="1"/>
+						<line number="28" hits="1"/>
+						<line number="29" hits="1"/>
+						<line number="30" hits="1"/>
+						<line number="31" hits="1"/>
+						<line number="33" hits="1"/>
+						<line number="35" hits="1"/>
+						<line number="36" hits="1"/>
+						<line number="37" hits="1"/>
+						<line number="40" hits="1"/>
+						<line number="41" hits="1"/>
+						<line number="42" hits="1"/>
+						<line number="43" hits="1"/>
+						<line number="44" hits="1"/>
+						<line number="45" hits="1"/>
+						<line number="48" hits="1"/>
+						<line number="49" hits="1"/>
+						<line number="52" hits="1"/>
+						<line number="53" hits="1"/>
+						<line number="55" hits="1"/>
+						<line number="56" hits="1"/>
+						<line number="58" hits="1"/>
+						<line number="59" hits="1"/>
+						<line number="62" hits="1"/>
+						<line number="63" hits="1"/>
+						<line number="65" hits="1"/>
+						<line number="66" hits="1"/>
+						<line number="67" hits="1"/>
+						<line number="68" hits="1"/>
+						<line number="70" hits="1"/>
+						<line number="71" hits="1"/>
+						<line number="73" hits="1"/>
+						<line number="74" hits="1"/>
+						<line number="75" hits="1"/>
+						<line number="76" hits="1"/>
+						<line number="78" hits="1"/>
+						<line number="82" hits="1"/>
+						<line number="83" hits="1"/>
+						<line number="84" hits="1"/>
+						<line number="85" hits="1"/>
+						<line number="87" hits="1"/>
+						<line number="90" hits="1"/>
+						<line number="91" hits="1"/>
+						<line number="92" hits="1"/>
+						<line number="93" hits="1"/>
+						<line number="95" hits="1"/>
+						<line number="99" hits="1"/>
+						<line number="101" hits="1"/>
+						<line number="102" hits="1"/>
+						<line number="103" hits="1"/>
+						<line number="104" hits="1"/>
+						<line number="105" hits="1"/>
+						<line number="107" hits="1"/>
+						<line number="108" hits="1"/>
+						<line number="111" hits="1"/>
+						<line number="112" hits="1"/>
+						<line number="113" hits="1"/>
+						<line number="114" hits="1"/>
+						<line number="115" hits="1"/>
+						<line number="116" hits="1"/>
+						<line number="117" hits="1"/>
+						<line number="118" hits="1"/>
+						<line number="119" hits="1"/>
+						<line number="120" hits="1"/>
+						<line number="121" hits="1"/>
+						<line number="123" hits="1"/>
+						<line number="126" hits="1"/>
+						<line number="127" hits="1"/>
+						<line number="128" hits="0"/>
+						<line number="131" hits="1"/>
+						<line number="132" hits="1"/>
+						<line number="133" hits="1"/>
+						<line number="134" hits="1"/>
+						<line number="135" hits="1"/>
+						<line number="136" hits="1"/>
+						<line number="137" hits="1"/>
+						<line number="139" hits="1"/>
+						<line number="141" hits="1"/>
+						<line number="142" hits="1"/>
+						<line number="143" hits="1"/>
+						<line number="144" hits="1"/>
+						<line number="145" hits="1"/>
+						<line number="148" hits="1"/>
+						<line number="149" hits="1"/>
+						<line number="152" hits="1"/>
+						<line number="153" hits="1"/>
+						<line number="156" hits="1"/>
+						<line number="161" hits="1"/>
+						<line number="163" hits="1"/>
+						<line number="164" hits="1"/>
+						<line number="167" hits="1"/>
+						<line number="168" hits="1"/>
+						<line number="170" hits="1"/>
+						<line number="171" hits="1"/>
+						<line number="173" hits="1"/>
+						<line number="174" hits="1"/>
+						<line number="177" hits="1"/>
+						<line number="178" hits="1"/>
+						<line number="179" hits="1"/>
+						<line number="180" hits="1"/>
+						<line number="181" hits="1"/>
+						<line number="182" hits="1"/>
+						<line number="183" hits="1"/>
+						<line number="187" hits="1"/>
+						<line number="188" hits="1"/>
+						<line number="190" hits="1"/>
+						<line number="191" hits="1"/>
+						<line number="192" hits="1"/>
+						<line number="193" hits="1"/>
+						<line number="247" hits="1"/>
+						<line number="248" hits="1"/>
+						<line number="296" hits="1"/>
+						<line number="297" hits="1"/>
+					</lines>
+				</class>
+				<class name="error_hpp__138" filename="lib/compiler/include/sema/error.hpp" branch-rate="1.0" complexity="1.0" line-rate="1.000">
+					<lines>
+						<line number="34" hits="1"/>
+						<line number="35" hits="1"/>
+					</lines>
+				</class>
+				<class name="while_hpp__139" filename="lib/compiler/include/ast/expressions/while.hpp" branch-rate="1.0" complexity="1.0" line-rate="1.000">
+					<lines>
+						<line number="23" hits="1"/>
+						<line number="29" hits="1"/>
+						<line number="30" hits="1"/>
+						<line number="31" hits="1"/>
+						<line number="32" hits="1"/>
+					</lines>
+				</class>
+				<class name="source_file_hpp__140" filename="lib/compiler/include/diagnostic/source_file.hpp" branch-rate="1.0" complexity="1.0" line-rate="1.000">
+					<lines>
+						<line number="18" hits="1"/>
+						<line number="22" hits="1"/>
+						<line number="24" hits="1"/>
+						<line number="26" hits="1"/>
+						<line number="37" hits="1"/>
+						<line number="38" hits="1"/>
+						<line number="40" hits="1"/>
+						<line number="42" hits="1"/>
+						<line number="53" hits="1"/>
+					</lines>
+				</class>
+				<class name="if_cpp__141" filename="lib/compiler/src/ast/expressions/if.cpp" branch-rate="1.0" complexity="1.0" line-rate="1.000">
+					<lines>
+						<line number="7" hits="1"/>
+						<line number="10" hits="1"/>
+						<line number="11" hits="1"/>
+						<line number="13" hits="1"/>
+						<line number="14" hits="1"/>
+						<line number="15" hits="1"/>
+						<line number="16" hits="1"/>
+						<line number="20" hits="1"/>
+						<line number="21" hits="1"/>
+						<line number="22" hits="1"/>
+						<line number="23" hits="1"/>
+						<line number="26" hits="1"/>
+						<line number="27" hits="1"/>
+						<line number="30" hits="1"/>
+						<line number="32" hits="1"/>
+						<line number="34" hits="1"/>
+						<line number="36" hits="1"/>
+						<line number="41" hits="1"/>
+					</lines>
+				</class>
+				<class name="if_hpp__142" filename="lib/compiler/include/ast/expressions/if.hpp" branch-rate="1.0" complexity="1.0" line-rate="1.000">
+					<lines>
+						<line number="11" hits="1"/>
+						<line number="21" hits="1"/>
+						<line number="22" hits="1"/>
+						<line number="23" hits="1"/>
+						<line number="25" hits="1"/>
+						<line number="31" hits="1"/>
+						<line number="32" hits="1"/>
+						<line number="33" hits="1"/>
+						<line number="34" hits="1"/>
+						<line number="37" hits="1"/>
+						<line number="38" hits="1"/>
+						<line number="39" hits="1"/>
+						<line number="40" hits="1"/>
+						<line number="41" hits="1"/>
+						<line number="42" hits="1"/>
+					</lines>
+				</class>
+				<class name="for_cpp__143" filename="lib/compiler/src/ast/expressions/for.cpp" branch-rate="1.0" complexity="1.0" line-rate="0.987">
+					<lines>
+						<line number="12" hits="1"/>
+						<line number="13" hits="1"/>
+						<line number="15" hits="1"/>
+						<line number="16" hits="1"/>
+						<line number="19" hits="1"/>
+						<line number="20" hits="1"/>
+						<line number="21" hits="1"/>
+						<line number="23" hits="1"/>
+						<line number="25" hits="1"/>
+						<line number="26" hits="1"/>
+						<line number="27" hits="0"/>
+						<line number="28" hits="1"/>
+						<line number="29" hits="1"/>
+						<line number="34" hits="1"/>
+						<line number="35" hits="1"/>
+						<line number="36" hits="1"/>
+						<line number="37" hits="1"/>
+						<line number="38" hits="1"/>
+						<line number="39" hits="1"/>
+						<line number="40" hits="1"/>
+						<line number="41" hits="1"/>
+						<line number="42" hits="1"/>
+						<line number="43" hits="1"/>
+						<line number="45" hits="1"/>
+						<line number="52" hits="1"/>
+						<line number="53" hits="1"/>
+						<line number="55" hits="1"/>
+						<line number="57" hits="1"/>
+						<line number="60" hits="1"/>
+						<line number="61" hits="1"/>
+						<line number="64" hits="1"/>
+						<line number="65" hits="1"/>
+						<line number="66" hits="1"/>
+						<line number="69" hits="1"/>
+						<line number="70" hits="1"/>
+						<line number="71" hits="1"/>
+						<line number="72" hits="1"/>
+						<line number="74" hits="1"/>
+						<line number="75" hits="1"/>
+						<line number="77" hits="1"/>
+						<line number="78" hits="1"/>
+						<line number="79" hits="1"/>
+						<line number="80" hits="1"/>
+						<line number="82" hits="1"/>
+						<line number="85" hits="1"/>
+						<line number="86" hits="1"/>
+						<line number="87" hits="1"/>
+						<line number="88" hits="1"/>
+						<line number="89" hits="1"/>
+						<line number="90" hits="1"/>
+						<line number="91" hits="1"/>
+						<line number="92" hits="1"/>
+						<line number="94" hits="1"/>
+						<line number="95" hits="1"/>
+						<line number="97" hits="1"/>
+						<line number="98" hits="1"/>
+						<line number="99" hits="1"/>
+						<line number="101" hits="1"/>
+						<line number="102" hits="1"/>
+						<line number="103" hits="1"/>
+						<line number="105" hits="1"/>
+						<line number="108" hits="1"/>
+						<line number="109" hits="1"/>
+						<line number="111" hits="1"/>
+						<line number="114" hits="1"/>
+						<line number="115" hits="1"/>
+						<line number="118" hits="1"/>
+						<line number="119" hits="1"/>
+						<line number="122" hits="1"/>
+						<line number="127" hits="1"/>
+						<line number="129" hits="1"/>
+						<line number="130" hits="1"/>
+						<line number="131" hits="1"/>
+						<line number="132" hits="1"/>
+						<line number="133" hits="1"/>
+						<line number="134" hits="1"/>
+						<line number="135" hits="1"/>
+					</lines>
+				</class>
+				<class name="continue_cpp__144" filename="lib/compiler/src/ast/statements/continue.cpp" branch-rate="1.0" complexity="1.0" line-rate="1.000">
+					<lines>
+						<line number="10" hits="1"/>
+						<line number="11" hits="1"/>
+						<line number="13" hits="1"/>
+						<line number="16" hits="1"/>
+						<line number="17" hits="1"/>
+						<line number="20" hits="1"/>
+						<line number="21" hits="1"/>
+						<line number="22" hits="1"/>
+						<line number="23" hits="1"/>
+						<line number="24" hits="1"/>
+						<line number="25" hits="1"/>
+						<line number="26" hits="1"/>
+						<line number="29" hits="1"/>
+						<line number="30" hits="1"/>
+						<line number="31" hits="1"/>
+						<line number="34" hits="1"/>
+						<line number="35" hits="1"/>
+						<line number="36" hits="1"/>
+						<line number="38" hits="1"/>
+						<line number="39" hits="1"/>
+						<line number="40" hits="1"/>
+					</lines>
+				</class>
+				<class name="do_while_cpp__145" filename="lib/compiler/src/ast/expressions/do_while.cpp" branch-rate="1.0" complexity="1.0" line-rate="1.000">
+					<lines>
+						<line number="11" hits="1"/>
+						<line number="12" hits="1"/>
+						<line number="14" hits="1"/>
+						<line number="17" hits="1"/>
+						<line number="18" hits="1"/>
+						<line number="19" hits="1"/>
+						<line number="21" hits="1"/>
+						<line number="22" hits="1"/>
+						<line number="23" hits="1"/>
+						<line number="25" hits="1"/>
+						<line number="26" hits="1"/>
+						<line number="27" hits="1"/>
+						<line number="29" hits="1"/>
+						<line number="32" hits="1"/>
+						<line number="33" hits="1"/>
+						<line number="34" hits="1"/>
+						<line number="35" hits="1"/>
+						<line number="37" hits="1"/>
+						<line number="39" hits="1"/>
+						<line number="41" hits="1"/>
+						<line number="42" hits="1"/>
+						<line number="43" hits="1"/>
+					</lines>
+				</class>
+				<class name="break_hpp__146" filename="lib/compiler/include/ast/statements/break.hpp" branch-rate="1.0" complexity="1.0" line-rate="1.000">
+					<lines>
+						<line number="27" hits="1"/>
+						<line number="28" hits="1"/>
+					</lines>
+				</class>
+				<class name="function_cpp__147" filename="lib/compiler/src/ast/expressions/function.cpp" branch-rate="1.0" complexity="1.0" line-rate="0.962">
+					<lines>
+						<line number="19" hits="1"/>
+						<line number="20" hits="1"/>
+						<line number="22" hits="0"/>
+						<line number="24" hits="1"/>
+						<line number="25" hits="1"/>
+						<line number="28" hits="1"/>
+						<line number="29" hits="1"/>
+						<line number="34" hits="1"/>
+						<line number="35" hits="1"/>
+						<line number="36" hits="1"/>
+						<line number="38" hits="1"/>
+						<line number="40" hits="1"/>
+						<line number="41" hits="1"/>
+						<line number="44" hits="1"/>
+						<line number="45" hits="1"/>
+						<line number="46" hits="0"/>
+						<line number="47" hits="1"/>
+						<line number="55" hits="1"/>
+						<line number="56" hits="1"/>
+						<line number="57" hits="1"/>
+						<line number="59" hits="1"/>
+						<line number="63" hits="1"/>
+						<line number="64" hits="1"/>
+						<line number="65" hits="1"/>
+						<line number="66" hits="1"/>
+						<line number="67" hits="1"/>
+						<line number="68" hits="1"/>
+						<line number="69" hits="1"/>
+						<line number="70" hits="1"/>
+						<line number="71" hits="1"/>
+						<line number="72" hits="1"/>
+						<line number="73" hits="1"/>
+						<line number="76" hits="1"/>
+						<line number="77" hits="1"/>
+						<line number="78" hits="1"/>
+						<line number="81" hits="1"/>
+						<line number="82" hits="1"/>
+						<line number="83" hits="1"/>
+						<line number="84" hits="1"/>
+						<line number="85" hits="1"/>
+						<line number="86" hits="1"/>
+						<line number="87" hits="1"/>
+						<line number="88" hits="1"/>
+						<line number="90" hits="1"/>
+						<line number="91" hits="1"/>
+						<line number="92" hits="1"/>
+						<line number="93" hits="1"/>
+						<line number="94" hits="1"/>
+						<line number="95" hits="1"/>
+						<line number="98" hits="1"/>
+						<line number="99" hits="1"/>
+						<line number="100" hits="1"/>
+						<line number="101" hits="1"/>
+						<line number="103" hits="1"/>
+						<line number="104" hits="1"/>
+						<line number="105" hits="1"/>
+						<line number="106" hits="1"/>
+						<line number="109" hits="1"/>
+						<line number="110" hits="1"/>
+						<line number="111" hits="1"/>
+						<line number="112" hits="1"/>
+						<line number="115" hits="1"/>
+						<line number="116" hits="1"/>
+						<line number="117" hits="1"/>
+						<line number="118" hits="1"/>
+						<line number="121" hits="1"/>
+						<line number="122" hits="1"/>
+						<line number="123" hits="1"/>
+						<line number="124" hits="1"/>
+						<line number="127" hits="1"/>
+						<line number="128" hits="1"/>
+						<line number="129" hits="1"/>
+						<line number="132" hits="1"/>
+						<line number="133" hits="1"/>
+						<line number="135" hits="1"/>
+						<line number="137" hits="1"/>
+						<line number="138" hits="1"/>
+						<line number="140" hits="1"/>
+						<line number="142" hits="1"/>
+						<line number="143" hits="1"/>
+						<line number="144" hits="1"/>
+						<line number="145" hits="1"/>
+						<line number="146" hits="1"/>
+						<line number="147" hits="1"/>
+						<line number="148" hits="1"/>
+						<line number="151" hits="1"/>
+						<line number="152" hits="1"/>
+						<line number="155" hits="1"/>
+						<line number="156" hits="0"/>
+						<line number="160" hits="1"/>
+						<line number="161" hits="1"/>
+						<line number="162" hits="1"/>
+						<line number="167" hits="1"/>
+						<line number="168" hits="1"/>
+						<line number="171" hits="1"/>
+						<line number="172" hits="1"/>
+						<line number="173" hits="1"/>
+						<line number="176" hits="1"/>
+						<line number="177" hits="1"/>
+						<line number="178" hits="1"/>
+						<line number="179" hits="1"/>
+						<line number="180" hits="1"/>
+						<line number="182" hits="1"/>
+						<line number="183" hits="1"/>
+						<line number="184" hits="1"/>
+						<line number="187" hits="1"/>
+						<line number="188" hits="1"/>
+						<line number="190" hits="1"/>
+						<line number="191" hits="1"/>
+						<line number="192" hits="0"/>
+						<line number="193" hits="0"/>
+						<line number="195" hits="1"/>
+						<line number="197" hits="1"/>
+						<line number="198" hits="1"/>
+						<line number="199" hits="1"/>
+						<line number="200" hits="1"/>
+						<line number="201" hits="1"/>
+						<line number="202" hits="1"/>
+						<line number="206" hits="1"/>
+						<line number="207" hits="1"/>
+						<line number="208" hits="1"/>
+						<line number="209" hits="1"/>
+						<line number="212" hits="1"/>
+						<line number="213" hits="1"/>
+						<line number="214" hits="1"/>
+						<line number="216" hits="1"/>
+						<line number="217" hits="1"/>
+						<line number="218" hits="1"/>
+						<line number="219" hits="1"/>
+						<line number="220" hits="1"/>
+						<line number="221" hits="1"/>
+					</lines>
+				</class>
+				<class name="infinite_loop_cpp__148" filename="lib/compiler/src/ast/expressions/infinite_loop.cpp" branch-rate="1.0" complexity="1.0" line-rate="1.000">
+					<lines>
+						<line number="10" hits="1"/>
+						<line number="11" hits="1"/>
+						<line number="13" hits="1"/>
+						<line number="16" hits="1"/>
+						<line number="17" hits="1"/>
+						<line number="18" hits="1"/>
+						<line number="20" hits="1"/>
+						<line number="21" hits="1"/>
+						<line number="22" hits="1"/>
+						<line number="24" hits="1"/>
+						<line number="25" hits="1"/>
+						<line number="27" hits="1"/>
+						<line number="28" hits="1"/>
+						<line number="29" hits="1"/>
+					</lines>
+				</class>
+				<class name="import_cpp__149" filename="lib/compiler/src/ast/statements/import.cpp" branch-rate="1.0" complexity="1.0" line-rate="0.979">
+					<lines>
+						<line number="11" hits="1"/>
+						<line number="12" hits="1"/>
+						<line number="14" hits="1"/>
+						<line number="15" hits="1"/>
+						<line number="20" hits="1"/>
+						<line number="21" hits="1"/>
+						<line number="23" hits="1"/>
+						<line number="24" hits="1"/>
+						<line number="28" hits="1"/>
+						<line number="29" hits="1"/>
+						<line number="31" hits="1"/>
+						<line number="34" hits="1"/>
+						<line number="36" hits="1"/>
+						<line number="37" hits="1"/>
+						<line number="39" hits="1"/>
+						<line number="60" hits="1"/>
+						<line number="61" hits="1"/>
+						<line number="62" hits="1"/>
+						<line number="63" hits="1"/>
+						<line number="65" hits="1"/>
+						<line number="66" hits="1"/>
+						<line number="67" hits="1"/>
+						<line number="68" hits="1"/>
+						<line number="71" hits="1"/>
+						<line number="72" hits="1"/>
+						<line number="73" hits="1"/>
+						<line number="75" hits="1"/>
+						<line number="77" hits="1"/>
+						<line number="78" hits="1"/>
+						<line number="80" hits="1"/>
+						<line number="81" hits="1"/>
+						<line number="82" hits="1"/>
+						<line number="83" hits="0"/>
+						<line number="85" hits="1"/>
+						<line number="87" hits="1"/>
+						<line number="88" hits="1"/>
+						<line number="89" hits="1"/>
+						<line number="90" hits="1"/>
+						<line number="92" hits="1"/>
+						<line number="95" hits="1"/>
+						<line number="96" hits="1"/>
+						<line number="97" hits="1"/>
+						<line number="98" hits="1"/>
+						<line number="99" hits="1"/>
+						<line number="100" hits="1"/>
+						<line number="102" hits="1"/>
+						<line number="103" hits="1"/>
+						<line number="106" hits="1"/>
+					</lines>
+				</class>
+				<class name="token_hpp__150" filename="lib/compiler/include/syntax/token.hpp" branch-rate="1.0" complexity="1.0" line-rate="1.000">
+					<lines>
+						<line number="262" hits="1"/>
+						<line number="263" hits="1"/>
+						<line number="266" hits="1"/>
+						<line number="267" hits="1"/>
+						<line number="270" hits="1"/>
+						<line number="271" hits="1"/>
+						<line number="274" hits="1"/>
+						<line number="275" hits="1"/>
+						<line number="278" hits="1"/>
+						<line number="279" hits="1"/>
+						<line number="282" hits="1"/>
+						<line number="283" hits="1"/>
+						<line number="286" hits="1"/>
+						<line number="287" hits="1"/>
+						<line number="290" hits="1"/>
+						<line number="291" hits="1"/>
+						<line number="301" hits="1"/>
+						<line number="302" hits="1"/>
+						<line number="303" hits="1"/>
+						<line number="304" hits="1"/>
+						<line number="306" hits="1"/>
+						<line number="307" hits="1"/>
+						<line number="309" hits="1"/>
+						<line number="314" hits="1"/>
+						<line number="324" hits="1"/>
+						<line number="325" hits="1"/>
+						<line number="326" hits="1"/>
+						<line number="333" hits="1"/>
+						<line number="339" hits="1"/>
+						<line number="341" hits="1"/>
+						<line number="342" hits="1"/>
+						<line number="343" hits="1"/>
+						<line number="344" hits="1"/>
+						<line number="345" hits="1"/>
+						<line number="346" hits="1"/>
+						<line number="347" hits="1"/>
+					</lines>
+				</class>
+				<class name="declaration_cpp__151" filename="lib/compiler/src/ast/statements/declaration.cpp" branch-rate="1.0" complexity="1.0" line-rate="0.976">
+					<lines>
+						<line number="15" hits="1"/>
+						<line number="16" hits="1"/>
+						<line number="17" hits="1"/>
+						<line number="19" hits="1"/>
+						<line number="22" hits="1"/>
+						<line number="23" hits="1"/>
+						<line number="24" hits="1"/>
+						<line number="26" hits="1"/>
+						<line number="27" hits="1"/>
+						<line number="28" hits="1"/>
+						<line number="29" hits="1"/>
+						<line number="30" hits="0"/>
+						<line number="32" hits="1"/>
+						<line number="35" hits="1"/>
+						<line number="36" hits="1"/>
+						<line number="39" hits="1"/>
+						<line number="40" hits="1"/>
+						<line number="41" hits="1"/>
+						<line number="42" hits="1"/>
+						<line number="44" hits="1"/>
+						<line number="45" hits="1"/>
+						<line number="46" hits="1"/>
+						<line number="49" hits="1"/>
+						<line number="50" hits="1"/>
+						<line number="52" hits="1"/>
+						<line number="53" hits="1"/>
+						<line number="54" hits="1"/>
+						<line number="56" hits="1"/>
+						<line number="59" hits="1"/>
+						<line number="60" hits="1"/>
+						<line number="61" hits="1"/>
+						<line number="62" hits="1"/>
+						<line number="67" hits="1"/>
+						<line number="69" hits="1"/>
+						<line number="70" hits="1"/>
+						<line number="71" hits="1"/>
+						<line number="72" hits="1"/>
+						<line number="75" hits="1"/>
+						<line number="76" hits="1"/>
+						<line number="77" hits="1"/>
+						<line number="78" hits="1"/>
+					</lines>
+				</class>
+				<class name="visitor_hpp__152" filename="lib/compiler/include/ast/visitor.hpp" branch-rate="1.0" complexity="1.0" line-rate="1.000">
+					<lines>
+						<line number="91" hits="1"/>
+						<line number="93" hits="1"/>
+						<line number="97" hits="1"/>
+						<line number="98" hits="1"/>
+						<line number="99" hits="1"/>
+						<line number="102" hits="1"/>
+						<line number="105" hits="1"/>
+						<line number="109" hits="1"/>
+						<line number="111" hits="1"/>
+					</lines>
+				</class>
+				<class name="node_cpp__153" filename="lib/compiler/src/ast/node.cpp" branch-rate="1.0" complexity="1.0" line-rate="1.000">
+					<lines>
+						<line number="21" hits="1"/>
+					</lines>
+				</class>
+				<class name="list_cpp__154" filename="lib/compiler/src/diagnostic/list.cpp" branch-rate="1.0" complexity="1.0" line-rate="0.000">
+					<lines>
+						<line number="12" hits="0"/>
+						<line number="13" hits="0"/>
+						<line number="16" hits="0"/>
+						<line number="19" hits="0"/>
+						<line number="20" hits="0"/>
+						<line number="23" hits="0"/>
+						<line number="24" hits="0"/>
+						<line number="25" hits="0"/>
+						<line number="26" hits="0"/>
+						<line number="27" hits="0"/>
+					</lines>
+				</class>
+				<class name="pool_cpp__155" filename="lib/compiler/src/sema/pool.cpp" branch-rate="1.0" complexity="1.0" line-rate="1.000">
+					<lines>
+						<line number="5" hits="1"/>
+						<line number="6" hits="1"/>
+						<line number="7" hits="1"/>
+						<line number="8" hits="1"/>
+						<line number="10" hits="1"/>
+						<line number="11" hits="1"/>
+						<line number="12" hits="1"/>
+						<line number="13" hits="1"/>
+						<line number="14" hits="1"/>
+						<line number="15" hits="1"/>
+					</lines>
+				</class>
+				<class name="operators_hpp__156" filename="lib/compiler/include/syntax/operators.hpp" branch-rate="1.0" complexity="1.0" line-rate="1.000">
+					<lines>
+						<line number="124" hits="1"/>
+						<line number="125" hits="1"/>
+						<line number="126" hits="1"/>
+						<line number="127" hits="1"/>
+						<line number="128" hits="1"/>
+					</lines>
+				</class>
+				<class name="test_cpp__157" filename="lib/compiler/src/ast/statements/test.cpp" branch-rate="1.0" complexity="1.0" line-rate="1.000">
+					<lines>
+						<line number="12" hits="1"/>
+						<line number="13" hits="1"/>
+						<line number="15" hits="1"/>
+						<line number="18" hits="1"/>
+						<line number="19" hits="1"/>
+						<line number="21" hits="1"/>
+						<line number="22" hits="1"/>
+						<line number="23" hits="1"/>
+						<line number="24" hits="1"/>
+						<line number="25" hits="1"/>
+						<line number="28" hits="1"/>
+						<line number="29" hits="1"/>
+						<line number="30" hits="1"/>
+						<line number="32" hits="1"/>
+						<line number="34" hits="1"/>
+						<line number="35" hits="1"/>
+						<line number="38" hits="1"/>
+						<line number="39" hits="1"/>
+						<line number="41" hits="1"/>
+						<line number="42" hits="1"/>
+						<line number="43" hits="1"/>
+					</lines>
+				</class>
+				<class name="array_hpp__158" filename="lib/compiler/include/ast/expressions/array.hpp" branch-rate="1.0" complexity="1.0" line-rate="1.000">
+					<lines>
+						<line number="24" hits="1"/>
+						<line number="30" hits="1"/>
+						<line number="31" hits="1"/>
+						<line number="32" hits="1"/>
+					</lines>
+				</class>
+				<class name="using_cpp__159" filename="lib/compiler/src/ast/statements/using.cpp" branch-rate="1.0" complexity="1.0" line-rate="1.000">
+					<lines>
+						<line number="19" hits="1"/>
+						<line number="20" hits="1"/>
+						<line number="22" hits="1"/>
+						<line number="25" hits="1"/>
+						<line number="27" hits="1"/>
+						<line number="28" hits="1"/>
+						<line number="30" hits="1"/>
+						<line number="31" hits="1"/>
+						<line number="33" hits="1"/>
+						<line number="34" hits="1"/>
+						<line number="36" hits="1"/>
+						<line number="37" hits="1"/>
+						<line number="38" hits="1"/>
+						<line number="40" hits="1"/>
+						<line number="41" hits="1"/>
+						<line number="42" hits="1"/>
+					</lines>
+				</class>
+				<class name="declaration_hpp__160" filename="lib/compiler/include/ast/statements/declaration.hpp" branch-rate="1.0" complexity="1.0" line-rate="1.000">
+					<lines>
+						<line number="28" hits="1"/>
+						<line number="29" hits="1"/>
+						<line number="32" hits="1"/>
+						<line number="33" hits="1"/>
+						<line number="40" hits="1"/>
+						<line number="41" hits="1"/>
+						<line number="42" hits="1"/>
+						<line number="57" hits="1"/>
+						<line number="63" hits="1"/>
+						<line number="64" hits="1"/>
+						<line number="65" hits="1"/>
+						<line number="66" hits="1"/>
+						<line number="68" hits="1"/>
+						<line number="69" hits="1"/>
+						<line number="76" hits="1"/>
+						<line number="77" hits="1"/>
+						<line number="92" hits="1"/>
+						<line number="94" hits="1"/>
+						<line number="95" hits="1"/>
+						<line number="96" hits="1"/>
+						<line number="99" hits="1"/>
+						<line number="100" hits="1"/>
+						<line number="101" hits="1"/>
+						<line number="104" hits="1"/>
+						<line number="105" hits="1"/>
+						<line number="106" hits="1"/>
+						<line number="107" hits="1"/>
+						<line number="111" hits="1"/>
+						<line number="112" hits="1"/>
+						<line number="113" hits="1"/>
+					</lines>
+				</class>
+				<class name="type_cpp__161" filename="lib/compiler/src/ast/expressions/type.cpp" branch-rate="1.0" complexity="1.0" line-rate="0.929">
+					<lines>
+						<line number="18" hits="1"/>
+						<line number="19" hits="1"/>
+						<line number="20" hits="1"/>
+						<line number="22" hits="0"/>
+						<line number="23" hits="0"/>
+						<line number="26" hits="1"/>
+						<line number="27" hits="1"/>
+						<line number="28" hits="1"/>
+						<line number="32" hits="1"/>
+						<line number="33" hits="1"/>
+						<line number="35" hits="0"/>
+						<line number="38" hits="1"/>
+						<line number="40" hits="1"/>
+						<line number="41" hits="1"/>
+						<line number="42" hits="1"/>
+						<line number="45" hits="1"/>
+						<line number="46" hits="1"/>
+						<line number="48" hits="1"/>
+						<line number="49" hits="1"/>
+						<line number="50" hits="1"/>
+						<line number="51" hits="1"/>
+						<line number="52" hits="1"/>
+						<line number="53" hits="1"/>
+						<line number="54" hits="1"/>
+						<line number="55" hits="1"/>
+						<line number="56" hits="1"/>
+						<line number="57" hits="1"/>
+						<line number="58" hits="1"/>
+						<line number="62" hits="1"/>
+						<line number="63" hits="1"/>
+						<line number="64" hits="1"/>
+						<line number="66" hits="1"/>
+						<line number="67" hits="1"/>
+						<line number="70" hits="1"/>
+						<line number="71" hits="1"/>
+						<line number="72" hits="1"/>
+						<line number="73" hits="1"/>
+						<line number="74" hits="1"/>
+						<line number="75" hits="1"/>
+						<line number="77" hits="1"/>
+						<line number="78" hits="1"/>
+						<line number="79" hits="1"/>
+						<line number="82" hits="1"/>
+						<line number="83" hits="1"/>
+						<line number="85" hits="1"/>
+						<line number="86" hits="1"/>
+						<line number="88" hits="1"/>
+						<line number="91" hits="1"/>
+						<line number="94" hits="1"/>
+						<line number="96" hits="1"/>
+						<line number="98" hits="1"/>
+						<line number="100" hits="1"/>
+						<line number="102" hits="1"/>
+						<line number="103" hits="1"/>
+						<line number="104" hits="1"/>
+						<line number="105" hits="1"/>
+						<line number="106" hits="1"/>
+						<line number="107" hits="1"/>
+						<line number="108" hits="1"/>
+						<line number="109" hits="1"/>
+						<line number="112" hits="0"/>
+						<line number="113" hits="1"/>
+						<line number="115" hits="1"/>
+						<line number="116" hits="1"/>
+						<line number="117" hits="1"/>
+						<line number="121" hits="1"/>
+						<line number="122" hits="1"/>
+						<line number="123" hits="1"/>
+						<line number="124" hits="1"/>
+						<line number="126" hits="1"/>
+						<line number="127" hits="1"/>
+						<line number="128" hits="1"/>
+						<line number="132" hits="1"/>
+						<line number="133" hits="1"/>
+						<line number="134" hits="1"/>
+						<line number="137" hits="1"/>
+						<line number="138" hits="1"/>
+						<line number="139" hits="1"/>
+						<line number="142" hits="1"/>
+						<line number="144" hits="1"/>
+						<line number="146" hits="1"/>
+						<line number="148" hits="1"/>
+						<line number="150" hits="1"/>
+						<line number="151" hits="1"/>
+						<line number="152" hits="1"/>
+						<line number="154" hits="0"/>
+						<line number="155" hits="0"/>
+						<line number="156" hits="0"/>
+						<line number="157" hits="0"/>
+						<line number="160" hits="1"/>
+						<line number="161" hits="1"/>
+						<line number="162" hits="1"/>
+						<line number="163" hits="1"/>
+						<line number="164" hits="1"/>
+						<line number="165" hits="1"/>
+						<line number="166" hits="1"/>
+						<line number="168" hits="1"/>
+						<line number="169" hits="1"/>
+						<line number="172" hits="1"/>
+						<line number="173" hits="1"/>
+						<line number="177" hits="1"/>
+						<line number="178" hits="1"/>
+						<line number="180" hits="1"/>
+						<line number="183" hits="1"/>
+						<line number="185" hits="1"/>
+						<line number="187" hits="1"/>
+						<line number="188" hits="1"/>
+						<line number="209" hits="1"/>
+						<line number="210" hits="1"/>
+						<line number="211" hits="1"/>
+						<line number="213" hits="1"/>
+						<line number="214" hits="1"/>
+						<line number="215" hits="1"/>
+					</lines>
+				</class>
+				<class name="counter_hpp__162" filename="lib/support/include/counter.hpp" branch-rate="1.0" complexity="1.0" line-rate="1.000">
+					<lines>
+						<line number="10" hits="1"/>
+						<line number="14" hits="1"/>
+						<line number="15" hits="1"/>
+						<line number="16" hits="1"/>
+						<line number="17" hits="1"/>
+						<line number="30" hits="1"/>
+						<line number="31" hits="1"/>
+						<line number="33" hits="1"/>
+						<line number="41" hits="1"/>
+						<line number="42" hits="1"/>
+						<line number="47" hits="1"/>
+						<line number="48" hits="1"/>
+						<line number="52" hits="1"/>
+						<line number="59" hits="1"/>
+					</lines>
+				</class>
+				<class name="struct_hpp__163" filename="lib/compiler/include/ast/expressions/struct.hpp" branch-rate="1.0" complexity="1.0" line-rate="1.000">
+					<lines>
+						<line number="18" hits="1"/>
+						<line number="24" hits="1"/>
+						<line number="30" hits="1"/>
+						<line number="31" hits="1"/>
+						<line number="32" hits="1"/>
+					</lines>
+				</class>
+				<class name="enum_hpp__164" filename="lib/support/include/enum.hpp" branch-rate="1.0" complexity="1.0" line-rate="1.000">
+					<lines>
+						<line number="60" hits="1"/>
+						<line number="65" hits="1"/>
+						<line number="67" hits="1"/>
+						<line number="71" hits="1"/>
+						<line number="72" hits="1"/>
+						<line number="73" hits="1"/>
+						<line number="74" hits="1"/>
+						<line number="80" hits="1"/>
+						<line number="82" hits="1"/>
+						<line number="84" hits="1"/>
+						<line number="85" hits="1"/>
+						<line number="92" hits="1"/>
+					</lines>
+				</class>
+				<class name="pool_hpp__165" filename="lib/compiler/include/sema/pool.hpp" branch-rate="1.0" complexity="1.0" line-rate="1.000">
+					<lines>
+						<line number="14" hits="1"/>
+						<line number="15" hits="1"/>
+						<line number="17" hits="1"/>
+						<line number="20" hits="1"/>
+					</lines>
+				</class>
+				<class name="parser_hpp__166" filename="lib/compiler/include/syntax/parser.hpp" branch-rate="1.0" complexity="1.0" line-rate="1.000">
+					<lines>
+						<line number="97" hits="1"/>
+						<line number="98" hits="1"/>
+						<line number="122" hits="1"/>
+						<line number="123" hits="1"/>
+						<line number="124" hits="1"/>
+						<line number="125" hits="1"/>
+						<line number="128" hits="1"/>
+						<line number="133" hits="1"/>
+						<line number="138" hits="1"/>
+						<line number="147" hits="1"/>
+						<line number="148" hits="1"/>
+						<line number="150" hits="1"/>
+						<line number="151" hits="1"/>
+						<line number="186" hits="1"/>
+						<line number="187" hits="1"/>
+						<line number="188" hits="1"/>
+						<line number="189" hits="1"/>
+						<line number="190" hits="1"/>
+						<line number="195" hits="1"/>
+						<line number="196" hits="1"/>
+					</lines>
+				</class>
+				<class name="node_hpp__167" filename="lib/compiler/include/ast/node.hpp" branch-rate="1.0" complexity="1.0" line-rate="0.973">
+					<lines>
+						<line number="106" hits="1"/>
+						<line number="108" hits="1"/>
+						<line number="112" hits="1"/>
+						<line number="113" hits="1"/>
+						<line number="115" hits="1"/>
+						<line number="117" hits="1"/>
+						<line number="118" hits="1"/>
+						<line number="119" hits="1"/>
+						<line number="120" hits="1"/>
+						<line number="121" hits="1"/>
+						<line number="122" hits="1"/>
+						<line number="123" hits="1"/>
+						<line number="125" hits="0"/>
+						<line number="127" hits="1"/>
+						<line number="128" hits="1"/>
+						<line number="130" hits="1"/>
+						<line number="131" hits="1"/>
+						<line number="132" hits="1"/>
+						<line number="136" hits="1"/>
+						<line number="137" hits="1"/>
+						<line number="138" hits="1"/>
+						<line number="143" hits="1"/>
+						<line number="144" hits="1"/>
+						<line number="145" hits="1"/>
+						<line number="152" hits="1"/>
+						<line number="166" hits="1"/>
+						<line number="168" hits="1"/>
+						<line number="171" hits="1"/>
+						<line number="173" hits="1"/>
+						<line number="174" hits="1"/>
+						<line number="179" hits="1"/>
+						<line number="181" hits="1"/>
+						<line number="184" hits="1"/>
+						<line number="186" hits="1"/>
+						<line number="187" hits="1"/>
+						<line number="192" hits="1"/>
+						<line number="194" hits="1"/>
+					</lines>
+				</class>
+				<class name="module_hpp__168" filename="lib/compiler/include/sema/module/module.hpp" branch-rate="1.0" complexity="1.0" line-rate="0.917">
+					<lines>
+						<line number="47" hits="1"/>
+						<line number="57" hits="1"/>
+						<line number="58" hits="1"/>
+						<line number="60" hits="0"/>
+						<line number="63" hits="1"/>
+						<line number="64" hits="1"/>
+						<line number="65" hits="1"/>
+						<line number="66" hits="1"/>
+						<line number="71" hits="1"/>
+						<line number="78" hits="1"/>
+						<line number="79" hits="1"/>
+						<line number="81" hits="1"/>
+					</lines>
+				</class>
+				<class name="arena_hpp__169" filename="lib/support/include/arena.hpp" branch-rate="1.0" complexity="1.0" line-rate="1.000">
+					<lines>
+						<line number="19" hits="1"/>
+						<line number="20" hits="1"/>
+						<line number="36" hits="1"/>
+						<line number="38" hits="1"/>
+						<line number="39" hits="1"/>
+						<line number="45" hits="1"/>
+						<line number="47" hits="1"/>
+						<line number="48" hits="1"/>
+						<line number="49" hits="1"/>
+						<line number="50" hits="1"/>
+						<line number="55" hits="1"/>
+						<line number="56" hits="1"/>
+						<line number="57" hits="1"/>
+						<line number="58" hits="1"/>
+						<line number="75" hits="1"/>
+						<line number="76" hits="1"/>
+						<line number="77" hits="1"/>
+					</lines>
+				</class>
+				<class name="precedence_cpp__170" filename="lib/compiler/src/syntax/precedence.cpp" branch-rate="1.0" complexity="1.0" line-rate="1.000">
+					<lines>
+						<line number="52" hits="1"/>
+						<line number="53" hits="1"/>
+					</lines>
+				</class>
+				<class name="parser_hpp__171" filename="lib/driver/include/arguments/parser.hpp" branch-rate="1.0" complexity="1.0" line-rate="1.000">
+					<lines>
+						<line number="20" hits="1"/>
+						<line number="22" hits="1"/>
+						<line number="27" hits="1"/>
+					</lines>
+				</class>
+				<class name="for_hpp__172" filename="lib/compiler/include/ast/expressions/for.hpp" branch-rate="1.0" complexity="1.0" line-rate="1.000">
+					<lines>
+						<line number="25" hits="1"/>
+						<line number="27" hits="1"/>
+						<line number="28" hits="1"/>
+						<line number="30" hits="1"/>
+						<line number="42" hits="1"/>
+						<line number="46" hits="1"/>
+						<line number="47" hits="1"/>
+						<line number="48" hits="1"/>
+						<line number="53" hits="1"/>
+						<line number="71" hits="1"/>
+						<line number="77" hits="1"/>
+						<line number="78" hits="1"/>
+						<line number="79" hits="1"/>
+						<line number="80" hits="1"/>
+					</lines>
+				</class>
+				<class name="label_hpp__173" filename="lib/compiler/include/ast/expressions/label.hpp" branch-rate="1.0" complexity="1.0" line-rate="1.000">
+					<lines>
+						<line number="39" hits="1"/>
+						<line number="45" hits="1"/>
+						<line number="60" hits="1"/>
+					</lines>
+				</class>
+				<class name="arena_cpp__174" filename="lib/support/src/arena.cpp" branch-rate="1.0" complexity="1.0" line-rate="0.914">
+					<lines>
+						<line number="8" hits="1"/>
+						<line number="9" hits="1"/>
+						<line number="10" hits="1"/>
+						<line number="11" hits="1"/>
+						<line number="12" hits="1"/>
+						<line number="13" hits="1"/>
+						<line number="15" hits="1"/>
+						<line number="16" hits="1"/>
+						<line number="17" hits="1"/>
+						<line number="18" hits="1"/>
+						<line number="19" hits="0"/>
+						<line number="20" hits="0"/>
+						<line number="21" hits="0"/>
+						<line number="23" hits="1"/>
+						<line number="26" hits="1"/>
+						<line number="27" hits="1"/>
+						<line number="29" hits="1"/>
+						<line number="30" hits="1"/>
+						<line number="31" hits="1"/>
+						<line number="32" hits="1"/>
+						<line number="33" hits="1"/>
+						<line number="34" hits="1"/>
+						<line number="36" hits="1"/>
+						<line number="37" hits="1"/>
+						<line number="39" hits="1"/>
+						<line number="40" hits="1"/>
+						<line number="41" hits="1"/>
+						<line number="43" hits="1"/>
+						<line number="44" hits="1"/>
+						<line number="45" hits="1"/>
+						<line number="46" hits="1"/>
+						<line number="47" hits="1"/>
+						<line number="50" hits="1"/>
+						<line number="51" hits="1"/>
+						<line number="52" hits="1"/>
+					</lines>
+				</class>
+				<class name="array_cpp__175" filename="lib/compiler/src/ast/expressions/array.cpp" branch-rate="1.0" complexity="1.0" line-rate="1.000">
+					<lines>
+						<line number="21" hits="1"/>
+						<line number="22" hits="1"/>
+						<line number="23" hits="1"/>
+						<line number="25" hits="1"/>
+						<line number="28" hits="1"/>
+						<line number="29" hits="1"/>
+						<line number="30" hits="1"/>
+						<line number="32" hits="1"/>
+						<line number="33" hits="1"/>
+						<line number="34" hits="1"/>
+						<line number="35" hits="1"/>
+						<line number="37" hits="1"/>
+						<line number="38" hits="1"/>
+						<line number="40" hits="1"/>
+						<line number="41" hits="1"/>
+						<line number="42" hits="1"/>
+						<line number="45" hits="1"/>
+						<line number="46" hits="1"/>
+						<line number="47" hits="1"/>
+						<line number="48" hits="1"/>
+						<line number="49" hits="1"/>
+						<line number="50" hits="1"/>
+						<line number="51" hits="1"/>
+						<line number="52" hits="1"/>
+						<line number="56" hits="1"/>
+						<line number="57" hits="1"/>
+						<line number="58" hits="1"/>
+						<line number="59" hits="1"/>
+						<line number="60" hits="1"/>
+						<line number="61" hits="1"/>
+						<line number="64" hits="1"/>
+						<line number="65" hits="1"/>
+						<line number="66" hits="1"/>
+						<line number="68" hits="1"/>
+						<line number="69" hits="1"/>
+						<line number="70" hits="1"/>
+						<line number="72" hits="1"/>
+						<line number="74" hits="1"/>
+						<line number="76" hits="1"/>
+						<line number="78" hits="1"/>
+						<line number="79" hits="1"/>
+						<line number="80" hits="1"/>
+						<line number="81" hits="1"/>
+						<line number="82" hits="1"/>
+					</lines>
+				</class>
+				<class name="prefix_hpp__176" filename="lib/compiler/include/ast/expressions/prefix.hpp" branch-rate="1.0" complexity="1.0" line-rate="0.957">
+					<lines>
+						<line number="14" hits="1"/>
+						<line number="17" hits="1"/>
+						<line number="19" hits="1"/>
+						<line number="24" hits="1"/>
+						<line number="25" hits="1"/>
+						<line number="26" hits="1"/>
+						<line number="27" hits="0"/>
+						<line number="29" hits="1"/>
+						<line number="31" hits="1"/>
+						<line number="32" hits="1"/>
+						<line number="33" hits="1"/>
+						<line number="35" hits="1"/>
+						<line number="36" hits="1"/>
+						<line number="38" hits="1"/>
+						<line number="41" hits="1"/>
+						<line number="42" hits="1"/>
+						<line number="43" hits="1"/>
+						<line number="62" hits="1"/>
+						<line number="63" hits="1"/>
+						<line number="64" hits="1"/>
+						<line number="68" hits="1"/>
+						<line number="73" hits="1"/>
+						<line number="75" hits="1"/>
+					</lines>
+				</class>
+				<class name="prefix_cpp__177" filename="lib/compiler/src/ast/expressions/prefix.cpp" branch-rate="1.0" complexity="1.0" line-rate="1.000">
+					<lines>
+						<line number="11" hits="1"/>
+						<line number="13" hits="1"/>
+						<line number="14" hits="1"/>
+						<line number="15" hits="1"/>
+						<line number="19" hits="1"/>
+						<line number="20" hits="1"/>
+						<line number="21" hits="1"/>
+						<line number="24" hits="1"/>
+						<line number="25" hits="1"/>
+						<line number="26" hits="1"/>
+						<line number="27" hits="1"/>
+						<line number="28" hits="1"/>
+						<line number="31" hits="1"/>
+						<line number="32" hits="1"/>
+					</lines>
+				</class>
+				<class name="primitive_cpp__178" filename="lib/compiler/src/ast/expressions/primitive.cpp" branch-rate="1.0" complexity="1.0" line-rate="0.981">
+					<lines>
+						<line number="11" hits="1"/>
+						<line number="14" hits="1"/>
+						<line number="15" hits="1"/>
+						<line number="16" hits="1"/>
+						<line number="17" hits="1"/>
+						<line number="19" hits="1"/>
+						<line number="20" hits="1"/>
+						<line number="22" hits="1"/>
+						<line number="23" hits="1"/>
+						<line number="24" hits="1"/>
+						<line number="25" hits="1"/>
+						<line number="26" hits="1"/>
+						<line number="27" hits="1"/>
+						<line number="29" hits="1"/>
+						<line number="32" hits="1"/>
+						<line number="33" hits="1"/>
+						<line number="34" hits="1"/>
+						<line number="35" hits="1"/>
+						<line number="37" hits="1"/>
+						<line number="39" hits="1"/>
+						<line number="40" hits="1"/>
+						<line number="41" hits="1"/>
+						<line number="42" hits="1"/>
+						<line number="43" hits="1"/>
+						<line number="44" hits="1"/>
+						<line number="45" hits="1"/>
+						<line number="46" hits="1"/>
+						<line number="47" hits="1"/>
+						<line number="50" hits="1"/>
+						<line number="51" hits="1"/>
+						<line number="53" hits="1"/>
+						<line number="54" hits="1"/>
+						<line number="55" hits="1"/>
+						<line number="56" hits="1"/>
+						<line number="59" hits="1"/>
+						<line number="61" hits="1"/>
+						<line number="62" hits="1"/>
+						<line number="63" hits="1"/>
+						<line number="66" hits="1"/>
+						<line number="68" hits="1"/>
+						<line number="69" hits="1"/>
+						<line number="70" hits="1"/>
+						<line number="73" hits="1"/>
+						<line number="76" hits="1"/>
+						<line number="77" hits="1"/>
+						<line number="78" hits="1"/>
+						<line number="79" hits="1"/>
+						<line number="80" hits="0"/>
+						<line number="82" hits="1"/>
+						<line number="85" hits="1"/>
+						<line number="86" hits="1"/>
+						<line number="87" hits="1"/>
+						<line number="88" hits="1"/>
+						<line number="89" hits="1"/>
+					</lines>
+				</class>
+				<class name="return_cpp__179" filename="lib/compiler/src/ast/statements/return.cpp" branch-rate="1.0" complexity="1.0" line-rate="1.000">
+					<lines>
+						<line number="7" hits="1"/>
+						<line number="10" hits="1"/>
+						<line number="11" hits="1"/>
+						<line number="13" hits="1"/>
+						<line number="14" hits="1"/>
+						<line number="15" hits="1"/>
+						<line number="16" hits="1"/>
+						<line number="17" hits="1"/>
+						<line number="18" hits="1"/>
+						<line number="20" hits="1"/>
+						<line number="21" hits="1"/>
+						<line number="22" hits="1"/>
+					</lines>
+				</class>
+				<class name="call_hpp__180" filename="lib/compiler/include/ast/expressions/call.hpp" branch-rate="1.0" complexity="1.0" line-rate="1.000">
+					<lines>
+						<line number="21" hits="1"/>
+						<line number="25" hits="1"/>
+						<line number="26" hits="1"/>
+						<line number="27" hits="1"/>
+						<line number="29" hits="1"/>
+						<line number="45" hits="1"/>
+						<line number="51" hits="1"/>
+						<line number="52" hits="1"/>
+					</lines>
+				</class>
+				<class name="continue_hpp__181" filename="lib/compiler/include/ast/statements/continue.hpp" branch-rate="1.0" complexity="1.0" line-rate="1.000">
+					<lines>
+						<line number="26" hits="1"/>
+					</lines>
+				</class>
+				<class name="defer_hpp__182" filename="lib/compiler/include/ast/statements/defer.hpp" branch-rate="1.0" complexity="1.0" line-rate="1.000">
+					<lines>
+						<line number="11" hits="1"/>
+						<line number="17" hits="1"/>
+						<line number="25" hits="1"/>
+						<line number="28" hits="1"/>
+						<line number="29" hits="1"/>
+						<line number="30" hits="1"/>
+					</lines>
+				</class>
+				<class name="string_cpp__183" filename="lib/support/src/string.cpp" branch-rate="1.0" complexity="1.0" line-rate="0.880">
+					<lines>
+						<line number="10" hits="1"/>
+						<line number="12" hits="1"/>
+						<line number="13" hits="1"/>
+						<line number="14" hits="1"/>
+						<line number="17" hits="1"/>
+						<line number="18" hits="1"/>
+						<line number="19" hits="1"/>
+						<line number="20" hits="1"/>
+						<line number="23" hits="1"/>
+						<line number="24" hits="1"/>
+						<line number="25" hits="1"/>
+						<line number="28" hits="1"/>
+						<line number="29" hits="1"/>
+						<line number="30" hits="1"/>
+						<line number="31" hits="1"/>
+						<line number="34" hits="1"/>
+						<line number="35" hits="1"/>
+						<line number="36" hits="1"/>
+						<line number="39" hits="1"/>
+						<line number="40" hits="1"/>
+						<line number="41" hits="1"/>
+						<line number="42" hits="1"/>
+						<line number="45" hits="0"/>
+						<line number="46" hits="0"/>
+						<line number="47" hits="0"/>
+					</lines>
+				</class>
+				<class name="return_hpp__184" filename="lib/compiler/include/ast/statements/return.hpp" branch-rate="1.0" complexity="1.0" line-rate="1.000">
+					<lines>
+						<line number="9" hits="1"/>
+						<line number="16" hits="1"/>
+						<line number="24" hits="1"/>
+						<line number="27" hits="1"/>
+						<line number="28" hits="1"/>
+						<line number="29" hits="1"/>
+					</lines>
+				</class>
+				<class name="do_while_hpp__185" filename="lib/compiler/include/ast/expressions/do_while.hpp" branch-rate="1.0" complexity="1.0" line-rate="1.000">
+					<lines>
+						<line number="21" hits="1"/>
+						<line number="27" hits="1"/>
+						<line number="28" hits="1"/>
+					</lines>
+				</class>
+				<class name="analyzer_hpp__186" filename="lib/compiler/include/sema/analyzer.hpp" branch-rate="1.0" complexity="1.0" line-rate="1.000">
+					<lines>
+						<line number="16" hits="1"/>
+						<line number="17" hits="1"/>
+						<line number="19" hits="1"/>
+						<line number="24" hits="1"/>
+						<line number="25" hits="1"/>
+						<line number="33" hits="1"/>
+						<line number="34" hits="1"/>
+					</lines>
+				</class>
+				<class name="import_hpp__187" filename="lib/compiler/include/ast/statements/import.hpp" branch-rate="1.0" complexity="1.0" line-rate="1.000">
+					<lines>
+						<line number="20" hits="1"/>
+						<line number="22" hits="1"/>
+						<line number="23" hits="1"/>
+						<line number="25" hits="1"/>
+						<line number="37" hits="1"/>
+						<line number="39" hits="1"/>
+						<line number="40" hits="1"/>
+						<line number="42" hits="1"/>
+						<line number="59" hits="1"/>
+						<line number="65" hits="1"/>
+						<line number="66" hits="1"/>
+						<line number="70" hits="1"/>
+						<line number="72" hits="1"/>
+						<line number="73" hits="1"/>
+					</lines>
+				</class>
+				<class name="function_hpp__188" filename="lib/compiler/include/ast/expressions/function.hpp" branch-rate="1.0" complexity="1.0" line-rate="1.000">
+					<lines>
+						<line number="21" hits="1"/>
+						<line number="25" hits="1"/>
+						<line number="26" hits="1"/>
+						<line number="29" hits="1"/>
+						<line number="42" hits="1"/>
+						<line number="46" hits="1"/>
+						<line number="47" hits="1"/>
+						<line number="50" hits="1"/>
+						<line number="70" hits="1"/>
+						<line number="80" hits="1"/>
+						<line number="81" hits="1"/>
+						<line number="82" hits="1"/>
+						<line number="83" hits="1"/>
+						<line number="84" hits="1"/>
+						<line number="85" hits="1"/>
+					</lines>
+				</class>
+				<class name="memory_hpp__189" filename="lib/support/include/memory.hpp" branch-rate="1.0" complexity="1.0" line-rate="0.978">
+					<lines>
+						<line number="22" hits="1"/>
+						<line number="23" hits="1"/>
+						<line number="46" hits="1"/>
+						<line number="48" hits="1"/>
+						<line number="57" hits="1"/>
+						<line number="58" hits="1"/>
+						<line number="59" hits="1"/>
+						<line number="61" hits="1"/>
+						<line number="62" hits="1"/>
+						<line number="63" hits="1"/>
+						<line number="67" hits="1"/>
+						<line number="69" hits="1"/>
+						<line number="75" hits="1"/>
+						<line number="76" hits="1"/>
+						<line number="77" hits="1"/>
+						<line number="80" hits="1"/>
+						<line number="81" hits="1"/>
+						<line number="82" hits="1"/>
+						<line number="85" hits="1"/>
+						<line number="86" hits="1"/>
+						<line number="87" hits="1"/>
+						<line number="90" hits="1"/>
+						<line number="91" hits="1"/>
+						<line number="92" hits="1"/>
+						<line number="95" hits="1"/>
+						<line number="96" hits="1"/>
+						<line number="97" hits="0"/>
+						<line number="108" hits="1"/>
+						<line number="109" hits="1"/>
+						<line number="145" hits="1"/>
+						<line number="146" hits="1"/>
+						<line number="147" hits="1"/>
+						<line number="148" hits="1"/>
+						<line number="149" hits="1"/>
+						<line number="154" hits="1"/>
+						<line number="155" hits="1"/>
+						<line number="164" hits="1"/>
+						<line number="165" hits="1"/>
+						<line number="166" hits="1"/>
+						<line number="168" hits="1"/>
+						<line number="174" hits="1"/>
+						<line number="177" hits="1"/>
+						<line number="178" hits="1"/>
+						<line number="179" hits="1"/>
+						<line number="181" hits="1"/>
+					</lines>
+				</class>
+				<class name="block_hpp__190" filename="lib/compiler/include/ast/statements/block.hpp" branch-rate="1.0" complexity="1.0" line-rate="1.000">
+					<lines>
+						<line number="14" hits="1"/>
+						<line number="19" hits="1"/>
+						<line number="23" hits="1"/>
+						<line number="25" hits="1"/>
+						<line number="32" hits="1"/>
+						<line number="33" hits="1"/>
+						<line number="34" hits="1"/>
+						<line number="35" hits="1"/>
+					</lines>
+				</class>
+				<class name="ast_dump_hpp__191" filename="lib/driver/include/arguments/ast_dump.hpp" branch-rate="1.0" complexity="1.0" line-rate="1.000">
+					<lines>
+						<line number="9" hits="1"/>
+					</lines>
+				</class>
+				<class name="infix_hpp__192" filename="lib/compiler/include/ast/expressions/infix.hpp" branch-rate="1.0" complexity="1.0" line-rate="1.000">
+					<lines>
+						<line number="12" hits="1"/>
+						<line number="18" hits="1"/>
+						<line number="20" hits="1"/>
+						<line number="21" hits="1"/>
+						<line number="22" hits="1"/>
+						<line number="24" hits="1"/>
+						<line number="27" hits="1"/>
+						<line number="28" hits="1"/>
+						<line number="29" hits="1"/>
+						<line number="30" hits="1"/>
+						<line number="33" hits="1"/>
+						<line number="34" hits="1"/>
+						<line number="35" hits="1"/>
+						<line number="36" hits="1"/>
+						<line number="39" hits="1"/>
+						<line number="40" hits="1"/>
+						<line number="41" hits="1"/>
+						<line number="42" hits="1"/>
+						<line number="43" hits="1"/>
+						<line number="46" hits="1"/>
+						<line number="47" hits="1"/>
+						<line number="48" hits="1"/>
+						<line number="69" hits="1"/>
+						<line number="70" hits="1"/>
+						<line number="71" hits="1"/>
+						<line number="72" hits="1"/>
+					</lines>
+				</class>
+				<class name="label_cpp__193" filename="lib/compiler/src/ast/expressions/label.cpp" branch-rate="1.0" complexity="1.0" line-rate="1.000">
+					<lines>
+						<line number="19" hits="1"/>
+						<line number="20" hits="1"/>
+						<line number="22" hits="1"/>
+						<line number="25" hits="1"/>
+						<line number="26" hits="1"/>
+						<line number="27" hits="1"/>
+						<line number="28" hits="1"/>
+						<line number="30" hits="1"/>
+						<line number="33" hits="1"/>
+						<line number="34" hits="1"/>
+						<line number="36" hits="1"/>
+						<line number="37" hits="1"/>
+						<line number="38" hits="1"/>
+						<line number="40" hits="1"/>
+						<line number="41" hits="1"/>
+						<line number="42" hits="1"/>
+						<line number="43" hits="1"/>
+						<line number="45" hits="1"/>
+						<line number="46" hits="1"/>
+						<line number="47" hits="1"/>
+						<line number="49" hits="1"/>
+						<line number="52" hits="1"/>
+						<line number="53" hits="1"/>
+						<line number="55" hits="1"/>
+						<line number="56" hits="1"/>
+						<line number="58" hits="1"/>
+						<line number="60" hits="1"/>
+						<line number="62" hits="1"/>
+						<line number="64" hits="1"/>
+						<line number="66" hits="1"/>
+						<line number="68" hits="1"/>
+						<line number="70" hits="1"/>
+						<line number="71" hits="1"/>
+						<line number="73" hits="1"/>
+						<line number="74" hits="1"/>
+						<line number="76" hits="1"/>
+						<line number="78" hits="1"/>
+					</lines>
+				</class>
+				<class name="diagnostic_cpp__194" filename="lib/compiler/src/diagnostic/diagnostic.cpp" branch-rate="1.0" complexity="1.0" line-rate="0.944">
+					<lines>
+						<line number="14" hits="1"/>
+						<line number="15" hits="1"/>
+						<line number="18" hits="1"/>
+						<line number="19" hits="1"/>
+						<line number="20" hits="1"/>
+						<line number="21" hits="1"/>
+						<line number="22" hits="1"/>
+						<line number="23" hits="1"/>
+						<line number="24" hits="1"/>
+						<line number="26" hits="1"/>
+						<line number="29" hits="1"/>
+						<line number="30" hits="1"/>
+						<line number="31" hits="1"/>
+						<line number="32" hits="1"/>
+						<line number="35" hits="1"/>
+						<line number="36" hits="1"/>
+						<line number="37" hits="1"/>
+						<line number="38" hits="0"/>
+					</lines>
+				</class>
+				<class name="initializer_cpp__195" filename="lib/compiler/src/ast/expressions/initializer.cpp" branch-rate="1.0" complexity="1.0" line-rate="0.971">
+					<lines>
+						<line number="12" hits="1"/>
+						<line number="13" hits="1"/>
+						<line number="15" hits="1"/>
+						<line number="17" hits="1"/>
+						<line number="18" hits="1"/>
+						<line number="24" hits="1"/>
+						<line number="25" hits="1"/>
+						<line number="26" hits="1"/>
+						<line number="28" hits="1"/>
+						<line number="32" hits="1"/>
+						<line number="33" hits="1"/>
+						<line number="35" hits="1"/>
+						<line number="36" hits="1"/>
+						<line number="37" hits="1"/>
+						<line number="38" hits="1"/>
+						<line number="40" hits="1"/>
+						<line number="42" hits="1"/>
+						<line number="43" hits="1"/>
+						<line number="44" hits="1"/>
+						<line number="45" hits="1"/>
+						<line number="47" hits="1"/>
+						<line number="48" hits="1"/>
+						<line number="49" hits="1"/>
+						<line number="50" hits="1"/>
+						<line number="51" hits="1"/>
+						<line number="53" hits="1"/>
+						<line number="55" hits="1"/>
+						<line number="58" hits="1"/>
+						<line number="59" hits="1"/>
+						<line number="60" hits="0"/>
+						<line number="62" hits="1"/>
+						<line number="63" hits="1"/>
+						<line number="64" hits="1"/>
+						<line number="65" hits="1"/>
+					</lines>
+				</class>
+				<class name="list_hpp__196" filename="lib/compiler/include/diagnostic/list.hpp" branch-rate="1.0" complexity="1.0" line-rate="0.714">
+					<lines>
+						<line number="32" hits="1"/>
+						<line number="35" hits="1"/>
+						<line number="36" hits="1"/>
+						<line number="38" hits="1"/>
+						<line number="42" hits="1"/>
+						<line number="43" hits="1"/>
+						<line number="44" hits="1"/>
+						<line number="47" hits="1"/>
+						<line number="48" hits="1"/>
+						<line number="55" hits="1"/>
+						<line number="59" hits="0"/>
+						<line number="60" hits="0"/>
+						<line number="61" hits="0"/>
+						<line number="63" hits="0"/>
+					</lines>
+				</class>
+				<class name="symbol_collector_hpp__197" filename="lib/compiler/include/sema/symbol_collector.hpp" branch-rate="1.0" complexity="1.0" line-rate="0.972">
+					<lines>
+						<line number="24" hits="1"/>
+						<line number="25" hits="1"/>
+						<line number="30" hits="1"/>
+						<line number="36" hits="1"/>
+						<line number="37" hits="1"/>
+						<line number="38" hits="1"/>
+						<line number="39" hits="1"/>
+						<line number="48" hits="1"/>
+						<line number="49" hits="1"/>
+						<line number="50" hits="1"/>
+						<line number="51" hits="1"/>
+						<line number="59" hits="1"/>
+						<line number="60" hits="1"/>
+						<line number="61" hits="1"/>
+						<line number="62" hits="1"/>
+						<line number="63" hits="1"/>
+						<line number="64" hits="1"/>
+						<line number="65" hits="1"/>
+						<line number="66" hits="1"/>
+						<line number="67" hits="1"/>
+						<line number="70" hits="1"/>
+						<line number="71" hits="1"/>
+						<line number="72" hits="1"/>
+						<line number="73" hits="1"/>
+						<line number="75" hits="1"/>
+						<line number="76" hits="1"/>
+						<line number="79" hits="1"/>
+						<line number="80" hits="1"/>
+						<line number="81" hits="1"/>
+						<line number="82" hits="0"/>
+						<line number="84" hits="1"/>
+						<line number="85" hits="1"/>
+						<line number="88" hits="1"/>
+						<line number="89" hits="1"/>
+						<line number="92" hits="1"/>
+						<line number="93" hits="1"/>
+					</lines>
+				</class>
+				<class name="infinite_loop_hpp__198" filename="lib/compiler/include/ast/expressions/infinite_loop.hpp" branch-rate="1.0" complexity="1.0" line-rate="1.000">
+					<lines>
+						<line number="20" hits="1"/>
+						<line number="26" hits="1"/>
+					</lines>
+				</class>
+				<class name="analyzer_cpp__199" filename="lib/compiler/src/sema/analyzer.cpp" branch-rate="1.0" complexity="1.0" line-rate="1.000">
+					<lines>
+						<line number="8" hits="1"/>
+						<line number="9" hits="1"/>
+						<line number="10" hits="1"/>
+						<line number="11" hits="1"/>
+						<line number="12" hits="1"/>
+						<line number="14" hits="1"/>
+						<line number="15" hits="1"/>
+						<line number="16" hits="1"/>
+						<line number="17" hits="1"/>
+					</lines>
+				</class>
+				<class name="symbol_hpp__200" filename="lib/compiler/include/sema/symbol.hpp" branch-rate="1.0" complexity="1.0" line-rate="1.000">
+					<lines>
+						<line number="59" hits="1"/>
+						<line number="84" hits="1"/>
+						<line number="89" hits="1"/>
+						<line number="93" hits="1"/>
+						<line number="103" hits="1"/>
+						<line number="109" hits="1"/>
+						<line number="110" hits="1"/>
+						<line number="116" hits="1"/>
+						<line number="122" hits="1"/>
+						<line number="128" hits="1"/>
+						<line number="132" hits="1"/>
+						<line number="133" hits="1"/>
+						<line number="140" hits="1"/>
+						<line number="141" hits="1"/>
+						<line number="146" hits="1"/>
+						<line number="147" hits="1"/>
+						<line number="148" hits="1"/>
+						<line number="149" hits="1"/>
+						<line number="154" hits="1"/>
+						<line number="155" hits="1"/>
+						<line number="159" hits="1"/>
+						<line number="160" hits="1"/>
+						<line number="161" hits="1"/>
+						<line number="171" hits="1"/>
+						<line number="172" hits="1"/>
+						<line number="178" hits="1"/>
+						<line number="181" hits="1"/>
+						<line number="182" hits="1"/>
+						<line number="186" hits="1"/>
+						<line number="187" hits="1"/>
+						<line number="188" hits="1"/>
+						<line number="189" hits="1"/>
+						<line number="197" hits="1"/>
+						<line number="200" hits="1"/>
+						<line number="201" hits="1"/>
+						<line number="203" hits="1"/>
+						<line number="205" hits="1"/>
+						<line number="206" hits="1"/>
+						<line number="207" hits="1"/>
+						<line number="213" hits="1"/>
+						<line number="214" hits="1"/>
+						<line number="217" hits="1"/>
+						<line number="221" hits="1"/>
+						<line number="222" hits="1"/>
+						<line number="223" hits="1"/>
+						<line number="226" hits="1"/>
+						<line number="227" hits="1"/>
+						<line number="231" hits="1"/>
+						<line number="235" hits="1"/>
+						<line number="236" hits="1"/>
+						<line number="237" hits="1"/>
+					</lines>
+				</class>
+				<class name="token_cpp__201" filename="lib/compiler/src/syntax/token.cpp" branch-rate="1.0" complexity="1.0" line-rate="0.987">
+					<lines>
+						<line number="12" hits="1"/>
+						<line number="13" hits="1"/>
+						<line number="14" hits="1"/>
+						<line number="15" hits="1"/>
+						<line number="16" hits="1"/>
+						<line number="17" hits="1"/>
+						<line number="18" hits="0"/>
+						<line number="19" hits="1"/>
+						<line number="21" hits="1"/>
+						<line number="22" hits="1"/>
+						<line number="23" hits="1"/>
+						<line number="24" hits="1"/>
+						<line number="25" hits="1"/>
+						<line number="26" hits="1"/>
+						<line number="27" hits="1"/>
+						<line number="29" hits="1"/>
+						<line number="33" hits="1"/>
+						<line number="34" hits="1"/>
+						<line number="40" hits="1"/>
+						<line number="46" hits="1"/>
+						<line number="52" hits="1"/>
+						<line number="58" hits="1"/>
+						<line number="59" hits="1"/>
+						<line number="61" hits="1"/>
+						<line number="63" hits="1"/>
+						<line number="64" hits="1"/>
+						<line number="65" hits="1"/>
+						<line number="66" hits="1"/>
+						<line number="67" hits="1"/>
+						<line number="68" hits="1"/>
+						<line number="69" hits="1"/>
+						<line number="70" hits="1"/>
+						<line number="71" hits="1"/>
+						<line number="72" hits="1"/>
+						<line number="73" hits="1"/>
+						<line number="74" hits="1"/>
+						<line number="75" hits="1"/>
+						<line number="77" hits="1"/>
+						<line number="89" hits="1"/>
+						<line number="90" hits="1"/>
+						<line number="91" hits="1"/>
+						<line number="92" hits="1"/>
+						<line number="94" hits="1"/>
+						<line number="96" hits="1"/>
+						<line number="97" hits="1"/>
+						<line number="101" hits="1"/>
+						<line number="102" hits="1"/>
+						<line number="103" hits="1"/>
+						<line number="107" hits="1"/>
+						<line number="108" hits="1"/>
+						<line number="109" hits="1"/>
+						<line number="111" hits="1"/>
+						<line number="114" hits="1"/>
+						<line number="115" hits="1"/>
+						<line number="117" hits="1"/>
+						<line number="118" hits="1"/>
+						<line number="119" hits="1"/>
+						<line number="122" hits="1"/>
+						<line number="123" hits="1"/>
+						<line number="124" hits="1"/>
+						<line number="125" hits="1"/>
+						<line number="127" hits="1"/>
+						<line number="130" hits="1"/>
+						<line number="131" hits="1"/>
+						<line number="132" hits="1"/>
+						<line number="134" hits="1"/>
+						<line number="135" hits="1"/>
+						<line number="137" hits="1"/>
+						<line number="138" hits="1"/>
+						<line number="147" hits="1"/>
+						<line number="149" hits="1"/>
+						<line number="150" hits="1"/>
+						<line number="157" hits="1"/>
+						<line number="158" hits="1"/>
+						<line number="160" hits="1"/>
+						<line number="162" hits="1"/>
+						<line number="163" hits="1"/>
+						<line number="164" hits="1"/>
+					</lines>
+				</class>
+				<class name="group_hpp__202" filename="lib/compiler/include/ast/expressions/group.hpp" branch-rate="1.0" complexity="1.0" line-rate="1.000">
+					<lines>
+						<line number="12" hits="1"/>
+						<line number="13" hits="1"/>
+						<line number="14" hits="1"/>
+						<line number="15" hits="1"/>
+						<line number="16" hits="1"/>
+						<line number="17" hits="1"/>
+					</lines>
+				</class>
+				<class name="index_hpp__203" filename="lib/compiler/include/ast/expressions/index.hpp" branch-rate="1.0" complexity="1.0" line-rate="1.000">
+					<lines>
+						<line number="11" hits="1"/>
+						<line number="19" hits="1"/>
+						<line number="21" hits="1"/>
+						<line number="27" hits="1"/>
+						<line number="28" hits="1"/>
+						<line number="31" hits="1"/>
+						<line number="32" hits="1"/>
+						<line number="33" hits="1"/>
+					</lines>
+				</class>
+				<class name="module_cpp__204" filename="lib/compiler/src/sema/module/module.cpp" branch-rate="1.0" complexity="1.0" line-rate="0.692">
+					<lines>
+						<line number="7" hits="0"/>
+						<line number="8" hits="0"/>
+						<line number="9" hits="0"/>
+						<line number="10" hits="0"/>
+						<line number="14" hits="1"/>
+						<line number="15" hits="1"/>
+						<line number="17" hits="1"/>
+						<line number="18" hits="0"/>
+						<line number="19" hits="0"/>
+						<line number="22" hits="1"/>
+						<line number="23" hits="1"/>
+						<line number="24" hits="1"/>
+						<line number="25" hits="1"/>
+						<line number="28" hits="1"/>
+						<line number="29" hits="1"/>
+						<line number="30" hits="1"/>
+						<line number="31" hits="0"/>
+						<line number="32" hits="0"/>
+						<line number="34" hits="1"/>
+						<line number="35" hits="1"/>
+						<line number="38" hits="1"/>
+						<line number="39" hits="1"/>
+						<line number="40" hits="1"/>
+						<line number="42" hits="1"/>
+						<line number="43" hits="0"/>
+						<line number="44" hits="0"/>
+						<line number="45" hits="0"/>
+						<line number="46" hits="0"/>
+						<line number="47" hits="0"/>
+						<line number="48" hits="0"/>
+						<line number="49" hits="0"/>
+						<line number="50" hits="0"/>
+						<line number="53" hits="1"/>
+						<line number="54" hits="1"/>
+						<line number="55" hits="1"/>
+						<line number="58" hits="1"/>
+						<line number="60" hits="1"/>
+						<line number="61" hits="1"/>
+						<line number="62" hits="1"/>
+						<line number="63" hits="1"/>
+						<line number="64" hits="1"/>
+						<line number="65" hits="1"/>
+						<line number="68" hits="1"/>
+						<line number="69" hits="1"/>
+						<line number="70" hits="1"/>
+						<line number="72" hits="1"/>
+						<line number="73" hits="1"/>
+						<line number="74" hits="1"/>
+						<line number="76" hits="1"/>
+						<line number="77" hits="1"/>
+						<line number="78" hits="1"/>
+						<line number="79" hits="1"/>
+					</lines>
+				</class>
+				<class name="memory_loader_cpp__205" filename="lib/compiler/src/sema/module/memory_loader.cpp" branch-rate="1.0" complexity="1.0" line-rate="1.000">
+					<lines>
+						<line number="5" hits="1"/>
+						<line number="6" hits="1"/>
+						<line number="7" hits="1"/>
+						<line number="8" hits="1"/>
+						<line number="9" hits="1"/>
+						<line number="11" hits="1"/>
+						<line number="12" hits="1"/>
+						<line number="13" hits="1"/>
+						<line number="14" hits="1"/>
+						<line number="15" hits="1"/>
+						<line number="16" hits="1"/>
+						<line number="17" hits="1"/>
+					</lines>
+				</class>
+				<class name="using_hpp__206" filename="lib/compiler/include/ast/statements/using.hpp" branch-rate="1.0" complexity="1.0" line-rate="1.000">
+					<lines>
+						<line number="28" hits="1"/>
+						<line number="29" hits="1"/>
+						<line number="31" hits="1"/>
+						<line number="32" hits="1"/>
+					</lines>
+				</class>
+				<class name="index_cpp__207" filename="lib/compiler/src/ast/expressions/index.cpp" branch-rate="1.0" complexity="1.0" line-rate="1.000">
+					<lines>
+						<line number="7" hits="1"/>
+						<line number="10" hits="1"/>
+						<line number="11" hits="1"/>
+						<line number="12" hits="1"/>
+						<line number="13" hits="1"/>
+						<line number="15" hits="1"/>
+						<line number="17" hits="1"/>
+						<line number="18" hits="1"/>
+						<line number="19" hits="1"/>
+						<line number="20" hits="1"/>
+					</lines>
+				</class>
+				<class name="block_cpp__208" filename="lib/compiler/src/ast/statements/block.cpp" branch-rate="1.0" complexity="1.0" line-rate="1.000">
+					<lines>
+						<line number="8" hits="1"/>
+						<line number="11" hits="1"/>
+						<line number="12" hits="1"/>
+						<line number="14" hits="1"/>
+						<line number="15" hits="1"/>
+						<line number="16" hits="1"/>
+						<line number="17" hits="1"/>
+						<line number="18" hits="1"/>
+						<line number="21" hits="1"/>
+						<line number="22" hits="1"/>
+						<line number="23" hits="1"/>
+						<line number="25" hits="1"/>
+						<line number="26" hits="1"/>
+						<line number="27" hits="1"/>
+						<line number="29" hits="1"/>
+						<line number="30" hits="1"/>
+					</lines>
+				</class>
+				<class name="type_hpp__209" filename="lib/compiler/include/sema/type.hpp" branch-rate="1.0" complexity="1.0" line-rate="1.000">
+					<lines>
+						<line number="94" hits="1"/>
+						<line number="95" hits="1"/>
+						<line number="97" hits="1"/>
+						<line number="100" hits="1"/>
+						<line number="101" hits="1"/>
+						<line number="102" hits="1"/>
+						<line number="103" hits="1"/>
+						<line number="104" hits="1"/>
+						<line number="105" hits="1"/>
+						<line number="106" hits="1"/>
+						<line number="107" hits="1"/>
+						<line number="120" hits="1"/>
+						<line number="145" hits="1"/>
+						<line number="171" hits="1"/>
+						<line number="172" hits="1"/>
+						<line number="173" hits="1"/>
+						<line number="198" hits="1"/>
+					</lines>
+				</class>
+				<class name="scope_resolve_cpp__210" filename="lib/compiler/src/ast/expressions/scope_resolve.cpp" branch-rate="1.0" complexity="1.0" line-rate="1.000">
+					<lines>
+						<line number="11" hits="1"/>
+						<line number="12" hits="1"/>
+						<line number="14" hits="1"/>
+						<line number="17" hits="1"/>
+						<line number="18" hits="1"/>
+						<line number="19" hits="1"/>
+						<line number="22" hits="1"/>
+						<line number="23" hits="1"/>
+						<line number="24" hits="1"/>
+						<line number="25" hits="1"/>
+						<line number="26" hits="1"/>
+						<line number="28" hits="1"/>
+						<line number="29" hits="1"/>
+						<line number="30" hits="1"/>
+					</lines>
+				</class>
+				<class name="source_loader_hpp__211" filename="lib/compiler/include/sema/module/source_loader.hpp" branch-rate="1.0" complexity="1.0" line-rate="1.000">
+					<lines>
+						<line number="11" hits="1"/>
+						<line number="13" hits="1"/>
+					</lines>
+				</class>
+				<class name="main_zig__212" filename="tools/harness/main.zig" branch-rate="1.0" complexity="1.0" line-rate="0.956">
+					<lines>
+						<line number="39" hits="1"/>
+						<line number="40" hits="1"/>
+						<line number="63" hits="1"/>
+						<line number="64" hits="1"/>
+						<line number="65" hits="1"/>
+						<line number="68" hits="1"/>
+						<line number="72" hits="1"/>
+						<line number="73" hits="1"/>
+						<line number="74" hits="1"/>
+						<line number="75" hits="1"/>
+						<line number="76" hits="0"/>
+						<line number="77" hits="0"/>
+						<line number="79" hits="1"/>
+						<line number="82" hits="1"/>
+						<line number="83" hits="1"/>
+						<line number="84" hits="1"/>
+						<line number="85" hits="1"/>
+						<line number="86" hits="1"/>
+						<line number="87" hits="1"/>
+						<line number="116" hits="1"/>
+						<line number="118" hits="1"/>
+						<line number="120" hits="1"/>
+						<line number="121" hits="1"/>
+						<line number="122" hits="1"/>
+						<line number="124" hits="1"/>
+						<line number="125" hits="0"/>
+						<line number="126" hits="1"/>
+						<line number="128" hits="1"/>
+						<line number="129" hits="1"/>
+						<line number="131" hits="1"/>
+						<line number="135" hits="1"/>
+						<line number="136" hits="1"/>
+						<line number="141" hits="1"/>
+						<line number="143" hits="1"/>
+						<line number="145" hits="1"/>
+						<line number="148" hits="1"/>
+						<line number="149" hits="1"/>
+						<line number="154" hits="1"/>
+						<line number="155" hits="1"/>
+						<line number="158" hits="1"/>
+						<line number="159" hits="1"/>
+						<line number="161" hits="1"/>
+						<line number="162" hits="1"/>
+						<line number="163" hits="1"/>
+						<line number="166" hits="1"/>
+						<line number="169" hits="1"/>
+						<line number="172" hits="1"/>
+						<line number="173" hits="1"/>
+						<line number="175" hits="1"/>
+						<line number="178" hits="1"/>
+						<line number="179" hits="1"/>
+						<line number="180" hits="1"/>
+						<line number="182" hits="1"/>
+						<line number="183" hits="1"/>
+						<line number="184" hits="1"/>
+						<line number="188" hits="1"/>
+						<line number="189" hits="1"/>
+						<line number="190" hits="1"/>
+						<line number="192" hits="1"/>
+						<line number="193" hits="1"/>
+						<line number="194" hits="1"/>
+						<line number="198" hits="1"/>
+						<line number="199" hits="1"/>
+						<line number="203" hits="1"/>
+						<line number="204" hits="1"/>
+						<line number="223" hits="1"/>
+						<line number="224" hits="1"/>
+						<line number="225" hits="1"/>
+						<line number="226" hits="1"/>
+						<line number="227" hits="1"/>
+						<line number="228" hits="1"/>
+						<line number="231" hits="1"/>
+						<line number="232" hits="1"/>
+						<line number="233" hits="1"/>
+						<line number="234" hits="1"/>
+						<line number="235" hits="1"/>
+						<line number="236" hits="1"/>
+						<line number="237" hits="1"/>
+						<line number="238" hits="1"/>
+						<line number="242" hits="1"/>
+						<line number="243" hits="1"/>
+						<line number="245" hits="1"/>
+						<line number="247" hits="1"/>
+						<line number="251" hits="1"/>
+						<line number="254" hits="1"/>
+						<line number="255" hits="1"/>
+						<line number="256" hits="1"/>
+						<line number="257" hits="1"/>
+						<line number="262" hits="1"/>
+						<line number="263" hits="1"/>
+						<line number="265" hits="1"/>
+						<line number="266" hits="1"/>
+						<line number="269" hits="1"/>
+						<line number="270" hits="0"/>
+						<line number="271" hits="0"/>
+						<line number="272" hits="0"/>
+						<line number="276" hits="1"/>
+						<line number="277" hits="1"/>
+						<line number="278" hits="1"/>
+						<line number="279" hits="0"/>
+						<line number="281" hits="1"/>
+						<line number="282" hits="1"/>
+						<line number="284" hits="1"/>
+						<line number="286" hits="1"/>
+						<line number="288" hits="1"/>
+						<line number="289" hits="1"/>
+						<line number="292" hits="1"/>
+						<line number="293" hits="1"/>
+						<line number="294" hits="1"/>
+						<line number="295" hits="1"/>
+						<line number="298" hits="1"/>
+						<line number="299" hits="1"/>
+						<line number="300" hits="0"/>
+						<line number="301" hits="1"/>
+						<line number="302" hits="1"/>
+						<line number="303" hits="1"/>
+						<line number="306" hits="1"/>
+						<line number="307" hits="1"/>
+						<line number="308" hits="1"/>
+						<line number="310" hits="1"/>
+						<line number="311" hits="1"/>
+						<line number="312" hits="1"/>
+						<line number="315" hits="1"/>
+						<line number="316" hits="1"/>
+						<line number="317" hits="1"/>
+						<line number="319" hits="1"/>
+						<line number="320" hits="1"/>
+						<line number="321" hits="1"/>
+						<line number="324" hits="1"/>
+						<line number="325" hits="1"/>
+						<line number="327" hits="1"/>
+						<line number="328" hits="1"/>
+						<line number="329" hits="1"/>
+						<line number="330" hits="1"/>
+						<line number="333" hits="1"/>
+						<line number="334" hits="1"/>
+						<line number="335" hits="1"/>
+						<line number="336" hits="1"/>
+						<line number="337" hits="1"/>
+						<line number="338" hits="1"/>
+						<line number="341" hits="1"/>
+						<line number="342" hits="1"/>
+						<line number="343" hits="1"/>
+						<line number="345" hits="1"/>
+						<line number="346" hits="1"/>
+						<line number="347" hits="1"/>
+						<line number="350" hits="1"/>
+						<line number="351" hits="1"/>
+						<line number="352" hits="1"/>
+						<line number="354" hits="1"/>
+						<line number="355" hits="1"/>
+						<line number="356" hits="1"/>
+						<line number="359" hits="1"/>
+						<line number="360" hits="1"/>
+						<line number="361" hits="1"/>
+						<line number="362" hits="1"/>
+						<line number="364" hits="1"/>
+						<line number="365" hits="1"/>
+						<line number="366" hits="1"/>
+						<line number="367" hits="1"/>
+						<line number="369" hits="1"/>
+						<line number="370" hits="1"/>
+						<line number="373" hits="1"/>
+						<line number="374" hits="1"/>
+						<line number="375" hits="1"/>
+						<line number="376" hits="1"/>
+						<line number="378" hits="1"/>
+						<line number="382" hits="1"/>
+						<line number="383" hits="1"/>
+						<line number="384" hits="1"/>
+						<line number="385" hits="1"/>
+						<line number="386" hits="1"/>
+						<line number="387" hits="1"/>
+						<line number="388" hits="1"/>
+						<line number="391" hits="1"/>
+						<line number="392" hits="1"/>
+						<line number="393" hits="1"/>
+						<line number="397" hits="1"/>
+						<line number="398" hits="1"/>
+						<line number="399" hits="1"/>
+						<line number="400" hits="1"/>
+						<line number="402" hits="1"/>
+						<line number="403" hits="1"/>
+					</lines>
+				</class>
+				<class name="source_file_cpp__213" filename="lib/compiler/src/diagnostic/source_file.cpp" branch-rate="1.0" complexity="1.0" line-rate="0.929">
+					<lines>
+						<line number="7" hits="1"/>
+						<line number="8" hits="1"/>
+						<line number="9" hits="1"/>
+						<line number="10" hits="1"/>
+						<line number="11" hits="1"/>
+						<line number="12" hits="1"/>
+						<line number="15" hits="1"/>
+						<line number="16" hits="1"/>
+						<line number="18" hits="1"/>
+						<line number="19" hits="1"/>
+						<line number="20" hits="1"/>
+						<line number="23" hits="1"/>
+						<line number="24" hits="1"/>
+						<line number="25" hits="1"/>
+						<line number="28" hits="1"/>
+						<line number="29" hits="1"/>
+						<line number="30" hits="1"/>
+						<line number="33" hits="1"/>
+						<line number="34" hits="1"/>
+						<line number="35" hits="1"/>
+						<line number="36" hits="1"/>
+						<line number="37" hits="0"/>
+						<line number="38" hits="0"/>
+						<line number="39" hits="1"/>
+						<line number="41" hits="1"/>
+						<line number="42" hits="1"/>
+						<line number="44" hits="1"/>
+						<line number="45" hits="1"/>
+					</lines>
+				</class>
+				<class name="source_location_hpp__214" filename="lib/compiler/include/diagnostic/source_location.hpp" branch-rate="1.0" complexity="1.0" line-rate="1.000">
+					<lines>
+						<line number="18" hits="1"/>
+						<line number="20" hits="1"/>
+						<line number="21" hits="1"/>
+						<line number="33" hits="1"/>
+						<line number="34" hits="1"/>
+						<line number="41" hits="1"/>
+						<line number="43" hits="1"/>
+						<line number="44" hits="1"/>
+					</lines>
+				</class>
+				<class name="dumper_cpp__215" filename="lib/compiler/src/ast/dumper.cpp" branch-rate="1.0" complexity="1.0" line-rate="0.989">
+					<lines>
+						<line number="10" hits="1"/>
+						<line number="11" hits="1"/>
+						<line number="13" hits="1"/>
+						<line number="14" hits="1"/>
+						<line number="15" hits="1"/>
+						<line number="16" hits="1"/>
+						<line number="17" hits="1"/>
+						<line number="18" hits="1"/>
+						<line number="20" hits="1"/>
+						<line number="23" hits="1"/>
+						<line number="24" hits="1"/>
+						<line number="25" hits="1"/>
+						<line number="26" hits="1"/>
+						<line number="29" hits="1"/>
+						<line number="30" hits="1"/>
+						<line number="31" hits="1"/>
+						<line number="32" hits="1"/>
+						<line number="33" hits="1"/>
+						<line number="35" hits="1"/>
+						<line number="36" hits="1"/>
+						<line number="37" hits="1"/>
+						<line number="38" hits="1"/>
+						<line number="39" hits="1"/>
+						<line number="41" hits="1"/>
+						<line number="43" hits="1"/>
+						<line number="44" hits="1"/>
+						<line number="46" hits="1"/>
+						<line number="47" hits="1"/>
+						<line number="48" hits="1"/>
+						<line number="49" hits="1"/>
+						<line number="52" hits="1"/>
+						<line number="53" hits="1"/>
+						<line number="54" hits="1"/>
+						<line number="55" hits="1"/>
+						<line number="56" hits="1"/>
+						<line number="58" hits="1"/>
+						<line number="59" hits="1"/>
+						<line number="61" hits="1"/>
+						<line number="62" hits="1"/>
+						<line number="63" hits="1"/>
+						<line number="64" hits="1"/>
+						<line number="66" hits="1"/>
+						<line number="67" hits="1"/>
+						<line number="68" hits="1"/>
+						<line number="69" hits="1"/>
+						<line number="70" hits="1"/>
+						<line number="72" hits="1"/>
+						<line number="74" hits="1"/>
+						<line number="75" hits="1"/>
+						<line number="76" hits="1"/>
+						<line number="77" hits="1"/>
+						<line number="79" hits="1"/>
+						<line number="80" hits="1"/>
+						<line number="81" hits="1"/>
+						<line number="82" hits="1"/>
+						<line number="83" hits="1"/>
+						<line number="84" hits="1"/>
+						<line number="86" hits="1"/>
+						<line number="87" hits="1"/>
+						<line number="89" hits="1"/>
+						<line number="90" hits="1"/>
+						<line number="91" hits="1"/>
+						<line number="92" hits="1"/>
+						<line number="93" hits="1"/>
+						<line number="96" hits="1"/>
+						<line number="97" hits="1"/>
+						<line number="98" hits="1"/>
+						<line number="99" hits="1"/>
+						<line number="101" hits="1"/>
+						<line number="102" hits="1"/>
+						<line number="103" hits="1"/>
+						<line number="104" hits="1"/>
+						<line number="105" hits="1"/>
+						<line number="106" hits="1"/>
+						<line number="108" hits="1"/>
+						<line number="109" hits="1"/>
+						<line number="110" hits="1"/>
+						<line number="111" hits="1"/>
+						<line number="112" hits="1"/>
+						<line number="113" hits="1"/>
+						<line number="115" hits="1"/>
+						<line number="117" hits="1"/>
+						<line number="118" hits="1"/>
+						<line number="120" hits="1"/>
+						<line number="121" hits="1"/>
+						<line number="122" hits="1"/>
+						<line number="123" hits="1"/>
+						<line number="126" hits="1"/>
+						<line number="127" hits="1"/>
+						<line number="128" hits="1"/>
+						<line number="129" hits="1"/>
+						<line number="132" hits="1"/>
+						<line number="133" hits="1"/>
+						<line number="134" hits="1"/>
+						<line number="135" hits="1"/>
+						<line number="137" hits="1"/>
+						<line number="138" hits="1"/>
+						<line number="139" hits="1"/>
+						<line number="140" hits="1"/>
+						<line number="141" hits="1"/>
+						<line number="142" hits="1"/>
+						<line number="144" hits="1"/>
+						<line number="145" hits="1"/>
+						<line number="146" hits="1"/>
+						<line number="148" hits="1"/>
+						<line number="149" hits="1"/>
+						<line number="150" hits="1"/>
+						<line number="151" hits="1"/>
+						<line number="152" hits="1"/>
+						<line number="153" hits="1"/>
+						<line number="154" hits="1"/>
+						<line number="156" hits="1"/>
+						<line number="157" hits="1"/>
+						<line number="158" hits="1"/>
+						<line number="159" hits="1"/>
+						<line number="160" hits="1"/>
+						<line number="162" hits="1"/>
+						<line number="163" hits="1"/>
+						<line number="164" hits="1"/>
+						<line number="165" hits="1"/>
+						<line number="166" hits="1"/>
+						<line number="167" hits="1"/>
+						<line number="168" hits="1"/>
+						<line number="170" hits="1"/>
+						<line number="171" hits="1"/>
+						<line number="172" hits="1"/>
+						<line number="173" hits="1"/>
+						<line number="174" hits="1"/>
+						<line number="177" hits="1"/>
+						<line number="178" hits="1"/>
+						<line number="179" hits="1"/>
+						<line number="182" hits="1"/>
+						<line number="183" hits="1"/>
+						<line number="184" hits="1"/>
+						<line number="185" hits="1"/>
+						<line number="187" hits="1"/>
+						<line number="188" hits="1"/>
+						<line number="189" hits="1"/>
+						<line number="190" hits="1"/>
+						<line number="191" hits="1"/>
+						<line number="192" hits="1"/>
+						<line number="194" hits="1"/>
+						<line number="195" hits="1"/>
+						<line number="196" hits="1"/>
+						<line number="197" hits="1"/>
+						<line number="198" hits="1"/>
+						<line number="199" hits="1"/>
+						<line number="201" hits="1"/>
+						<line number="202" hits="1"/>
+						<line number="204" hits="1"/>
+						<line number="205" hits="1"/>
+						<line number="207" hits="1"/>
+						<line number="208" hits="1"/>
+						<line number="209" hits="1"/>
+						<line number="212" hits="1"/>
+						<line number="213" hits="1"/>
+						<line number="214" hits="1"/>
+						<line number="215" hits="1"/>
+						<line number="218" hits="1"/>
+						<line number="219" hits="1"/>
+						<line number="220" hits="1"/>
+						<line number="221" hits="1"/>
+						<line number="223" hits="1"/>
+						<line number="224" hits="1"/>
+						<line number="225" hits="1"/>
+						<line number="226" hits="1"/>
+						<line number="227" hits="1"/>
+						<line number="228" hits="1"/>
+						<line number="230" hits="1"/>
+						<line number="231" hits="1"/>
+						<line number="233" hits="1"/>
+						<line number="234" hits="1"/>
+						<line number="235" hits="1"/>
+						<line number="236" hits="1"/>
+						<line number="238" hits="1"/>
+						<line number="239" hits="1"/>
+						<line number="240" hits="1"/>
+						<line number="241" hits="1"/>
+						<line number="242" hits="1"/>
+						<line number="244" hits="1"/>
+						<line number="245" hits="1"/>
+						<line number="246" hits="1"/>
+						<line number="247" hits="1"/>
+						<line number="264" hits="1"/>
+						<line number="265" hits="1"/>
+						<line number="266" hits="1"/>
+						<line number="267" hits="1"/>
+						<line number="269" hits="1"/>
+						<line number="270" hits="1"/>
+						<line number="272" hits="1"/>
+						<line number="273" hits="1"/>
+						<line number="274" hits="1"/>
+						<line number="275" hits="1"/>
+						<line number="278" hits="1"/>
+						<line number="279" hits="1"/>
+						<line number="280" hits="1"/>
+						<line number="281" hits="1"/>
+						<line number="282" hits="1"/>
+						<line number="284" hits="1"/>
+						<line number="285" hits="1"/>
+						<line number="287" hits="1"/>
+						<line number="288" hits="1"/>
+						<line number="289" hits="1"/>
+						<line number="290" hits="1"/>
+						<line number="291" hits="1"/>
+						<line number="292" hits="1"/>
+						<line number="294" hits="1"/>
+						<line number="296" hits="1"/>
+						<line number="297" hits="1"/>
+						<line number="298" hits="1"/>
+						<line number="299" hits="1"/>
+						<line number="300" hits="1"/>
+						<line number="301" hits="1"/>
+						<line number="303" hits="1"/>
+						<line number="304" hits="1"/>
+						<line number="306" hits="1"/>
+						<line number="307" hits="1"/>
+						<line number="308" hits="1"/>
+						<line number="309" hits="1"/>
+						<line number="312" hits="1"/>
+						<line number="313" hits="1"/>
+						<line number="314" hits="1"/>
+						<line number="315" hits="1"/>
+						<line number="316" hits="1"/>
+						<line number="318" hits="1"/>
+						<line number="319" hits="1"/>
+						<line number="321" hits="1"/>
+						<line number="322" hits="1"/>
+						<line number="323" hits="1"/>
+						<line number="324" hits="1"/>
+						<line number="326" hits="1"/>
+						<line number="327" hits="1"/>
+						<line number="328" hits="1"/>
+						<line number="329" hits="1"/>
+						<line number="330" hits="1"/>
+						<line number="331" hits="1"/>
+						<line number="332" hits="1"/>
+						<line number="334" hits="1"/>
+						<line number="337" hits="1"/>
+						<line number="338" hits="1"/>
+						<line number="339" hits="1"/>
+						<line number="340" hits="1"/>
+						<line number="341" hits="1"/>
+						<line number="343" hits="1"/>
+						<line number="344" hits="1"/>
+						<line number="346" hits="1"/>
+						<line number="347" hits="1"/>
+						<line number="348" hits="1"/>
+						<line number="349" hits="1"/>
+						<line number="352" hits="1"/>
+						<line number="353" hits="1"/>
+						<line number="354" hits="1"/>
+						<line number="355" hits="1"/>
+						<line number="357" hits="1"/>
+						<line number="358" hits="1"/>
+						<line number="359" hits="1"/>
+						<line number="360" hits="1"/>
+						<line number="361" hits="1"/>
+						<line number="362" hits="1"/>
+						<line number="372" hits="1"/>
+						<line number="373" hits="1"/>
+						<line number="374" hits="1"/>
+						<line number="375" hits="1"/>
+						<line number="382" hits="1"/>
+						<line number="383" hits="1"/>
+						<line number="384" hits="1"/>
+						<line number="385" hits="1"/>
+						<line number="386" hits="1"/>
+						<line number="387" hits="1"/>
+						<line number="388" hits="1"/>
+						<line number="389" hits="1"/>
+						<line number="390" hits="1"/>
+						<line number="391" hits="1"/>
+						<line number="392" hits="1"/>
+						<line number="394" hits="1"/>
+						<line number="396" hits="1"/>
+						<line number="397" hits="1"/>
+						<line number="399" hits="1"/>
+						<line number="400" hits="1"/>
+						<line number="401" hits="1"/>
+						<line number="402" hits="1"/>
+						<line number="404" hits="1"/>
+						<line number="405" hits="1"/>
+						<line number="406" hits="1"/>
+						<line number="407" hits="1"/>
+						<line number="408" hits="1"/>
+						<line number="410" hits="1"/>
+						<line number="411" hits="1"/>
+						<line number="412" hits="1"/>
+						<line number="413" hits="1"/>
+						<line number="415" hits="1"/>
+						<line number="416" hits="1"/>
+						<line number="418" hits="1"/>
+						<line number="419" hits="1"/>
+						<line number="420" hits="1"/>
+						<line number="421" hits="1"/>
+						<line number="422" hits="1"/>
+						<line number="423" hits="1"/>
+						<line number="424" hits="1"/>
+						<line number="425" hits="1"/>
+						<line number="427" hits="1"/>
+						<line number="428" hits="1"/>
+						<line number="429" hits="1"/>
+						<line number="430" hits="1"/>
+						<line number="431" hits="1"/>
+						<line number="432" hits="1"/>
+						<line number="434" hits="1"/>
+						<line number="437" hits="1"/>
+						<line number="438" hits="1"/>
+						<line number="439" hits="1"/>
+						<line number="440" hits="1"/>
+						<line number="441" hits="1"/>
+						<line number="442" hits="1"/>
+						<line number="445" hits="1"/>
+						<line number="446" hits="1"/>
+						<line number="447" hits="1"/>
+						<line number="448" hits="1"/>
+						<line number="449" hits="1"/>
+						<line number="450" hits="1"/>
+						<line number="451" hits="0"/>
+						<line number="452" hits="0"/>
+						<line number="453" hits="0"/>
+						<line number="455" hits="1"/>
+						<line number="457" hits="1"/>
+						<line number="458" hits="1"/>
+						<line number="459" hits="1"/>
+						<line number="460" hits="1"/>
+						<line number="461" hits="1"/>
+						<line number="463" hits="1"/>
+						<line number="465" hits="1"/>
+						<line number="466" hits="1"/>
+						<line number="468" hits="1"/>
+						<line number="469" hits="1"/>
+						<line number="470" hits="1"/>
+						<line number="471" hits="1"/>
+						<line number="474" hits="1"/>
+						<line number="475" hits="1"/>
+						<line number="476" hits="1"/>
+						<line number="477" hits="1"/>
+						<line number="478" hits="1"/>
+						<line number="480" hits="1"/>
+						<line number="481" hits="1"/>
+						<line number="484" hits="1"/>
+						<line number="485" hits="1"/>
+						<line number="486" hits="1"/>
+						<line number="487" hits="1"/>
+						<line number="489" hits="1"/>
+						<line number="490" hits="1"/>
+						<line number="491" hits="1"/>
+						<line number="492" hits="1"/>
+						<line number="493" hits="1"/>
+						<line number="494" hits="1"/>
+						<line number="496" hits="1"/>
+						<line number="497" hits="1"/>
+						<line number="499" hits="1"/>
+						<line number="500" hits="1"/>
+						<line number="501" hits="1"/>
+						<line number="502" hits="1"/>
+						<line number="504" hits="1"/>
+						<line number="505" hits="1"/>
+						<line number="506" hits="1"/>
+						<line number="507" hits="1"/>
+						<line number="508" hits="1"/>
+						<line number="511" hits="1"/>
+						<line number="512" hits="1"/>
+						<line number="513" hits="1"/>
+						<line number="514" hits="1"/>
+						<line number="516" hits="1"/>
+						<line number="517" hits="1"/>
+						<line number="518" hits="1"/>
+						<line number="519" hits="1"/>
+						<line number="520" hits="1"/>
+						<line number="521" hits="1"/>
+						<line number="523" hits="1"/>
+						<line number="524" hits="1"/>
+						<line number="525" hits="1"/>
+						<line number="526" hits="1"/>
+						<line number="527" hits="1"/>
+						<line number="528" hits="1"/>
+						<line number="529" hits="1"/>
+						<line number="531" hits="1"/>
+						<line number="533" hits="1"/>
+						<line number="534" hits="1"/>
+						<line number="535" hits="1"/>
+						<line number="536" hits="1"/>
+						<line number="537" hits="1"/>
+						<line number="538" hits="1"/>
+						<line number="539" hits="1"/>
+						<line number="541" hits="1"/>
+						<line number="542" hits="1"/>
+						<line number="543" hits="1"/>
+						<line number="544" hits="1"/>
+						<line number="545" hits="1"/>
+						<line number="546" hits="1"/>
+						<line number="548" hits="1"/>
+						<line number="549" hits="1"/>
+						<line number="550" hits="1"/>
+						<line number="551" hits="1"/>
+						<line number="552" hits="1"/>
+						<line number="553" hits="1"/>
+						<line number="554" hits="1"/>
+						<line number="555" hits="1"/>
+						<line number="557" hits="1"/>
+						<line number="558" hits="1"/>
+						<line number="560" hits="1"/>
+						<line number="561" hits="1"/>
+						<line number="562" hits="1"/>
+						<line number="563" hits="1"/>
+						<line number="566" hits="1"/>
+						<line number="567" hits="1"/>
+						<line number="568" hits="1"/>
+						<line number="569" hits="1"/>
+						<line number="571" hits="1"/>
+						<line number="572" hits="1"/>
+						<line number="573" hits="1"/>
+						<line number="574" hits="1"/>
+						<line number="575" hits="1"/>
+						<line number="576" hits="1"/>
+						<line number="588" hits="1"/>
+						<line number="589" hits="1"/>
+						<line number="590" hits="1"/>
+						<line number="592" hits="1"/>
+						<line number="593" hits="1"/>
+						<line number="595" hits="1"/>
+						<line number="596" hits="1"/>
+						<line number="597" hits="1"/>
+						<line number="600" hits="1"/>
+						<line number="601" hits="1"/>
+						<line number="602" hits="1"/>
+						<line number="603" hits="1"/>
+						<line number="604" hits="1"/>
+						<line number="605" hits="1"/>
+						<line number="606" hits="1"/>
+						<line number="608" hits="1"/>
+						<line number="610" hits="1"/>
+						<line number="611" hits="1"/>
+						<line number="612" hits="1"/>
+						<line number="613" hits="1"/>
+						<line number="614" hits="0"/>
+						<line number="615" hits="0"/>
+						<line number="616" hits="1"/>
+						<line number="618" hits="1"/>
+						<line number="619" hits="1"/>
+						<line number="621" hits="1"/>
+						<line number="622" hits="1"/>
+						<line number="623" hits="1"/>
+						<line number="624" hits="1"/>
+						<line number="625" hits="1"/>
+						<line number="626" hits="1"/>
+						<line number="627" hits="1"/>
+						<line number="628" hits="1"/>
+						<line number="630" hits="1"/>
+						<line number="631" hits="1"/>
+						<line number="632" hits="1"/>
+						<line number="633" hits="1"/>
+						<line number="634" hits="1"/>
+						<line number="635" hits="1"/>
+						<line number="638" hits="1"/>
+						<line number="639" hits="1"/>
+						<line number="640" hits="1"/>
+						<line number="641" hits="1"/>
+						<line number="642" hits="1"/>
+						<line number="644" hits="1"/>
+						<line number="645" hits="1"/>
+						<line number="647" hits="1"/>
+						<line number="648" hits="1"/>
+						<line number="649" hits="1"/>
+						<line number="650" hits="1"/>
+						<line number="651" hits="1"/>
+						<line number="654" hits="1"/>
+						<line number="655" hits="1"/>
+						<line number="656" hits="1"/>
+						<line number="657" hits="1"/>
+						<line number="658" hits="1"/>
+					</lines>
+				</class>
+				<class name="symbol_collector_cpp__216" filename="lib/compiler/src/sema/symbol_collector.cpp" branch-rate="1.0" complexity="1.0" line-rate="0.985">
+					<lines>
+						<line number="9" hits="1"/>
+						<line number="10" hits="1"/>
+						<line number="11" hits="1"/>
+						<line number="13" hits="1"/>
+						<line number="14" hits="1"/>
+						<line number="16" hits="1"/>
+						<line number="17" hits="1"/>
+						<line number="18" hits="1"/>
+						<line number="19" hits="1"/>
+						<line number="20" hits="1"/>
+						<line number="44" hits="1"/>
+						<line number="46" hits="1"/>
+						<line number="47" hits="1"/>
+						<line number="48" hits="1"/>
+						<line number="49" hits="1"/>
+						<line number="51" hits="1"/>
+						<line number="52" hits="1"/>
+						<line number="53" hits="1"/>
+						<line number="55" hits="1"/>
+						<line number="56" hits="1"/>
+						<line number="57" hits="1"/>
+						<line number="58" hits="1"/>
+						<line number="60" hits="1"/>
+						<line number="61" hits="1"/>
+						<line number="62" hits="1"/>
+						<line number="64" hits="1"/>
+						<line number="65" hits="1"/>
+						<line number="66" hits="1"/>
+						<line number="67" hits="1"/>
+						<line number="70" hits="1"/>
+						<line number="71" hits="1"/>
+						<line number="72" hits="1"/>
+						<line number="74" hits="1"/>
+						<line number="75" hits="1"/>
+						<line number="77" hits="1"/>
+						<line number="78" hits="1"/>
+						<line number="79" hits="1"/>
+						<line number="80" hits="1"/>
+						<line number="81" hits="1"/>
+						<line number="83" hits="1"/>
+						<line number="84" hits="1"/>
+						<line number="85" hits="1"/>
+						<line number="87" hits="1"/>
+						<line number="89" hits="1"/>
+						<line number="92" hits="1"/>
+						<line number="93" hits="1"/>
+						<line number="95" hits="1"/>
+						<line number="96" hits="1"/>
+						<line number="97" hits="1"/>
+						<line number="98" hits="1"/>
+						<line number="99" hits="1"/>
+						<line number="101" hits="1"/>
+						<line number="102" hits="1"/>
+						<line number="103" hits="1"/>
+						<line number="104" hits="1"/>
+						<line number="106" hits="1"/>
+						<line number="107" hits="1"/>
+						<line number="108" hits="1"/>
+						<line number="110" hits="1"/>
+						<line number="111" hits="1"/>
+						<line number="112" hits="1"/>
+						<line number="114" hits="1"/>
+						<line number="115" hits="1"/>
+						<line number="116" hits="1"/>
+						<line number="117" hits="1"/>
+						<line number="120" hits="1"/>
+						<line number="121" hits="1"/>
+						<line number="122" hits="1"/>
+						<line number="124" hits="1"/>
+						<line number="125" hits="1"/>
+						<line number="126" hits="1"/>
+						<line number="127" hits="1"/>
+						<line number="129" hits="1"/>
+						<line number="130" hits="1"/>
+						<line number="131" hits="1"/>
+						<line number="132" hits="1"/>
+						<line number="133" hits="1"/>
+						<line number="135" hits="1"/>
+						<line number="136" hits="1"/>
+						<line number="137" hits="1"/>
+						<line number="138" hits="1"/>
+						<line number="140" hits="1"/>
+						<line number="141" hits="1"/>
+						<line number="142" hits="1"/>
+						<line number="143" hits="1"/>
+						<line number="144" hits="1"/>
+						<line number="145" hits="1"/>
+						<line number="146" hits="1"/>
+						<line number="147" hits="1"/>
+						<line number="156" hits="1"/>
+						<line number="157" hits="1"/>
+						<line number="158" hits="1"/>
+						<line number="160" hits="1"/>
+						<line number="161" hits="1"/>
+						<line number="162" hits="1"/>
+						<line number="164" hits="1"/>
+						<line number="165" hits="1"/>
+						<line number="166" hits="1"/>
+						<line number="167" hits="1"/>
+						<line number="169" hits="1"/>
+						<line number="170" hits="1"/>
+						<line number="171" hits="1"/>
+						<line number="172" hits="1"/>
+						<line number="173" hits="1"/>
+						<line number="175" hits="1"/>
+						<line number="176" hits="1"/>
+						<line number="177" hits="1"/>
+						<line number="179" hits="1"/>
+						<line number="180" hits="1"/>
+						<line number="181" hits="1"/>
+						<line number="182" hits="1"/>
+						<line number="184" hits="1"/>
+						<line number="185" hits="1"/>
+						<line number="186" hits="1"/>
+						<line number="187" hits="1"/>
+						<line number="189" hits="1"/>
+						<line number="190" hits="1"/>
+						<line number="191" hits="1"/>
+						<line number="192" hits="1"/>
+						<line number="193" hits="1"/>
+						<line number="201" hits="1"/>
+						<line number="202" hits="1"/>
+						<line number="203" hits="1"/>
+						<line number="205" hits="1"/>
+						<line number="206" hits="1"/>
+						<line number="207" hits="1"/>
+						<line number="208" hits="1"/>
+						<line number="209" hits="1"/>
+						<line number="210" hits="1"/>
+						<line number="211" hits="1"/>
+						<line number="214" hits="1"/>
+						<line number="215" hits="1"/>
+						<line number="216" hits="1"/>
+						<line number="218" hits="1"/>
+						<line number="219" hits="1"/>
+						<line number="221" hits="1"/>
+						<line number="222" hits="1"/>
+						<line number="223" hits="1"/>
+						<line number="224" hits="1"/>
+						<line number="225" hits="1"/>
+						<line number="227" hits="1"/>
+						<line number="229" hits="1"/>
+						<line number="232" hits="1"/>
+						<line number="233" hits="1"/>
+						<line number="235" hits="1"/>
+						<line number="236" hits="1"/>
+						<line number="237" hits="1"/>
+						<line number="238" hits="1"/>
+						<line number="240" hits="1"/>
+						<line number="241" hits="1"/>
+						<line number="242" hits="1"/>
+						<line number="243" hits="1"/>
+						<line number="245" hits="1"/>
+						<line number="246" hits="1"/>
+						<line number="247" hits="1"/>
+						<line number="248" hits="1"/>
+						<line number="249" hits="1"/>
+						<line number="252" hits="1"/>
+						<line number="253" hits="1"/>
+						<line number="254" hits="1"/>
+						<line number="255" hits="1"/>
+						<line number="256" hits="1"/>
+						<line number="258" hits="1"/>
+						<line number="259" hits="1"/>
+						<line number="260" hits="1"/>
+						<line number="261" hits="1"/>
+						<line number="262" hits="1"/>
+						<line number="264" hits="1"/>
+						<line number="265" hits="1"/>
+						<line number="267" hits="1"/>
+						<line number="268" hits="1"/>
+						<line number="269" hits="1"/>
+						<line number="270" hits="1"/>
+						<line number="271" hits="1"/>
+						<line number="273" hits="1"/>
+						<line number="275" hits="1"/>
+						<line number="277" hits="1"/>
+						<line number="278" hits="1"/>
+						<line number="279" hits="1"/>
+						<line number="282" hits="1"/>
+						<line number="283" hits="1"/>
+						<line number="284" hits="1"/>
+						<line number="285" hits="1"/>
+						<line number="286" hits="1"/>
+						<line number="287" hits="1"/>
+						<line number="288" hits="1"/>
+						<line number="289" hits="1"/>
+						<line number="290" hits="1"/>
+						<line number="291" hits="1"/>
+						<line number="292" hits="1"/>
+						<line number="293" hits="1"/>
+						<line number="294" hits="1"/>
+						<line number="295" hits="1"/>
+						<line number="296" hits="1"/>
+						<line number="297" hits="1"/>
+						<line number="298" hits="0"/>
+						<line number="299" hits="0"/>
+						<line number="300" hits="0"/>
+						<line number="302" hits="1"/>
+						<line number="304" hits="1"/>
+						<line number="305" hits="1"/>
+						<line number="306" hits="1"/>
+						<line number="308" hits="1"/>
+						<line number="309" hits="1"/>
+						<line number="310" hits="1"/>
+						<line number="311" hits="1"/>
+						<line number="312" hits="1"/>
+						<line number="314" hits="1"/>
+						<line number="315" hits="1"/>
+						<line number="317" hits="1"/>
+						<line number="318" hits="1"/>
+						<line number="319" hits="1"/>
+						<line number="321" hits="1"/>
+						<line number="322" hits="1"/>
+						<line number="323" hits="1"/>
+						<line number="325" hits="1"/>
+						<line number="326" hits="1"/>
+						<line number="327" hits="1"/>
+						<line number="329" hits="1"/>
+						<line number="330" hits="1"/>
+						<line number="331" hits="1"/>
+						<line number="332" hits="1"/>
+						<line number="333" hits="1"/>
+						<line number="334" hits="1"/>
+						<line number="335" hits="1"/>
+						<line number="336" hits="1"/>
+						<line number="337" hits="1"/>
+						<line number="338" hits="1"/>
+						<line number="342" hits="1"/>
+						<line number="343" hits="1"/>
+						<line number="345" hits="1"/>
+						<line number="346" hits="1"/>
+						<line number="347" hits="1"/>
+						<line number="348" hits="0"/>
+						<line number="349" hits="1"/>
+						<line number="351" hits="1"/>
+						<line number="352" hits="1"/>
+						<line number="353" hits="1"/>
+						<line number="354" hits="1"/>
+						<line number="355" hits="1"/>
+						<line number="356" hits="1"/>
+						<line number="357" hits="1"/>
+						<line number="358" hits="1"/>
+						<line number="360" hits="1"/>
+						<line number="361" hits="1"/>
+						<line number="362" hits="1"/>
+						<line number="363" hits="1"/>
+						<line number="364" hits="1"/>
+						<line number="366" hits="1"/>
+						<line number="367" hits="1"/>
+						<line number="369" hits="1"/>
+						<line number="370" hits="1"/>
+						<line number="371" hits="1"/>
+						<line number="372" hits="1"/>
+						<line number="373" hits="1"/>
+						<line number="377" hits="1"/>
+						<line number="378" hits="1"/>
+						<line number="379" hits="1"/>
+						<line number="380" hits="1"/>
+						<line number="381" hits="1"/>
+						<line number="382" hits="1"/>
+						<line number="384" hits="1"/>
+						<line number="385" hits="1"/>
+						<line number="386" hits="1"/>
+					</lines>
+				</class>
+				<class name="union_cpp__217" filename="lib/compiler/src/ast/expressions/union.cpp" branch-rate="1.0" complexity="1.0" line-rate="1.000">
+					<lines>
+						<line number="19" hits="1"/>
+						<line number="20" hits="1"/>
+						<line number="22" hits="1"/>
+						<line number="24" hits="1"/>
+						<line number="25" hits="1"/>
+						<line number="28" hits="1"/>
+						<line number="29" hits="1"/>
+						<line number="35" hits="1"/>
+						<line number="36" hits="1"/>
+						<line number="38" hits="1"/>
+						<line number="41" hits="1"/>
+						<line number="42" hits="1"/>
+						<line number="43" hits="1"/>
+						<line number="45" hits="1"/>
+						<line number="46" hits="1"/>
+						<line number="47" hits="1"/>
+						<line number="48" hits="1"/>
+						<line number="50" hits="1"/>
+						<line number="51" hits="1"/>
+						<line number="53" hits="1"/>
+						<line number="54" hits="1"/>
+						<line number="56" hits="1"/>
+						<line number="59" hits="1"/>
+						<line number="60" hits="1"/>
+						<line number="61" hits="1"/>
+						<line number="63" hits="1"/>
+						<line number="64" hits="1"/>
+						<line number="67" hits="1"/>
+						<line number="68" hits="1"/>
+						<line number="69" hits="1"/>
+						<line number="71" hits="1"/>
+						<line number="72" hits="1"/>
+						<line number="73" hits="1"/>
+						<line number="74" hits="1"/>
+						<line number="75" hits="1"/>
+					</lines>
+				</class>
+				<class name="symbol_cpp__218" filename="lib/compiler/src/sema/symbol.cpp" branch-rate="1.0" complexity="1.0" line-rate="0.898">
+					<lines>
+						<line number="12" hits="1"/>
+						<line number="13" hits="1"/>
+						<line number="16" hits="1"/>
+						<line number="17" hits="1"/>
+						<line number="18" hits="1"/>
+						<line number="19" hits="1"/>
+						<line number="20" hits="1"/>
+						<line number="21" hits="1"/>
+						<line number="22" hits="1"/>
+						<line number="24" hits="1"/>
+						<line number="25" hits="1"/>
+						<line number="27" hits="1"/>
+						<line number="28" hits="1"/>
+						<line number="29" hits="1"/>
+						<line number="31" hits="1"/>
+						<line number="32" hits="1"/>
+						<line number="35" hits="1"/>
+						<line number="36" hits="1"/>
+						<line number="37" hits="1"/>
+						<line number="38" hits="1"/>
+						<line number="39" hits="1"/>
+						<line number="43" hits="1"/>
+						<line number="44" hits="1"/>
+						<line number="45" hits="0"/>
+						<line number="46" hits="1"/>
+						<line number="47" hits="1"/>
+						<line number="48" hits="0"/>
+						<line number="51" hits="1"/>
+						<line number="53" hits="1"/>
+						<line number="56" hits="1"/>
+						<line number="57" hits="1"/>
+						<line number="58" hits="1"/>
+						<line number="60" hits="1"/>
+						<line number="61" hits="1"/>
+						<line number="62" hits="1"/>
+						<line number="63" hits="1"/>
+						<line number="64" hits="1"/>
+						<line number="68" hits="1"/>
+						<line number="69" hits="1"/>
+						<line number="72" hits="1"/>
+						<line number="73" hits="1"/>
+						<line number="74" hits="1"/>
+						<line number="75" hits="1"/>
+						<line number="80" hits="1"/>
+						<line number="81" hits="1"/>
+						<line number="82" hits="1"/>
+						<line number="83" hits="1"/>
+						<line number="84" hits="1"/>
+						<line number="86" hits="1"/>
+						<line number="87" hits="1"/>
+						<line number="88" hits="1"/>
+						<line number="90" hits="0"/>
+						<line number="91" hits="0"/>
+						<line number="93" hits="1"/>
+						<line number="94" hits="1"/>
+						<line number="95" hits="0"/>
+						<line number="96" hits="0"/>
+						<line number="101" hits="1"/>
+						<line number="102" hits="1"/>
+					</lines>
+				</class>
+				<class name="option_hpp__219" filename="lib/support/include/option.hpp" branch-rate="1.0" complexity="1.0" line-rate="1.000">
+					<lines>
+						<line number="16" hits="1"/>
+						<line number="17" hits="1"/>
+						<line number="18" hits="1"/>
+						<line number="24" hits="1"/>
+						<line number="27" hits="1"/>
+						<line number="28" hits="1"/>
+						<line number="41" hits="1"/>
+						<line number="42" hits="1"/>
+						<line number="43" hits="1"/>
+						<line number="46" hits="1"/>
+						<line number="47" hits="1"/>
+						<line number="65" hits="1"/>
+						<line number="66" hits="1"/>
+						<line number="67" hits="1"/>
+						<line number="68" hits="1"/>
+						<line number="69" hits="1"/>
+						<line number="72" hits="1"/>
+						<line number="73" hits="1"/>
+						<line number="74" hits="1"/>
+						<line number="75" hits="1"/>
+						<line number="76" hits="1"/>
+					</lines>
+				</class>
+				<class name="indent_hpp__220" filename="lib/support/include/indent.hpp" branch-rate="1.0" complexity="1.0" line-rate="1.000">
+					<lines>
+						<line number="18" hits="1"/>
+						<line number="22" hits="1"/>
+						<line number="23" hits="1"/>
+						<line number="30" hits="1"/>
+						<line number="31" hits="1"/>
+						<line number="33" hits="1"/>
+						<line number="34" hits="1"/>
+						<line number="35" hits="1"/>
+						<line number="36" hits="1"/>
+						<line number="37" hits="1"/>
+						<line number="38" hits="1"/>
+						<line number="39" hits="1"/>
+						<line number="40" hits="1"/>
+						<line number="41" hits="1"/>
+					</lines>
+				</class>
+				<class name="call_cpp__221" filename="lib/compiler/src/ast/expressions/call.cpp" branch-rate="1.0" complexity="1.0" line-rate="1.000">
+					<lines>
+						<line number="17" hits="1"/>
+						<line number="18" hits="1"/>
+						<line number="19" hits="1"/>
+						<line number="21" hits="1"/>
+						<line number="23" hits="1"/>
+						<line number="24" hits="1"/>
+						<line number="25" hits="1"/>
+						<line number="26" hits="1"/>
+						<line number="27" hits="1"/>
+						<line number="29" hits="1"/>
+						<line number="30" hits="1"/>
+						<line number="33" hits="1"/>
+						<line number="38" hits="1"/>
+						<line number="39" hits="1"/>
+						<line number="41" hits="1"/>
+						<line number="44" hits="1"/>
+						<line number="45" hits="1"/>
+						<line number="47" hits="1"/>
+						<line number="49" hits="1"/>
+						<line number="50" hits="1"/>
+						<line number="51" hits="1"/>
+						<line number="52" hits="1"/>
+						<line number="53" hits="1"/>
+						<line number="54" hits="1"/>
+						<line number="56" hits="1"/>
+						<line number="57" hits="1"/>
+						<line number="59" hits="1"/>
+						<line number="60" hits="1"/>
+						<line number="61" hits="1"/>
+						<line number="62" hits="1"/>
+						<line number="63" hits="1"/>
+						<line number="67" hits="1"/>
+						<line number="68" hits="1"/>
+						<line number="69" hits="1"/>
+						<line number="70" hits="1"/>
+						<line number="72" hits="1"/>
+						<line number="74" hits="1"/>
+						<line number="75" hits="1"/>
+						<line number="76" hits="1"/>
+						<line number="78" hits="1"/>
+						<line number="79" hits="1"/>
+						<line number="80" hits="1"/>
+					</lines>
+				</class>
+				<class name="defer_cpp__222" filename="lib/compiler/src/ast/statements/defer.cpp" branch-rate="1.0" complexity="1.0" line-rate="1.000">
+					<lines>
+						<line number="10" hits="1"/>
+						<line number="13" hits="1"/>
+						<line number="14" hits="1"/>
+						<line number="15" hits="1"/>
+						<line number="16" hits="1"/>
+						<line number="17" hits="1"/>
+						<line number="19" hits="1"/>
+						<line number="20" hits="1"/>
+						<line number="23" hits="1"/>
+						<line number="24" hits="1"/>
+						<line number="26" hits="1"/>
+						<line number="27" hits="1"/>
+					</lines>
+				</class>
+				<class name="keywords_hpp__223" filename="lib/compiler/include/syntax/keywords.hpp" branch-rate="1.0" complexity="1.0" line-rate="1.000">
+					<lines>
+						<line number="123" hits="1"/>
+						<line number="124" hits="1"/>
+						<line number="125" hits="1"/>
+						<line number="126" hits="1"/>
+						<line number="127" hits="1"/>
+						<line number="183" hits="1"/>
+						<line number="184" hits="1"/>
+						<line number="185" hits="1"/>
+						<line number="186" hits="1"/>
+						<line number="187" hits="1"/>
+					</lines>
+				</class>
+			</classes>
+		</package>
+	</packages>
+</coverage>
