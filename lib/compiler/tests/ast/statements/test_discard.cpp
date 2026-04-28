@@ -29,7 +29,7 @@ TEST_CASE("Malformed discardees") {
             "_ = import std;",
             syntax::ParserDiagnostic{"No prefix parse function for IMPORT(import) found",
                                      syntax::ParserError::MISSING_PREFIX_PARSER,
-                                     std::pair{1uz, 5uz}});
+                                     std::pair{0uz, 4uz}});
     }
 
     SECTION("Misplaced incorrect statement") {
@@ -37,15 +37,15 @@ TEST_CASE("Malformed discardees") {
             "_ = import 3;",
             syntax::ParserDiagnostic{"No prefix parse function for IMPORT(import) found",
                                      syntax::ParserError::MISSING_PREFIX_PARSER,
-                                     std::pair{1uz, 5uz}});
+                                     std::pair{0uz, 4uz}});
     }
 }
 
 TEST_CASE("Missing discardee") {
     helpers::test_parser_fail(
-        "_ = ", syntax::ParserDiagnostic{syntax::ParserError::DISCARD_MISSING_DISCARDEE, 1, 3});
+        "_ = ", syntax::ParserDiagnostic{syntax::ParserError::DISCARD_MISSING_DISCARDEE, 0, 2});
     helpers::test_parser_fail(
-        "_ = ;", syntax::ParserDiagnostic{syntax::ParserError::DISCARD_MISSING_DISCARDEE, 1, 3});
+        "_ = ;", syntax::ParserDiagnostic{syntax::ParserError::DISCARD_MISSING_DISCARDEE, 0, 2});
 }
 
 } // namespace porpoise::tests

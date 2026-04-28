@@ -57,21 +57,21 @@ TEST_CASE("Struct flavors") {
 
 TEST_CASE("Illegal struct member") {
     helpers::test_parser_fail("struct { import std; };",
-                              syntax::ParserDiagnostic{syntax::ParserError::INVALID_MEMBER, 1, 10});
+                              syntax::ParserDiagnostic{syntax::ParserError::INVALID_MEMBER, 0, 9});
 }
 
 TEST_CASE("Empty struct body") {
     helpers::test_parser_fail("struct {};",
-                              syntax::ParserDiagnostic{syntax::ParserError::EMPTY_STRUCT, 1, 1});
+                              syntax::ParserDiagnostic{syntax::ParserError::EMPTY_STRUCT, 0, 0});
 }
 
 TEST_CASE("Packed keyword out of order") {
     helpers::test_parser_fail(
         "struct packed { var a: Foo = bar; };",
-        syntax::ParserDiagnostic{syntax::ParserError::PACKED_AFTER_STRUCT_KEYWORD, 1, 1},
+        syntax::ParserDiagnostic{syntax::ParserError::PACKED_AFTER_STRUCT_KEYWORD, 0, 0},
         syntax::ParserDiagnostic{"No prefix parse function for RBRACE(}) found",
                                  syntax::ParserError::MISSING_PREFIX_PARSER,
-                                 std::pair{1uz, 35uz}});
+                                 std::pair{0uz, 34uz}});
 }
 
 } // namespace porpoise::tests

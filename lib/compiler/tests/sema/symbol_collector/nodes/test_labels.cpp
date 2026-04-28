@@ -31,7 +31,7 @@ TEST_CASE("Label redeclaration") {
         "const a := a: {};",
         sema::Diagnostic{"Redeclaration of symbol 'a'. Previous declaration here: 1:1",
                          sema::Error::IDENTIFIER_REDECLARATION,
-                         std::pair{1uz, 12uz}});
+                         std::pair{0uz, 11uz}});
 }
 
 TEST_CASE("Label shadowing") {
@@ -39,7 +39,7 @@ TEST_CASE("Label shadowing") {
         "const a := blk: { var blk: i32; };",
         sema::Diagnostic{"Attempt to shadow identifier 'blk'. Previous declaration here: 1:12",
                          sema::Error::SHADOWING_DECLARATION,
-                         std::pair{1uz, 19uz}});
+                         std::pair{0uz, 18uz}});
 }
 
 } // namespace porpoise::tests

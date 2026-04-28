@@ -96,34 +96,34 @@ TEST_CASE("Enum with decls") {
 
 TEST_CASE("Empty enum") {
     helpers::test_parser_fail("enum {};",
-                              syntax::ParserDiagnostic{syntax::ParserError::EMPTY_ENUM, 1, 1});
+                              syntax::ParserDiagnostic{syntax::ParserError::EMPTY_ENUM, 0, 0});
     helpers::test_parser_fail("enum : T {};",
-                              syntax::ParserDiagnostic{syntax::ParserError::EMPTY_ENUM, 1, 1});
+                              syntax::ParserDiagnostic{syntax::ParserError::EMPTY_ENUM, 0, 0});
 }
 
 TEST_CASE("Illegal underlying type") {
     helpers::test_parser_fail(
-        "enum : 4 {A};", syntax::ParserDiagnostic{syntax::ParserError::ILLEGAL_IDENTIFIER, 1, 8});
+        "enum : 4 {A};", syntax::ParserDiagnostic{syntax::ParserError::ILLEGAL_IDENTIFIER, 0, 7});
     helpers::test_parser_fail(
         R"(enum : "e" {A};)",
-        syntax::ParserDiagnostic{syntax::ParserError::ILLEGAL_IDENTIFIER, 1, 8});
+        syntax::ParserDiagnostic{syntax::ParserError::ILLEGAL_IDENTIFIER, 0, 7});
 }
 
 TEST_CASE("Empty enum with decl") {
     helpers::test_parser_fail("enum : i64 { const b := fn(&self, a: A): C { c; }; };",
-                              syntax::ParserDiagnostic{syntax::ParserError::EMPTY_ENUM, 1, 1});
+                              syntax::ParserDiagnostic{syntax::ParserError::EMPTY_ENUM, 0, 0});
 }
 
 TEST_CASE("Out of order enum") {
     helpers::test_parser_fail("enum : i64 { A = 2l const b := fn(&self, a: A): C { c; }; B = 2l };",
                               syntax::ParserDiagnostic{"Expected token SEMICOLON, found RBRACE",
                                                        syntax::ParserError::UNEXPECTED_TOKEN,
-                                                       std::pair{1uz, 66uz}});
+                                                       std::pair{0uz, 65uz}});
 }
 
 TEST_CASE("Non-static non-function enum member") {
     helpers::test_parser_fail("enum { A = i32{} const b := 2; };",
-                              syntax::ParserDiagnostic{syntax::ParserError::INVALID_MEMBER, 1, 18});
+                              syntax::ParserDiagnostic{syntax::ParserError::INVALID_MEMBER, 0, 17});
 }
 
 } // namespace porpoise::tests

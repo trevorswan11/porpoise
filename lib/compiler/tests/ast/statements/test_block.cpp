@@ -28,13 +28,13 @@ TEST_CASE("Non-terminated block") {
     helpers::test_parser_fail(
         "{ ",
         syntax::ParserDiagnostic{
-            "Expected token RBRACE, found END", syntax::ParserError::UNEXPECTED_TOKEN, 1, 3});
+            "Expected token RBRACE, found END", syntax::ParserError::UNEXPECTED_TOKEN, 0, 2});
 }
 
 TEST_CASE("Illegal block inner statement") {
     helpers::test_parser_fail(
         "{ import std; };",
-        syntax::ParserDiagnostic{syntax::ParserError::ILLEGAL_BLOCK_STATEMENT, 1, 3});
+        syntax::ParserDiagnostic{syntax::ParserError::ILLEGAL_BLOCK_STATEMENT, 0, 2});
 }
 
 } // namespace porpoise::tests

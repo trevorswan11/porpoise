@@ -21,23 +21,23 @@ TEST_CASE("Correct defers") {
 TEST_CASE("Illegal deferred statements") {
     helpers::test_parser_fail(
         "defer import std;",
-        syntax::ParserDiagnostic{syntax::ParserError::ILLEGAL_DEFERRED_STATEMENT, 1, 7});
+        syntax::ParserDiagnostic{syntax::ParserError::ILLEGAL_DEFERRED_STATEMENT, 0, 6});
     helpers::test_parser_fail(
         "defer return 3;",
-        syntax::ParserDiagnostic{syntax::ParserError::ILLEGAL_DEFERRED_STATEMENT, 1, 7});
+        syntax::ParserDiagnostic{syntax::ParserError::ILLEGAL_DEFERRED_STATEMENT, 0, 6});
     helpers::test_parser_fail(
         "defer var a: i32;",
-        syntax::ParserDiagnostic{syntax::ParserError::ILLEGAL_DEFERRED_STATEMENT, 1, 7});
+        syntax::ParserDiagnostic{syntax::ParserError::ILLEGAL_DEFERRED_STATEMENT, 0, 6});
     helpers::test_parser_fail(
         "defer using a = i32;",
-        syntax::ParserDiagnostic{syntax::ParserError::ILLEGAL_DEFERRED_STATEMENT, 1, 7});
+        syntax::ParserDiagnostic{syntax::ParserError::ILLEGAL_DEFERRED_STATEMENT, 0, 6});
 }
 
 TEST_CASE("Missing deferred statements") {
     helpers::test_parser_fail(
-        "defer", syntax::ParserDiagnostic{syntax::ParserError::DEFER_MISSING_DEFERREE, 1, 1});
+        "defer", syntax::ParserDiagnostic{syntax::ParserError::DEFER_MISSING_DEFERREE, 0, 0});
     helpers::test_parser_fail(
-        "defer;", syntax::ParserDiagnostic{syntax::ParserError::DEFER_MISSING_DEFERREE, 1, 1});
+        "defer;", syntax::ParserDiagnostic{syntax::ParserError::DEFER_MISSING_DEFERREE, 0, 0});
 }
 
 } // namespace porpoise::tests

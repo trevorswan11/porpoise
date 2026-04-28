@@ -76,7 +76,7 @@ TEST_CASE("i32 parsing") {
     helpers::test_primitive<N>(
         "0xFFFFFFFFFFFFFFFFFFF;",
         opt::none,
-        syntax::ParserDiagnostic{syntax::ParserError::INTEGER_OVERFLOW, 1, 1});
+        syntax::ParserDiagnostic{syntax::ParserError::INTEGER_OVERFLOW, 0, 0});
 }
 
 TEST_CASE("i64") {
@@ -89,7 +89,7 @@ TEST_CASE("i64") {
     helpers::test_primitive<N>(
         "0xFFFFFFFFFFFFFFFFFFFl;",
         opt::none,
-        syntax::ParserDiagnostic{syntax::ParserError::INTEGER_OVERFLOW, 1, 1});
+        syntax::ParserDiagnostic{syntax::ParserError::INTEGER_OVERFLOW, 0, 0});
 }
 
 TEST_CASE("isize parsing") {
@@ -102,7 +102,7 @@ TEST_CASE("isize parsing") {
     helpers::test_primitive<N>(
         "0xFFFFFFFFFFFFFFFFz;",
         opt::none,
-        syntax::ParserDiagnostic{syntax::ParserError::INTEGER_OVERFLOW, 1, 1});
+        syntax::ParserDiagnostic{syntax::ParserError::INTEGER_OVERFLOW, 0, 0});
 }
 
 TEST_CASE("u32 parsing") {
@@ -115,7 +115,7 @@ TEST_CASE("u32 parsing") {
     helpers::test_primitive<N>(
         "0xFFFFFFFFFFFFFFFFu;",
         opt::none,
-        syntax::ParserDiagnostic{syntax::ParserError::INTEGER_OVERFLOW, 1, 1});
+        syntax::ParserDiagnostic{syntax::ParserError::INTEGER_OVERFLOW, 0, 0});
 }
 
 TEST_CASE("u64 parsing") {
@@ -128,7 +128,7 @@ TEST_CASE("u64 parsing") {
     helpers::test_primitive<N>(
         "0xFFFFFFFFFFFFFFFFFul;",
         opt::none,
-        syntax::ParserDiagnostic{syntax::ParserError::INTEGER_OVERFLOW, 1, 1});
+        syntax::ParserDiagnostic{syntax::ParserError::INTEGER_OVERFLOW, 0, 0});
 }
 
 TEST_CASE("usize parsing") {
@@ -141,24 +141,24 @@ TEST_CASE("usize parsing") {
     helpers::test_primitive<N>(
         "0xFFFFFFFFFFFFFFFFFuz;",
         opt::none,
-        syntax::ParserDiagnostic{syntax::ParserError::INTEGER_OVERFLOW, 1, 1});
+        syntax::ParserDiagnostic{syntax::ParserError::INTEGER_OVERFLOW, 0, 0});
 }
 
 TEST_CASE("u8 parsing") {
     using N = ast::U8Expression;
-    helpers::test_primitive<N>("'3';", syntax::TokenType::U8, '3');
-    helpers::test_primitive<N>("'\\n';", syntax::TokenType::U8, '\n');
-    helpers::test_primitive<N>("'\\r';", syntax::TokenType::U8, '\r');
-    helpers::test_primitive<N>("'\\t';", syntax::TokenType::U8, '\t');
-    helpers::test_primitive<N>("'\\\\';", syntax::TokenType::U8, '\\');
-    helpers::test_primitive<N>("'\\\'';", syntax::TokenType::U8, '\'');
-    helpers::test_primitive<N>("'\\\"';", syntax::TokenType::U8, '\"');
-    helpers::test_primitive<N>("'\\0';", syntax::TokenType::U8, '\0');
+    helpers::test_primitive<N>("'3';", syntax::TokenType::U8, u8{'3'});
+    helpers::test_primitive<N>("'\\n';", syntax::TokenType::U8, u8{'\n'});
+    helpers::test_primitive<N>("'\\r';", syntax::TokenType::U8, u8{'\r'});
+    helpers::test_primitive<N>("'\\t';", syntax::TokenType::U8, u8{'\t'});
+    helpers::test_primitive<N>("'\\\\';", syntax::TokenType::U8, u8{'\\'});
+    helpers::test_primitive<N>("'\\\'';", syntax::TokenType::U8, u8{'\''});
+    helpers::test_primitive<N>("'\\\"';", syntax::TokenType::U8, u8{'\"'});
+    helpers::test_primitive<N>("'\\0';", syntax::TokenType::U8, u8{'\0'});
 
     helpers::test_primitive<N>(
         "'\\f';",
         {},
-        syntax::ParserDiagnostic{syntax::ParserError::UNKNOWN_CHARACTER_ESCAPE, 1, 1});
+        syntax::ParserDiagnostic{syntax::ParserError::UNKNOWN_CHARACTER_ESCAPE, 0, 0});
 }
 
 TEST_CASE("f32 parsing") {
@@ -168,7 +168,7 @@ TEST_CASE("f32 parsing") {
 
     helpers::test_primitive<N>("1023.234612e234000f;",
                                opt::none,
-                               syntax::ParserDiagnostic{syntax::ParserError::FLOAT_OVERFLOW, 1, 1});
+                               syntax::ParserDiagnostic{syntax::ParserError::FLOAT_OVERFLOW, 0, 0});
 }
 
 TEST_CASE("f64 parsing") {
@@ -180,7 +180,7 @@ TEST_CASE("f64 parsing") {
     helpers::test_primitive<N>(
         "1023.234612e234000;",
         opt::none,
-        syntax::ParserDiagnostic{syntax::ParserError::DOUBLE_OVERFLOW, 1, 1});
+        syntax::ParserDiagnostic{syntax::ParserError::DOUBLE_OVERFLOW, 0, 0});
 }
 
 TEST_CASE("Bool parsing") {

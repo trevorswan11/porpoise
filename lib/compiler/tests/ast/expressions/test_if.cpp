@@ -43,19 +43,19 @@ TEST_CASE("If with alternate") {
 
 TEST_CASE("If without condition") {
     helpers::test_parser_fail(
-        "if () b;", syntax::ParserDiagnostic{syntax::ParserError::IF_MISSING_CONDITION, 1, 1});
+        "if () b;", syntax::ParserDiagnostic{syntax::ParserError::IF_MISSING_CONDITION, 0, 0});
 }
 
 TEST_CASE("If with illegal consequence") {
     helpers::test_parser_fail(
         "if (a) import std;",
-        syntax::ParserDiagnostic{syntax::ParserError::ILLEGAL_IF_BRANCH, 1, 8});
+        syntax::ParserDiagnostic{syntax::ParserError::ILLEGAL_IF_BRANCH, 0, 7});
 }
 
 TEST_CASE("If with illegal alternate") {
     helpers::test_parser_fail(
         "if (a) {} else import std;",
-        syntax::ParserDiagnostic{syntax::ParserError::ILLEGAL_IF_BRANCH, 1, 16});
+        syntax::ParserDiagnostic{syntax::ParserError::ILLEGAL_IF_BRANCH, 0, 15});
 }
 
 } // namespace porpoise::tests

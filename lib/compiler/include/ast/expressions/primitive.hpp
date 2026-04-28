@@ -161,7 +161,7 @@ class USizeExpression : public PrimitiveExpression<USizeExpression, usize> {
     auto accept(Visitor& v) const -> void override;
 };
 
-class U8Expression : public PrimitiveExpression<U8Expression, byte> {
+class U8Expression : public PrimitiveExpression<U8Expression, u8> {
   public:
     static constexpr auto KIND = NodeKind::U8_EXPRESSION;
 

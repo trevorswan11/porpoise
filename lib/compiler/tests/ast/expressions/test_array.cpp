@@ -52,18 +52,18 @@ TEST_CASE("Implicitly sized array") {
 TEST_CASE("Size mismatch") {
     helpers::test_parser_fail(
         "[1uz]i32{2, 3};",
-        syntax::ParserDiagnostic{syntax::ParserError::EXPLICIT_ARRAY_SIZE_MISMATCH, 1, 2});
+        syntax::ParserDiagnostic{syntax::ParserError::EXPLICIT_ARRAY_SIZE_MISMATCH, 0, 1});
 }
 
 TEST_CASE("Array size token requirement") {
     helpers::test_parser_fail(
-        "[]i32{2};", syntax::ParserDiagnostic{syntax::ParserError::MISSING_ARRAY_SIZE_TOKEN, 1, 1});
+        "[]i32{2};", syntax::ParserDiagnostic{syntax::ParserError::MISSING_ARRAY_SIZE_TOKEN, 0, 0});
     helpers::test_parser_fail(
         "[3]i32{1,2,3};",
-        syntax::ParserDiagnostic{syntax::ParserError::ILLEGAL_ARRAY_SIZE_TYPE, 1, 2});
+        syntax::ParserDiagnostic{syntax::ParserError::ILLEGAL_ARRAY_SIZE_TYPE, 0, 1});
     helpers::test_parser_fail(
         R"(["e"]i32{1};)",
-        syntax::ParserDiagnostic{syntax::ParserError::ILLEGAL_ARRAY_SIZE_TYPE, 1, 2});
+        syntax::ParserDiagnostic{syntax::ParserError::ILLEGAL_ARRAY_SIZE_TYPE, 0, 1});
 }
 
 } // namespace porpoise::tests

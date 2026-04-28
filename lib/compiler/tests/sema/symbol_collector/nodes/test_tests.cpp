@@ -14,14 +14,14 @@ TEST_CASE("Test shadowing") {
         R"(const a := 2; test "foo" { const a := 3; })",
         sema::Diagnostic{"Attempt to shadow identifier 'a'. Previous declaration here: 1:1",
                          sema::Error::SHADOWING_DECLARATION,
-                         std::pair{1uz, 28uz}});
+                         std::pair{0uz, 27uz}});
 }
 
 TEST_CASE("Illegal test location") {
     helpers::test_collector_fail("const a := fn(&self): void { test {} };",
                                  sema::Diagnostic{"Tests must be at the topmost level of a file",
                                                   sema::Error::ILLEGAL_TEST_LOCATION,
-                                                  std::pair{1uz, 30uz}});
+                                                  std::pair{0uz, 29uz}});
 }
 
 } // namespace porpoise::tests

@@ -127,45 +127,45 @@ TEST_CASE("Mutability restrictions") {
     const std::array contending_mut{keywords::CONSTEXPR, keywords::VAR, keywords::CONSTANT};
     for (const auto& mut : array::combinations(contending_mut)) {
         test_decl_fail({mut.first, mut.second},
-                       syntax::ParserDiagnostic{syntax::ParserError::ILLEGAL_DECL_MODIFIERS, 1, 1});
+                       syntax::ParserDiagnostic{syntax::ParserError::ILLEGAL_DECL_MODIFIERS, 0, 0});
     }
     test_decl_fail({keywords::CONSTEXPR, keywords::VAR, keywords::CONSTANT},
-                   syntax::ParserDiagnostic{syntax::ParserError::ILLEGAL_DECL_MODIFIERS, 1, 1});
+                   syntax::ParserDiagnostic{syntax::ParserError::ILLEGAL_DECL_MODIFIERS, 0, 0});
 }
 
 TEST_CASE("CONSTEXPR restrictions") {
     const std::array contending_mut{keywords::EXTERN, keywords::CONSTEXPR};
     for (const auto& mut : array::combinations(contending_mut)) {
         test_decl_fail({mut.first, mut.second},
-                       syntax::ParserDiagnostic{syntax::ParserError::ILLEGAL_DECL_MODIFIERS, 1, 1});
+                       syntax::ParserDiagnostic{syntax::ParserError::ILLEGAL_DECL_MODIFIERS, 0, 0});
     }
     test_decl_fail({keywords::EXTERN, keywords::CONSTEXPR},
-                   syntax::ParserDiagnostic{syntax::ParserError::ILLEGAL_DECL_MODIFIERS, 1, 1});
+                   syntax::ParserDiagnostic{syntax::ParserError::ILLEGAL_DECL_MODIFIERS, 0, 0});
 }
 
 TEST_CASE("ABI/Linkage restrictions") {
     const std::array contending_mut{keywords::EXTERN, keywords::EXPORT};
     for (const auto& mut : array::combinations(contending_mut)) {
         test_decl_fail({mut.first, mut.second},
-                       syntax::ParserDiagnostic{syntax::ParserError::ILLEGAL_DECL_MODIFIERS, 1, 1});
+                       syntax::ParserDiagnostic{syntax::ParserError::ILLEGAL_DECL_MODIFIERS, 0, 0});
     }
     test_decl_fail({keywords::EXTERN, keywords::EXPORT},
-                   syntax::ParserDiagnostic{syntax::ParserError::ILLEGAL_DECL_MODIFIERS, 1, 1});
+                   syntax::ParserDiagnostic{syntax::ParserError::ILLEGAL_DECL_MODIFIERS, 0, 0});
 }
 
 TEST_CASE("Extern requirements") {
     test_decl_fail({keywords::EXTERN, keywords::CONSTANT},
-                   syntax::ParserDiagnostic{syntax::ParserError::EXTERN_VALUE_INITIALIZED, 1, 1});
+                   syntax::ParserDiagnostic{syntax::ParserError::EXTERN_VALUE_INITIALIZED, 0, 0});
     test_decl_fail({keywords::EXTERN, keywords::VAR},
-                   syntax::ParserDiagnostic{syntax::ParserError::EXTERN_VALUE_INITIALIZED, 1, 1});
+                   syntax::ParserDiagnostic{syntax::ParserError::EXTERN_VALUE_INITIALIZED, 0, 0});
 }
 
 TEST_CASE("Constant requirements") {
     test_decl_fail({keywords::CONSTANT},
-                   syntax::ParserDiagnostic{syntax::ParserError::CONST_DECL_MISSING_VALUE, 1, 1},
+                   syntax::ParserDiagnostic{syntax::ParserError::CONST_DECL_MISSING_VALUE, 0, 0},
                    "a: i32;");
     test_decl_fail({keywords::CONSTEXPR},
-                   syntax::ParserDiagnostic{syntax::ParserError::CONST_DECL_MISSING_VALUE, 1, 1},
+                   syntax::ParserDiagnostic{syntax::ParserError::CONST_DECL_MISSING_VALUE, 0, 0},
                    "a: i32;");
 }
 
@@ -173,7 +173,7 @@ TEST_CASE("Non-terminated decls") {
     helpers::test_parser_fail(
         "var a: i32 = 2",
         syntax::ParserDiagnostic{
-            "Expected token SEMICOLON, found END", syntax::ParserError::UNEXPECTED_TOKEN, 1, 15});
+            "Expected token SEMICOLON, found END", syntax::ParserError::UNEXPECTED_TOKEN, 0, 14});
 }
 
 } // namespace porpoise::tests

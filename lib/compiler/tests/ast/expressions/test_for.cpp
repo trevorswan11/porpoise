@@ -56,73 +56,73 @@ TEST_CASE("Non-terminated iterables") {
         "for (0..4 |i| { a; } else return b;",
         syntax::ParserDiagnostic{"Expected token RBRACE, found IDENT",
                                  syntax::ParserError::UNEXPECTED_TOKEN,
-                                 std::pair{1uz, 17uz}},
+                                 std::pair{0uz, 16uz}},
         syntax::ParserDiagnostic{"No prefix parse function for RBRACE(}) found",
                                  syntax::ParserError::MISSING_PREFIX_PARSER,
-                                 std::pair{1uz, 20uz}});
+                                 std::pair{0uz, 19uz}});
 }
 
 TEST_CASE("Missing iterables") {
     helpers::test_parser_fail(
         "for () |i| { a; } else return b;",
-        syntax::ParserDiagnostic{syntax::ParserError::FOR_MISSING_ITERABLES, 1, 1},
+        syntax::ParserDiagnostic{syntax::ParserError::FOR_MISSING_ITERABLES, 0, 0},
         syntax::ParserDiagnostic{"No prefix parse function for RBRACE(}) found",
                                  syntax::ParserError::MISSING_PREFIX_PARSER,
-                                 std::pair{1uz, 17uz}});
+                                 std::pair{0uz, 16uz}});
 
     helpers::test_parser_fail(
         "for |i| { a; } else return b;",
         syntax::ParserDiagnostic{
-            "Expected token LPAREN, found BW_OR", syntax::ParserError::UNEXPECTED_TOKEN, 1, 5},
+            "Expected token LPAREN, found BW_OR", syntax::ParserError::UNEXPECTED_TOKEN, 0, 4},
         syntax::ParserDiagnostic{"No prefix parse function for RBRACE(}) found",
                                  syntax::ParserError::MISSING_PREFIX_PARSER,
-                                 std::pair{1uz, 14uz}});
+                                 std::pair{0uz, 13uz}});
 }
 
 TEST_CASE("Non-terminated captures") {
     helpers::test_parser_fail(
         "for (0..4) |i { a; } else return b;",
         syntax::ParserDiagnostic{
-            "Expected token COMMA, found LBRACE", syntax::ParserError::UNEXPECTED_TOKEN, 1, 15},
+            "Expected token COMMA, found LBRACE", syntax::ParserError::UNEXPECTED_TOKEN, 0, 14},
         syntax::ParserDiagnostic{"No prefix parse function for RBRACE(}) found",
                                  syntax::ParserError::MISSING_PREFIX_PARSER,
-                                 std::pair{1uz, 20uz}});
+                                 std::pair{0uz, 19uz}});
 }
 
 TEST_CASE("Missing captures") {
     helpers::test_parser_fail(
         "for (0..4) { a; } else return b;",
         syntax::ParserDiagnostic{
-            "Expected token BW_OR, found LBRACE", syntax::ParserError::UNEXPECTED_TOKEN, 1, 12},
+            "Expected token BW_OR, found LBRACE", syntax::ParserError::UNEXPECTED_TOKEN, 0, 11},
         syntax::ParserDiagnostic{"No prefix parse function for RBRACE(}) found",
                                  syntax::ParserError::MISSING_PREFIX_PARSER,
-                                 std::pair{1uz, 17uz}});
+                                 std::pair{0uz, 16uz}});
 }
 
 TEST_CASE("Illegal capture") {
     helpers::test_parser_fail(
         "for (0..4) |2| { a; } else return b;",
-        syntax::ParserDiagnostic{syntax::ParserError::ILLEGAL_IDENTIFIER, 1, 13},
+        syntax::ParserDiagnostic{syntax::ParserError::ILLEGAL_IDENTIFIER, 0, 12},
         syntax::ParserDiagnostic{"No prefix parse function for RBRACE(}) found",
                                  syntax::ParserError::MISSING_PREFIX_PARSER,
-                                 std::pair{1uz, 21uz}});
+                                 std::pair{0uz, 20uz}});
 }
 
 TEST_CASE("Iterable-capture mismatch") {
     helpers::test_parser_fail(
         "for (0..4) |i, j| { a; } else return b;",
-        syntax::ParserDiagnostic{syntax::ParserError::FOR_ITERABLE_CAPTURE_MISMATCH, 1, 1});
+        syntax::ParserDiagnostic{syntax::ParserError::FOR_ITERABLE_CAPTURE_MISMATCH, 0, 0});
 }
 
 TEST_CASE("Empty for block") {
     helpers::test_parser_fail("for (0..4) |i| {} else return b;",
-                              syntax::ParserDiagnostic{syntax::ParserError::EMPTY_FOR_LOOP, 1, 16});
+                              syntax::ParserDiagnostic{syntax::ParserError::EMPTY_FOR_LOOP, 0, 15});
 }
 
 TEST_CASE("Illegal for-else clause") {
     helpers::test_parser_fail(
         "for (0..4) |i| { a; } else import std;",
-        syntax::ParserDiagnostic{syntax::ParserError::ILLEGAL_LOOP_NON_BREAK, 1, 28});
+        syntax::ParserDiagnostic{syntax::ParserError::ILLEGAL_LOOP_NON_BREAK, 0, 27});
 }
 
 } // namespace porpoise::tests

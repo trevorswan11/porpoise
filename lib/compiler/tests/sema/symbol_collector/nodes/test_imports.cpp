@@ -77,7 +77,7 @@ TEST_CASE("Duplicate module declaration") {
     helpers::test_collector_fail("module; module;",
                                  sema::Diagnostic{"Only one module statement is allowed per file",
                                                   sema::Error::DUPLICATE_MODULE_STATEMENT,
-                                                  std::pair{1uz, 9uz}});
+                                                  std::pair{0uz, 8uz}});
 }
 
 TEST_CASE("Illegal module statement location") {
@@ -85,7 +85,7 @@ TEST_CASE("Illegal module statement location") {
         "const a := 2; module;",
         sema::Diagnostic{"Module indicator must be first statement of file",
                          sema::Error::ILLEGAL_MODULE_STATEMENT_LOCATION,
-                         std::pair{1uz, 15uz}});
+                         std::pair{0uz, 14uz}});
 }
 
 } // namespace porpoise::tests

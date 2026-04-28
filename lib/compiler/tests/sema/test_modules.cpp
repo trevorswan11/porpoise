@@ -64,7 +64,7 @@ TEST_CASE("Unknown file module") {
         ctx.root_mod->get_sema_diagnostics(),
         sema::Diagnostic{R"(Could not load file: "a.porp")",
                          sema::Error::PATH_DOES_NOT_EXIST,
-                         std::pair{1uz, 8uz}});
+                         std::pair{0uz, 7uz}});
 }
 
 } // namespace porpoise::tests

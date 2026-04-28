@@ -274,7 +274,7 @@ ExpressionStatement
 ExpressionStatement
 └─ Expr: U32Expression: 3
 ExpressionStatement
-└─ Expr: U8Expression: a
+└─ Expr: U8Expression: 97
 ExpressionStatement
 └─ Expr: F32Expression: 2.3
 ExpressionStatement

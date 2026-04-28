@@ -19,11 +19,6 @@ auto Parser::reset(std::string_view input) noexcept -> void { *this = Parser{inp
 
 auto Parser::advance(u8 times) noexcept -> const Token& {
     for (u8 i = 0; i < times; ++i) {
-        if (current_token_.type == TokenType::END &&
-            (input_.empty() && current_token_.is_at_start())) {
-            break;
-        }
-
         current_token_ = peek_token_;
         peek_token_    = lexer_.advance();
     }

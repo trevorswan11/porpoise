@@ -203,16 +203,16 @@ TEST_CASE("Volatile restricted to declarations") {
         "var a: volatile i32;",
         syntax::ParserDiagnostic{"No prefix parse function for VOLATILE(volatile) found",
                                  syntax::ParserError::MISSING_PREFIX_PARSER,
-                                 std::pair{1uz, 8uz}});
+                                 std::pair{0uz, 7uz}});
 }
 
 TEST_CASE("Array type requirement") {
     helpers::test_parser_fail(
         "var a: [9]i32;",
-        syntax::ParserDiagnostic{syntax::ParserError::ILLEGAL_ARRAY_SIZE_TYPE, 1, 9});
+        syntax::ParserDiagnostic{syntax::ParserError::ILLEGAL_ARRAY_SIZE_TYPE, 0, 8});
     helpers::test_parser_fail(
         R"(var a: ["e"]i32;)",
-        syntax::ParserDiagnostic{syntax::ParserError::ILLEGAL_ARRAY_SIZE_TYPE, 1, 9});
+        syntax::ParserDiagnostic{syntax::ParserError::ILLEGAL_ARRAY_SIZE_TYPE, 0, 8});
 }
 
 TEST_CASE("Function type restrictions") {
@@ -223,29 +223,29 @@ TEST_CASE("Function type restrictions") {
     for (const auto& illegal : illegals) {
         helpers::test_parser_fail(
             illegal,
-            syntax::ParserDiagnostic{syntax::ParserError::ILLEGAL_FUNCTION_TYPE_MODIFIER, 1, 8});
+            syntax::ParserDiagnostic{syntax::ParserError::ILLEGAL_FUNCTION_TYPE_MODIFIER, 0, 7});
     }
 }
 
 TEST_CASE("Bodied function type") {
     helpers::test_parser_fail(
         "var a: *mut fn(): void { b; };",
-        syntax::ParserDiagnostic{syntax::ParserError::EXPLICIT_FN_TYPE_HAS_BODY, 1, 13},
+        syntax::ParserDiagnostic{syntax::ParserError::EXPLICIT_FN_TYPE_HAS_BODY, 0, 12},
         syntax::ParserDiagnostic{"No prefix parse function for RBRACE(}) found",
                                  syntax::ParserError::MISSING_PREFIX_PARSER,
-                                 std::pair{1uz, 29uz}});
+                                 std::pair{0uz, 28uz}});
 }
 
 TEST_CASE("Function return type restrictions") {
     helpers::test_parser_fail(
         "var a: fn(): &void;",
-        syntax::ParserDiagnostic{syntax::ParserError::ILLEGAL_VOID_TYPE_MODIFIER, 1, 14});
+        syntax::ParserDiagnostic{syntax::ParserError::ILLEGAL_VOID_TYPE_MODIFIER, 0, 13});
     helpers::test_parser_fail(
         "var a: fn(): &type;",
-        syntax::ParserDiagnostic{syntax::ParserError::ILLEGAL_TYPE_TYPE_MODIFIER, 1, 14});
+        syntax::ParserDiagnostic{syntax::ParserError::ILLEGAL_TYPE_TYPE_MODIFIER, 0, 13});
     helpers::test_parser_fail(
         "var a: fn(): &noreturn;",
-        syntax::ParserDiagnostic{syntax::ParserError::ILLEGAL_NORETURN_TYPE_MODIFIER, 1, 14});
+        syntax::ParserDiagnostic{syntax::ParserError::ILLEGAL_NORETURN_TYPE_MODIFIER, 0, 13});
 }
 
 } // namespace porpoise::tests

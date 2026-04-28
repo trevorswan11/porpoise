@@ -13,11 +13,10 @@ LineOffsets::LineOffsets(std::string_view input) {
 
 auto SourceFile::get_diagnostic_strings(const SourceLocation& loc) const
     -> std::pair<std::string_view, opt::Option<std::string>> {
-    if (loc.line == 0 || loc.line > offsets_.size()) { return {"<invalid line>", opt::none}; }
+    if (loc.line > offsets_.size()) { return {"<invalid line>", opt::none}; }
 
-    // SourceLocation is 1-indexed but the offsets are 0-indexed
-    const auto start  = offsets_[loc.line - 1];
-    const auto end    = loc.line < offsets_.size() ? offsets_[loc.line] : offsets_.size();
+    const auto start  = offsets_[loc.line];
+    const auto end    = loc.line < offsets_.size() ? offsets_[loc.line + 1] : offsets_.size();
     auto       substr = string::substr(source_, start, end - start);
 
     // Count skipped on the left but not right since the caret is right-clipped
@@ -29,9 +28,10 @@ auto SourceFile::get_diagnostic_strings(const SourceLocation& loc) const
     if (loc.column < skipped || loc.column > substr.size()) { return {substr, opt::none}; }
     const auto true_col = loc.column - skipped;
 
+    // The caret gets put one after the column size since the location in 0-indexed
     std::string caret_line;
     caret_line.reserve(true_col + 1);
-    for (usize i = 1; i < true_col; ++i) {
+    for (usize i = 0; i < true_col; ++i) {
         if (substr[i] == '\t') {
             caret_line += '\t';
         } else {

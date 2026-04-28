@@ -169,31 +169,31 @@ TEST_CASE("Shadowing member/field declarations") {
         "const a := struct { const a := 2; };",
         sema::Diagnostic{"Attempt to shadow identifier 'a'. Previous declaration here: 1:1",
                          sema::Error::SHADOWING_DECLARATION,
-                         std::pair{1uz, 21uz}});
+                         std::pair{0uz, 20uz}});
 
     helpers::test_collector_fail(
         "const a := enum {a};",
         sema::Diagnostic{"Attempt to shadow identifier 'a'. Previous declaration here: 1:1",
                          sema::Error::SHADOWING_DECLARATION,
-                         std::pair{1uz, 18uz}});
+                         std::pair{0uz, 17uz}});
 
     helpers::test_collector_fail(
         "const a := enum {b static const a := 2; };",
         sema::Diagnostic{"Attempt to shadow identifier 'a'. Previous declaration here: 1:1",
                          sema::Error::SHADOWING_DECLARATION,
-                         std::pair{1uz, 20uz}});
+                         std::pair{0uz, 19uz}});
 
     helpers::test_collector_fail(
         "const a := union { a: i32 };",
         sema::Diagnostic{"Attempt to shadow identifier 'a'. Previous declaration here: 1:1",
                          sema::Error::SHADOWING_DECLARATION,
-                         std::pair{1uz, 20uz}});
+                         std::pair{0uz, 19uz}});
 
     helpers::test_collector_fail(
         "const a := union { b: i32 static const a := 2; };",
         sema::Diagnostic{"Attempt to shadow identifier 'a'. Previous declaration here: 1:1",
                          sema::Error::SHADOWING_DECLARATION,
-                         std::pair{1uz, 27uz}});
+                         std::pair{0uz, 26uz}});
 }
 
 } // namespace porpoise::tests

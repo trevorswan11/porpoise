@@ -163,75 +163,74 @@ TEST_CASE("Function missing return type") {
     helpers::test_parser_fail(
         "fn(*mut this, a: A, b: *B, );",
         syntax::ParserDiagnostic{
-            "Expected token COLON, found SEMICOLON", syntax::ParserError::UNEXPECTED_TOKEN, 1, 29});
+            "Expected token COLON, found SEMICOLON", syntax::ParserError::UNEXPECTED_TOKEN, 0, 28});
 
     helpers::test_parser_fail(
         "fn(*mut this, a: A, b: *B, ): ;",
         syntax::ParserDiagnostic{"No prefix parse function for SEMICOLON(;) found",
                                  syntax::ParserError::MISSING_PREFIX_PARSER,
-                                 std::pair{1uz, 31uz}});
+                                 std::pair{0uz, 30uz}});
 
     helpers::test_parser_fail(
         "fn(*mut this, a: A, b: *B, ): ",
-        syntax::ParserDiagnostic{syntax::ParserError::MISSING_EXPLICIT_TYPE, 1, 29});
+        syntax::ParserDiagnostic{syntax::ParserError::MISSING_EXPLICIT_TYPE, 0, 28});
 }
 
 TEST_CASE("Function parameter missing type") {
     helpers::test_parser_fail(
         "fn(*mut this, a): i32;",
         syntax::ParserDiagnostic{
-            "Expected token COLON, found RPAREN", syntax::ParserError::UNEXPECTED_TOKEN, 1, 16});
+            "Expected token COLON, found RPAREN", syntax::ParserError::UNEXPECTED_TOKEN, 0, 15});
 }
 
 TEST_CASE("Out-of-place self parameter") {
     helpers::test_parser_fail(
         "fn(a: A, &self): i32;",
-        syntax::ParserDiagnostic{syntax::ParserError::ILLEGAL_IDENTIFIER, 1, 10});
+        syntax::ParserDiagnostic{syntax::ParserError::ILLEGAL_IDENTIFIER, 0, 9});
 
     helpers::test_parser_fail(
         "fn(a: A, self): i32;",
         syntax::ParserDiagnostic{
-            "Expected token COLON, found RPAREN", syntax::ParserError::UNEXPECTED_TOKEN, 1, 14});
+            "Expected token COLON, found RPAREN", syntax::ParserError::UNEXPECTED_TOKEN, 0, 13});
 }
 
 TEST_CASE("Out-of-place variadic parameter") {
     helpers::test_parser_fail(
         "fn(a: A, ..., b: B): i32;",
         syntax::ParserDiagnostic{
-            "Expected token RPAREN, found IDENT", syntax::ParserError::UNEXPECTED_TOKEN, 1, 15});
+            "Expected token RPAREN, found IDENT", syntax::ParserError::UNEXPECTED_TOKEN, 0, 14});
 }
 
 TEST_CASE("Default function parameter") {
     helpers::test_parser_fail(
         "fn(a: A = 2): i32;",
-        syntax::ParserDiagnostic{syntax::ParserError::FUNCTION_PARAMETER_HAS_DEFAULT_VALUE, 1, 5});
+        syntax::ParserDiagnostic{syntax::ParserError::FUNCTION_PARAMETER_HAS_DEFAULT_VALUE, 0, 4});
 }
 
 TEST_CASE("Noreturn function types") {
     helpers::test_parser_fail(
         "fn(a: &noreturn): i32;",
-        syntax::ParserDiagnostic{syntax::ParserError::ILLEGAL_NORETURN_TYPE_MODIFIER, 1, 7});
+        syntax::ParserDiagnostic{syntax::ParserError::ILLEGAL_NORETURN_TYPE_MODIFIER, 0, 6});
     helpers::test_parser_fail(
         "fn(a: noreturn): i32;",
-        syntax::ParserDiagnostic{syntax::ParserError::FUNCTION_PARAMETER_IS_NORETURN, 1, 5});
+        syntax::ParserDiagnostic{syntax::ParserError::FUNCTION_PARAMETER_IS_NORETURN, 0, 4});
     helpers::test_parser_fail(
         "fn(a: A): &noreturn;",
-        syntax::ParserDiagnostic{syntax::ParserError::ILLEGAL_NORETURN_TYPE_MODIFIER, 1, 11});
+        syntax::ParserDiagnostic{syntax::ParserError::ILLEGAL_NORETURN_TYPE_MODIFIER, 0, 10});
 }
 
 TEST_CASE("Illegal type function types") {
     helpers::test_parser_fail(
         "fn(A: &type): i32;",
-        syntax::ParserDiagnostic{syntax::ParserError::ILLEGAL_TYPE_TYPE_MODIFIER, 1, 7});
+        syntax::ParserDiagnostic{syntax::ParserError::ILLEGAL_TYPE_TYPE_MODIFIER, 0, 6});
     helpers::test_parser_fail(
         "fn(A: type): &type;",
-        syntax::ParserDiagnostic{syntax::ParserError::ILLEGAL_TYPE_TYPE_MODIFIER, 1, 14});
+        syntax::ParserDiagnostic{syntax::ParserError::ILLEGAL_TYPE_TYPE_MODIFIER, 0, 13});
 }
 
 TEST_CASE("Non-terminated parameter list") {
     helpers::test_parser_fail(
-        "fn(a: A, : i32;",
-        syntax::ParserDiagnostic{syntax::ParserError::ILLEGAL_IDENTIFIER, 1, 10});
+        "fn(a: A, : i32;", syntax::ParserDiagnostic{syntax::ParserError::ILLEGAL_IDENTIFIER, 0, 9});
 }
 
 } // namespace porpoise::tests

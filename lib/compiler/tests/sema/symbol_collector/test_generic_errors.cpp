@@ -12,32 +12,32 @@ TEST_CASE("Duplicate identifiers") {
         helpers::make_vector<MockFile>(MockFile{"a.porp", "const foo := bar;", "a"}),
         sema::Diagnostic{"Redeclaration of symbol 'a'. Previous declaration here: 1:1",
                          sema::Error::IDENTIFIER_REDECLARATION,
-                         std::pair{1uz, 15uz}});
+                         std::pair{0uz, 14uz}});
 }
 
 TEST_CASE("Semantically illegal statements") {
     helpers::test_collector_fail("{}",
                                  sema::Diagnostic{"Cannot have block at the top level",
                                                   sema::Error::ILLEGAL_TOP_LEVEL_STATEMENT,
-                                                  std::pair{1uz, 1uz}});
+                                                  std::pair{0uz, 0uz}});
 
     helpers::test_collector_fail("defer 2;",
                                  sema::Diagnostic{"Cannot have defer outside of a function's scope",
                                                   sema::Error::ILLEGAL_TOP_LEVEL_STATEMENT,
-                                                  std::pair{1uz, 1uz}});
+                                                  std::pair{0uz, 0uz}});
 
     helpers::test_collector_fail("return 2;",
                                  sema::Diagnostic{"Cannot return outside of a function",
                                                   sema::Error::ILLEGAL_CONTROL_FLOW,
-                                                  std::pair{1uz, 1uz}});
+                                                  std::pair{0uz, 0uz}});
 
     helpers::test_collector_fail("break; continue;",
                                  sema::Diagnostic{"Cannot break outside of a loop or label",
                                                   sema::Error::ILLEGAL_CONTROL_FLOW,
-                                                  std::pair{1uz, 1uz}},
+                                                  std::pair{0uz, 0uz}},
                                  sema::Diagnostic{"Cannot continue outside of a loop",
                                                   sema::Error::ILLEGAL_CONTROL_FLOW,
-                                                  std::pair{1uz, 8uz}});
+                                                  std::pair{0uz, 7uz}});
 }
 
 using namespace std::string_view_literals;
@@ -56,7 +56,7 @@ TEST_CASE("Restricted non-const top level declarations") {
             sema::Diagnostic{
                 fmt::format("Top level {}s must be marked const at the top level", desc),
                 sema::Error::ILLEGAL_NON_CONST_STATEMENT,
-                std::pair{1uz, 1uz}});
+                std::pair{0uz, 0uz}});
     }
 }
 
@@ -67,7 +67,7 @@ TEST_CASE("Restricted non-const top level struct declarations") {
             sema::Diagnostic{
                 fmt::format("Top level {}s must be marked const at the top level", desc),
                 sema::Error::ILLEGAL_NON_CONST_STATEMENT,
-                std::pair{1uz, 21uz}});
+                std::pair{0uz, 20uz}});
     }
 }
 
@@ -77,7 +77,7 @@ TEST_CASE("Redundant constexpr usage on top level declarations") {
             fmt::format("constexpr {}", input),
             sema::Diagnostic{fmt::format("Top level {}s are implicitly compile time known", desc),
                              sema::Error::REDUNDANT_CONSTEXPR,
-                             std::pair{1uz, 1uz}});
+                             std::pair{0uz, 0uz}});
     }
 }
 

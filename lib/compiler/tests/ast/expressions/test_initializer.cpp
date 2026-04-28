@@ -67,24 +67,24 @@ TEST_CASE("Unclosed implicit initializer") {
     helpers::test_parser_fail(".{",
                               syntax::ParserDiagnostic{"Expected token RBRACE, found END",
                                                        syntax::ParserError::UNEXPECTED_TOKEN,
-                                                       std::pair{1uz, 3uz}});
+                                                       std::pair{0uz, 2uz}});
 
     helpers::test_parser_fail(".{ .a = 2",
                               syntax::ParserDiagnostic{"Expected token COMMA, found END",
                                                        syntax::ParserError::UNEXPECTED_TOKEN,
-                                                       std::pair{1uz, 10uz}});
+                                                       std::pair{0uz, 9uz}});
 }
 
 TEST_CASE("Unclosed explicit initializer") {
     helpers::test_parser_fail("T{",
                               syntax::ParserDiagnostic{"Expected token RBRACE, found END",
                                                        syntax::ParserError::UNEXPECTED_TOKEN,
-                                                       std::pair{1uz, 3uz}});
+                                                       std::pair{0uz, 2uz}});
 
     helpers::test_parser_fail("T{ .a = 2",
                               syntax::ParserDiagnostic{"Expected token COMMA, found END",
                                                        syntax::ParserError::UNEXPECTED_TOKEN,
-                                                       std::pair{1uz, 10uz}});
+                                                       std::pair{0uz, 9uz}});
 }
 
 TEST_CASE("Malformed initializer key-value") {
@@ -92,7 +92,7 @@ TEST_CASE("Malformed initializer key-value") {
         "T{ .a = };",
         syntax::ParserDiagnostic{"No prefix parse function for RBRACE(}) found",
                                  syntax::ParserError::MISSING_PREFIX_PARSER,
-                                 std::pair{1uz, 9uz}});
+                                 std::pair{0uz, 8uz}});
 }
 
 } // namespace porpoise::tests

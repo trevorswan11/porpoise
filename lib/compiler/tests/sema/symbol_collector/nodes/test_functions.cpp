@@ -53,7 +53,7 @@ TEST_CASE("Defer statements respect identifier collection rules") {
         "pub const main := fn(args: [][:0]u8): i32 { defer { var main: i32; } };",
         sema::Diagnostic{"Attempt to shadow identifier 'main'. Previous declaration here: 1:1",
                          sema::Error::SHADOWING_DECLARATION,
-                         std::pair{1uz, 53uz}});
+                         std::pair{0uz, 52uz}});
 }
 
 TEST_CASE("Function basic param redeclaration") {
@@ -61,7 +61,7 @@ TEST_CASE("Function basic param redeclaration") {
         "const f := fn(f: bool): void {};",
         sema::Diagnostic{"Attempt to shadow identifier 'f'. Previous declaration here: 1:1",
                          sema::Error::SHADOWING_DECLARATION,
-                         std::pair{1uz, 15uz}});
+                         std::pair{0uz, 14uz}});
 }
 
 TEST_CASE("Function self param redeclaration") {
@@ -69,7 +69,7 @@ TEST_CASE("Function self param redeclaration") {
         "const f := fn(f): void {};",
         sema::Diagnostic{"Attempt to shadow identifier 'f'. Previous declaration here: 1:1",
                          sema::Error::SHADOWING_DECLARATION,
-                         std::pair{1uz, 15uz}});
+                         std::pair{0uz, 14uz}});
 }
 
 TEST_CASE("Function local param redeclaration") {
@@ -77,7 +77,7 @@ TEST_CASE("Function local param redeclaration") {
         "const f := fn(a, a: bool): void {};",
         sema::Diagnostic{"Redeclaration of symbol 'a'. Previous declaration here: 1:15",
                          sema::Error::IDENTIFIER_REDECLARATION,
-                         std::pair{1uz, 18uz}});
+                         std::pair{0uz, 17uz}});
 }
 
 TEST_CASE("Function block shadowing") {
@@ -85,7 +85,7 @@ TEST_CASE("Function block shadowing") {
         "const f := fn(): void { var f := 3; };",
         sema::Diagnostic{"Attempt to shadow identifier 'f'. Previous declaration here: 1:1",
                          sema::Error::SHADOWING_DECLARATION,
-                         std::pair{1uz, 25uz}});
+                         std::pair{0uz, 24uz}});
 }
 
 } // namespace porpoise::tests

@@ -31,7 +31,7 @@ TEST_CASE("Diagnostic type checkers") {
 TEST_CASE("Custom locateable") {
     SomethingLocationed        l;
     const Diagnostic<TestEnum> d{TestEnum::SAD, l};
-    CHECK("SAD 0:42" == d.to_string());
+    CHECK("SAD 1:43" == d.to_string());
 }
 
 TEST_CASE("Error messages with associated files") {
@@ -42,14 +42,14 @@ TEST_CASE("Error messages with associated files") {
 TEST_CASE("Locateable Error messages with associated files") {
     SomethingLocationed        l;
     const Diagnostic<TestEnum> d{TestEnum::SAD, l};
-    CHECK("foo.porp:0:42: SAD" == d.to_string("foo.porp"));
+    CHECK("foo.porp:1:43: SAD" == d.to_string("foo.porp"));
 }
 
 TEST_CASE("Move constructor with new error") {
     SomethingLocationed  l;
     Diagnostic<TestEnum> d1{TestEnum::SAD, l};
     Diagnostic<TestEnum> d2{std::move(d1), TestEnum::MAD};
-    CHECK("MAD 0:42" == d2.to_string());
+    CHECK("MAD 1:43" == d2.to_string());
 }
 
 TEST_CASE("Move constructor with new location") {
@@ -58,7 +58,7 @@ TEST_CASE("Move constructor with new location") {
 
     SomethingElseLocationed e;
     Diagnostic<TestEnum>    d2{std::move(d1), e};
-    CHECK("SAD 42:0" == d2.to_string());
+    CHECK("SAD 43:1" == d2.to_string());
 }
 
 } // namespace tests

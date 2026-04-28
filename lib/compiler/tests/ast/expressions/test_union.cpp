@@ -120,35 +120,35 @@ TEST_CASE("Illegal union field name") {
     helpers::test_parser_fail(
         "union { 2: i32 };",
         syntax::ParserDiagnostic{
-            "Expected token IDENT, found INT_10", syntax::ParserError::UNEXPECTED_TOKEN, 1, 9});
+            "Expected token IDENT, found INT_10", syntax::ParserError::UNEXPECTED_TOKEN, 0, 8});
 }
 
 TEST_CASE("Illegal union field type") {
     helpers::test_parser_fail(
         "union { a: 2 };",
-        syntax::ParserDiagnostic{syntax::ParserError::ILLEGAL_EXPLICIT_TYPE, 1, 10});
+        syntax::ParserDiagnostic{syntax::ParserError::ILLEGAL_EXPLICIT_TYPE, 0, 9});
 }
 
 TEST_CASE("Empty union") {
     helpers::test_parser_fail("union { };",
-                              syntax::ParserDiagnostic{syntax::ParserError::EMPTY_UNION, 1, 1});
+                              syntax::ParserDiagnostic{syntax::ParserError::EMPTY_UNION, 0, 0});
 }
 
 TEST_CASE("Empty union with decl") {
     helpers::test_parser_fail("union { const b := fn(&self, a: A): C { c; }; };",
-                              syntax::ParserDiagnostic{syntax::ParserError::EMPTY_UNION, 1, 1});
+                              syntax::ParserDiagnostic{syntax::ParserError::EMPTY_UNION, 0, 0});
 }
 
 TEST_CASE("Out of order union") {
     helpers::test_parser_fail("union { a: i32, const b := fn(&self, a: A): C { c; }; b: i32, };",
                               syntax::ParserDiagnostic{"Expected token SEMICOLON, found COMMA",
                                                        syntax::ParserError::UNEXPECTED_TOKEN,
-                                                       std::pair{1uz, 61uz}});
+                                                       std::pair{0uz, 60uz}});
 }
 
 TEST_CASE("Non-static non-function union member") {
     helpers::test_parser_fail("union { a: i32, const b := 2; };",
-                              syntax::ParserDiagnostic{syntax::ParserError::INVALID_MEMBER, 1, 17});
+                              syntax::ParserDiagnostic{syntax::ParserError::INVALID_MEMBER, 0, 16});
 }
 
 } // namespace porpoise::tests

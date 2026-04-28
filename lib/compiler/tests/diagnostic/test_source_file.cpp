@@ -6,6 +6,7 @@
 
 namespace porpoise::tests {
 
+// clang-format off
 constexpr std::string_view source{
     R"(This is line 1
 This is line 2
@@ -13,6 +14,26 @@ This is line 2
 Line 4 has      some weird   spacing...
     Line 5 is    unrealistic.. .
 )"};
+// clang-format on
+
+namespace helpers {
+
+auto test_diag_strings(const SourceLocation&         t,
+                       std::string_view              expected_line,
+                       opt::Option<std::string_view> expected_caret) {
+    const SourceFile file{source};
+    const auto [ln, caret] = file.get_diagnostic_strings(t);
+
+    CHECK(ln == expected_line);
+    if (expected_caret) {
+        REQUIRE(caret);
+        CHECK(*caret == *expected_caret);
+    } else {
+        CHECK_FALSE(caret);
+    }
+}
+
+} // namespace helpers
 
 TEST_CASE("Offset generation") {
     LineOffsets offsets{source};
@@ -24,15 +45,13 @@ TEST_CASE("Offset generation") {
     }
 }
 
-using namespace std::string_view_literals;
+TEST_CASE("Diagnostic at start of input") {
+    helpers::test_diag_strings({0uz, 0uz}, "This is line 1", "^");
+}
 
-TEST_CASE("Line 1 Column 0 Diagnostic") {
-    SourceFile file{source};
-    const auto [ln, caret] = file.get_diagnostic_strings({1uz, 0uz});
-
-    CHECK(ln == "This is line 1");
-    REQUIRE(caret);
-    CHECK(*caret == "^");
+TEST_CASE("Diagnostic inside of first line") {
+    helpers::test_diag_strings({0uz, 1uz}, "This is line 1", " ^");
+    helpers::test_diag_strings({0uz, 5uz}, "This is line 1", "     ^");
 }
 
 } // namespace porpoise::tests
