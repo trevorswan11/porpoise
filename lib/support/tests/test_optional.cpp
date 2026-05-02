@@ -13,13 +13,13 @@
 namespace porpoise::tests {
 
 TEST_CASE("Ref construction checks") {
-    STATIC_CHECK_FALSE(std::is_constructible_v<opt::Ref<i32>, i32&&>);
-    STATIC_CHECK(std::is_trivially_copyable_v<opt::Ref<i32>>);
+    STATIC_CHECK_FALSE(std::is_constructible_v<opt::detail::Ref<i32>, i32&&>);
+    STATIC_CHECK(std::is_trivially_copyable_v<opt::detail::Ref<i32>>);
 }
 
 TEST_CASE("opt::Option template specialization") {
-    STATIC_CHECK(std::is_same_v<opt::Option<i32&>, opt::Ref<i32>>);
-    STATIC_CHECK(std::is_same_v<opt::Option<const i32&>, opt::Ref<const i32>>);
+    STATIC_CHECK(std::is_same_v<opt::Option<i32&>, opt::detail::Ref<i32>>);
+    STATIC_CHECK(std::is_same_v<opt::Option<const i32&>, opt::detail::Ref<const i32>>);
     STATIC_CHECK(std::is_same_v<opt::Option<i32>, std::optional<i32>>);
 }
 
@@ -32,8 +32,8 @@ TEST_CASE("opt::Option template checks") {
 }
 
 TEST_CASE("Ref basic construction") {
-    i32                 val = 42;
-    const opt::Ref<i32> opt{val};
+    i32                         val = 42;
+    const opt::detail::Ref<i32> opt{val};
 
     CHECK(opt.has_value());
     CHECK(static_cast<bool>(opt));
@@ -45,13 +45,13 @@ TEST_CASE("Ref basic construction") {
 
 TEST_CASE("Ref null use & access") {
     SECTION("Default") {
-        const opt::Ref<i32> opt{};
+        const opt::detail::Ref<i32> opt{};
         CHECK_FALSE(opt.has_value());
         CHECK_THROWS_AS(opt.value(), std::bad_optional_access);
     }
 
     SECTION("Explicit") {
-        const opt::Ref<i32> opt{opt::none};
+        const opt::detail::Ref<i32> opt{opt::none};
         CHECK_FALSE(opt.has_value());
         CHECK_THROWS_AS(opt.value(), std::bad_optional_access);
     }
@@ -59,25 +59,25 @@ TEST_CASE("Ref null use & access") {
 
 TEST_CASE("Ref conversions") {
     SECTION("Non-const -> const") {
-        i32                       val = 42;
-        const opt::Ref<i32>       mut_opt{val};
-        const opt::Ref<const i32> const_opt{mut_opt};
+        i32                               val = 42;
+        const opt::detail::Ref<i32>       mut_opt{val};
+        const opt::detail::Ref<const i32> const_opt{mut_opt};
         CHECK(const_opt.has_value());
         CHECK(*const_opt == 42);
     }
 
     SECTION("Derived -> Base") {
-        helpers::Derived                 d;
-        const opt::Ref<helpers::Derived> d_opt{d};
-        const opt::Ref<helpers::Base>    base_opt = d_opt;
+        helpers::Derived                         d;
+        const opt::detail::Ref<helpers::Derived> d_opt{d};
+        const opt::detail::Ref<helpers::Base>    base_opt = d_opt;
         CHECK(base_opt.has_value());
         CHECK(base_opt->x == 10);
     }
 }
 
 TEST_CASE("Ref reassignment") {
-    i32           a = 1, b = 2;
-    opt::Ref<i32> opt{a};
+    i32                   a = 1, b = 2;
+    opt::detail::Ref<i32> opt{a};
     CHECK(*opt == 1);
 
     opt = b;
@@ -88,8 +88,8 @@ TEST_CASE("Ref reassignment") {
 }
 
 TEST_CASE("Ref mutability") {
-    i32                 val = 42;
-    const opt::Ref<i32> opt{val};
+    i32                         val = 42;
+    const opt::detail::Ref<i32> opt{val};
     CHECK(*opt == 42);
 
     *opt = 1;
@@ -135,7 +135,18 @@ TEST_CASE("Ref transform on none") {
     opt::Option<i32&> opt_i{};
 
     const auto res = opt_i.transform([](const i32& i) { return i + 2; });
-    REQUIRE_FALSE(res);
+    CHECK_FALSE(res);
+}
+
+TEST_CASE("Boolean wrapper") {
+    opt::detail::Boolean b;
+    CHECK_FALSE(b.has_value());
+    CHECK_THROWS_AS(b.value(), std::bad_optional_access);
+    CHECK_FALSE(b.value_or(false));
+
+    b = true;
+    CHECK(b.has_value());
+    CHECK(b.value_or(false));
 }
 
 } // namespace porpoise::tests

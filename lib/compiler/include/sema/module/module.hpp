@@ -15,7 +15,6 @@
 
 #include "diagnostic/source_file.hpp"
 
-#include "array.hpp"
 #include "memory.hpp"
 #include "result.hpp"
 #include "utility.hpp"
@@ -25,14 +24,18 @@ namespace porpoise::sema::mod {
 enum class ModuleState : u8 {
     PARSED,
     SYMBOLS_COLLECTED,
-    SYMBOLS_VALIDATED,
+    TYPE_RESOLVED,
     TYPE_CHECKED,
+
+    POISONED_SYMBOL_COLLECTION,
+    POISONED_TYPE_RESOLVED,
+    POISONED_TYPE_CHECKED,
     ERRORED,
 };
 
 using DiagnosticListVariant = std::variant<syntax::ParserDiagnostics, sema::Diagnostics>;
 
-#define MAKE_MODULE_DIAGNOSTIC_UNPACKER(name, DiagType)                         \
+#define MAKE_MODULE_DIAGNOSTIC_UNPACKER(name, checker, DiagType)                \
     [[nodiscard]] auto CONCAT(get_, name)() const noexcept -> const DiagType& { \
         try {                                                                   \
             return std::get<DiagType>(diagnostics);                             \
@@ -40,7 +43,7 @@ using DiagnosticListVariant = std::variant<syntax::ParserDiagnostics, sema::Diag
     }                                                                           \
                                                                                 \
     [[nodiscard]] auto CONCAT(has_, name)() const noexcept -> bool {            \
-        return is_errored() && std::holds_alternative<DiagType>(diagnostics);   \
+        return checker() && std::holds_alternative<DiagType>(diagnostics);      \
     }
 
 struct Module {
@@ -48,26 +51,43 @@ struct Module {
     std::filesystem::path parent_path;
     SourceFile            source;
     ast::AST              tree;
-    array::Index          root_table_idx;
+    opt::Index            root_table_idx;
     ModuleState           state;
 
     DiagnosticListVariant diagnostics;
 
-    MAKE_MODULE_DIAGNOSTIC_UNPACKER(parser_diagnostics, syntax::ParserDiagnostics)
-    MAKE_MODULE_DIAGNOSTIC_UNPACKER(sema_diagnostics, sema::Diagnostics)
+    MAKE_MODULE_DIAGNOSTIC_UNPACKER(parser_diagnostics, is_errored, syntax::ParserDiagnostics)
+    MAKE_MODULE_DIAGNOSTIC_UNPACKER(sema_diagnostics, is_poisoned, sema::Diagnostics)
 
     MAKE_VARIANT_MATCHER(diagnostics)
 
     // Errors out the module regardless of previous state and emplaces the diagnostics
-    template <typename DiagList> auto error_out(DiagList&& list) noexcept -> mod::ModuleState {
-        state = ModuleState::ERRORED;
+    template <typename DiagList>
+    auto error_out(DiagList&& list, ModuleState error_state = ModuleState::ERRORED) noexcept
+        -> mod::ModuleState {
         diagnostics.emplace<DiagList>(std::move(list));
-        return state;
+        return state = error_state;
     }
 
     // Prints the modules diagnostics to the stream, doing nothing if an error state is not present
     auto print_diagnostics(std::ostream& os) const -> void;
     auto is_errored() const noexcept -> bool { return state == ModuleState::ERRORED; }
+    auto is_poisoned() const noexcept -> bool {
+        return state >= ModuleState::POISONED_SYMBOL_COLLECTION && !is_errored();
+    }
+
+    // Indicates if the module is neither errored nor poisoned
+    auto is_ok() const noexcept -> bool { return state < ModuleState::POISONED_SYMBOL_COLLECTION; }
+
+    auto is_collectable() const noexcept -> bool {
+        return state == mod::ModuleState::PARSED && !root_table_idx;
+    }
+
+    // Checks if symbol collection has run, allowing poisoned states
+    auto is_resolvable() const noexcept -> bool {
+        return root_table_idx && (state == mod::ModuleState::SYMBOLS_COLLECTED ||
+                                  state == mod::ModuleState::POISONED_SYMBOL_COLLECTION);
+    }
 };
 
 #undef MAKE_MODULE_DIAGNOSTIC_UNPACKER

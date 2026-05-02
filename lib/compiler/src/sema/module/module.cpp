@@ -5,7 +5,7 @@
 namespace porpoise::sema::mod {
 
 auto Module::print_diagnostics(std::ostream& os) const -> void {
-    if (!is_errored()) { return; }
+    if (is_ok()) { return; }
     match([&](const auto& l) { l.print(os, *this); });
 }
 

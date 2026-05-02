@@ -9,38 +9,39 @@ namespace keywords = syntax::keywords;
 using MockFile = helpers::MockFile;
 
 TEST_CASE("Import aliases correctly used") {
-    const ast::ImportStatement import_one{
-        syntax::Token{keywords::IMPORT},
-        ast::LibraryImport{helpers::make_ident("foo"), helpers::make_ident<true>("A")}};
-    const ast::ImportStatement import_two{
-        syntax::Token{keywords::IMPORT},
-        ast::FileImport{helpers::make_primitive<ast::StringExpression>(R"("f.porp")"),
-                        helpers::make_ident("F")}};
-
     helpers::test_collector(
         R"(import foo as A; import "f.porp" as F; const foo := bar;)",
         helpers::make_vector<MockFile>(MockFile{"foo.porp", "const foo := bar;", "foo"},
                                        MockFile{"f.porp", "const foo := bar;"}),
-        helpers::TableEntry{"A",
-                            sema::SymbolicImport{&import_one, opt::none},
-                            sema::types::Key{sema::TypeKind::MODULE, false, 1}},
-        helpers::TableEntry{"F",
-                            sema::SymbolicImport{&import_two, opt::none},
-                            sema::types::Key{sema::TypeKind::MODULE, false, 2}},
+        helpers::TableEntry<ast::ImportStatement>{
+            "A",
+            ast::ImportStatement{
+                syntax::Token{keywords::IMPORT},
+                ast::LibraryImport{helpers::make_ident("foo"), helpers::make_ident<true>("A")}},
+            sema::types::Key{sema::TypeKind::MODULE, false, 1},
+            sema::types::Key{sema::TypeKind::MODULE, false, 1}},
+        helpers::TableEntry<ast::ImportStatement>{
+            "F",
+            ast::ImportStatement{
+                syntax::Token{keywords::IMPORT},
+                ast::FileImport{helpers::make_primitive<ast::StringExpression>(R"("f.porp")"),
+                                helpers::make_ident("F")}},
+            sema::types::Key{sema::TypeKind::MODULE, false, 2},
+            sema::types::Key{sema::TypeKind::MODULE, false, 2}},
         helpers::TableEntry{"foo", helpers::foo_bar_decl()});
 }
 
 TEST_CASE("Public import query") {
     const auto test = [](bool is_public) {
-        const auto                 input = fmt::format("{} import std;", is_public ? "pub" : "");
-        const ast::ImportStatement import_stmt{
-            syntax::Token{is_public ? keywords::PUBLIC : keywords::IMPORT},
-            ast::LibraryImport{helpers::make_ident("std"), {}}};
-
         auto ctx = helpers::test_collector(
-            input,
+            fmt::format("{} import std;", is_public ? "pub" : ""),
             helpers::make_vector<MockFile>(MockFile{"std.porp", "var a: i32;", "std"}),
-            helpers::TableEntry{"std", sema::SymbolicImport{&import_stmt, opt::none}});
+            helpers::TableEntry<ast::ImportStatement>{
+                "std",
+                ast::ImportStatement{syntax::Token{is_public ? keywords::PUBLIC : keywords::IMPORT},
+                                     ast::LibraryImport{helpers::make_ident("std"), {}}},
+                sema::types::Key{sema::TypeKind::MODULE, false, 1},
+                sema::types::Key{sema::TypeKind::MODULE, false, 1}});
 
         auto&       table      = ctx.analyzer.get_table(ctx.root_mod->root_table_idx);
         const auto& std_import = table.get_opt("std");
@@ -104,27 +105,16 @@ TEST_CASE("Self import") {
 }
 
 TEST_CASE("Unknown file module") {
-    auto ctx = helpers::analyze_unchecked(helpers::test_file, R"(import "a.porp" as a;)");
+    std::stringstream ss;
+    auto ctx = helpers::analyze_unchecked(helpers::TEST_FILENAME, ss, R"(import "a.porp" as a;)");
     REQUIRE(ctx.root_mod->has_sema_diagnostics());
 
-    const auto& diagnostics = ctx.root_mod->get_sema_diagnostics();
-    helpers::check_errors_against<sema::Diagnostic>(
-        diagnostics,
-        sema::Diagnostic{R"(Could not find path 'a.porp' in virtual file system)",
-                         sema::Error::PATH_DOES_NOT_EXIST,
-                         std::pair{0uz, 7uz}});
-
-    SECTION("Proper module diagnostic formatting") {
-        REQUIRE(diagnostics.size() == 1);
-        std::stringstream ss;
-        detail::format_module_diagnostic(ss, diagnostics[0].to_formattable(), *ctx.root_mod, false);
-
-        constexpr std::string_view expected{
-            R"(test.porp:1:8: error: Could not find path 'a.porp' in virtual file system
+    constexpr std::string_view expected{
+        R"(test.porp:1:8: error: Could not find path 'a.porp' in virtual file system
     import "a.porp" as a;
-           ^)"};
-        CHECK(ss.view() == expected);
-    }
+           ^
+)"};
+    CHECK(ss.view() == expected);
 }
 
 } // namespace porpoise::tests

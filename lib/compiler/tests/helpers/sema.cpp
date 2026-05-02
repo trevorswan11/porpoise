@@ -4,9 +4,10 @@ namespace porpoise::tests::helpers {
 
 SemaTestContext::SemaTestContext(const std::vector<MockFile>& imports,
                                  const std::filesystem::path& root_path,
-                                 std::string_view             input)
-    : loader{mem::make_box<sema::mod::MemoryLoader>()}, manager{*loader}, analyzer{manager},
-      root_mod{[&] {
+                                 std::string_view             input,
+                                 std::ostream&                error_stream)
+    : loader{mem::make_box<sema::mod::MemoryLoader>()}, manager{*loader},
+      analyzer{manager, error_stream, false}, root_mod{[&] {
           loader->add(root_path, std::string{input});
           for (const auto& mock : imports) {
               loader->add(mock.path, std::string{mock.source});
@@ -22,7 +23,7 @@ SemaTestContext::SemaTestContext(const std::vector<MockFile>& imports,
 
 auto collect(std::string_view input, const std::vector<MockFile>& imports)
     -> std::pair<SemaTestContext, usize> {
-    SemaTestContext ctx{imports, test_file, input};
+    SemaTestContext ctx{imports, TEST_FILENAME, input};
     auto            test_mod = ctx.root_mod;
     REQUIRE_FALSE(test_mod->has_parser_diagnostics());
     ctx.analyzer.collect_symbols(*test_mod);

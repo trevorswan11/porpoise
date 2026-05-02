@@ -32,8 +32,9 @@ template <DiagnosticType D> class DiagnosticList {
     MAKE_ITERATOR(Diagnostics, std::vector<D>, diagnostics_)
 
   public:
-    DiagnosticList() noexcept = default;
-    ~DiagnosticList()         = default;
+    explicit DiagnosticList(opt::Option<bool> in_terminal = opt::none) noexcept
+        : in_terminal_{in_terminal} {}
+    ~DiagnosticList() = default;
 
     MAKE_MOVE_ONLY(DiagnosticList)
 
@@ -55,15 +56,19 @@ template <DiagnosticType D> class DiagnosticList {
     operator std::span<const D>() const { return diagnostics_; }
 
     // Prints the diagnostics with information from the enclosing module if provided
-    auto print(std::ostream& os, opt::Option<const sema::mod::Module&> module = opt::none) const
-        -> void {
+    auto print(std::ostream& os, opt::Option<const sema::mod::Module&> module) const -> void {
         for (const auto& diag : diagnostics_) {
-            detail::format_module_diagnostic(os, diag.to_formattable(), module, opt::none) << "\n";
+            detail::format_module_diagnostic(os, diag.to_formattable(), module, in_terminal_)
+                << "\n";
         }
     }
 
+    // Creates a new list with the same terminal behavior
+    [[nodiscard]] auto create_new() const -> DiagnosticList { return DiagnosticList{in_terminal_}; }
+
   private:
-    Diagnostics diagnostics_;
+    Diagnostics       diagnostics_;
+    opt::Option<bool> in_terminal_;
 };
 
 } // namespace porpoise

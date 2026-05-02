@@ -1,5 +1,6 @@
 #pragma once
 
+#include <iostream>
 #include <string>
 #include <vector>
 
@@ -13,7 +14,10 @@ namespace porpoise::sema {
 // The manager for all steps of semantic analysis.
 class Analyzer {
   public:
-    explicit Analyzer(mod::ModuleManager& modules) noexcept : modules_{modules} {}
+    explicit Analyzer(mod::ModuleManager& modules,
+                      std::ostream&       error_stream,
+                      opt::Option<bool>   in_terminal) noexcept
+        : modules_{modules}, error_stream_{error_stream}, in_terminal_{in_terminal} {}
     ~Analyzer() = default;
 
     MAKE_MOVE_CONSTRUCTABLE_ONLY(Analyzer)
@@ -34,11 +38,14 @@ class Analyzer {
     MAKE_DEDUCING_GETTER(pool, TypePool&)
 
     auto collect_symbols(mod::Module& module) -> void;
+    auto resolve_types(mod::Module& module) -> void;
 
   private:
     mod::ModuleManager& modules_;
     SymbolTableRegistry registry_;
     TypePool            pool_;
+    std::ostream&       error_stream_;
+    opt::Option<bool>   in_terminal_;
 
     std::vector<std::string> collection_stack_;
 };

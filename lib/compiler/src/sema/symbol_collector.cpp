@@ -1,18 +1,20 @@
 #include "sema/symbol_collector.hpp"
 
 #include "ast/ast.hpp"
-#include "ast/visitor.hpp"
 
 namespace porpoise::sema {
 
 auto SymbolCollector::collect_symbols(mod::Module& module, const Context& ctx) -> mod::ModuleState {
-    if (module.state < mod::ModuleState::SYMBOLS_COLLECTED && !module.root_table_idx) {
+    if (module.is_collectable()) {
         module.root_table_idx.emplace(ctx.registry.create());
 
         SymbolCollector collector{module, ctx};
         for (const auto& node : module.tree) { node->accept(collector); }
 
-        if (!ctx.diagnostics.empty()) { return module.error_out(std::move(ctx.diagnostics)); }
+        if (!ctx.diagnostics.empty()) {
+            return module.error_out(std::move(ctx.diagnostics),
+                                    mod::ModuleState::POISONED_SYMBOL_COLLECTION);
+        }
         module.state = mod::ModuleState::SYMBOLS_COLLECTED;
     }
     return module.state;
@@ -349,15 +351,16 @@ auto SymbolCollector::visit(const ast::ImportStatement& import_stmt) -> void {
             }));
     } else {
         imported_mod.emplace(**mod_result);
-        Diagnostics diags;
+        auto diags = ctx_.diagnostics.create_new();
         collect_symbols(*imported_mod, ctx_.copy(diags));
     }
 
     ctx_.try_result(
         ctx_.registry.insert_into(table_idx_, alias, SymbolicImport{&import_stmt, imported_mod}));
     if (imported_mod) {
-        import_stmt.set_sema_type(
-            ctx_.pool[{TypeKind::MODULE, false, imported_mod->root_table_idx}]);
+        auto& type = ctx_.pool[{TypeKind::MODULE, false, imported_mod->root_table_idx}];
+        import_stmt.set_sema_type(type);
+        ctx_.registry.get_from(table_idx_, alias).emplace_type(type);
     }
 }
 

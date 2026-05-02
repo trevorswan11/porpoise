@@ -95,13 +95,13 @@ TEST_CASE("NonNull basic usage") {
 }
 
 TEST_CASE("NonNull from optional reference") {
-    i32                 val = 10;
-    const opt::Ref<i32> opt{val};
+    i32                         val = 10;
+    const opt::detail::Ref<i32> opt{val};
 
     const mem::NonNull<i32> ptr{opt};
     CHECK(*ptr == 10);
 
-    const opt::Ref<i32> empty;
+    const opt::detail::Ref<i32> empty;
     CHECK_THROWS_AS(mem::NonNull<i32>{empty}, std::bad_optional_access);
 }
 

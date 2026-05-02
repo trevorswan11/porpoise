@@ -31,31 +31,23 @@ auto AstDump::run() -> void {
         sema::mod::ModuleManager manager{loader};
         loader.add(stdin_path, std::string{trimmed});
 
-        sema::Analyzer analyzer{manager};
+        sema::Analyzer analyzer{manager, std::cerr, true};
         if (!analyzer.analyze(stdin_path)) {
             fmt::println(std::cerr, "Failed to load input from stdin");
             break;
         }
 
-        // Parsing
+        // Print debug information from each stage
         const auto stdin_mod = *manager.try_get_file_module(stdin_path);
-        if (stdin_mod->has_parser_diagnostics()) {
-            stdin_mod->get_parser_diagnostics().print(std::cerr, *stdin_mod);
-            continue;
-        } else {
-            ast::ASTDumper dumper{std::cout};
-            for (const auto& node : stdin_mod->tree) { node->accept(dumper); }
-        }
+        if (stdin_mod->is_errored()) { continue; }
 
-        // Sema
-        if (stdin_mod->has_sema_diagnostics()) {
-            stdin_mod->get_sema_diagnostics().print(std::cerr, *stdin_mod);
-            continue;
-        } else {
-            fmt::println("{} total tables, {} top-level symbols collected",
-                         analyzer.get_registry().size(),
-                         analyzer.get_table(stdin_mod->root_table_idx).size());
-        }
+        ast::ASTDumper dumper{std::cout};
+        for (const auto& node : stdin_mod->tree) { node->accept(dumper); }
+
+        if (stdin_mod->is_poisoned()) { continue; }
+        fmt::println("{} total tables, {} top-level symbols collected",
+                     analyzer.get_registry().size(),
+                     analyzer.get_table(stdin_mod->root_table_idx).size());
     }
 }
 

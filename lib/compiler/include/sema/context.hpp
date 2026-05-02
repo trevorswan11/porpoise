@@ -1,5 +1,7 @@
 #pragma once
 
+#include <ostream>
+
 #include "sema/error.hpp"
 #include "sema/module/module.hpp"
 #include "sema/pool.hpp"
@@ -13,10 +15,11 @@ struct Context {
     SymbolTableRegistry& registry;
     TypePool&            pool;
     Diagnostics&         diagnostics;
+    std::ostream&        error_stream;
 
     // Creates a new context with a new diagnostics pointer
     [[nodiscard]] auto copy(Diagnostics& new_diags) const noexcept -> Context {
-        return {modules, registry, pool, new_diags};
+        return {modules, registry, pool, new_diags, error_stream};
     }
 
     // Returns false if the passed result was an error type, which is forwarded to the diagnostics

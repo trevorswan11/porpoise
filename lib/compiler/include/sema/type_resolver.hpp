@@ -3,26 +3,22 @@
 #include "ast/node.hpp"
 #include "ast/visitor.hpp"
 
-#include "sema/symbol.hpp"
-#include "sema/type.hpp"
+#include "sema/context.hpp"
 
 namespace porpoise::sema {
 
-class Analyzer;
-class TypePool;
-
-// You aren't going to believe what this does (Pass 2)
+// Resolves all types and symbol uses without type checking
 class TypeResolver : public ast::Visitor {
   public:
-    TypeResolver(Analyzer& analyzer, SymbolTableStack& stack) noexcept;
+    TypeResolver(const Context& ctx) noexcept : ctx_{ctx} {}
+
+    static auto resolve_types(mod::Module& module, const Context& ctx) -> mod::ModuleState;
 
     MAKE_AST_VISITOR_OVERRIDES()
 
   private:
-    [[maybe_unused]] Analyzer&         analyzer_;
-    [[maybe_unused]] TypePool&         pool_;
-    [[maybe_unused]] SymbolTableStack& stack_;
-    opt::Option<Type&>                 last_type_;
+    [[maybe_unused]] Context ctx_;
+    opt::Option<Type&>       last_type_;
 };
 
 } // namespace porpoise::sema

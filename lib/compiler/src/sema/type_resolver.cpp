@@ -1,13 +1,34 @@
+#include <cassert>
+
 #include "sema/type_resolver.hpp"
 
-#include "sema/analyzer.hpp"
+#include "ast/ast.hpp"
 
 namespace porpoise::sema {
 
-TypeResolver::TypeResolver(Analyzer& analyzer, SymbolTableStack& stack) noexcept
-    : analyzer_{analyzer}, pool_{analyzer_.get_pool()}, stack_{stack} {}
+auto TypeResolver::resolve_types(mod::Module& module, const Context& ctx) -> mod::ModuleState {
+    // Poisoned collection should flush the diagnostics
+    if (module.state == mod::ModuleState::POISONED_SYMBOL_COLLECTION) {
+        module.print_diagnostics(ctx.error_stream);
+    }
 
-auto TypeResolver::visit(const ast::ArrayExpression&) -> void {}
+    if (module.is_resolvable()) {
+        assert(module.root_table_idx.has_value() && "Cannot resolve module with no table");
+        TypeResolver resolver{ctx};
+        for (const auto& node : module.tree) { node->accept(resolver); }
+
+        if (!ctx.diagnostics.empty() || module.is_poisoned()) {
+            return module.error_out(std::move(ctx.diagnostics),
+                                    mod::ModuleState::POISONED_TYPE_RESOLVED);
+        }
+        module.state = mod::ModuleState::TYPE_RESOLVED;
+    }
+    return module.state;
+}
+
+auto TypeResolver::visit(const ast::ArrayExpression& array) -> void {
+    visit_list(array.get_items());
+}
 
 auto TypeResolver::visit(const ast::CallArgument&) -> void {}
 
@@ -65,9 +86,10 @@ auto TypeResolver::visit(const ast::ImplicitAccessExpression&) -> void {}
 
 auto TypeResolver::visit(const ast::StringExpression&) -> void {}
 
-#define MAKE_BUILTIN_RESOLVER(NodeType, kind)                \
-    auto TypeResolver::visit(const ast::NodeType&) -> void { \
-        last_type_.emplace(pool_.builtin(TypeKind::kind));   \
+#define MAKE_BUILTIN_RESOLVER(NodeType, kind)                                 \
+    auto TypeResolver::visit(const ast::NodeType& node) -> void {             \
+        last_type_.emplace(ctx_.pool.get_builtin_value_type(TypeKind::kind)); \
+        node.set_sema_type(*last_type_);                                      \
     }
 
 MAKE_BUILTIN_RESOLVER(I32Expression, INT)

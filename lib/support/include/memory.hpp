@@ -165,7 +165,7 @@ class NonNull {
         assert(ptr_ && "Attempt to create NonNull from nullptr");
     }
 
-    NonNull(opt::Ref<T> opt) : ptr_{&opt.value()} {}
+    NonNull(opt::detail::Ref<T> opt) : ptr_{&opt.value()} {}
     NonNull(opt::None) = delete;
     NonNull(T&&)       = delete;
 
@@ -187,7 +187,7 @@ class NonNull {
 
 } // namespace mem
 
-template <typename T, typename D> class opt::Ref<mem::Box<T, D>&> {
+template <typename T, typename D> class opt::detail::Ref<mem::Box<T, D>&> {
     static_assert(false, "Use a NullableBox<T, D> to accomplish this!");
 };
 

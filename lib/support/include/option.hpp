@@ -2,14 +2,19 @@
 
 #include <cassert>
 #include <concepts>
+#include <limits>
 #include <optional>
 #include <type_traits>
 #include <utility>
+
+#include "types.hpp"
 
 namespace porpoise::opt {
 
 using None          = std::nullopt_t;
 constexpr None none = std::nullopt;
+
+namespace detail {
 
 template <typename T> class Ref {
   public:
@@ -71,14 +76,64 @@ template <typename T> class Ref {
     T* ptr_;
 };
 
+// An efficient optional representation of boolean values
+class Boolean {
+  public:
+    // cppcheck-suppress-begin noExplicitConstructor
+    Boolean() noexcept : value_{NO_VALUE} {}
+    Boolean(bool value) noexcept : value_{static_cast<u8>(value)} {}
+    Boolean(None) noexcept : value_{NO_VALUE} {}
+    // cppcheck-suppress-end noExplicitConstructor
+
+    [[nodiscard]] auto has_value() const noexcept -> bool { return value_ != NO_VALUE; }
+
+    auto emplace(bool value) noexcept -> void { value_ = value; }
+    auto reset() noexcept -> void { value_ = NO_VALUE; }
+
+    // Resets the optional and returns the stored bool
+    auto take() noexcept -> bool {
+        auto value = value_;
+        reset();
+        return value;
+    }
+
+    auto value() const -> bool {
+        if (!has_value()) { throw std::bad_optional_access(); }
+        return static_cast<bool>(value_);
+    }
+
+    auto get() const noexcept -> bool { return static_cast<bool>(value_); }
+
+    template <class Or> constexpr auto value_or(Or&& or_value) -> bool {
+        // This is straight from clang's stdc++ C++23 optional implementation
+        static_assert(std::is_copy_constructible_v<Or>,
+                      "Boolean::value_or: T must be copy constructible");
+        static_assert(std::is_convertible_v<Or, bool>,
+                      "Boolean::value_or: Or must be convertible to T");
+        return has_value() ? this->get() : static_cast<bool>(std::forward<Or>(or_value));
+    }
+
+    auto operator*() const noexcept -> bool { return value_; }
+
+  private:
+    static constexpr u8 NO_VALUE = 3;
+
+  private:
+    u8 value_;
+};
+
+} // namespace detail
+
 // A safe, reference-allowable optional type dispatcher
 template <typename T>
-using Option =
-    std::conditional_t<std::is_reference_v<T>, Ref<std::remove_reference_t<T>>, std::optional<T>>;
+using Option = std::conditional_t<
+    std::is_reference_v<T>,
+    detail::Ref<std::remove_reference_t<T>>,
+    std::conditional_t<std::is_same_v<T, bool>, detail::Boolean, std::optional<T>>>;
 
 template <typename T> struct is_option : std::false_type {};
 template <typename T> struct is_option<std::optional<T>> : std::true_type {};
-template <typename T> struct is_option<Ref<T>> : std::true_type {};
+template <typename T> struct is_option<detail::Ref<T>> : std::true_type {};
 template <typename T> constexpr bool is_option_v = is_option<T>::value;
 
 // Compares two values, forwarding safety concerns to the comparator.
@@ -99,5 +154,46 @@ template <typename T> auto safe_eq(const Option<T>& a, const Option<T>& b) noexc
 #define MAKE_OPTIONAL_UNPACKER(name, ReturnType, member, deref)                                  \
     [[nodiscard]] auto get_##name() const noexcept -> const ReturnType& { return deref member; } \
     [[nodiscard]] auto has_##name() const noexcept -> bool { return member.has_value(); }
+
+// A minimal usize wrapper that provides zero-cost optional behavior
+class Index {
+  public:
+    Index() noexcept = default;
+
+    // cppcheck-suppress-begin noExplicitConstructor
+    Index(usize idx) noexcept : idx_{idx} {}
+    Index(std::nullopt_t) noexcept {}
+
+    // Any negative value is treated as a sentinel
+    template <Integral Int> Index(Int i) noexcept {
+        if (i >= 0) { idx_ = static_cast<usize>(i); }
+    }
+    // cppcheck-suppress-end noExplicitConstructor
+
+    [[nodiscard]] auto     has_value() const noexcept -> bool { return idx_ != NO_VALUE; }
+    [[nodiscard]] explicit operator bool() const noexcept { return has_value(); }
+
+    auto emplace(usize idx) noexcept -> void { idx_ = idx; }
+
+    auto reset() noexcept -> void { idx_ = NO_VALUE; }
+    auto take() noexcept -> usize {
+        usize idx = idx_;
+        reset();
+        return idx;
+    }
+
+    auto value() const -> usize {
+        if (!*this) { throw std::bad_optional_access(); }
+        return idx_;
+    }
+
+    [[nodiscard]] operator usize() const noexcept { return idx_; }
+
+  private:
+    static constexpr usize NO_VALUE = std::numeric_limits<usize>::max();
+
+  private:
+    usize idx_{NO_VALUE};
+};
 
 } // namespace porpoise::opt

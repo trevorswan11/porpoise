@@ -6,7 +6,6 @@
 
 #include <ankerl/unordered_dense.h>
 
-#include "array.hpp"
 #include "hash.hpp"
 #include "memory.hpp"
 #include "option.hpp"
@@ -49,26 +48,26 @@ namespace types {
 using PrimitiveType = Unit;
 
 struct Slice {
-    mem::NonNull<Type> underlying;
-    bool               null_terminated;
+    Type& underlying;
+    bool  null_terminated;
 };
 
 struct Array {
-    mem::NonNull<Type> underlying;
-    usize              len;
-    bool               null_terminated;
+    Type& underlying;
+    usize len;
+    bool  null_terminated;
 };
 
 struct Pointer {
-    mem::NonNull<Type> underlying;
+    Type& underlying;
 };
 
 struct Reference {
-    mem::NonNull<Type> underlying;
+    Type& underlying;
 };
 
 struct Enum {
-    mem::NonNull<Type> underlying;
+    Type& underlying;
 };
 
 struct Struct {
@@ -77,7 +76,7 @@ struct Struct {
 
 struct Function {
     std::span<mem::NonNull<Type>> params;
-    mem::NonNull<Type>            return_type;
+    Type&                         return_type;
 };
 
 template <typename T>
@@ -185,7 +184,7 @@ class Type {
 
   private:
     TypeKind              kind_;
-    array::Index          scope_table_idx_;
+    opt::Index            scope_table_idx_;
     opt::Option<Resolved> resolved_;
 };
 
