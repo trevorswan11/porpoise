@@ -5,8 +5,7 @@
 
 namespace porpoise::sema {
 
-auto SymbolCollector::collect_symbols(mod::Module& module, const CollectorCtx& ctx)
-    -> mod::ModuleState {
+auto SymbolCollector::collect_symbols(mod::Module& module, const Context& ctx) -> mod::ModuleState {
     if (module.state < mod::ModuleState::SYMBOLS_COLLECTED && !module.root_table_idx) {
         module.root_table_idx.emplace(ctx.registry.create());
 
@@ -353,8 +352,13 @@ auto SymbolCollector::visit(const ast::ImportStatement& import_stmt) -> void {
         Diagnostics diags;
         collect_symbols(*imported_mod, ctx_.copy(diags));
     }
-    try_result(
+
+    ctx_.try_result(
         ctx_.registry.insert_into(table_idx_, alias, SymbolicImport{&import_stmt, imported_mod}));
+    if (imported_mod) {
+        import_stmt.set_sema_type(
+            ctx_.pool[{TypeKind::MODULE, false, imported_mod->root_table_idx}]);
+    }
 }
 
 auto SymbolCollector::visit(const ast::ReturnStatement& return_stmt) -> void {

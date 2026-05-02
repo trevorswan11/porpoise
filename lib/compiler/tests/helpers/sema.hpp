@@ -39,7 +39,7 @@ struct SemaTestContext {
     -> std::pair<SemaTestContext, usize>;
 
 // Collects the assumed-syntactically-valid input and checks for no errors
-auto collect_and_validate(std::string_view input, const std::vector<MockFile>& imports = {})
+auto collect_and_check(std::string_view input, const std::vector<MockFile>& imports = {})
     -> std::pair<SemaTestContext, usize>;
 
 // Runs the entire Analyzer on the provided input without checking semantic validity (no errors)
@@ -137,7 +137,7 @@ template <typename... Entries>
 auto test_collector(std::string_view             input,
                     const std::vector<MockFile>& imports,
                     Entries&&... entries) -> SemaTestContext {
-    auto [ctx, idx]      = collect_and_validate(input, imports);
+    auto [ctx, idx]      = collect_and_check(input, imports);
     auto&       analyzer = ctx.analyzer;
     const auto& actual   = analyzer.get_table(idx);
     CHECK(actual.size() == sizeof...(Entries));

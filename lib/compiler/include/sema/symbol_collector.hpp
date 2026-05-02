@@ -5,7 +5,7 @@
 
 #include "module/module.hpp"
 
-#include "sema/error.hpp"
+#include "sema/context.hpp"
 #include "sema/pool.hpp"
 #include "sema/symbol.hpp"
 #include "sema/type.hpp"
@@ -13,18 +13,6 @@
 #include "counter.hpp"
 
 namespace porpoise::sema {
-
-struct CollectorCtx {
-    mod::ModuleManager&  modules;
-    SymbolTableRegistry& registry;
-    TypePool&            pool;
-    Diagnostics&         diagnostics;
-
-    // Creates a new context with a new diagnostics pointer
-    [[nodiscard]] auto copy(Diagnostics& new_diags) const noexcept -> CollectorCtx {
-        return {modules, registry, pool, new_diags};
-    }
-};
 
 // An AST walker that performs 0 type checking
 class SymbolCollector : public ast::Visitor {
@@ -45,12 +33,12 @@ class SymbolCollector : public ast::Visitor {
     };
 
   public:
-    SymbolCollector(mod::Module& collecting, const CollectorCtx& ctx) noexcept
+    SymbolCollector(mod::Module& collecting, const Context& ctx) noexcept
         : collecting_{collecting}, table_idx_{collecting.root_table_idx}, ctx_{ctx} {
         table_stack_.push(table_idx_);
     }
 
-    static auto collect_symbols(mod::Module& module, const CollectorCtx& ctx) -> mod::ModuleState;
+    static auto collect_symbols(mod::Module& module, const Context& ctx) -> mod::ModuleState;
 
     MAKE_AST_VISITOR_OVERRIDES()
 
@@ -66,19 +54,10 @@ class SymbolCollector : public ast::Visitor {
         return new_idx;
     }
 
-    // Returns false if the passed result was an error type
-    template <typename T = Unit> auto try_result(Result<T, Diagnostic>&& result) -> bool {
-        if (!result) {
-            ctx_.diagnostics.emplace_back(result.error());
-            return false;
-        }
-        return true;
-    }
-
     template <typename SymbolicVariant>
     auto try_declare(std::string_view name, SymbolicVariant node) -> bool {
-        return try_result(ctx_.registry.is_shadowing(table_stack_, name, node)) &&
-               try_result(ctx_.registry.insert_into(table_idx_, name, node));
+        return ctx_.try_result(ctx_.registry.is_shadowing(table_stack_, name, node)) &&
+               ctx_.try_result(ctx_.registry.insert_into(table_idx_, name, node));
     }
 
     auto fn_guard() noexcept -> std::pair<DefaultCounter::Guard, DefaultCounter::Guard> {
@@ -97,7 +76,7 @@ class SymbolCollector : public ast::Visitor {
     mod::Module&       collecting_;
     usize              table_idx_;
     SymbolTableStack   table_stack_;
-    CollectorCtx       ctx_;
+    Context            ctx_;
     opt::Option<Type&> last_type_;
 
     DefaultCounter in_expr_scope_;

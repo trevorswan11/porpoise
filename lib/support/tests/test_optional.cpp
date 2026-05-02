@@ -12,7 +12,7 @@
 
 namespace porpoise::tests {
 
-TEST_CASE("OptRef construction checks") {
+TEST_CASE("Ref construction checks") {
     STATIC_CHECK_FALSE(std::is_constructible_v<opt::Ref<i32>, i32&&>);
     STATIC_CHECK(std::is_trivially_copyable_v<opt::Ref<i32>>);
 }
@@ -31,7 +31,7 @@ TEST_CASE("opt::Option template checks") {
     STATIC_CHECK_FALSE(opt::is_option_v<int>);
 }
 
-TEST_CASE("OptRef basic construction") {
+TEST_CASE("Ref basic construction") {
     i32                 val = 42;
     const opt::Ref<i32> opt{val};
 
@@ -43,7 +43,7 @@ TEST_CASE("OptRef basic construction") {
     CHECK(&*opt == &val);
 }
 
-TEST_CASE("OptRef null use & access") {
+TEST_CASE("Ref null use & access") {
     SECTION("Default") {
         const opt::Ref<i32> opt{};
         CHECK_FALSE(opt.has_value());
@@ -57,7 +57,7 @@ TEST_CASE("OptRef null use & access") {
     }
 }
 
-TEST_CASE("OptRef conversions") {
+TEST_CASE("Ref conversions") {
     SECTION("Non-const -> const") {
         i32                       val = 42;
         const opt::Ref<i32>       mut_opt{val};
@@ -75,7 +75,7 @@ TEST_CASE("OptRef conversions") {
     }
 }
 
-TEST_CASE("OptRef reassignment") {
+TEST_CASE("Ref reassignment") {
     i32           a = 1, b = 2;
     opt::Ref<i32> opt{a};
     CHECK(*opt == 1);
@@ -87,7 +87,7 @@ TEST_CASE("OptRef reassignment") {
     CHECK_FALSE(opt.has_value());
 }
 
-TEST_CASE("OptRef mutability") {
+TEST_CASE("Ref mutability") {
     i32                 val = 42;
     const opt::Ref<i32> opt{val};
     CHECK(*opt == 42);
@@ -120,6 +120,22 @@ TEST_CASE("Safe optional custom equality") {
         return std::ranges::equal(
             a, b, [](byte ac, byte bc) { return std::tolower(ac) == std::tolower(bc); });
     }));
+}
+
+TEST_CASE("Ref transform on value") {
+    i32               i = 9;
+    opt::Option<i32&> opt_i{i};
+
+    const auto res = opt_i.transform([](const i32& i) { return i + 2; });
+    REQUIRE(res);
+    CHECK(*res == 11);
+}
+
+TEST_CASE("Ref transform on none") {
+    opt::Option<i32&> opt_i{};
+
+    const auto res = opt_i.transform([](const i32& i) { return i + 2; });
+    REQUIRE_FALSE(res);
 }
 
 } // namespace porpoise::tests

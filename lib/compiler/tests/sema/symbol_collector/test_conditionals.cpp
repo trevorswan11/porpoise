@@ -23,7 +23,7 @@ auto test_conditional_scope(sema::Analyzer& analyzer, usize idx) {
 } // namespace helpers
 
 TEST_CASE("If expression collection") {
-    auto [ctx, idx] = helpers::collect_and_validate(
+    auto [ctx, idx] = helpers::collect_and_check(
         "const a := if (b) { const foo := bar; } else { const foo := bar; };");
 
     auto& analyzer = ctx.analyzer;
@@ -66,14 +66,12 @@ TEST_CASE("If expression collection") {
     helpers::test_conditional_scope(analyzer, 2);
 }
 
-TEST_CASE("Flat if collection") {
-    helpers::collect_and_validate("const a := if (b > 4) c; else d;");
-}
+TEST_CASE("Flat if collection") { helpers::collect_and_check("const a := if (b > 4) c; else d;"); }
 
 TEST_CASE("Match expression collection") {
     auto [ctx, idx] =
-        helpers::collect_and_validate("const a := match (b) { c => |d| { const foo := bar; } e => "
-                                      "|_| { const foo := bar; } } else { const foo := bar; };");
+        helpers::collect_and_check("const a := match (b) { c => |d| { const foo := bar; } e => "
+                                   "|_| { const foo := bar; } } else { const foo := bar; };");
 
     auto& analyzer = ctx.analyzer;
     CHECK(analyzer.get_registry().size() == 6);
@@ -125,8 +123,7 @@ TEST_CASE("Match expression collection") {
 }
 
 TEST_CASE("Flat match collection") {
-    helpers::collect_and_validate(
-        "const a := match (b) { c => |d| d; e => |_| f; g => h; } else i;");
+    helpers::collect_and_check("const a := match (b) { c => |d| d; e => |_| f; g => h; } else i;");
 }
 
 TEST_CASE("If expression inner shadowing") {

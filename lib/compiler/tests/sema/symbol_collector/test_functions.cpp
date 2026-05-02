@@ -43,13 +43,13 @@ TEST_CASE("Function hollow types") {
 }
 
 TEST_CASE("Well-placed function control-flow statements") {
-    helpers::collect_and_validate("pub const main := fn(args: [][:0]u8): void { return; };");
-    helpers::collect_and_validate("pub const main := fn(args: [][:0]u8): i32 { return 0; };");
-    helpers::collect_and_validate("pub const main := fn(args: [][:0]u8): i32 { defer a = 2; };");
+    helpers::collect_and_check("pub const main := fn(args: [][:0]u8): void { return; };");
+    helpers::collect_and_check("pub const main := fn(args: [][:0]u8): i32 { return 0; };");
+    helpers::collect_and_check("pub const main := fn(args: [][:0]u8): i32 { defer a = 2; };");
 }
 
 TEST_CASE("Constexpr function declaration") {
-    helpers::collect_and_validate("pub constexpr work := fn(): i32 { return 1; };");
+    helpers::collect_and_check("pub constexpr work := fn(): i32 { return 1; };");
 }
 
 TEST_CASE("Defer statements respect identifier collection rules") {

@@ -21,8 +21,12 @@ TEST_CASE("Import aliases correctly used") {
         R"(import foo as A; import "f.porp" as F; const foo := bar;)",
         helpers::make_vector<MockFile>(MockFile{"foo.porp", "const foo := bar;", "foo"},
                                        MockFile{"f.porp", "const foo := bar;"}),
-        helpers::TableEntry{"A", sema::SymbolicImport{&import_one, opt::none}},
-        helpers::TableEntry{"F", sema::SymbolicImport{&import_two, opt::none}},
+        helpers::TableEntry{"A",
+                            sema::SymbolicImport{&import_one, opt::none},
+                            sema::types::Key{sema::TypeKind::MODULE, false, 1}},
+        helpers::TableEntry{"F",
+                            sema::SymbolicImport{&import_two, opt::none},
+                            sema::types::Key{sema::TypeKind::MODULE, false, 2}},
         helpers::TableEntry{"foo", helpers::foo_bar_decl()});
 }
 

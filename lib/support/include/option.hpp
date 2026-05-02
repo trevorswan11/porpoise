@@ -4,6 +4,7 @@
 #include <concepts>
 #include <optional>
 #include <type_traits>
+#include <utility>
 
 namespace porpoise::opt {
 
@@ -45,6 +46,26 @@ template <typename T> class Ref {
 
     auto operator->() const noexcept -> T* { return ptr_; }
     auto operator*() const noexcept -> T& { return *ptr_; }
+
+    // Applies F to to underlying reference if present
+    template <class F> constexpr auto transform(F&& f) & {
+        using ResCV = std::invoke_result_t<F, T&>;
+        using Res   = std::remove_cv_t<ResCV>;
+
+        // This is straight from clang's stdc++ C++23 optional implementation
+        static_assert(!std::is_array_v<Res>, "Result of f(value()) should not be an Array");
+        static_assert(!std::is_same_v<Res, std::in_place_t>,
+                      "Result of f(value()) should not be std::in_place_t");
+        static_assert(!std::is_same_v<Res, None>, "Result of f(value()) should not be opt::none");
+        static_assert(std::is_object_v<Res>, "Result of f(value()) should be an object type");
+
+        // Also from clang, but generalized to support reference transform chains
+        using Ret = std::conditional_t<std::is_reference_v<ResCV>,
+                                       Ref<std::remove_reference_t<ResCV>>,
+                                       std::optional<ResCV>>;
+        if (*this) { return Ret{std::forward<F>(f)(value())}; }
+        return Ret{};
+    }
 
   private:
     T* ptr_;

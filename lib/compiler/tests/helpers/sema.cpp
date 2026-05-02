@@ -30,7 +30,7 @@ auto collect(std::string_view input, const std::vector<MockFile>& imports)
     return {std::move(ctx), test_mod->root_table_idx};
 }
 
-auto collect_and_validate(std::string_view input, const std::vector<MockFile>& imports)
+auto collect_and_check(std::string_view input, const std::vector<MockFile>& imports)
     -> std::pair<SemaTestContext, usize> {
     auto [ctx, idx] = collect(input, imports);
     if (ctx.root_mod->has_sema_diagnostics()) {

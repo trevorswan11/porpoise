@@ -39,6 +39,7 @@ enum class TypeKind : u8 {
     FUNCTION,
     BLOCK,
     MATCH_ARM,
+    MODULE,
 };
 
 class Type;
