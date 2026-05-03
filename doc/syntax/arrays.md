@@ -60,7 +60,15 @@ var a: &[]&*mut T; // Analogous slice type
 ## Memory layout
 - Arrays and slices of bytes are not implicitly null terminated
     - If you wish to make a non-null terminated slice a null terminated one, you must do so explicitly
-        - You can indicate that a slice or array is null terminated by explicitly annotating the type with `:0`
+    - You can indicate that a slice or array is null terminated by annotating the size with `:0`
+```porpoise
+const a := [_:0]u8{'a', 'b', '\0' }; // Inferred Size ending with a null byte
+var a: [:0]i32; // Null terminated slice type
+var a: [5uz:0]i32; // Null terminated array type
+```
+- Note that the size of the array type is baked into the null terminated flag, they are not summed
+    - This means the size `[5uz:0]` means size 5 with the element at index 4 a null byte
+
 ### Arrays
 - Arrays are guaranteed to be contiguous in memory
 - Arrays do not support implicit sentinel termination, the size provided to an array at initialization is exactly the size of that array during use

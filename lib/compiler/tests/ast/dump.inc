@@ -1,6 +1,7 @@
 R"(ExpressionStatement
 └─ Expr: ArrayExpression
     ├─ Size: (inferred)
+    ├─ Null terminated: true
     ├─ Type: ExplicitType (modifier: PTR)
     │   └─ IdentifierExpression: N
     └─ Items:
@@ -285,6 +286,7 @@ ExpressionStatement
 ExpressionStatement
 └─ Expr: ArrayExpression
     ├─ Size: USizeExpression: 1
+    ├─ Null terminated: false
     ├─ Type: ExplicitType (modifier: BASE)
     │   └─ IdentifierExpression: A
     └─ Items:

@@ -11,7 +11,7 @@
 namespace porpoise::tests {
 
 constexpr std::string_view input{R"(
-    [_]*N{a, b, c, d, e, 3, "54" };
+    [_:0]*N{a, b, c, d, e, 3, "54" };
     a <= b or c == d and e;
     a or b[3uz] == !c;
     continue;

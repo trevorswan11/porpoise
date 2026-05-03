@@ -80,7 +80,7 @@ struct Function {
 };
 
 template <typename T>
-concept KeyMarker = std::is_convertible_v<T, uptr> && std::is_convertible_v<T, uptr>;
+concept KeyMarker = std::is_convertible_v<T, uptr>;
 
 class Key {
   public:

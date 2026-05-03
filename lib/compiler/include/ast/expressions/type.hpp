@@ -92,11 +92,14 @@ class ExplicitType {
     MAKE_VARIANT_MATCHER(type_)
     [[nodiscard]] auto get_token() const noexcept -> const syntax::Token&;
 
+    MAKE_AST_SEMA_TYPE_FNS()
+
     MAKE_EQ_DELEGATION(ExplicitType)
 
   private:
-    TypeModifier        modifier_;
-    ExplicitTypeVariant type_;
+    mutable opt::Option<sema::Type&> sema_type_;
+    TypeModifier                     modifier_;
+    ExplicitTypeVariant              type_;
 };
 
 class TypeExpression : public ExprBase<TypeExpression> {

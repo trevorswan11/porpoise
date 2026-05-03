@@ -20,6 +20,12 @@ auto ASTDumper::visit(const ArrayExpression& array) -> void {
     }
 
     {
+        const Indent::Guard g_inner{indent_, false};
+        fmt::println(
+            out_, "{}Null terminated: {}", indent_.current_branch(), array.is_null_terminated());
+    }
+
+    {
         const Indent::Guard g{indent_, false};
         fmt::print(out_, "{}Type: ", indent_.current_branch());
         visit(array.get_item_type());

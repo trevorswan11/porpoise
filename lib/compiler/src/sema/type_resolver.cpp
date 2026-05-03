@@ -1,5 +1,6 @@
 #include <cassert>
 
+#include "sema/type.hpp"
 #include "sema/type_resolver.hpp"
 
 #include "ast/ast.hpp"
@@ -28,6 +29,22 @@ auto TypeResolver::resolve_types(mod::Module& module, const Context& ctx) -> mod
 
 auto TypeResolver::visit(const ast::ArrayExpression& array) -> void {
     visit_list(array.get_items());
+    array.get_item_type().accept(*this);
+    array.get_item_type().set_sema_type(*last_type_.take());
+
+    const auto size            = array.get_size();
+    auto&      item_type       = array.get_item_type().get_sema_type();
+    const auto null_terminated = array.is_null_terminated();
+    last_type_.emplace(ctx_.pool[types::Key{
+        TypeKind::ARRAY, false, 0, size, reinterpret_cast<uptr>(&item_type), null_terminated}]);
+    if (!last_type_->has_resolved()) {
+        last_type_->resolve(types::Array{
+            item_type,
+            size,
+            null_terminated,
+        });
+    }
+    array.set_sema_type(*last_type_);
 }
 
 auto TypeResolver::visit(const ast::CallArgument&) -> void {}

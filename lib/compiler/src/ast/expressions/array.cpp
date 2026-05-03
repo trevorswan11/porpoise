@@ -16,10 +16,11 @@ namespace porpoise::ast {
 
 ArrayExpression::ArrayExpression(const syntax::Token&              start_token,
                                  mem::NullableBox<Expression>      size,
+                                 bool                              null_terminated,
                                  ExplicitType&&                    item_type,
                                  std::vector<mem::Box<Expression>> items) noexcept
-    : ExprBase{start_token}, size_{std::move(size)}, item_type_{std::move(item_type)},
-      items_{std::move(items)} {}
+    : ExprBase{start_token}, size_{std::move(size)}, null_terminated_{null_terminated},
+      item_type_{std::move(item_type)}, items_{std::move(items)} {}
 ArrayExpression::~ArrayExpression() = default;
 
 auto ArrayExpression::accept(Visitor& v) const -> void { v.visit(*this); }
@@ -27,14 +28,32 @@ auto ArrayExpression::accept(Visitor& v) const -> void { v.visit(*this); }
 auto ArrayExpression::parse(syntax::Parser& parser)
     -> Result<mem::Box<Expression>, syntax::ParserDiagnostic> {
     const auto start_token = parser.get_current_token();
-    parser.advance();
 
+    auto                         null_terminated = false;
     mem::NullableBox<Expression> size;
-    if (!parser.current_token_is(syntax::TokenType::UNDERSCORE)) {
+    if (parser.peek_token_is(syntax::TokenType::NULL_TERMINATED)) {
+        parser.advance();
+        null_terminated = true;
+    } else if (!parser.peek_token_is(syntax::TokenType::RBRACKET)) {
+        parser.advance();
         if (parser.current_token_is(syntax::TokenType::RBRACKET)) {
             return make_parser_err(syntax::ParserError::MISSING_ARRAY_SIZE_TOKEN, start_token);
+        } else if (!parser.current_token_is(syntax::TokenType::UNDERSCORE)) {
+            size = mem::nullable_box_from(TRY(parser.parse_expression()));
+            if (!size->any<USizeExpression, IdentifierExpression>()) {
+                return make_parser_err(syntax::ParserError::ILLEGAL_ARRAY_SIZE_TYPE,
+                                       size->get_token());
+            }
         }
-        size = mem::nullable_box_from(TRY(parser.parse_expression()));
+
+        // The null terminated marker comes after the size for explicitly sized types
+        if (parser.peek_token_is(syntax::TokenType::NULL_TERMINATED)) {
+            parser.advance();
+            null_terminated = true;
+        }
+    } else {
+        // There needs to be a token for the size for array literals
+        return make_parser_err(syntax::ParserError::MISSING_ARRAY_SIZE_TOKEN, start_token);
     }
 
     TRY(parser.expect_peek(syntax::TokenType::RBRACKET));
@@ -72,12 +91,13 @@ auto ArrayExpression::parse(syntax::Parser& parser)
     }
 
     return mem::make_box<ArrayExpression>(
-        start_token, std::move(size), std::move(item_type), std::move(items));
+        start_token, std::move(size), null_terminated, std::move(item_type), std::move(items));
 }
 
 auto ArrayExpression::is_equal(const Node& other) const noexcept -> bool {
     const auto& casted = as<ArrayExpression>(other);
     return mem::nullable_boxes_eq(size_, casted.size_) && item_type_ == casted.item_type_ &&
+           null_terminated_ == casted.null_terminated_ &&
            std::ranges::equal(
                items_, casted.items_, [](const auto& a, const auto& b) { return *a == *b; });
 }
