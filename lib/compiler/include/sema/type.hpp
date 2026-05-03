@@ -153,10 +153,12 @@ class Type {
     MAKE_GETTER(kind, TypeKind)
     MAKE_OPTIONAL_UNPACKER(resolved, Resolved, resolved_, *)
 
+    // Unpacks T from the resolved type assuming the type has been resolved to T
     template <typename Self, typename T> [[nodiscard]] auto as(this Self&& self) -> auto& {
         return std::get<T>(self.resolved_.value());
     }
 
+    // Tries to unpack T, returning an empty option instead of throwing an exception
     template <typename Self, typename T> [[nodiscard]] auto as_opt(this Self&& self) noexcept {
         if (!self.resolved_) { return opt::none; }
         using ReturnType = std::conditional_t<std::is_const_v<std::remove_reference_t<Self>>,
@@ -181,6 +183,9 @@ class Type {
     }
 
     auto resolve(Resolved type) noexcept -> void { resolved_.emplace(std::move(type)); }
+
+    // Returns the memory address of the Type for a Key's marker
+    [[nodiscard]] auto as_marker() const noexcept -> uptr { return reinterpret_cast<uptr>(this); }
 
   private:
     TypeKind              kind_;

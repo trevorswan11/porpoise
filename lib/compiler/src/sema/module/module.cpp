@@ -6,7 +6,8 @@ namespace porpoise::sema::mod {
 
 auto Module::print_diagnostics(std::ostream& os) const -> void {
     if (is_ok()) { return; }
-    match([&](const auto& l) { l.print(os, *this); });
+    match(Overloaded{[&](const auto& l) { l.print(os, *this); },
+                     [](const Unit&) { std::unreachable(); }});
 }
 
 auto ModuleManager::try_get_file_module(const std::filesystem::path& path,

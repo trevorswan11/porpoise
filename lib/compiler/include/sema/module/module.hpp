@@ -33,7 +33,7 @@ enum class ModuleState : u8 {
     ERRORED,
 };
 
-using DiagnosticListVariant = std::variant<syntax::ParserDiagnostics, sema::Diagnostics>;
+using DiagnosticListVariant = std::variant<Unit, syntax::ParserDiagnostics, sema::Diagnostics>;
 
 #define MAKE_MODULE_DIAGNOSTIC_UNPACKER(name, checker, DiagType)                \
     [[nodiscard]] auto CONCAT(get_, name)() const noexcept -> const DiagType& { \
@@ -54,7 +54,7 @@ struct Module {
     opt::Index            root_table_idx;
     ModuleState           state;
 
-    DiagnosticListVariant diagnostics;
+    DiagnosticListVariant diagnostics{Unit{}};
 
     MAKE_MODULE_DIAGNOSTIC_UNPACKER(parser_diagnostics, is_errored, syntax::ParserDiagnostics)
     MAKE_MODULE_DIAGNOSTIC_UNPACKER(sema_diagnostics, is_poisoned, sema::Diagnostics)
@@ -63,15 +63,19 @@ struct Module {
 
     // Errors out the module regardless of previous state and emplaces the diagnostics
     template <typename DiagList>
-    auto error_out(DiagList&& list, ModuleState error_state = ModuleState::ERRORED) noexcept
-        -> mod::ModuleState {
+        requires(!std::same_as<std::remove_cvref_t<DiagList>, Unit>)
+    auto error_out(DiagList&& list, ModuleState error_state) noexcept -> mod::ModuleState {
         diagnostics.emplace<DiagList>(std::move(list));
         return state = error_state;
     }
 
     // Prints the modules diagnostics to the stream, doing nothing if an error state is not present
     auto print_diagnostics(std::ostream& os) const -> void;
+
+    // Errored modules cannot be used in any future compilation step
     auto is_errored() const noexcept -> bool { return state == ModuleState::ERRORED; }
+
+    // Poisoned modules are able to be used in sematic steps but are not correct themselves
     auto is_poisoned() const noexcept -> bool {
         return state >= ModuleState::POISONED_SYMBOL_COLLECTION && !is_errored();
     }
