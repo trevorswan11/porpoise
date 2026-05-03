@@ -29,7 +29,7 @@ auto TypeResolver::resolve_types(mod::Module& module, const Context& ctx) -> mod
 
 auto TypeResolver::visit(const ast::ArrayExpression& array) -> void {
     visit_list(array.get_items());
-    array.get_item_type().accept(*this);
+    visit(array.get_item_type());
     array.get_item_type().set_sema_type(*last_type_.take());
 
     const auto size            = array.get_size();

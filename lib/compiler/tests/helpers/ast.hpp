@@ -154,7 +154,7 @@ template <ast::PrimitiveNode N, bool Nullable = false>
     requires(std::same_as<N, ast::VoidExpression>)
 auto make_primitive() noexcept {
     return make_leaf_node<ast::VoidExpression, Nullable>(
-        syntax::Token{syntax::TokenType::LBRACE, "{"}, Unit{});
+        syntax::Token{syntax::TokenType::LBRACE, "{"});
 }
 
 template <ast::PrimitiveNode N, bool Nullable = false>
@@ -162,7 +162,7 @@ template <ast::PrimitiveNode N, bool Nullable = false>
 auto make_primitive(bool value) noexcept {
     const syntax::Token tok{value ? syntax::keywords::BOOLEAN_TRUE
                                   : syntax::keywords::BOOLEAN_FALSE};
-    return make_leaf_node<ast::BoolExpression, Nullable>(tok, value ? true : false);
+    return make_leaf_node<ast::BoolExpression, Nullable>(tok);
 }
 
 namespace type_modifiers {

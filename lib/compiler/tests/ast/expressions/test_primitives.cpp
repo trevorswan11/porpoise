@@ -27,11 +27,19 @@ auto test_primitive(std::string_view                                            
     CHECK(errors.empty());
     CHECK(ast.size() == 1);
 
-    const auto  actual{std::move(ast[0])};
-    const auto& expr_stmt = into_expression_statement(*actual);
-    const N     expected{syntax::Token{*expected_type, trim_semicolons(node_token_slice)},
-                     std::get<T>(expected_value)};
-    CHECK(expected == expr_stmt.get_expression());
+    const auto     actual{std::move(ast[0])};
+    const auto&    expr_stmt = into_expression_statement(*actual);
+    opt::Option<N> expected;
+
+    if constexpr (ast::LightPrimitiveNode<N>) {
+        expected.emplace(syntax::Token{*expected_type, trim_semicolons(node_token_slice)});
+    } else {
+        expected.emplace(syntax::Token{*expected_type, trim_semicolons(node_token_slice)},
+                         std::get<T>(expected_value));
+    }
+
+    REQUIRE(expected);
+    CHECK(*expected == expr_stmt.get_expression());
 }
 
 template <ast::PrimitiveNode N>

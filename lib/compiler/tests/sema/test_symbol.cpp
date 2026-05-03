@@ -11,7 +11,7 @@ TEST_CASE("Basic table operations") {
     const std::string_view     name{"a"};
     const ast::ImportStatement import_node{syntax::Token{syntax::keywords::IMPORT},
                                            ast::LibraryImport{helpers::make_ident(name), {}}};
-    const sema::SymbolicImport import_sym{&import_node, opt::none};
+    const sema::SymbolicImport import_sym{import_node, opt::none};
 
     CHECK(table.empty());
     CHECK(table.insert(name, import_sym));
@@ -35,7 +35,7 @@ TEST_CASE("Multiple table import") {
     const ast::ImportStatement library_import{
         syntax::Token{syntax::keywords::IMPORT},
         ast::LibraryImport{helpers::make_ident(library_name), {}}};
-    const sema::SymbolicImport library_sym{&library_import, opt::none};
+    const sema::SymbolicImport library_sym{library_import, opt::none};
     CHECK(table.insert(library_name, library_sym));
 
     const std::string_view     user_name{"node"};
@@ -44,7 +44,7 @@ TEST_CASE("Multiple table import") {
         syntax::Token{syntax::keywords::IMPORT},
         ast::FileImport{helpers::make_primitive<ast::StringExpression>(user_file),
                         helpers::make_ident(user_name)}};
-    const sema::SymbolicImport user_sym{&user_import, opt::none};
+    const sema::SymbolicImport user_sym{user_import, opt::none};
     CHECK(table.insert(user_name, user_sym));
 
     CHECK(table.size() == 2);
@@ -62,7 +62,7 @@ TEST_CASE("Duplicate table inserts") {
     const std::string_view     name{"a"};
     const ast::ImportStatement import_node{syntax::Token{syntax::keywords::IMPORT},
                                            ast::LibraryImport{helpers::make_ident(name), {}}};
-    const sema::SymbolicImport import_sym{&import_node, opt::none};
+    const sema::SymbolicImport import_sym{import_node, opt::none};
 
     CHECK(table.insert(name, import_sym));
     CHECK_FALSE(table.insert(name, import_sym));
@@ -73,7 +73,7 @@ TEST_CASE("Illegal registry insert") {
     sema::SymbolTableRegistry  registry;
     const ast::ImportStatement import_node{syntax::Token{syntax::keywords::IMPORT},
                                            ast::LibraryImport{helpers::make_ident("a"), {}}};
-    const sema::SymbolicImport import_sym{&import_node, opt::none};
+    const sema::SymbolicImport import_sym{import_node, opt::none};
     const auto                 result = registry.insert_into(0, "a", import_sym);
 
     CHECK_FALSE(result);

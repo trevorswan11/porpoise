@@ -10,7 +10,7 @@
 namespace porpoise::sema {
 
 auto SymbolicImport::is_equal(const SymbolicImport& other) const noexcept -> bool {
-    return *node == *other.node;
+    return node == other.node;
 }
 
 auto Symbol::is_equal(const Symbol& other) const noexcept -> bool {
@@ -36,14 +36,14 @@ auto Symbol::get_node_token() const noexcept -> const syntax::Token& {
     return match(
         Overloaded{[](const auto& node) -> const syntax::Token& { return node->get_token(); },
                    [](const SymbolicImport& inner) -> const syntax::Token& {
-                       return inner.node->get_token();
+                       return inner.node.get_token();
                    }});
 }
 
 auto Symbol::is_public() const noexcept -> bool {
     return match(Overloaded{
         [](const SymbolicDecl& decl) { return decl->has_modifier(ast::DeclModifiers::PUBLIC); },
-        [](const SymbolicImport& import_stmt) { return import_stmt.node->is_public(); },
+        [](const SymbolicImport& import_stmt) { return import_stmt.node.is_public(); },
         [](const SymbolicUsing& using_stmt) { return using_stmt->is_public(); },
         [](const auto&) { return false; }});
 }
@@ -61,7 +61,7 @@ auto SymbolTable::insert(std::string_view name, SymbolicNode node) -> Result<Uni
             Error::IDENTIFIER_REDECLARATION,
             std::visit(Overloaded{[](const auto& inner) -> auto& { return inner->get_token(); },
                                   [](const SymbolicImport& inner) -> auto& {
-                                      return inner.node->get_token();
+                                      return inner.node.get_token();
                                   }},
                        node));
     }
@@ -88,12 +88,12 @@ auto SymbolTableRegistry::insert_into(usize table_idx, std::string_view name, Sy
                                     return SourceInfo<syntax::Token>::get(inner->get_token());
                                 },
                                 [](const SymbolicImport& inner) {
-                                    return SourceInfo<syntax::Token>::get(inner.node->get_token());
+                                    return SourceInfo<syntax::Token>::get(inner.node.get_token());
                                 }})),
                 Error::SHADOWING_DECLARATION,
                 std::visit(Overloaded{[](const auto& inner) -> auto& { return inner->get_token(); },
                                       [](const SymbolicImport& inner) -> auto& {
-                                          return inner.node->get_token();
+                                          return inner.node.get_token();
                                       }},
                            node));
         }

@@ -25,7 +25,6 @@ auto ISizeExpression::accept(Visitor& v) const -> void { v.visit(*this); }
 auto U32Expression::accept(Visitor& v) const -> void { v.visit(*this); }
 auto U64Expression::accept(Visitor& v) const -> void { v.visit(*this); }
 auto USizeExpression::accept(Visitor& v) const -> void { v.visit(*this); }
-
 auto U8Expression::accept(Visitor& v) const -> void { v.visit(*this); }
 
 auto U8Expression::parse(syntax::Parser& parser)
@@ -50,10 +49,10 @@ auto U8Expression::parse(syntax::Parser& parser)
     return mem::make_box<U8Expression>(start_token, value);
 }
 
-template <typename T> auto approx_eq(T a, T b) -> bool {
+template <typename Float> auto approx_eq(Float a, Float b) -> bool {
     const auto largest = std::max(std::abs(b), std::abs(a));
     const auto diff    = std::abs(a - b);
-    return diff <= largest * std::numeric_limits<T>::epsilon();
+    return diff <= largest * std::numeric_limits<Float>::epsilon();
 }
 
 auto F32Expression::accept(Visitor& v) const -> void { v.visit(*this); }
@@ -74,9 +73,7 @@ auto BoolExpression::accept(Visitor& v) const -> void { v.visit(*this); }
 
 auto BoolExpression::parse(syntax::Parser& parser)
     -> Result<mem::Box<Expression>, syntax::ParserDiagnostic> {
-    const auto& start_token = parser.get_current_token();
-    return mem::make_box<BoolExpression>(start_token,
-                                         start_token.type == syntax::TokenType::BOOLEAN_TRUE);
+    return mem::make_box<BoolExpression>(parser.get_current_token());
 }
 
 auto VoidExpression::accept(Visitor& v) const -> void { v.visit(*this); }
@@ -85,7 +82,7 @@ auto VoidExpression::parse(syntax::Parser& parser)
     -> Result<mem::Box<Expression>, syntax::ParserDiagnostic> {
     const auto start_token = parser.get_current_token();
     TRY(parser.expect_peek(syntax::TokenType::RBRACE));
-    return mem::make_box<VoidExpression>(start_token, Unit{});
+    return mem::make_box<VoidExpression>(start_token);
 }
 
 // cppcheck-suppress-end [constParameterReference, duplInheritedMember]

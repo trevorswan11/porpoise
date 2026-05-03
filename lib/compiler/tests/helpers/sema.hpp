@@ -80,7 +80,7 @@ template <typename N> struct TableEntry {
 
 // A helper for creating leaf-node-based symbols
 template <ast::LeafNode N> struct TableEntry<N> {
-    using IsLeaf = void;
+    using is_leaf = void;
 
     std::string_view              name;
     N                             node;
@@ -90,7 +90,7 @@ template <ast::LeafNode N> struct TableEntry<N> {
 
 // A helper for creating symbolic imports
 template <> struct TableEntry<ast::ImportStatement> {
-    using IsSymImp = void;
+    using is_sym_imp = void;
 
     std::string_view              name;
     ast::ImportStatement          node;
@@ -100,7 +100,7 @@ template <> struct TableEntry<ast::ImportStatement> {
 
 // A helper for creating declaration symbols
 template <> struct TableEntry<ast::DeclStatement> {
-    using IsDecl = void;
+    using is_decl = void;
 
     std::string_view              name;
     ast::DeclStatement            node;
@@ -110,13 +110,13 @@ template <> struct TableEntry<ast::DeclStatement> {
 };
 
 template <typename T>
-concept IsDeclEntry = requires { typename T::IsDecl; };
+concept IsDeclEntry = requires { typename T::is_decl; };
 
 template <typename T>
-concept IsLeafEntry = requires { typename T::IsLeaf; };
+concept IsLeafEntry = requires { typename T::is_leaf; };
 
 template <typename T>
-concept IsSymImpEntry = requires { typename T::IsSymImp; };
+concept IsSymImpEntry = requires { typename T::is_sym_imp; };
 
 // A type can be emplaced at different levels depending on template specialization
 template <typename EntryT, typename NodeLike>
@@ -169,7 +169,7 @@ auto test_collector(std::string_view             input,
 
         opt::Option<sema::Symbol> expected;
         if constexpr (IsSymImpEntry<EntryT>) {
-            expected.emplace(entries.name, sema::SymbolicImport{&entries.node, opt::none});
+            expected.emplace(entries.name, sema::SymbolicImport{entries.node, opt::none});
         } else {
             expected.emplace(entries.name, &entries.node);
         }

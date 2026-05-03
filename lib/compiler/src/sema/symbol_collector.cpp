@@ -356,7 +356,7 @@ auto SymbolCollector::visit(const ast::ImportStatement& import_stmt) -> void {
     }
 
     ctx_.try_result(
-        ctx_.registry.insert_into(table_idx_, alias, SymbolicImport{&import_stmt, imported_mod}));
+        ctx_.registry.insert_into(table_idx_, alias, SymbolicImport{import_stmt, imported_mod}));
     if (imported_mod) {
         auto& type = ctx_.pool[{TypeKind::MODULE, false, imported_mod->root_table_idx}];
         import_stmt.set_sema_type(type);

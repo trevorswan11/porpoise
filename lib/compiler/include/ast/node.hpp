@@ -109,12 +109,12 @@ class Node {
 
     virtual auto accept(Visitor& v) const -> void = 0;
 
-    auto get_token() const noexcept -> const syntax::Token& { return start_token_; }
-    auto get_kind() const noexcept -> NodeKind { return kind_; }
+    [[nodiscard]] auto get_token() const noexcept -> const syntax::Token& { return start_token_; }
+    [[nodiscard]] auto get_kind() const noexcept -> NodeKind { return kind_; }
 
     MAKE_AST_SEMA_TYPE_FNS()
 
-    friend auto operator==(const Node& lhs, const Node& rhs) noexcept -> bool {
+    [[nodiscard]] friend auto operator==(const Node& lhs, const Node& rhs) noexcept -> bool {
         if (lhs.kind_ != rhs.kind_) { return false; }
         if (lhs.start_token_.type != rhs.start_token_.type) { return false; }
         if (lhs.start_token_.slice != rhs.start_token_.slice) { return false; }
@@ -127,8 +127,11 @@ class Node {
         return lhs.is_equal(rhs);
     }
 
-    template <LeafNode T> auto     is() const noexcept -> bool { return kind_ == T::KIND; }
-    template <LeafNode... Ts> auto any() const noexcept -> bool {
+    template <LeafNode T> [[nodiscard]] constexpr auto is() const noexcept -> bool {
+        return kind_ == T::KIND;
+    }
+
+    template <LeafNode... Ts> [[nodiscard]] constexpr auto any() const noexcept -> bool {
         return ((kind_ == Ts::KIND) || ...);
     }
 

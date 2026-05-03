@@ -53,13 +53,12 @@ using SymbolicArm         = mem::NonNull<const ast::MatchArm>;
 using SymbolicLabel       = mem::NonNull<const ast::LabelExpression>;
 
 struct SymbolicImport {
-    mem::NonNull<const ast::ImportStatement> node;
-    opt::Option<mod::Module&>                imported_mod;
+    const ast::ImportStatement& node;
+    opt::Option<mod::Module&>   imported_mod;
 
     MAKE_EQ_DELEGATION(SymbolicImport)
 };
 
-// No other nodes can ever be at the top level
 using SymbolicNode = std::variant<SymbolicDecl,
                                   SymbolicImport,
                                   SymbolicUsing,

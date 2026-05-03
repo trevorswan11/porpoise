@@ -94,7 +94,7 @@ class Visitor {
     ABSTRACT_AST_VISITOR_DECLARATION()
 
   protected:
-    template <typename T> constexpr auto visit_list(const T& list) -> void {
+    template <typename ASTNodeList> constexpr auto visit_list(const ASTNodeList& list) -> void {
         for (const auto& node : list) { unwrap_and_accept(node); }
     }
 
