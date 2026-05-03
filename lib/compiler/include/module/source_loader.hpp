@@ -2,11 +2,11 @@
 
 #include <filesystem>
 
-#include "sema/error.hpp"
+#include "module/error.hpp"
 
 #include "result.hpp"
 
-namespace porpoise::sema::mod {
+namespace porpoise::mod {
 
 class SourceLoader {
   public:
@@ -19,4 +19,4 @@ class SourceLoader {
         -> Result<std::filesystem::path, Error> = 0;
 };
 
-} // namespace porpoise::sema::mod
+} // namespace porpoise::mod

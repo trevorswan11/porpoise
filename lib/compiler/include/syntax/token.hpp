@@ -7,10 +7,7 @@
 #include <fmt/format.h>
 #include <magic_enum/magic_enum.hpp>
 
-#include "diagnostic/diagnostic.hpp"
-
-#include "diagnostic/source_location.hpp"
-
+#include "diagnostic.hpp"
 #include "option.hpp"
 #include "result.hpp"
 #include "types.hpp"

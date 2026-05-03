@@ -14,7 +14,6 @@ auto TypeResolver::resolve_types(mod::Module& module, const Context& ctx) -> mod
     }
 
     if (module.is_resolvable()) {
-        assert(module.root_table_idx.has_value() && "Cannot resolve module with no table");
         TypeResolver resolver{ctx};
         for (const auto& node : module.tree) { node->accept(resolver); }
 
@@ -38,11 +37,7 @@ auto TypeResolver::visit(const ast::ArrayExpression& array) -> void {
     last_type_.emplace(ctx_.pool[types::Key{
         TypeKind::ARRAY, false, 0, size, item_type.as_marker(), null_terminated}]);
     if (!last_type_->has_resolved()) {
-        last_type_->resolve(types::Array{
-            item_type,
-            size,
-            null_terminated,
-        });
+        last_type_->resolve<types::Array>(item_type, size, null_terminated);
     }
     array.set_sema_type(*last_type_);
 }
@@ -103,23 +98,23 @@ auto TypeResolver::visit(const ast::ImplicitAccessExpression&) -> void {}
 
 auto TypeResolver::visit(const ast::StringExpression&) -> void {}
 
-#define MAKE_BUILTIN_RESOLVER(NodeType, kind)                                 \
+#define MAKE_PRIMITIVE_RESOLVER(NodeType, kind)                               \
     auto TypeResolver::visit(const ast::NodeType& node) -> void {             \
         last_type_.emplace(ctx_.pool.get_builtin_value_type(TypeKind::kind)); \
         node.set_sema_type(*last_type_);                                      \
     }
 
-MAKE_BUILTIN_RESOLVER(I32Expression, INT)
-MAKE_BUILTIN_RESOLVER(I64Expression, LONG)
-MAKE_BUILTIN_RESOLVER(ISizeExpression, SIZE)
-MAKE_BUILTIN_RESOLVER(U32Expression, UINT)
-MAKE_BUILTIN_RESOLVER(U64Expression, ULONG)
-MAKE_BUILTIN_RESOLVER(USizeExpression, USIZE)
-MAKE_BUILTIN_RESOLVER(U8Expression, BYTE)
-MAKE_BUILTIN_RESOLVER(BoolExpression, BOOL)
-MAKE_BUILTIN_RESOLVER(VoidExpression, VOID)
-MAKE_BUILTIN_RESOLVER(F32Expression, FLOAT)
-MAKE_BUILTIN_RESOLVER(F64Expression, DOUBLE)
+MAKE_PRIMITIVE_RESOLVER(I32Expression, INT)
+MAKE_PRIMITIVE_RESOLVER(I64Expression, LONG)
+MAKE_PRIMITIVE_RESOLVER(ISizeExpression, SIZE)
+MAKE_PRIMITIVE_RESOLVER(U32Expression, UINT)
+MAKE_PRIMITIVE_RESOLVER(U64Expression, ULONG)
+MAKE_PRIMITIVE_RESOLVER(USizeExpression, USIZE)
+MAKE_PRIMITIVE_RESOLVER(U8Expression, BYTE)
+MAKE_PRIMITIVE_RESOLVER(BoolExpression, BOOL)
+MAKE_PRIMITIVE_RESOLVER(VoidExpression, VOID)
+MAKE_PRIMITIVE_RESOLVER(F32Expression, FLOAT)
+MAKE_PRIMITIVE_RESOLVER(F64Expression, DOUBLE)
 
 auto TypeResolver::visit(const ast::ScopeResolutionExpression&) -> void {}
 

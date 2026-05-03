@@ -3,23 +3,23 @@
 #include <sstream>
 #include <system_error>
 
-#include "sema/module/file_loader.hpp"
+#include "module/file_loader.hpp"
 
-namespace porpoise::sema::mod {
+namespace porpoise::mod {
 
 auto FileLoader::load(const std::filesystem::path& path) -> Result<std::string, Diagnostic> {
     if (!std::filesystem::exists(path)) {
-        return make_sema_err(fmt::format("Path '{}' does not exist", path.string()),
-                             Error::PATH_DOES_NOT_EXIST);
+        return make_mod_err(fmt::format("Path '{}' does not exist", path.string()),
+                            Error::PATH_DOES_NOT_EXIST);
     } else if (!std::filesystem::is_regular_file(path)) {
-        return make_sema_err(fmt::format("Path '{}' is not a file", path.string()),
-                             Error::PATH_IS_NOT_FILE);
+        return make_mod_err(fmt::format("Path '{}' is not a file", path.string()),
+                            Error::PATH_IS_NOT_FILE);
     }
 
     std::ifstream file{path, std::ios::in};
     if (!file.is_open()) {
-        return make_sema_err(fmt::format("Failed to open file at path: '{}'", path.string()),
-                             Error::FAILED_TO_OPEN_FILE);
+        return make_mod_err(fmt::format("Failed to open file at path: '{}'", path.string()),
+                            Error::FAILED_TO_OPEN_FILE);
     }
     std::stringstream buf;
     buf << file.rdbuf();
@@ -34,4 +34,4 @@ auto FileLoader::normalize(const std::filesystem::path& path)
     return canonical_path;
 }
 
-} // namespace porpoise::sema::mod
+} // namespace porpoise::mod

@@ -2,7 +2,7 @@
 #include <fmt/format.h>
 #include <fmt/ostream.h>
 
-#include "diagnostic/diagnostic.hpp"
+#include "diagnostic.hpp"
 
 #include "utility.hpp"
 

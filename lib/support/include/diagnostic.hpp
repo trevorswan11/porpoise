@@ -1,28 +1,55 @@
 #pragma once
 
 #include <ostream>
+#include <span>
 #include <sstream>
 #include <utility>
+#include <vector>
 
 #include <magic_enum/magic_enum.hpp>
 
 #include <fmt/color.h>
 #include <fmt/format.h>
 
-#include "diagnostic/source_location.hpp"
-
 #include "enum.hpp"
 #include "option.hpp"
 #include "types.hpp"
+#include "utility.hpp"
 
 namespace porpoise {
+
+// Should be zero indexed and only 1-indexed at print time
+struct SourceLocation {
+    usize line   = 0;
+    usize column = 0;
+
+    SourceLocation() noexcept = default;
+    SourceLocation(usize line, usize column) noexcept : line{line}, column{column} {}
+
+    auto operator==(const SourceLocation& other) const noexcept -> bool {
+        return line == other.line && column == other.column;
+    }
+};
+
+template <typename T> struct SourceInfo;
+
+template <typename T>
+concept Locateable = requires(T t) {
+    { SourceInfo<T>::get(t) } -> std::same_as<SourceLocation>;
+};
+
+template <> struct SourceInfo<std::pair<usize, usize>> {
+    static auto get(const std::pair<usize, usize>& p) noexcept -> SourceLocation {
+        return {p.first, p.second};
+    }
+};
+
+namespace mod { struct Module; } // namespace mod
 
 enum class DiagnosticLevel : u8 {
     ERROR,
     WARNING,
 };
-
-namespace detail {
 
 namespace style {
 
@@ -33,6 +60,8 @@ constexpr auto WARNING = fmt::fg(fmt::color::light_yellow);
 constexpr auto CARET   = fmt::fg(fmt::color::green);
 
 } // namespace style
+
+namespace detail {
 
 // Returns the level fit for diagnostic printing
 [[nodiscard]] constexpr auto level_name(DiagnosticLevel level) noexcept -> std::string_view {
@@ -70,12 +99,13 @@ template <ScopedEnum E> class Diagnostic {
   public:
     explicit Diagnostic(E err) noexcept : error_{err} {}
     Diagnostic(E err, usize line, usize column) noexcept : error_{err}, loc_{{line, column}} {}
-    Diagnostic(std::string msg, E err, usize line, usize column) noexcept
+    Diagnostic(opt::Option<std::string> msg, E err, usize line, usize column) noexcept
         : message_{std::move(msg)}, error_{err}, loc_{{line, column}} {}
-    Diagnostic(std::string msg, E err) noexcept : message_{std::move(msg)}, error_{err} {}
+    Diagnostic(opt::Option<std::string> msg, E err) noexcept
+        : message_{std::move(msg)}, error_{err} {}
 
     template <Locateable T>
-    Diagnostic(std::string msg, E err, const T& t) noexcept
+    Diagnostic(opt::Option<std::string> msg, E err, const T& t) noexcept
         : message_{std::move(msg)}, error_{err}, loc_{SourceInfo<T>::get(t)} {}
 
     template <Locateable T> Diagnostic(E err, T t) : error_{err}, loc_{SourceInfo<T>::get(t)} {}
@@ -97,9 +127,11 @@ template <ScopedEnum E> class Diagnostic {
     }
 
     auto operator==(const Diagnostic& other) const noexcept -> bool {
-        return message_ == other.message_ && error_ == other.error_ && loc_ == other.loc_;
+        return message_ == other.message_ && error_ == other.error_ && loc_ == other.loc_ &&
+               level_ == other.level_;
     }
 
+    MAKE_GETTER(message, const opt::Option<std::string>&)
     [[nodiscard]] auto to_formattable() const noexcept -> detail::FormattableDiagnostic {
         return {message_, loc_, level_};
     }
@@ -122,7 +154,52 @@ template <typename T> constexpr bool is_diagnostic_v = is_diagnostic<T>::value;
 template <typename T>
 concept DiagnosticType = is_diagnostic_v<T>;
 
+template <DiagnosticType D> class DiagnosticList {
+  public:
+    MAKE_ITERATOR(Diagnostics, std::vector<D>, diagnostics_)
+
+  public:
+    explicit DiagnosticList(opt::Option<bool> in_terminal = opt::none) noexcept
+        : in_terminal_{in_terminal} {}
+    ~DiagnosticList() = default;
+
+    MAKE_MOVE_ONLY(DiagnosticList)
+
+    auto push_back(const D& d) -> void { diagnostics_.push_back(d); }
+
+    template <typename... Args> auto emplace_back(Args&&... args) -> void {
+        diagnostics_.emplace_back(std::forward<Args>(args)...);
+    }
+
+    template <typename Self>
+    [[nodiscard]] auto operator[](this Self&& self, usize idx) noexcept -> auto& {
+        return self.diagnostics_[idx];
+    }
+
+    template <typename Self> [[nodiscard]] auto at(this Self&& self, usize idx) -> auto& {
+        return self.diagnostics_.at(idx);
+    }
+
+    operator std::span<const D>() const { return diagnostics_; }
+
+    // Creates a new list with the same terminal behavior
+    [[nodiscard]] auto create_new() const -> DiagnosticList { return DiagnosticList{in_terminal_}; }
+    auto get_terminal_status() const noexcept -> const opt::Option<bool>& { return in_terminal_; }
+
+  private:
+    Diagnostics       diagnostics_;
+    opt::Option<bool> in_terminal_;
+};
+
 } // namespace porpoise
+
+template <> struct fmt::formatter<porpoise::SourceLocation> {
+    static constexpr auto parse(format_parse_context& ctx) noexcept { return ctx.begin(); }
+
+    template <typename F> static auto format(const porpoise::SourceLocation& loc, F& ctx) {
+        return fmt::format_to(ctx.out(), "{}:{}", loc.line + 1, loc.column + 1);
+    }
+};
 
 template <typename E> struct fmt::formatter<porpoise::Diagnostic<E>> {
     static constexpr auto parse(format_parse_context& ctx) noexcept { return ctx.begin(); }

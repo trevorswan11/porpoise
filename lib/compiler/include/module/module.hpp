@@ -9,17 +9,17 @@
 #include "ast/node.hpp"
 
 #include "sema/error.hpp"
-#include "sema/module/source_loader.hpp"
 
 #include "syntax/parser.hpp"
 
-#include "diagnostic/source_file.hpp"
+#include "module/source_loader.hpp"
 
 #include "memory.hpp"
 #include "result.hpp"
+#include "source_file.hpp"
 #include "utility.hpp"
 
-namespace porpoise::sema::mod {
+namespace porpoise::mod {
 
 enum class ModuleState : u8 {
     PARSED,
@@ -33,7 +33,9 @@ enum class ModuleState : u8 {
     ERRORED,
 };
 
+// cppcheck-suppress-begin internalAstError
 using DiagnosticListVariant = std::variant<Unit, syntax::ParserDiagnostics, sema::Diagnostics>;
+// cppcheck-suppress-end internalAstError
 
 #define MAKE_MODULE_DIAGNOSTIC_UNPACKER(name, checker, DiagType)                \
     [[nodiscard]] auto CONCAT(get_, name)() const noexcept -> const DiagType& { \
@@ -131,4 +133,4 @@ class ModuleManager {
     ankerl::unordered_dense::map<std::string, std::filesystem::path> module_lut_;
 };
 
-} // namespace porpoise::sema::mod
+} // namespace porpoise::mod

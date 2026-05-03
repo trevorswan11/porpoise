@@ -9,8 +9,9 @@
 #include "ast/node.hpp"
 
 #include "sema/analyzer.hpp"
-#include "sema/module/memory_loader.hpp"
-#include "sema/module/module.hpp"
+
+#include "module/memory_loader.hpp"
+#include "module/module.hpp"
 
 #include "string.hpp"
 
@@ -27,8 +28,8 @@ auto AstDump::run() -> void {
         if (trimmed == "exit") { break; }
         if (trimmed.empty()) { continue; }
 
-        sema::mod::MemoryLoader  loader;
-        sema::mod::ModuleManager manager{loader};
+        mod::MemoryLoader  loader;
+        mod::ModuleManager manager{loader};
         loader.add(stdin_path, std::string{trimmed});
 
         sema::Analyzer analyzer{manager, std::cerr, true};

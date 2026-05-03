@@ -8,7 +8,8 @@
 #include <ankerl/unordered_dense.h>
 
 #include "sema/error.hpp"
-#include "sema/module/module.hpp"
+
+#include "module/module.hpp"
 
 #include "syntax/token.hpp"
 

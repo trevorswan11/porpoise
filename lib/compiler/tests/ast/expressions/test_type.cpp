@@ -200,15 +200,6 @@ TEST_CASE("Enum inline types") {
                 helpers::make_decls())});
 }
 
-TEST_CASE("Array type requirement") {
-    helpers::test_parser_fail(
-        "var a: [9]i32;",
-        syntax::ParserDiagnostic{syntax::ParserError::ILLEGAL_ARRAY_SIZE_TYPE, 0, 8});
-    helpers::test_parser_fail(
-        R"(var a: ["e"]i32;)",
-        syntax::ParserDiagnostic{syntax::ParserError::ILLEGAL_ARRAY_SIZE_TYPE, 0, 8});
-}
-
 TEST_CASE("Function type restrictions") {
     const auto illegals = std::to_array<std::string_view>({
         "var a: &fn(): void;",

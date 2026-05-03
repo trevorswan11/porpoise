@@ -6,7 +6,7 @@ SemaTestContext::SemaTestContext(const std::vector<MockFile>& imports,
                                  const std::filesystem::path& root_path,
                                  std::string_view             input,
                                  std::ostream&                error_stream)
-    : loader{mem::make_box<sema::mod::MemoryLoader>()}, manager{*loader},
+    : loader{mem::make_box<mod::MemoryLoader>()}, manager{*loader},
       analyzer{manager, error_stream, false}, root_mod{[&] {
           loader->add(root_path, std::string{input});
           for (const auto& mock : imports) {

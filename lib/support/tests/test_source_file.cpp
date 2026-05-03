@@ -2,7 +2,7 @@
 
 #include <catch2/catch_test_macros.hpp>
 
-#include "diagnostic/source_file.hpp"
+#include "source_file.hpp"
 
 namespace porpoise::tests {
 

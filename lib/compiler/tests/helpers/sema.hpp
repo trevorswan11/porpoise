@@ -9,8 +9,9 @@
 
 #include "sema/analyzer.hpp"
 #include "sema/error.hpp"
-#include "sema/module/memory_loader.hpp"
 #include "sema/symbol.hpp"
+
+#include "module/memory_loader.hpp"
 
 namespace porpoise::tests::helpers {
 
@@ -23,10 +24,10 @@ struct MockFile {
 };
 
 struct SemaTestContext {
-    mem::Box<sema::mod::MemoryLoader> loader;
-    sema::mod::ModuleManager          manager;
-    sema::Analyzer                    analyzer;
-    mem::NonNull<sema::mod::Module>   root_mod;
+    mem::Box<mod::MemoryLoader> loader;
+    mod::ModuleManager          manager;
+    sema::Analyzer              analyzer;
+    mem::NonNull<mod::Module>   root_mod;
 
     // The root is automatically added to the internal loader and can be immediately analyzed
     explicit SemaTestContext(const std::vector<MockFile>& imports,

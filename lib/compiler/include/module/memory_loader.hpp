@@ -4,9 +4,9 @@
 
 #include <ankerl/unordered_dense.h>
 
-#include "sema/module/source_loader.hpp"
+#include "module/source_loader.hpp"
 
-namespace porpoise::sema::mod {
+namespace porpoise::mod {
 
 // A mock loader used for in-memory files that can't be referenced relatively
 class MemoryLoader : public SourceLoader {
@@ -26,4 +26,4 @@ class MemoryLoader : public SourceLoader {
     ankerl::unordered_dense::map<std::filesystem::path, std::string> files_;
 };
 
-} // namespace porpoise::sema::mod
+} // namespace porpoise::mod

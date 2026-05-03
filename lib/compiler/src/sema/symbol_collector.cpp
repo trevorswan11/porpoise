@@ -344,7 +344,8 @@ auto SymbolCollector::visit(const ast::ImportStatement& import_stmt) -> void {
     if (!mod_result) {
         // The token is retrieved here to avoid copying it on success
         ctx_.diagnostics.emplace_back(
-            std::move(mod_result.error()),
+            mod_result.error().get_message(),
+            Error::MODULE_LOAD_ERROR,
             import_stmt.match(Overloaded{
                 [](const ast::LibraryImport& module) { return module.get_name().get_token(); },
                 [](const ast::FileImport& user) { return user.get_file().get_token(); },

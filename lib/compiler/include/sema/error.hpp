@@ -1,8 +1,6 @@
 #pragma once
 
-#include "diagnostic/diagnostic.hpp"
-#include "diagnostic/list.hpp"
-
+#include "diagnostic.hpp"
 #include "result.hpp"
 
 namespace porpoise::sema {
@@ -19,13 +17,7 @@ enum class Error : u8 {
     SHADOWING_DECLARATION,
     CIRCULAR_DEPENDENCY,
     ILLEGAL_TEST_LOCATION,
-    NORMALIZATION_FAILED,
-    PATH_DOES_NOT_EXIST,
-    PATH_IS_NOT_FILE,
-    FAILED_TO_OPEN_FILE,
-    MODULE_ALREADY_EXISTS,
-    MODULE_DOES_NOT_EXIST,
-    MODULE_PATH_NOT_RELATIVE,
+    MODULE_LOAD_ERROR,
 };
 
 using Diagnostic  = Diagnostic<Error>;

@@ -1,7 +1,7 @@
 # Arrays
 ## Declarations
 - Arrays are defined with 3 key components
-    - A size: This must be an underscore (signifying inferred size), a compile time constant (denoted with `constexpr`), or a usize integer literal (suffix `uz`)
+    - A size: This must be an underscore (signifying inferred size), a compile time constant (previously declared with `constexpr`), or an integer literal (suffix `uz`)
     - A type: This can be any valid type, but it must be present and cannot be inferred
     - Items: These items must be of the type specified, and must match the provided size if provided
 - Arrays are immutably sized, though internal elements can be mutable based on the provided type
@@ -20,7 +20,7 @@
 ## Types
 - There are two types of Array types 
     - Array types are extremely similar to their declaration counterpart, requiring two key components
-        - A size: This must be a compile time constant or a usize integer literal
+        - A size: This must be a compile time constant integer or integer literal coercible to a usize
         - A type: This can be any valid type, but it must be present and cannot be inferred. It can be as deeply nested as you'd like (i.e. `[2uz][2uz]i32`)
     - Slice types differ from array types in that they lack a size. They are composed of:
         - An open-close bracket pair with nothing in between

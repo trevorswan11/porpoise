@@ -6,7 +6,13 @@
 namespace porpoise::sema {
 
 auto Analyzer::analyze(const std::filesystem::path& entry_path) -> Result<Unit, Diagnostic> {
-    auto module = TRY(modules_.try_get_file_module(entry_path));
+    auto module_result = modules_.try_get_file_module(entry_path);
+    if (!module_result) {
+        return make_sema_err(std::move(module_result.error().get_message()),
+                             Error::MODULE_LOAD_ERROR);
+    }
+
+    auto module = *module_result;
     if (module->has_parser_diagnostics()) {
         module->print_diagnostics(error_stream_);
         return Unit{};

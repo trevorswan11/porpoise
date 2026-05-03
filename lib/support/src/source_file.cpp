@@ -1,4 +1,4 @@
-#include "diagnostic/source_file.hpp"
+#include "source_file.hpp"
 
 #include "string.hpp"
 

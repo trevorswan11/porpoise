@@ -4,8 +4,7 @@
 #include <string_view>
 #include <vector>
 
-#include "diagnostic/source_location.hpp"
-
+#include "diagnostic.hpp"
 #include "iterator.hpp"
 #include "option.hpp"
 #include "utility.hpp"

@@ -19,7 +19,7 @@ namespace porpoise::ast {
 template <typename N>
 concept PrimitiveNode = LeafNode<N> && requires { typename N::value_type; };
 
-// A primitive node without an explicit underlying payload 
+// A primitive node without an explicit underlying payload
 template <typename N>
 concept LightPrimitiveNode = PrimitiveNode<N> && requires { typename N::is_light; };
 
@@ -210,13 +210,13 @@ class F64Expression : public PrimitiveExpression<F64Expression, f64> {
 class BoolExpression : public ExprBase<BoolExpression> {
   public:
     using value_type = bool;
-    using is_light = void;
+    using is_light   = void;
 
   public:
     static constexpr auto KIND = NodeKind::BOOL_EXPRESSION;
 
   public:
-    BoolExpression(const syntax::Token& start_token) noexcept : ExprBase{start_token} {}
+    explicit BoolExpression(const syntax::Token& start_token) noexcept : ExprBase{start_token} {}
 
     MAKE_MOVE_CONSTRUCTABLE_ONLY(BoolExpression)
 
@@ -235,13 +235,13 @@ class BoolExpression : public ExprBase<BoolExpression> {
 class VoidExpression : public ExprBase<VoidExpression> {
   public:
     using value_type = Unit;
-    using is_light = void;
+    using is_light   = void;
 
   public:
     static constexpr auto KIND = NodeKind::VOID_EXPRESSION;
 
   public:
-    VoidExpression(const syntax::Token& start_token) noexcept : ExprBase{start_token} {}
+    explicit VoidExpression(const syntax::Token& start_token) noexcept : ExprBase{start_token} {}
 
     MAKE_MOVE_CONSTRUCTABLE_ONLY(VoidExpression)
 

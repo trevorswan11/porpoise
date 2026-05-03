@@ -9,9 +9,7 @@
 #include "syntax/precedence.hpp"
 #include "syntax/token.hpp"
 
-#include "diagnostic/diagnostic.hpp"
-#include "diagnostic/list.hpp"
-
+#include "diagnostic.hpp"
 #include "variant.hpp"
 
 namespace porpoise {

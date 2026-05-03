@@ -4,7 +4,6 @@
 #include "ast/expressions/enum.hpp"
 #include "ast/expressions/function.hpp"
 #include "ast/expressions/identifier.hpp"
-#include "ast/expressions/primitive.hpp"
 #include "ast/expressions/scope_resolve.hpp"
 #include "ast/expressions/struct.hpp"
 #include "ast/expressions/union.hpp"
@@ -53,10 +52,6 @@ auto ExplicitType::accept(Visitor& v) const -> void { v.visit(*this); }
         } else if (!parser.peek_token_is(syntax::TokenType::RBRACKET)) {
             parser.advance();
             dimension = mem::nullable_box_from(TRY(parser.parse_expression()));
-            if (!dimension->any<USizeExpression, IdentifierExpression>()) {
-                return make_parser_err(syntax::ParserError::ILLEGAL_ARRAY_SIZE_TYPE,
-                                       dimension->get_token());
-            }
 
             // The null terminated marker comes after the size for explicitly sized types
             if (parser.peek_token_is(syntax::TokenType::NULL_TERMINATED)) {

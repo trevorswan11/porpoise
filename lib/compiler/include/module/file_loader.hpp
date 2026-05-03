@@ -2,7 +2,7 @@
 
 #include "source_loader.hpp"
 
-namespace porpoise::sema::mod {
+namespace porpoise::mod {
 
 class FileLoader : public SourceLoader {
   public:
@@ -15,4 +15,4 @@ class FileLoader : public SourceLoader {
         -> Result<std::filesystem::path, Error> override;
 };
 
-} // namespace porpoise::sema::mod
+} // namespace porpoise::mod

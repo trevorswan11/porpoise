@@ -2,15 +2,15 @@
 
 #include <catch2/catch_test_macros.hpp>
 
-#include "sema/module/file_loader.hpp"
+#include "module/file_loader.hpp"
 
 namespace porpoise::tests {
 
 constexpr std::string_view expected_contents{"This is porpoise-ful\n"};
 
 TEST_CASE("Reading file off of disk correctly") {
-    sema::mod::FileLoader loader;
-    const auto            normalized = loader.normalize("lib/compiler/tests/sema/module/mock.inc");
+    mod::FileLoader loader;
+    const auto      normalized = loader.normalize("lib/compiler/tests/module/mock.inc");
     REQUIRE(normalized);
 
     const auto contents = loader.load(*normalized);
@@ -20,28 +20,28 @@ TEST_CASE("Reading file off of disk correctly") {
 }
 
 TEST_CASE("Path load on file not on disk") {
-    sema::mod::FileLoader loader;
-    const auto            normalized = loader.normalize("lib/compiler/tests/sema/module/mock");
+    mod::FileLoader loader;
+    const auto      normalized = loader.normalize("lib/compiler/tests/module/mock");
     REQUIRE(normalized);
 
     const auto result = loader.load(*normalized);
     REQUIRE_FALSE(result);
 
-    const sema::Diagnostic expected{fmt::format("Path '{}' does not exist", normalized->string()),
-                                    sema::Error::PATH_DOES_NOT_EXIST};
+    const mod::Diagnostic expected{fmt::format("Path '{}' does not exist", normalized->string()),
+                                   mod::Error::PATH_DOES_NOT_EXIST};
     CHECK(result.error() == expected);
 }
 
 TEST_CASE("Path load on directory on disk") {
-    sema::mod::FileLoader loader;
-    const auto            normalized = loader.normalize("lib/compiler/tests/sema/module");
+    mod::FileLoader loader;
+    const auto      normalized = loader.normalize("lib/compiler/tests/module");
     REQUIRE(normalized);
 
     const auto result = loader.load(*normalized);
     REQUIRE_FALSE(result);
 
-    const sema::Diagnostic expected{fmt::format("Path '{}' is not a file", normalized->string()),
-                                    sema::Error::PATH_IS_NOT_FILE};
+    const mod::Diagnostic expected{fmt::format("Path '{}' is not a file", normalized->string()),
+                                   mod::Error::PATH_IS_NOT_FILE};
     CHECK(result.error() == expected);
 }
 

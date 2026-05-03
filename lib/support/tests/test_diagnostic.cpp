@@ -1,16 +1,15 @@
 #include <catch2/catch_test_macros.hpp>
 
-#include "diagnostic/diagnostic.hpp"
+#include "diagnostic.hpp"
 
 namespace porpoise {
 
 struct SomethingLocationed {};
+struct SomethingElseLocationed {};
 
 template <> struct SourceInfo<SomethingLocationed> {
     static auto get(const SomethingLocationed&) noexcept -> SourceLocation { return {0, 42}; }
 };
-
-struct SomethingElseLocationed {};
 
 template <> struct SourceInfo<SomethingElseLocationed> {
     static auto get(const SomethingElseLocationed&) noexcept -> SourceLocation { return {42, 0}; }

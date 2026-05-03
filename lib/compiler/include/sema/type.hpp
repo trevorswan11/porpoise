@@ -182,7 +182,9 @@ class Type {
         return scope_table_idx_;
     }
 
-    auto resolve(Resolved type) noexcept -> void { resolved_.emplace(std::move(type)); }
+    template <typename Resolvee, typename... Args> auto resolve(Args&&... args) noexcept -> void {
+        resolved_.emplace(Resolvee{std::forward<Args>(args)...});
+    }
 
     // Returns the memory address of the Type for a Key's marker
     [[nodiscard]] auto as_marker() const noexcept -> uptr { return reinterpret_cast<uptr>(this); }

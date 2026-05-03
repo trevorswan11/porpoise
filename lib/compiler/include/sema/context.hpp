@@ -3,9 +3,10 @@
 #include <ostream>
 
 #include "sema/error.hpp"
-#include "sema/module/module.hpp"
 #include "sema/pool.hpp"
 #include "sema/symbol.hpp"
+
+#include "module/module.hpp"
 
 namespace porpoise::sema {
 

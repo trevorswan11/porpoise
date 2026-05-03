@@ -2,14 +2,16 @@
 
 #include "ast/expressions/array.hpp"
 
-#include "ast/expressions/call.hpp" // IWYU pragma: keep
+// IWYU pragma: begin_keeps
+#include "ast/expressions/call.hpp"
 #include "ast/expressions/enum.hpp"
 #include "ast/expressions/function.hpp"
 #include "ast/expressions/identifier.hpp"
-#include "ast/expressions/primitive.hpp"
 #include "ast/expressions/scope_resolve.hpp"
-#include "ast/expressions/struct.hpp" // IWYU pragma: keep
+#include "ast/expressions/struct.hpp"
 #include "ast/expressions/union.hpp"
+// IWYU pragma: end_keeps
+
 #include "ast/visitor.hpp"
 
 namespace porpoise::ast {
@@ -40,10 +42,6 @@ auto ArrayExpression::parse(syntax::Parser& parser)
             return make_parser_err(syntax::ParserError::MISSING_ARRAY_SIZE_TOKEN, start_token);
         } else if (!parser.current_token_is(syntax::TokenType::UNDERSCORE)) {
             size = mem::nullable_box_from(TRY(parser.parse_expression()));
-            if (!size->any<USizeExpression, IdentifierExpression>()) {
-                return make_parser_err(syntax::ParserError::ILLEGAL_ARRAY_SIZE_TYPE,
-                                       size->get_token());
-            }
         }
 
         // The null terminated marker comes after the size for explicitly sized types
@@ -71,25 +69,7 @@ auto ArrayExpression::parse(syntax::Parser& parser)
         }
     }
 
-    // Perform last minute ident/size checks to reduce load on Sema
     TRY(parser.expect_peek(syntax::TokenType::RBRACE));
-    if (size) {
-        const auto& size_expr = *size;
-        if (size_expr.is<USizeExpression>()) {
-            const auto& explicit_size = as<USizeExpression>(size_expr);
-            const auto& size_token    = size_expr.get_token();
-
-            // Enforce full initialization
-            if (items.size() != explicit_size.get_value()) {
-                return make_parser_err(syntax::ParserError::EXPLICIT_ARRAY_SIZE_MISMATCH,
-                                       size_token);
-            }
-        } else if (!size_expr.is<IdentifierExpression>()) {
-            return make_parser_err(syntax::ParserError::ILLEGAL_ARRAY_SIZE_TYPE,
-                                   size_expr.get_token());
-        }
-    }
-
     return mem::make_box<ArrayExpression>(
         start_token, std::move(size), null_terminated, std::move(item_type), std::move(items));
 }
