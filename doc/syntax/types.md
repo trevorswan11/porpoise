@@ -1,12 +1,13 @@
 # Types
 ## Explicit Types
 - Types in porpoise are first class values and can be assigned to values and passed to functions
-- There are 4 different explicit type modifiers in porpoise
+- There are 5 different explicit type modifiers in porpoise
     - `*`: Denotes a constant pointer
     - `*mut`: Denotes a mutable pointer
     - `&`: Denotes a constant reference
     - `&mut`: Denotes a mutable reference
-- These modifiers act in an opposite way to languages like C, C++, and Zig, while behaving similar to Rust
+    - `volatile`: Denotes a [volatile](https://en.wikipedia.org/wiki/Volatile_(computer_programming)) value, preventing certain compiler optimizations for the sake of correctness
+- Most of these modifiers act in an opposite way to languages like C, C++, and Zig, while behaving similar to Rust
     - Mutability is opt-in, with everything else being constant by default
 - There are 4 different explicit types in porpoise
     - Identifier types: Consist of an identifier (either a keyword or user defined type)

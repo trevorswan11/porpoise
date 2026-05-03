@@ -31,6 +31,8 @@ TEST_CASE("Named types") {
     SECTION("Shallow types") {
         helpers::test_type_expr("i32", ast::ExplicitType{mods::BASE, helpers::make_ident("i32")});
         helpers::test_type_expr("*i32", ast::ExplicitType{mods::PTR, helpers::make_ident("i32")});
+        helpers::test_type_expr("volatile i32",
+                                ast::ExplicitType{mods::VOLATILE, helpers::make_ident("i32")});
 
         const syntax::Token a{syntax::TokenType::IDENT, "a"};
         helpers::test_type_expr("a()",
@@ -196,14 +198,6 @@ TEST_CASE("Enum inline types") {
                                      helpers::make_primitive<ast::U32Expression, true>("3u")},
                     ast::Enumeration{helpers::make_ident("B"), {}}),
                 helpers::make_decls())});
-}
-
-TEST_CASE("Volatile restricted to declarations") {
-    helpers::test_parser_fail(
-        "var a: volatile i32;",
-        syntax::ParserDiagnostic{"No prefix parse function for VOLATILE(volatile) found",
-                                 syntax::ParserError::MISSING_PREFIX_PARSER,
-                                 std::pair{0uz, 7uz}});
 }
 
 TEST_CASE("Array type requirement") {

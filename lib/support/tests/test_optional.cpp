@@ -143,10 +143,21 @@ TEST_CASE("Boolean wrapper") {
     CHECK_FALSE(b.has_value());
     CHECK_THROWS_AS(b.value(), std::bad_optional_access);
     CHECK_FALSE(b.value_or(false));
+    CHECK_FALSE(b.value_or(0));
 
     b = true;
     CHECK(b.has_value());
     CHECK(b.value_or(false));
+}
+
+TEST_CASE("Index wrapper") {
+    opt::Index i;
+    CHECK_FALSE(i.has_value());
+    CHECK_THROWS_AS(i.value(), std::bad_optional_access);
+
+    i = 0;
+    CHECK(i.has_value());
+    CHECK(i == 0);
 }
 
 } // namespace porpoise::tests

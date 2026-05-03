@@ -26,6 +26,7 @@ class TypeModifier {
         MUT_REF,
         PTR,
         MUT_PTR,
+        VOLATILE,
     };
 
   public:
@@ -53,6 +54,8 @@ class TypeModifier {
         return is_mutable_ptr() || is_const_ptr();
     }
 
+    MAKE_MUTUALLY_EXCLUSIVE_TYPE_QUERY(volatile, Modifier::VOLATILE)
+
     friend auto operator==(const TypeModifier& lhs, const TypeModifier& rhs) noexcept -> bool {
         return lhs.underlying_ == rhs.underlying_;
     }
@@ -64,6 +67,7 @@ class TypeModifier {
         {syntax::TokenType::AND_MUT, Modifier::MUT_REF},
         {syntax::TokenType::STAR, Modifier::PTR},
         {syntax::TokenType::STAR_MUT, Modifier::MUT_PTR},
+        {syntax::TokenType::VOLATILE, Modifier::VOLATILE},
     });
 
   private:

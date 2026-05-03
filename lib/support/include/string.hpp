@@ -1,41 +1,65 @@
 #pragma once
 
+#include <algorithm>
+#include <cctype>
+#include <concepts>
+#include <ranges>
 #include <string_view>
+#include <type_traits>
 
 #include "types.hpp"
 
 namespace porpoise::string {
 
-using Predicate = bool (*)(byte);
+template <typename Func>
+concept Predicate = std::convertible_to<std::invoke_result_t<Func, byte>, bool>;
 
-[[nodiscard]] auto is_space(byte b) noexcept -> bool;
+// Trim all characters that fulfill the predicate from the left of the string
+template <Predicate Pred>
+[[nodiscard]] constexpr auto trim_left(
+    std::string_view str, Pred pred = [](byte b) { return std::isspace(b); }) noexcept
+    -> std::string_view {
+    const auto first = std::ranges::find_if_not(str, pred);
+    return std::string_view{first, static_cast<usize>(str.end() - first)};
+}
 
-[[nodiscard]] auto trim_left(std::string_view str, Predicate pred = is_space) noexcept
-    -> std::string_view;
+// Trims leftmost spaces
+constexpr auto trim_left(std::string_view str) noexcept -> std::string_view {
+    return trim_left(str, [](byte b) { return std::isspace(b); });
+}
 
-// Same as `trim_left` but counts the number of times the predicate was true
-[[nodiscard]] auto trim_left(std::string_view str, usize& count, Predicate pred = is_space) noexcept
-    -> std::string_view;
+// Trim all characters that fulfill the predicate from the right of the string
+template <Predicate Pred>
+[[nodiscard]] constexpr auto trim_right(std::string_view str, Pred pred) noexcept
+    -> std::string_view {
+    const auto last = std::ranges::find_if_not(str | std::views::reverse, pred).base();
+    return std::string_view{str.begin(), last};
+}
 
-[[nodiscard]] auto trim_right(std::string_view str, Predicate pred = is_space) noexcept
-    -> std::string_view;
+// Trims rightmost spaces
+constexpr auto trim_right(std::string_view str) noexcept -> std::string_view {
+    return trim_right(str, [](byte b) { return std::isspace(b); });
+}
 
-// Same as `trim_right` but counts the number of times the predicate was true
-[[nodiscard]] auto trim_right(std::string_view str,
-                              usize&           count,
-                              Predicate        pred = is_space) noexcept -> std::string_view;
+// Trim all characters that fulfill the predicate from both ends of the string
+template <Predicate Pred>
+[[nodiscard]] constexpr auto trim(std::string_view str, Pred pred) noexcept -> std::string_view {
+    const auto ltrim = trim_left(str, pred);
+    return trim_right(ltrim, pred);
+}
 
-[[nodiscard]] auto trim(std::string_view str, Predicate pred = is_space) noexcept
-    -> std::string_view;
-
-// Same as `trim` but counts the number of times the predicate was true
-[[nodiscard]] auto trim(std::string_view str, usize& count, Predicate pred = is_space) noexcept
-    -> std::string_view;
+// Trims both ends' spaces
+constexpr auto trim(std::string_view str) noexcept -> std::string_view {
+    return trim(str, [](byte b) { return std::isspace(b); });
+}
 
 // Zero allocation substring returning empty substring for invalid input
-[[nodiscard]] auto substr(std::string_view str,
-                          usize            pos,
-                          usize len = std::string_view::npos) noexcept -> std::string_view;
+[[nodiscard]] constexpr auto
+substr(std::string_view str, usize pos, usize len = std::string_view::npos) noexcept
+    -> std::string_view {
+    return pos > str.size() ? std::string_view{}
+                            : std::string_view{str.data() + pos, std::min(len, str.size() - pos)};
+}
 
 // Think hard about why a view of an rvalue temporary string is a bad idea
 auto substr(std::string&& str, usize pos, usize len = std::string_view::npos) noexcept

@@ -172,6 +172,7 @@ const ast::TypeModifier REF{ast::TypeModifier::Modifier::REF};
 const ast::TypeModifier MUT_REF{ast::TypeModifier::Modifier::MUT_REF};
 const ast::TypeModifier PTR{ast::TypeModifier::Modifier::PTR};
 const ast::TypeModifier MUT_PTR{ast::TypeModifier::Modifier::MUT_PTR};
+const ast::TypeModifier VOLATILE{ast::TypeModifier::Modifier::VOLATILE};
 
 } // namespace type_modifiers
 

@@ -6,8 +6,6 @@
 
 #include "helpers/ast.hpp"
 
-#include "array.hpp"
-
 namespace porpoise::tests {
 
 namespace keywords  = syntax::keywords;
@@ -125,7 +123,7 @@ static auto test_decl_fail(std::initializer_list<syntax::Keyword> modifiers,
 
 TEST_CASE("Mutability restrictions") {
     const std::array contending_mut{keywords::CONSTEXPR, keywords::VAR, keywords::CONSTANT};
-    for (const auto& mut : array::combinations(contending_mut)) {
+    for (const auto& mut : helpers::combinations(contending_mut)) {
         test_decl_fail({mut.first, mut.second},
                        syntax::ParserDiagnostic{syntax::ParserError::ILLEGAL_DECL_MODIFIERS, 0, 0});
     }
@@ -135,7 +133,7 @@ TEST_CASE("Mutability restrictions") {
 
 TEST_CASE("CONSTEXPR restrictions") {
     const std::array contending_mut{keywords::EXTERN, keywords::CONSTEXPR};
-    for (const auto& mut : array::combinations(contending_mut)) {
+    for (const auto& mut : helpers::combinations(contending_mut)) {
         test_decl_fail({mut.first, mut.second},
                        syntax::ParserDiagnostic{syntax::ParserError::ILLEGAL_DECL_MODIFIERS, 0, 0});
     }
@@ -145,7 +143,7 @@ TEST_CASE("CONSTEXPR restrictions") {
 
 TEST_CASE("ABI/Linkage restrictions") {
     const std::array contending_mut{keywords::EXTERN, keywords::EXPORT};
-    for (const auto& mut : array::combinations(contending_mut)) {
+    for (const auto& mut : helpers::combinations(contending_mut)) {
         test_decl_fail({mut.first, mut.second},
                        syntax::ParserDiagnostic{syntax::ParserError::ILLEGAL_DECL_MODIFIERS, 0, 0});
     }

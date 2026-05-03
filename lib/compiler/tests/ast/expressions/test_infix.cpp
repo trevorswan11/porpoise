@@ -4,8 +4,6 @@
 
 #include "helpers/ast.hpp"
 
-#include "array.hpp"
-
 namespace porpoise::tests {
 
 namespace operators = syntax::operators;
@@ -95,7 +93,9 @@ TEST_CASE("Assignment operator right associativity") {
     }
 
     SECTION("Combinations") {
-        for (const auto& ops : array::combinations(assignment_ops)) { test_assignment_assoc(ops); }
+        for (const auto& ops : helpers::combinations(assignment_ops)) {
+            test_assignment_assoc(ops);
+        }
     }
 }
 
