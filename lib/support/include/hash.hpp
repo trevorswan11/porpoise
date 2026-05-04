@@ -8,6 +8,9 @@
 
 namespace porpoise::hash {
 
+template <typename T>
+concept Hashable = std::is_convertible_v<T, u64>;
+
 namespace wyhash = ankerl::unordered_dense::detail::wyhash;
 
 // A 'high-quality' hash backed by `wyhash` with a `std::hash` fallback
@@ -15,20 +18,25 @@ class Hasher {
   public:
     // Hashes the provided value to use as the initial hashed value
     template <typename T> explicit Hasher(const T& initial) : hash_{hash(initial)} {}
+    Hasher() noexcept : hash_{0} {}
 
     // Hashes the provided value and mixes the result with the current hash
     template <typename T> auto combine(const T& value) noexcept -> void {
         hash_ = wyhash::mix(hash_, hash(value));
     }
 
+    template <> auto combine<Hasher>(const Hasher& value) noexcept -> void {
+        hash_ = wyhash::mix(hash_, value.finalize());
+    }
+
     // Call this after a full operation to get the resulting hash
     [[nodiscard]] auto finalize() const noexcept -> u64 { return hash_; }
 
+    bool operator==(const Hasher&) const noexcept = default;
+
   private:
     template <typename T> [[nodiscard]] static auto hash(const T& value) noexcept -> u64 {
-        if constexpr (std::is_convertible_v<T, u64>) {
-            return wyhash::hash(static_cast<u64>(value));
-        }
+        if constexpr (Hashable<T>) { return wyhash::hash(static_cast<u64>(value)); }
         return ankerl::unordered_dense::hash<T>{}(value);
     }
 

@@ -67,11 +67,18 @@ struct Reference {
 };
 
 struct Enum {
-    Type& underlying;
+    Type&                         underlying;
+    std::span<mem::NonNull<Type>> members;
+};
+
+struct Union {
+    std::span<mem::NonNull<Type>> fields;
+    std::span<mem::NonNull<Type>> members;
 };
 
 struct Struct {
-    bool packed;
+    bool                          packed;
+    std::span<mem::NonNull<Type>> members;
 };
 
 struct Function {
@@ -79,20 +86,13 @@ struct Function {
     Type&                         return_type;
 };
 
-template <typename T>
-concept KeyMarker = std::is_convertible_v<T, uptr>;
-
 class Key {
   public:
-    template <KeyMarker A = uptr, KeyMarker B = uptr>
-    Key(TypeKind kind,
-        bool     mut,
-        usize    idx      = 0,
-        A        marker_a = 0,
-        B        marker_b = 0,
-        bool     flag     = false) noexcept
-        : kind_{kind}, mut_{mut}, idx_{idx}, marker_a_{static_cast<uptr>(marker_a)},
-          marker_b_{static_cast<uptr>(marker_b)}, flag_{flag} {}
+    template <hash::Hashable... Markers>
+    Key(TypeKind kind, bool mut, usize idx = 0, bool flag = false, Markers&&... markers) noexcept
+        : kind_{kind}, mut_{mut}, idx_{idx}, flag_{flag} {
+        (..., [&] { markers_.combine(markers); }());
+    }
 
     MAKE_GETTER(kind, TypeKind)
 
@@ -101,31 +101,25 @@ class Key {
         hash::Hasher h{std::to_underlying(kind_)};
         h.combine(mut_);
         h.combine(idx_);
-        h.combine(marker_a_);
-        h.combine(marker_b_);
         h.combine(flag_);
+        h.combine(markers_);
         return h.finalize();
     }
 
-    auto                        emplace_idx(usize idx) noexcept -> void { idx_ = idx; }
-    template <KeyMarker T> auto emplace_marker_a(T marker_a) noexcept -> void {
-        marker_a_ = static_cast<uptr>(marker_a);
+    auto                             emplace_idx(usize idx) noexcept -> void { idx_ = idx; }
+    auto                             emplace_flag(bool flag) noexcept -> void { flag_ = flag; }
+    template <hash::Hashable H> auto emplace_marker(const H& marker) noexcept -> void {
+        markers_.combine(marker);
     }
-
-    template <KeyMarker T> auto emplace_marker_b(T marker_b) noexcept -> void {
-        marker_b_ = static_cast<uptr>(marker_b);
-    }
-    auto emplace_flag(bool flag) noexcept -> void { flag_ = flag; }
 
     bool operator==(const Key&) const noexcept = default;
 
   private:
-    TypeKind kind_;
-    bool     mut_;
-    usize    idx_;
-    uptr     marker_a_;
-    uptr     marker_b_;
-    bool     flag_;
+    TypeKind     kind_;
+    bool         mut_;
+    usize        idx_;
+    bool         flag_;
+    hash::Hasher markers_;
 };
 
 } // namespace types
@@ -187,7 +181,7 @@ class Type {
     }
 
     // Returns the memory address of the Type for a Key's marker
-    [[nodiscard]] auto as_marker() const noexcept -> uptr { return reinterpret_cast<uptr>(this); }
+    [[nodiscard]] auto as_marker() const noexcept -> u64 { return reinterpret_cast<u64>(this); }
 
   private:
     TypeKind              kind_;

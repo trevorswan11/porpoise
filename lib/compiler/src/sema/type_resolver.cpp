@@ -34,8 +34,8 @@ auto TypeResolver::visit(const ast::ArrayExpression& array) -> void {
     const auto size            = array.get_size();
     auto&      item_type       = array.get_item_type().get_sema_type();
     const auto null_terminated = array.is_null_terminated();
-    last_type_.emplace(ctx_.pool[types::Key{
-        TypeKind::ARRAY, false, 0, size, item_type.as_marker(), null_terminated}]);
+    last_type_.emplace(
+        ctx_.pool[{TypeKind::ARRAY, false, 0, null_terminated, size, item_type.as_marker()}]);
     if (!last_type_->has_resolved()) {
         last_type_->resolve<types::Array>(item_type, size, null_terminated);
     }
