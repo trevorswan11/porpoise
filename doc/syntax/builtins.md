@@ -157,84 +157,84 @@ Computes the number of set bits in the expression's binary representation.
 
 # @sqrt
 ```porpoise
-@sqrt(expression: auto): auto
+@sqrt(expression: auto): @typeOf(expression)
 ```
 
 Computes the square root of the passed expression.
 
 # @sin
 ```porpoise
-@sin(expression: auto): auto
+@sin(expression: auto): @typeOf(expression)
 ```
 
 Computes the sine of the passed expression.
 
 # @cos
 ```porpoise
-@cos(expression: auto): auto
+@cos(expression: auto): @typeOf(expression)
 ```
 
 Computes the cosine of the passed expression.
 
 # @tan
 ```porpoise
-@tan(expression: auto): auto
+@tan(expression: auto): @typeOf(expression)
 ```
 
 Computes the tangent of the passed expression.
 
 # @exp
 ```porpoise
-@exp(expression: auto): auto
+@exp(expression: auto): @typeOf(expression)
 ```
 
 Computes the exponentiation `e^x` of the passed expression.
 
 # @exp2
 ```porpoise
-@exp2(expression: auto): auto
+@exp2(expression: auto): @typeOf(expression)
 ```
 
 Computes the exponentiation `2^x` of the passed expression.
 
 # @log
 ```porpoise
-@log(expression: auto): auto
+@log(expression: auto): @typeOf(expression)
 ```
 
 Computes the natural logarithm of the passed expression.
 
 # @log2
 ```porpoise
-@log2(expression: auto): auto
+@log2(expression: auto): @typeOf(expression)
 ```
 
 Computes the base-2 logarithm of the passed expression.
 
 # @log10
 ```porpoise
-@log10(expression: auto): auto
+@log10(expression: auto): @typeOf(expression)
 ```
 
 Computes the base-10 logarithm of the passed expression.
 
 # @abs
 ```porpoise
-@abs(expression: auto): auto
+@abs(expression: auto): @typeOf(expression)
 ```
 
 Computes the absolute value of the passed expression.
 
 # @floor
 ```porpoise
-@floor(expression: auto): auto
+@floor(expression: auto): @typeOf(expression)
 ```
 
 Computes the floor'ed value of the passed expression.
 
 # @ceil
 ```porpoise
-@ceil(expression: auto): auto
+@ceil(expression: auto): @typeOf(expression)
 ```
 
 Computes the ceil'ed value of the passed expression.
