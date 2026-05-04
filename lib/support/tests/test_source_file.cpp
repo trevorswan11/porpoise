@@ -50,7 +50,8 @@ TEST_CASE("First and second line diagnostics") {
         helpers::test_diag_strings({i, 1uz}, lines[i], " ^");
         helpers::test_diag_strings({i, 5uz}, lines[i], "     ^");
         helpers::test_diag_strings({i, 13uz}, lines[i], "             ^");
-        helpers::test_diag_strings({i, 14uz}, lines[i], opt::none);
+        helpers::test_diag_strings({i, 14uz}, lines[i], "              ^");
+        helpers::test_diag_strings({i, 17uz}, lines[i], opt::none);
     }
 }
 

@@ -34,14 +34,13 @@ TEST_CASE("Trailing comma") {
 }
 
 TEST_CASE("Builtin with multiple arguments") {
-    const syntax::Token func{keywords::builtins::PTR_ADD};
+    const syntax::Token func{keywords::builtins::AS};
     helpers::test_expr_stmt(
-        "@ptrAdd(a, 4uz);",
-        ast::CallExpression{
-            func,
-            helpers::make_ident(func),
-            helpers::make_vector<ast::CallArgument>(
-                helpers::make_ident("a"), helpers::make_primitive<ast::USizeExpression>("4uz"))});
+        "@as(i32, a);",
+        ast::CallExpression{func,
+                            helpers::make_ident(func),
+                            helpers::make_vector<ast::CallArgument>(helpers::make_ident("i32"),
+                                                                    helpers::make_ident("a"))});
 }
 
 TEST_CASE("Type arguments in call") {

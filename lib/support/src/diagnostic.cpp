@@ -32,7 +32,11 @@ auto format_diagnostic(std::ostream&                   os,
     }
 
     // The optional message changes position based on source path presence
-    if (diag.message) { fmt::print(os, " {}", *diag.message); }
+    if (diag.message) {
+        fmt::print(os, " {}", *diag.message);
+    } else {
+        fmt::print(os, " {}", diag.error_name);
+    }
     if (!source_path && diag.location) { os << fmt::format(" {}", *diag.location); }
     return os;
 }

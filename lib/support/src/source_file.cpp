@@ -16,7 +16,7 @@ auto SourceFile::get_diagnostic_strings(const SourceLocation& loc) const
     if (loc.line > offsets_.size()) { return {"<invalid line>", opt::none}; }
 
     const auto start  = offsets_[loc.line];
-    const auto end    = loc.line < offsets_.size() ? offsets_[loc.line + 1] : offsets_.size();
+    const auto end    = loc.line + 1 < offsets_.size() ? offsets_[loc.line + 1] : source_.size();
     auto       substr = string::substr(source_, start, end - start);
 
     // Count skipped on the left but not right since the caret is right-clipped
@@ -31,9 +31,11 @@ auto SourceFile::get_diagnostic_strings(const SourceLocation& loc) const
     substr        = string::trim_right(substr);
 
     // Adjust the column number based on skipped spaces
-    if (loc.column < skipped) { return {substr, opt::none}; }
+    if (substr.empty() || loc.column < skipped) { return {substr, opt::none}; }
     const auto true_col = loc.column - skipped;
-    if (true_col + 1 > substr.size()) { return {substr, opt::none}; }
+
+    // Allow 1 past the end to accommodate missing semicolons
+    if (true_col > substr.size() + 1) { return {substr, opt::none}; }
 
     // The caret gets put one after the column size since the location in 0-indexed
     std::string caret_line;

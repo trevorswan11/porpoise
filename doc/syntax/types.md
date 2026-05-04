@@ -97,3 +97,11 @@ const Hand := union {
     - There is no string type in porpoise. Instead you must use an array or slice of bytes (i.e. `[]u8` or `[N]u8`)
 - `bool`: True (`true`) or false (`false`)
 - `void`: The unit type, this can be declared using empty curly braces `{}`
+
+## Special Types
+- `auto`: This type is used to tell function signatures that the type should be deduced by the call arguments
+    - This is valid for parameters and for the return type
+    - It can also be used in declarations, but this behaves the same as the walrus (`:=`) inference operator
+- `opaque`: This type indicates a type that is not known to the compiler for some reason
+    - Opaque types must be behind a pointer and cannot be dereferenced (mutability is allowed, but references are not)
+    - This exists to fulfill the need introduced by C's `void*` idiom

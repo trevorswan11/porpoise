@@ -14,7 +14,7 @@
 
 - Arrays do not decay to pointers implicitly as they do in C
 - To call a C function that takes in a pointer that is actually an array, you can use the builtin `@ptrFromArray`
-    - This erases the underlying size of the array and is not reversible. It is only recommended for use with C interop
+    - This erases the underlying size of the array and is not trivially reversible. It is only recommended for use with C interop
 - If you have a pointer and its size, you can recreate a porpoise-style slice using the `@sliceFromPtr` builtin
 
 ## Types
@@ -48,14 +48,6 @@ var a: &[]&*mut T; // Analogous slice type
     - This can be used to chain array indexing as: `const val := matrix[0uz][1uz];`
 - Indexing an array with a range returns a slice that is exactly the size specified by said range
 - An attempt to index outside of the bounds of an array results in a crash
-- If an array has decayed to a pointer, there are a few ways to interact with the memory through builtins:
-    - `@ptrAdd(ptr, offset)`: Returns a pointer to the value at `ptr + offset`
-    - `@ptrSub(ptr, offset)`: Returns a pointer to the value at `ptr - offset`
-    - `@ptrIdx(ptr, offset)`: Returns a pointer to the value at `offset`
-- It is not necessary to scale the offset by the size of the underlying item type
-    - This is a footgun from C that is handled internally by porpoise
-- These builtins are `not` safety checked, and illegal access has undefined behavior
-    - They should be avoided unless strictly necessary (i.e. working with highly performance-critical code or C-interop)
 
 ## Memory layout
 - Arrays and slices of bytes are not implicitly null terminated

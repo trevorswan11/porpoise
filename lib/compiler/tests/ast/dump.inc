@@ -229,10 +229,10 @@ ExpressionStatement
         └─ Name: IdentifierExpression: C
 ExpressionStatement
 └─ Expr: CallExpression
-    ├─ Callee: IdentifierExpression: @ptrAdd (builtin)
+    ├─ Callee: IdentifierExpression: @as (builtin)
     └─ Arguments:
-        ├─ IdentifierExpression: a
-        └─ USizeExpression: 4
+        ├─ IdentifierExpression: i32 (primitive)
+        └─ IdentifierExpression: a
 UsingStatement
 ├─ Public: false
 ├─ Alias: IdentifierExpression: T

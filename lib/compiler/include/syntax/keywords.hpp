@@ -48,6 +48,8 @@ constexpr Keyword U8{"u8", TokenType::U8_TYPE};
 constexpr Keyword BOOL{"bool", TokenType::BOOL_TYPE};
 constexpr Keyword VOID{"void", TokenType::VOID_TYPE};
 constexpr Keyword TYPE{"type", TokenType::TYPE_TYPE};
+constexpr Keyword AUTO{"auto", TokenType::AUTO_TYPE};
+constexpr Keyword OPAQUE{"opaque", TokenType::OPAQUE_TYPE};
 constexpr Keyword AS{"as", TokenType::AS};
 constexpr Keyword PUBLIC{"pub", TokenType::PUBLIC};
 constexpr Keyword EXTERN{"extern", TokenType::EXTERN};
@@ -62,36 +64,45 @@ constexpr Keyword TEST{"test", TokenType::TEST};
 
 namespace builtins {
 
-constexpr Keyword TYPEOF{"@typeOf", TokenType::TYPEOF};
-constexpr Keyword SIZEOF{"@sizeOf", TokenType::SIZEOF};
-constexpr Keyword ALIGNOF{"@alignOf", TokenType::ALIGNOF};
-constexpr Keyword PTR_ADD{"@ptrAdd", TokenType::PTR_ADD};
-constexpr Keyword PTR_SUB{"@ptrSub", TokenType::PTR_SUB};
-constexpr Keyword PTR_FROM_ARRAY{"@ptrFromArray", TokenType::PTR_FROM_ARRAY};
-constexpr Keyword SLICE_FROM_PTR{"@sliceFromPtr", TokenType::SLICE_FROM_PTR};
-constexpr Keyword PTR_IDX{"@ptrIdx", TokenType::PTR_IDX};
-constexpr Keyword PTR_FROM_INT{"@ptrFromInt", TokenType::PTR_FROM_INT};
-constexpr Keyword INT_FROM_PTR{"@intFromPtr", TokenType::INT_FROM_PTR};
-constexpr Keyword SIN{"@sin", TokenType::SIN};
-constexpr Keyword COS{"@cos", TokenType::COS};
-constexpr Keyword TAN{"@tan", TokenType::TAN};
-constexpr Keyword SQRT{"@sqrt", TokenType::SQRT};
-constexpr Keyword LOG{"@log", TokenType::LOG};
-constexpr Keyword LOG_10{"@log10", TokenType::LOG_10};
-constexpr Keyword LOG_2{"@log2", TokenType::LOG_2};
-constexpr Keyword MIN{"@min", TokenType::MIN};
-constexpr Keyword MAX{"@max", TokenType::MAX};
-constexpr Keyword MOD{"@mod", TokenType::MOD};
-constexpr Keyword DIVMOD{"@divmod", TokenType::DIVMOD};
-constexpr Keyword TRUNC{"@trunc", TokenType::TRUNC};
-constexpr Keyword CAST{"@cast", TokenType::CAST};
-constexpr Keyword CEIL{"@ceil", TokenType::CEIL};
-constexpr Keyword FLOOR{"@floor", TokenType::FLOOR};
-constexpr Keyword EXP{"@exp", TokenType::EXP};
-constexpr Keyword EXP_2{"@exp2", TokenType::EXP_2};
-constexpr Keyword POW{"@pow", TokenType::POW};
-constexpr Keyword CLZ{"@clz", TokenType::CLZ};
-constexpr Keyword CTZ{"@ctz", TokenType::CTZ};
+constexpr Keyword ALIGN_CAST{"@alignCast", TokenType::BUILTIN_ALIGN_CAST};
+constexpr Keyword PTR_CAST{"@ptrCast", TokenType::BUILTIN_PTR_CAST};
+constexpr Keyword BIT_CAST{"@bitCast", TokenType::BUILTIN_BIT_CAST};
+constexpr Keyword CONST_CAST{"@constCast", TokenType::BUILTIN_CONST_CAST};
+constexpr Keyword VOLATILE_CAST{"@volatileCast", TokenType::BUILTIN_VOLATILE_CAST};
+constexpr Keyword AS{"@as", TokenType::BUILTIN_AS};
+constexpr Keyword INT_FROM_PTR{"@intFromPtr", TokenType::BUILTIN_INT_FROM_PTR};
+constexpr Keyword PTR_FROM_INT{"@ptrFromInt", TokenType::BUILTIN_PTR_FROM_INT};
+constexpr Keyword PTR_FROM_ARRAY{"@ptrFromArray", TokenType::BUILTIN_PTR_FROM_ARRAY};
+constexpr Keyword SLICE_FROM_PTR{"@sliceFromPtr", TokenType::BUILTIN_SLICE_FROM_PTR};
+
+constexpr Keyword ALIGN_OF{"@alignOf", TokenType::BUILTIN_ALIGN_OF};
+constexpr Keyword SIZE_OF{"@sizeOf", TokenType::BUILTIN_SIZE_OF};
+constexpr Keyword TYPE_OF{"@typeOf", TokenType::BUILTIN_TYPE_OF};
+constexpr Keyword TAG_NAME{"@tagName", TokenType::BUILTIN_TAG_NAME};
+
+constexpr Keyword MEMCPY{"@memcpy", TokenType::BUILTIN_MEMCPY};
+constexpr Keyword MEMSET{"@memset", TokenType::BUILTIN_MEMSET};
+constexpr Keyword MEMMOVE{"@memmove", TokenType::BUILTIN_MEMMOVE};
+
+constexpr Keyword MUL_ADD{"@mulAdd", TokenType::BUILTIN_MUL_ADD};
+constexpr Keyword CLZ{"@clz", TokenType::BUILTIN_CLZ};
+constexpr Keyword CTZ{"@ctz", TokenType::BUILTIN_CTZ};
+constexpr Keyword DIV_MOD{"@divMod", TokenType::BUILTIN_DIV_MOD};
+constexpr Keyword POP_COUNT{"@popCount", TokenType::BUILTIN_POP_COUNT};
+constexpr Keyword SQRT{"@sqrt", TokenType::BUILTIN_SQRT};
+constexpr Keyword SIN{"@sin", TokenType::BUILTIN_SIN};
+constexpr Keyword COS{"@cos", TokenType::BUILTIN_COS};
+constexpr Keyword TAN{"@tan", TokenType::BUILTIN_TAN};
+constexpr Keyword EXP{"@exp", TokenType::BUILTIN_EXP};
+constexpr Keyword EXP2{"@exp2", TokenType::BUILTIN_EXP2};
+constexpr Keyword LOG{"@log", TokenType::BUILTIN_LOG};
+constexpr Keyword LOG2{"@log2", TokenType::BUILTIN_LOG2};
+constexpr Keyword LOG10{"@log10", TokenType::BUILTIN_LOG10};
+constexpr Keyword ABS{"@abs", TokenType::BUILTIN_ABS};
+constexpr Keyword FLOOR{"@floor", TokenType::BUILTIN_FLOOR};
+constexpr Keyword CEIL{"@ceil", TokenType::BUILTIN_CEIL};
+
+constexpr Keyword PANIC{"@panic", TokenType::BUILTIN_PANIC};
 
 } // namespace builtins
 
@@ -110,10 +121,11 @@ constexpr auto ALL_KEYWORDS = [] {
         keywords::U32,       keywords::U64,          keywords::USIZE,
         keywords::F32,       keywords::F64,          keywords::U8,
         keywords::BOOL,      keywords::VOID,         keywords::TYPE,
-        keywords::AS,        keywords::PUBLIC,       keywords::EXTERN,
-        keywords::EXPORT,    keywords::PACKED,       keywords::VOLATILE,
-        keywords::STATIC,    keywords::NORETURN,     keywords::NULLPTR,
-        keywords::USING,     keywords::TEST,
+        keywords::AUTO,      keywords::OPAQUE,       keywords::AS,
+        keywords::PUBLIC,    keywords::EXTERN,       keywords::EXPORT,
+        keywords::PACKED,    keywords::VOLATILE,     keywords::STATIC,
+        keywords::NORETURN,  keywords::NULLPTR,      keywords::USING,
+        keywords::TEST,
     };
 
     std::ranges::sort(all_keywords, {}, &Keyword::first);
@@ -138,42 +150,46 @@ constexpr auto ALL_PRIMITIVES = std::array{
     keywords::U8.second,
     keywords::BOOL.second,
     keywords::VOID.second,
-    keywords::TYPE.second,
 };
 
 constexpr auto ALL_BUILTINS = [] {
     namespace builtins = keywords::builtins;
     auto all_builtins  = std::array{
-        builtins::TYPEOF,
-        builtins::SIZEOF,
-        builtins::ALIGNOF,
-        builtins::PTR_ADD,
-        builtins::PTR_SUB,
+        builtins::ALIGN_CAST,
+        builtins::PTR_CAST,
+        builtins::BIT_CAST,
+        builtins::CONST_CAST,
+        builtins::VOLATILE_CAST,
+        builtins::AS,
+        builtins::INT_FROM_PTR,
+        builtins::PTR_FROM_INT,
         builtins::PTR_FROM_ARRAY,
         builtins::SLICE_FROM_PTR,
-        builtins::PTR_IDX,
-        builtins::PTR_FROM_INT,
-        builtins::INT_FROM_PTR,
+        builtins::ALIGN_OF,
+        builtins::SIZE_OF,
+        builtins::TYPE_OF,
+        builtins::TAG_NAME,
+        builtins::MEMCPY,
+        builtins::MEMSET,
+        builtins::MEMMOVE,
+        builtins::MUL_ADD,
+        builtins::CLZ,
+        builtins::CTZ,
+        builtins::DIV_MOD,
+        builtins::PANIC,
+        builtins::POP_COUNT,
+        builtins::SQRT,
         builtins::SIN,
         builtins::COS,
         builtins::TAN,
-        builtins::SQRT,
-        builtins::LOG,
-        builtins::LOG_10,
-        builtins::LOG_2,
-        builtins::MIN,
-        builtins::MAX,
-        builtins::MOD,
-        builtins::DIVMOD,
-        builtins::TRUNC,
-        builtins::CAST,
-        builtins::CEIL,
-        builtins::FLOOR,
-        builtins::POW,
         builtins::EXP,
-        builtins::EXP_2,
-        builtins::CLZ,
-        builtins::CTZ,
+        builtins::EXP2,
+        builtins::LOG,
+        builtins::LOG2,
+        builtins::LOG10,
+        builtins::ABS,
+        builtins::FLOOR,
+        builtins::CEIL,
     };
 
     std::ranges::sort(all_builtins, {}, &Keyword::first);

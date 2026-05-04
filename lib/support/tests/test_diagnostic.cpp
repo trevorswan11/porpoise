@@ -30,7 +30,7 @@ TEST_CASE("Diagnostic type checkers") {
 TEST_CASE("Location and error only") {
     SomethingLocationed  l;
     Diagnostic<TestEnum> d{TestEnum::SAD, l};
-    CHECK("error: 1:43" == d.to_string(opt::none, false));
+    CHECK("error: SAD 1:43" == d.to_string(opt::none, false));
 }
 
 TEST_CASE("Custom locateable") {

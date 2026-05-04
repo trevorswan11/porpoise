@@ -3,6 +3,7 @@
 #include <ostream>
 #include <span>
 #include <sstream>
+#include <string_view>
 #include <utility>
 #include <vector>
 
@@ -84,6 +85,7 @@ namespace detail {
 // A decomposed diagnostic that contains all information for base formatting
 struct FormattableDiagnostic {
     const opt::Option<std::string>&     message;
+    std::string_view                    error_name;
     const opt::Option<SourceLocation>&  location;
     const opt::Option<DiagnosticLevel>& level;
 };
@@ -133,7 +135,7 @@ template <ScopedEnum E> class Diagnostic {
 
     MAKE_GETTER(message, const opt::Option<std::string>&)
     [[nodiscard]] auto to_formattable() const noexcept -> detail::FormattableDiagnostic {
-        return {message_, loc_, level_};
+        return {message_, magic_enum::enum_name(error_), loc_, level_};
     }
 
     // Diagnostics are always ERROR by default, see `unset_level`

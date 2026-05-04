@@ -75,7 +75,7 @@ auto ExplicitType::accept(Visitor& v) const -> void { v.visit(*this); }
 
     // Otherwise the type has to be a 'simple' function or ident
     const auto& peek_token = parser.get_peek_token();
-    if (peek_token.is_valid_ident() && !peek_token.is_builtin()) {
+    if (peek_token.is_valid_ident()) {
         // It's trivial to catch these syntactic errors here
         if (!modifier.is_value()) {
             switch (peek_token.type) {

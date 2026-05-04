@@ -13,3 +13,4 @@ A WIP reference of the porpoise programming language
 - [structs](syntax/structs.md)
 - [types](syntax/types.md)
 - [unions](syntax/unions.md)
+- [builtins](syntax/builtins.md)

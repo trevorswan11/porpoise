@@ -160,8 +160,14 @@ auto Token::is_decl_token() const noexcept -> bool {
 }
 
 auto Token::is_valid_ident() const noexcept -> bool {
-    return type == TokenType::IDENT || type == TokenType::NORETURN ||
-           type == TokenType::TYPE_TYPE || is_primitive() || is_builtin();
+    switch (type) {
+    case TokenType::IDENT:
+    case TokenType::NORETURN:
+    case TokenType::TYPE_TYPE:
+    case TokenType::AUTO_TYPE:
+    case TokenType::OPAQUE_TYPE: return true;
+    default:                     return is_primitive() || is_builtin();
+    }
 }
 
 } // namespace porpoise::syntax

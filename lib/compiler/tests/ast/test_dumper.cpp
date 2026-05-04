@@ -34,7 +34,7 @@ constexpr std::string_view input{R"(
     fn(*mut this, a: A, b: *B, ): i32 { c; };
     for (arr, l, p) |i, &mut j, _| { a; } else return b;
     enum : u64 {A = 1ul, B = T, C, };
-    @ptrAdd(a, 4uz);
+    @as(i32, a);
     using T = i32;
     a(&mut r, t, *[N:0]u8);
     .a;
