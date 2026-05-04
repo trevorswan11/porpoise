@@ -159,6 +159,14 @@ auto Token::is_decl_token() const noexcept -> bool {
     }
 }
 
+auto Token::is_member_token() const noexcept -> bool {
+    switch (type) {
+    case TokenType::IMPORT:
+    case TokenType::USING:  return true;
+    default:                return is_decl_token();
+    }
+}
+
 auto Token::is_valid_ident() const noexcept -> bool {
     switch (type) {
     case TokenType::IDENT:

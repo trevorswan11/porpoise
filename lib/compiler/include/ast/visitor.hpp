@@ -1,5 +1,7 @@
 #pragma once
 
+#include <type_traits>
+
 #include "memory.hpp"
 
 namespace porpoise::ast {

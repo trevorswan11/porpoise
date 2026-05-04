@@ -48,7 +48,7 @@ auto AstDump::run() -> void {
         if (stdin_mod->is_poisoned()) { continue; }
         fmt::println("{} total tables, {} top-level symbols collected",
                      analyzer.get_registry().size(),
-                     analyzer.get_table(stdin_mod->root_table_idx).size());
+                     analyzer.get_table(*stdin_mod->root_table_idx).size());
     }
 }
 

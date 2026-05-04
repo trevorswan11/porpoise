@@ -157,7 +157,7 @@ TEST_CASE("Index wrapper") {
 
     i = 0;
     CHECK(i.has_value());
-    CHECK(i == 0);
+    CHECK(*i == 0);
 }
 
 } // namespace porpoise::tests

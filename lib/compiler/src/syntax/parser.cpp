@@ -173,25 +173,6 @@ auto Parser::parse_expression(Precedence precedence)
     return nullptr;
 }
 
-auto Parser::parse_member_decls(ast::MemberValidator validator)
-    -> Result<ast::Members, ParserDiagnostic> {
-    ast::Members members;
-    while (!peek_token_is(syntax::TokenType::RBRACE) && !peek_token_is(syntax::TokenType::END)) {
-        advance();
-        auto member = TRY(parse_statement(true));
-        if (!member->is<ast::DeclStatement>()) {
-            return make_parser_err(syntax::ParserError::INVALID_MEMBER, member->get_token());
-        }
-
-        // Check the decl against the validator if provided
-        if (validator && !validator(ast::Node::as<ast::DeclStatement>(*member))) {
-            return make_parser_err(syntax::ParserError::INVALID_MEMBER, member->get_token());
-        }
-        members.emplace_back(ast::Node::downcast<ast::DeclStatement>(std::move(member)));
-    }
-    return members;
-}
-
 constexpr auto PREFIX_FNS = [] {
     EnumMap<TokenType, Parser::PrefixFn> fns;
 

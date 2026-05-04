@@ -21,7 +21,7 @@ TEST_CASE("Struct flavors") {
             input_case.first,
             ast::StructExpression{
                 syntax::Token{input_case.second},
-                helpers::make_decls(
+                helpers::make_members(
                     ast::DeclStatement{
                         syntax::Token{keywords::VAR},
                         helpers::make_ident("a"),
@@ -55,14 +55,33 @@ TEST_CASE("Struct flavors") {
     }
 }
 
-TEST_CASE("Illegal struct member") {
-    helpers::test_parser_fail("struct { import std; };",
-                              syntax::ParserDiagnostic{syntax::ParserError::INVALID_MEMBER, 0, 9});
+TEST_CASE("Non-decl struct members") {
+    helpers::test_expr_stmt(
+        "struct { import std; using I = i32; };",
+        ast::StructExpression{
+            syntax::Token{keywords::STRUCT},
+            helpers::make_members(
+                ast::ImportStatement{syntax::Token{keywords::IMPORT},
+                                     ast::LibraryImport{helpers::make_ident("std"), {}}},
+                ast::UsingStatement{syntax::Token{keywords::USING},
+                                    helpers::make_ident("I"),
+                                    ast::ExplicitType{
+                                        mods::BASE,
+                                        helpers::make_ident("i32"),
+                                    }})});
 }
 
 TEST_CASE("Empty struct body") {
     helpers::test_parser_fail("struct {};",
                               syntax::ParserDiagnostic{syntax::ParserError::EMPTY_STRUCT, 0, 0});
+}
+
+TEST_CASE("Illegal members") {
+    helpers::test_parser_fail("struct { const foo := bar; };",
+                              syntax::ParserDiagnostic{syntax::ParserError::INVALID_MEMBER, 0, 9});
+
+    helpers::test_parser_fail("struct { extern var foo: bar; };",
+                              syntax::ParserDiagnostic{syntax::ParserError::INVALID_MEMBER, 0, 9});
 }
 
 TEST_CASE("Packed keyword out of order") {

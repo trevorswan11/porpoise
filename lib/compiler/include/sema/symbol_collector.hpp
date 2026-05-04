@@ -34,7 +34,7 @@ class SymbolCollector : public ast::Visitor {
 
   public:
     SymbolCollector(mod::Module& collecting, const Context& ctx) noexcept
-        : collecting_{collecting}, table_idx_{collecting.root_table_idx}, ctx_{ctx} {
+        : collecting_{collecting}, table_idx_{*collecting.root_table_idx}, ctx_{ctx} {
         table_stack_.push(table_idx_);
     }
 

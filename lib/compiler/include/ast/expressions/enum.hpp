@@ -3,6 +3,7 @@
 #include <span>
 
 #include "ast/node.hpp"
+#include "ast/statements/members.hpp"
 
 #include "syntax/parser.hpp"
 
@@ -54,7 +55,7 @@ class EnumExpression : public ExprBase<EnumExpression> {
     MAKE_NULLABLE_BOX_UNPACKER(underlying, IdentifierExpression, underlying_, *)
     MAKE_GETTER(enumerations, std::span<const Enumeration>)
     [[nodiscard]] auto has_members() const noexcept -> bool { return !members_.empty(); }
-    MAKE_GETTER(members, MembersView)
+    MAKE_GETTER(members, const Members&)
 
   protected:
     auto is_equal(const Node& other) const noexcept -> bool override;

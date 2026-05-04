@@ -18,7 +18,7 @@ TEST_CASE("Correct union") {
                                 ast::ExplicitType{mods::BASE, helpers::make_ident("i32")}},
                 ast::UnionField{helpers::make_ident("b"),
                                 ast::ExplicitType{mods::MUT_REF, helpers::make_ident("T")}}),
-            helpers::make_decls()});
+            helpers::make_members()});
 }
 
 TEST_CASE("Complex union fields") {
@@ -32,7 +32,7 @@ TEST_CASE("Complex union fields") {
                     ast::ExplicitType{mods::PTR,
                                       mem::make_box<ast::StructExpression>(
                                           syntax::Token{keywords::STRUCT},
-                                          helpers::make_decls(ast::DeclStatement{
+                                          helpers::make_members(ast::DeclStatement{
                                               syntax::Token{keywords::VAR},
                                               helpers::make_ident("b"),
                                               mem::make_box<ast::TypeExpression>(
@@ -56,8 +56,8 @@ TEST_CASE("Complex union fields") {
                                     helpers::make_ident("RED"),
                                     helpers::make_primitive<ast::U32Expression, true>("3u")},
                                 ast::Enumeration{helpers::make_ident("B"), {}}),
-                            helpers::make_decls())}}),
-            helpers::make_decls()});
+                            helpers::make_members())}}),
+            helpers::make_members()});
 }
 
 TEST_CASE("Union with decls") {
@@ -71,7 +71,7 @@ TEST_CASE("Union with decls") {
                     ast::ExplicitType{mods::PTR,
                                       mem::make_box<ast::StructExpression>(
                                           syntax::Token{keywords::STRUCT},
-                                          helpers::make_decls(ast::DeclStatement{
+                                          helpers::make_members(ast::DeclStatement{
                                               syntax::Token{keywords::VAR},
                                               helpers::make_ident("b"),
                                               mem::make_box<ast::TypeExpression>(
@@ -83,7 +83,7 @@ TEST_CASE("Union with decls") {
                                               helpers::make_ident<true>("bar"),
                                               ast::DeclModifiers::VARIABLE,
                                           }))}}),
-                helpers::make_decls(
+                helpers::make_members(
                     ast::DeclStatement{
                         syntax::Token{keywords::CONSTANT},
                         helpers::make_ident("b"),
@@ -116,6 +116,25 @@ TEST_CASE("Union with decls") {
     test(fmt::format(format_str, ","));
 }
 
+TEST_CASE("Non-decl union members") {
+    helpers::test_expr_stmt(
+        "union { a: i32, import std; using I = i32; };",
+        ast::UnionExpression{
+            syntax::Token{keywords::UNION},
+            helpers::make_vector<ast::UnionField>(
+                ast::UnionField{helpers::make_ident("a"),
+                                ast::ExplicitType{mods::BASE, helpers::make_ident("i32")}}),
+            helpers::make_members(
+                ast::ImportStatement{syntax::Token{keywords::IMPORT},
+                                     ast::LibraryImport{helpers::make_ident("std"), {}}},
+                ast::UsingStatement{syntax::Token{keywords::USING},
+                                    helpers::make_ident("I"),
+                                    ast::ExplicitType{
+                                        mods::BASE,
+                                        helpers::make_ident("i32"),
+                                    }})});
+}
+
 TEST_CASE("Illegal union field name") {
     helpers::test_parser_fail(
         "union { 2: i32 };",
@@ -146,7 +165,7 @@ TEST_CASE("Out of order union") {
                                                        std::pair{0uz, 60uz}});
 }
 
-TEST_CASE("Non-static non-function union member") {
+TEST_CASE("Non-static non-function union decl") {
     helpers::test_parser_fail("union { a: i32, const b := 2; };",
                               syntax::ParserDiagnostic{syntax::ParserError::INVALID_MEMBER, 0, 16});
 }

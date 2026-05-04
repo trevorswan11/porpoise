@@ -35,7 +35,7 @@ auto TestStatement::parse(syntax::Parser& parser)
     return mem::make_box<TestStatement>(
         start_token,
         std::move(description),
-        downcast<BlockStatement>(TRY(BlockStatement::parse(parser, true))));
+        downcast<BlockStatement>(TRY(BlockStatement::parse(parser))));
 }
 
 auto TestStatement::is_equal(const Node& other) const noexcept -> bool {

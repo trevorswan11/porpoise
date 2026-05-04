@@ -162,7 +162,7 @@ TEST_CASE("Union inline types") {
                                     ast::ExplicitType{mods::BASE, helpers::make_ident("i32")}},
                     ast::UnionField{helpers::make_ident("b"),
                                     ast::ExplicitType{mods::MUT_REF, helpers::make_ident("T")}}),
-                helpers::make_decls())});
+                helpers::make_members())});
 }
 
 TEST_CASE("Struct inline types") {
@@ -172,7 +172,7 @@ TEST_CASE("Struct inline types") {
             mods::PTR,
             mem::make_box<ast::StructExpression>(
                 syntax::Token{keywords::STRUCT},
-                helpers::make_decls(ast::DeclStatement{
+                helpers::make_members(ast::DeclStatement{
                     syntax::Token{keywords::VAR},
                     helpers::make_ident("b"),
                     mem::make_box<ast::TypeExpression>(syntax::Token{syntax::TokenType::COLON, ":"},
@@ -197,7 +197,7 @@ TEST_CASE("Enum inline types") {
                     ast::Enumeration{helpers::make_ident("RED"),
                                      helpers::make_primitive<ast::U32Expression, true>("3u")},
                     ast::Enumeration{helpers::make_ident("B"), {}}),
-                helpers::make_decls())});
+                helpers::make_members())});
 }
 
 TEST_CASE("Function type restrictions") {

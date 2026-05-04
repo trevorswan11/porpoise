@@ -76,7 +76,8 @@ auto SymbolCollector::visit(const ast::EnumExpression& enum_expr) -> void {
     const auto scope_idx = visit_scopes(
         TypeKind::ENUM,
         IterPair{enum_expr.get_enumerations(), [this](const auto& field) { visit(field); }},
-        IterPair{enum_expr.get_members(), [this](const auto& decl) { visit(*decl); }});
+        IterPair{enum_expr.get_members(),
+                 [this](const auto& member) { ast::Members::accept(member, *this); }});
     last_type_->set_symbol_table_idx(scope_idx);
     enum_expr.set_sema_type(*last_type_);
 }
@@ -206,7 +207,8 @@ MAKE_PREFIX_COLLECTOR(ast::UnaryExpression)
 auto SymbolCollector::visit(const ast::StructExpression& struct_expr) -> void {
     const auto scope_idx =
         visit_scopes(TypeKind::STRUCT,
-                     IterPair{struct_expr, [this](const auto& field) { field->accept(*this); }});
+                     IterPair{struct_expr.get_members(),
+                              [this](const auto& member) { ast::Members::accept(member, *this); }});
     last_type_->set_symbol_table_idx(scope_idx);
     struct_expr.set_sema_type(*last_type_);
 }
@@ -217,10 +219,11 @@ auto SymbolCollector::visit(const ast::UnionField& field) -> void {
 }
 
 auto SymbolCollector::visit(const ast::UnionExpression& union_expr) -> void {
-    const auto scope_idx = visit_scopes(
-        TypeKind::UNION,
-        IterPair{union_expr.get_fields(), [this](const auto& field) { visit(field); }},
-        IterPair{union_expr.get_members(), [this](const auto& decl) { visit(*decl); }});
+    const auto scope_idx =
+        visit_scopes(TypeKind::UNION,
+                     IterPair{union_expr.get_fields(), [this](const auto& field) { visit(field); }},
+                     IterPair{union_expr.get_members(),
+                              [this](const auto& member) { ast::Members::accept(member, *this); }});
     last_type_->set_symbol_table_idx(scope_idx);
     union_expr.set_sema_type(*last_type_);
 }
@@ -359,7 +362,7 @@ auto SymbolCollector::visit(const ast::ImportStatement& import_stmt) -> void {
     ctx_.try_result(
         ctx_.registry.insert_into(table_idx_, alias, SymbolicImport{import_stmt, imported_mod}));
     if (imported_mod) {
-        auto& type = ctx_.pool[{TypeKind::MODULE, false, imported_mod->root_table_idx}];
+        auto& type = ctx_.pool[{TypeKind::MODULE, false, *imported_mod->root_table_idx}];
         import_stmt.set_sema_type(type);
         ctx_.registry.get_from(table_idx_, alias).emplace_type(type);
     }

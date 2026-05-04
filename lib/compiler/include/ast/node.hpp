@@ -3,7 +3,6 @@
 #include <algorithm>
 #include <cassert>
 #include <concepts>
-#include <span>
 #include <vector>
 
 #include <magic_enum/magic_enum.hpp>
@@ -163,8 +162,7 @@ class Node {
     friend class ExplicitType;
 };
 
-using AST     = std::vector<mem::Box<Node>>;
-using ASTView = std::span<const mem::Box<Node>>;
+using AST = std::vector<mem::Box<Node>>;
 
 template <typename Derived, typename Base> class NodeBase : public Base {
   protected:
@@ -196,11 +194,6 @@ template <typename Derived> class StmtBase : public NodeBase<Derived, Statement>
   protected:
     using NodeBase<Derived, Statement>::NodeBase;
 };
-
-class DeclStatement;
-using Members         = std::vector<mem::Box<DeclStatement>>;
-using MembersView     = std::span<const mem::Box<DeclStatement>>;
-using MemberValidator = bool(const DeclStatement&);
 
 } // namespace ast
 

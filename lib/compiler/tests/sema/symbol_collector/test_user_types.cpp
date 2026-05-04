@@ -11,7 +11,7 @@ namespace mods      = helpers::type_modifiers;
 TEST_CASE("Struct hollow types") {
     const sema::types::Key key{sema::TypeKind::STRUCT, false, 1};
     auto                   ctx = helpers::test_collector(
-        "const a := struct { const foo := bar; };",
+        "const a := struct { var foo := bar; };",
         {},
         helpers::TableEntry<ast::DeclStatement>{
             "a",
@@ -20,14 +20,15 @@ TEST_CASE("Struct hollow types") {
                 helpers::make_ident("a"),
                 mem::make_box<ast::TypeExpression>(syntax::Token{operators::WALRUS}, opt::none),
                 mem::make_nullable_box<ast::StructExpression>(
-                    syntax::Token{keywords::STRUCT}, helpers::make_decls(helpers::foo_bar_decl())),
+                    syntax::Token{keywords::STRUCT},
+                    helpers::make_members(helpers::foo_bar_decl(false))),
                 ast::DeclModifiers::CONSTANT,
             },
             opt::none,
             key,
             key});
 
-    helpers::test_hollow_symbols(ctx, helpers::TableEntry{"foo", helpers::foo_bar_decl()});
+    helpers::test_hollow_symbols(ctx, helpers::TableEntry{"foo", helpers::foo_bar_decl(false)});
 }
 
 TEST_CASE("Enum hollow types") {
@@ -47,7 +48,7 @@ TEST_CASE("Enum hollow types") {
                     syntax::Token{keywords::ENUM},
                     nullptr,
                     helpers::make_vector<ast::Enumeration>(enumeration()),
-                    helpers::make_decls()),
+                    helpers::make_members()),
                 ast::DeclModifiers::CONSTANT,
             },
             opt::none,
@@ -83,7 +84,7 @@ TEST_CASE("Enum hollow types with member") {
                     syntax::Token{keywords::ENUM},
                     nullptr,
                     helpers::make_vector<ast::Enumeration>(enumeration()),
-                    helpers::make_decls(member())),
+                    helpers::make_members(member())),
                 ast::DeclModifiers::CONSTANT,
             },
             opt::none,
@@ -114,7 +115,7 @@ TEST_CASE("Union hollow types") {
                 mem::make_nullable_box<ast::UnionExpression>(
                     syntax::Token{keywords::UNION},
                     helpers::make_vector<ast::UnionField>(field()),
-                    helpers::make_decls()),
+                    helpers::make_members()),
                 ast::DeclModifiers::CONSTANT,
             },
             opt::none,
@@ -153,7 +154,7 @@ TEST_CASE("Union hollow types with member") {
                 mem::make_nullable_box<ast::UnionExpression>(
                     syntax::Token{keywords::UNION},
                     helpers::make_vector<ast::UnionField>(field()),
-                    helpers::make_decls(member())),
+                    helpers::make_members(member())),
                 ast::DeclModifiers::CONSTANT,
             },
             opt::none,
@@ -180,7 +181,7 @@ TEST_CASE("Public using query") {
                                         helpers::make_ident("i32"),
                                     }}});
 
-        auto&       table     = ctx.analyzer.get_table(ctx.root_mod->root_table_idx);
+        auto&       table     = ctx.analyzer.get_table(*ctx.root_mod->root_table_idx);
         const auto& int_alias = table.get_opt("I");
         REQUIRE(int_alias);
         CHECK(int_alias->is_public() == is_public);
@@ -192,7 +193,7 @@ TEST_CASE("Public using query") {
 
 TEST_CASE("Shadowing member/field declarations") {
     helpers::test_collector_fail(
-        "const a := struct { const a := 2; };",
+        "const a := struct { var a := 2; };",
         sema::Diagnostic{"Attempt to shadow identifier 'a'. Previous declaration here: 1:1",
                          sema::Error::SHADOWING_DECLARATION,
                          std::pair{0uz, 20uz}});

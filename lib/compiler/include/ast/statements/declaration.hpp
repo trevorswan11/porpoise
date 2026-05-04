@@ -1,9 +1,5 @@
 #pragma once
 
-#include <algorithm>
-#include <array>
-#include <bit>
-
 #include <magic_enum/magic_enum_flags.hpp>
 
 #include "ast/node.hpp"
@@ -78,50 +74,11 @@ class DeclStatement : public StmtBase<DeclStatement> {
     }
 
   private:
-    using ModifierMapping                 = std::pair<syntax::TokenType, DeclModifiers>;
-    static constexpr auto LEGAL_MODIFIERS = std::to_array<ModifierMapping>({
-        {syntax::TokenType::VAR, DeclModifiers::VARIABLE},
-        {syntax::TokenType::CONSTANT, DeclModifiers::CONSTANT},
-        {syntax::TokenType::CONSTEXPR, DeclModifiers::CONSTEXPR},
-        {syntax::TokenType::PUBLIC, DeclModifiers::PUBLIC},
-        {syntax::TokenType::EXTERN, DeclModifiers::EXTERN},
-        {syntax::TokenType::EXPORT, DeclModifiers::EXPORT},
-        {syntax::TokenType::STATIC, DeclModifiers::STATIC},
-    });
-
-    static constexpr auto validate_modifiers(DeclModifiers modifiers) noexcept -> bool {
-        // Exactly one mutability flag must be set
-        const auto valid_mut = std::popcount(std::to_underlying(
-                                   modifiers & (DeclModifiers::VARIABLE | DeclModifiers::CONSTANT |
-                                                DeclModifiers::CONSTEXPR))) == 1;
-
-        // Comptime values cannot be known at link time, obviously
-        const auto valid_constexpr =
-            std::popcount(std::to_underlying(
-                modifiers & (DeclModifiers::EXTERN | DeclModifiers::CONSTEXPR))) <= 1;
-
-        // At most one ABI flag can be set
-        const auto valid_abi =
-            std::popcount(std::to_underlying(modifiers &
-                                             (DeclModifiers::EXTERN | DeclModifiers::EXPORT))) <= 1;
-        return valid_mut && valid_constexpr && valid_abi;
-    }
-
-    static constexpr auto token_to_modifier(const syntax::Token& tok)
-        -> opt::Option<DeclModifiers> {
-        const auto it = std::ranges::find(LEGAL_MODIFIERS, tok.type, &ModifierMapping::first);
-        return it == LEGAL_MODIFIERS.end() ? opt::none : opt::Option<DeclModifiers>{it->second};
-    }
-
-  private:
     mem::Box<IdentifierExpression> ident_;
     mem::Box<TypeExpression>       type_;
     mem::NullableBox<Expression>   value_;
     DeclModifiers                  modifiers_;
 };
-
-// Validates a declaration inside of non-struct user defined types (i.e. enums & unions)
-[[nodiscard]] auto validate_non_struct_member(const DeclStatement& decl) noexcept -> bool;
 
 } // namespace porpoise::ast
 

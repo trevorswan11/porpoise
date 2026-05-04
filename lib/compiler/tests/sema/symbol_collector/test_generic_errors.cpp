@@ -43,7 +43,7 @@ TEST_CASE("Semantically illegal statements") {
 using namespace std::string_view_literals;
 
 constexpr auto RESTRICTED_INPUTS = std::array{
-    std::pair{"a := struct { const b := 2; };"sv, "struct"sv},
+    std::pair{"a := struct { var b := 2; };"sv, "struct"sv},
     std::pair{"a := enum { A };"sv, "enum"sv},
     std::pair{"a := union { b: bool };"sv, "union"sv},
 };

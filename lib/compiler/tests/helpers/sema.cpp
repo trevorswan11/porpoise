@@ -2,6 +2,9 @@
 
 namespace porpoise::tests::helpers {
 
+namespace keywords  = syntax::keywords;
+namespace operators = syntax::operators;
+
 SemaTestContext::SemaTestContext(const std::vector<MockFile>& imports,
                                  const std::filesystem::path& root_path,
                                  std::string_view             input,
@@ -28,7 +31,7 @@ auto collect(std::string_view input, const std::vector<MockFile>& imports)
     REQUIRE_FALSE(test_mod->has_parser_diagnostics());
     ctx.analyzer.collect_symbols(*test_mod);
 
-    return {std::move(ctx), test_mod->root_table_idx};
+    return {std::move(ctx), *test_mod->root_table_idx};
 }
 
 auto collect_and_check(std::string_view input, const std::vector<MockFile>& imports)
@@ -40,13 +43,14 @@ auto collect_and_check(std::string_view input, const std::vector<MockFile>& impo
     return {std::move(ctx), idx};
 }
 
-auto common_decl(std::string_view name, std::string_view assign) -> ast::DeclStatement {
+auto common_decl(std::string_view name, std::string_view assign, bool constant)
+    -> ast::DeclStatement {
     return ast::DeclStatement{
-        syntax::Token{syntax::keywords::CONSTANT},
+        syntax::Token{constant ? keywords::CONSTANT : keywords::VAR},
         make_ident(name),
-        mem::make_box<ast::TypeExpression>(syntax::Token{syntax::operators::WALRUS}, opt::none),
+        mem::make_box<ast::TypeExpression>(syntax::Token{operators::WALRUS}, opt::none),
         make_ident<true>(assign),
-        ast::DeclModifiers::CONSTANT,
+        constant ? ast::DeclModifiers::CONSTANT : ast::DeclModifiers::VARIABLE,
     };
 }
 

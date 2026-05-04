@@ -1,3 +1,7 @@
+#include <algorithm>
+#include <array>
+#include <bit>
+
 #include "ast/statements/declaration.hpp"
 
 #include "ast/expressions/function.hpp"
@@ -6,6 +10,44 @@
 #include "ast/visitor.hpp"
 
 namespace porpoise::ast {
+
+namespace {
+
+using ModifierMapping          = std::pair<syntax::TokenType, DeclModifiers>;
+constexpr auto LEGAL_MODIFIERS = std::to_array<ModifierMapping>({
+    {syntax::TokenType::VAR, DeclModifiers::VARIABLE},
+    {syntax::TokenType::CONSTANT, DeclModifiers::CONSTANT},
+    {syntax::TokenType::CONSTEXPR, DeclModifiers::CONSTEXPR},
+    {syntax::TokenType::PUBLIC, DeclModifiers::PUBLIC},
+    {syntax::TokenType::EXTERN, DeclModifiers::EXTERN},
+    {syntax::TokenType::EXPORT, DeclModifiers::EXPORT},
+    {syntax::TokenType::STATIC, DeclModifiers::STATIC},
+});
+
+[[nodiscard]] constexpr auto validate_modifiers(DeclModifiers modifiers) noexcept -> bool {
+    // Exactly one mutability flag must be set
+    const auto valid_mut = std::popcount(std::to_underlying(
+                               modifiers & (DeclModifiers::VARIABLE | DeclModifiers::CONSTANT |
+                                            DeclModifiers::CONSTEXPR))) == 1;
+
+    // Comptime values cannot be known at link time, obviously
+    const auto valid_constexpr =
+        std::popcount(std::to_underlying(modifiers &
+                                         (DeclModifiers::EXTERN | DeclModifiers::CONSTEXPR))) <= 1;
+
+    // At most one ABI flag can be set
+    const auto valid_abi = std::popcount(std::to_underlying(
+                               modifiers & (DeclModifiers::EXTERN | DeclModifiers::EXPORT))) <= 1;
+    return valid_mut && valid_constexpr && valid_abi;
+}
+
+[[nodiscard]] constexpr auto token_to_modifier(const syntax::Token& tok)
+    -> opt::Option<DeclModifiers> {
+    const auto it = std::ranges::find(LEGAL_MODIFIERS, tok.type, &ModifierMapping::first);
+    return it == LEGAL_MODIFIERS.end() ? opt::none : opt::Option<DeclModifiers>{it->second};
+}
+
+} // namespace
 
 DeclStatement::DeclStatement(const syntax::Token&           start_token,
                              mem::Box<IdentifierExpression> ident,
@@ -70,11 +112,6 @@ auto DeclStatement::is_equal(const Node& other) const noexcept -> bool {
     const auto& casted = as<DeclStatement>(other);
     return *ident_ == *casted.ident_ && *type_ == *casted.type_ &&
            mem::nullable_boxes_eq(value_, casted.value_) && modifiers_ == casted.modifiers_;
-}
-
-auto validate_non_struct_member(const DeclStatement& decl) noexcept -> bool {
-    if (decl.get_value().is<ast::FunctionExpression>()) { return true; }
-    return decl.has_modifier(DeclModifiers::STATIC);
 }
 
 } // namespace porpoise::ast

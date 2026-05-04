@@ -36,8 +36,8 @@ auto ExplicitType::accept(Visitor& v) const -> void { v.visit(*this); }
 [[nodiscard]] auto ExplicitType::parse(syntax::Parser& parser)
     -> Result<ExplicitType, syntax::ParserDiagnostic> {
     // Always check for a modifier and advance past it if present
-    const auto modifier_token = parser.get_peek_token();
-    const auto modifier       = TypeModifier::from_token(modifier_token);
+    const auto         modifier_token = parser.get_peek_token();
+    const TypeModifier modifier{modifier_token};
     if (!modifier.is_value()) { parser.advance(); }
 
     // The array dimension of a type are only present conditionally
@@ -67,8 +67,8 @@ auto ExplicitType::accept(Visitor& v) const -> void { v.visit(*this); }
                             ExplicitArrayType{std::move(dimension),
                                               null_terminated,
                                               mem::make_box<ExplicitType>(std::move(inner))}};
-    } else if (!TypeModifier::from_token(parser.get_peek_token()).is_value()) {
-        // Don't advance since the parser does it implicitly here (costs two from_token calls)
+    } else if (!TypeModifier{parser.get_peek_token()}.is_value()) {
+        // Don't advance since the parser does it implicitly here (costs two modifier queries)
         auto inner = TRY(ExplicitType::parse(parser));
         return ExplicitType{std::move(modifier), mem::make_box<ExplicitType>(std::move(inner))};
     }
@@ -174,31 +174,37 @@ TypeExpression::~TypeExpression() = default;
 
 auto TypeExpression::accept(Visitor& v) const -> void { v.visit(*this); }
 
-auto TypeExpression::parse(syntax::Parser& parser)
+namespace {
+
+// Parses the explicit type if present and checks for an upcoming assignment for init
+[[nodiscard]] auto parse_type_and_initializer(syntax::Parser& parser)
     -> Result<std::pair<mem::Box<Expression>, bool>, syntax::ParserDiagnostic> {
     // The start start token is always offset as this is called irregularly
     const auto start_token = parser.get_peek_token();
 
-    auto [type, initialized] =
-        TRY(([&]() -> Result<std::pair<mem::Box<TypeExpression>, bool>, syntax::ParserDiagnostic> {
-            if (parser.peek_token_is(syntax::TokenType::WALRUS)) {
-                auto type_expr = mem::make_box<TypeExpression>(start_token, opt::none);
-                parser.advance();
-                return std::pair{std::move(type_expr), true};
-            } else if (parser.peek_token_is(syntax::TokenType::COLON)) {
-                parser.advance();
-                auto explicit_type = TRY(ExplicitType::parse(parser));
-                auto type_expr =
-                    mem::make_box<TypeExpression>(start_token, std::move(explicit_type));
-                if (parser.peek_token_is(syntax::TokenType::ASSIGN)) {
-                    parser.advance();
-                    return std::pair{std::move(type_expr), true};
-                }
-                return std::pair{std::move(type_expr), false};
-            } else {
-                return Err{parser.peek_error(syntax::TokenType::COLON)};
-            }
-        }()));
+    if (parser.peek_token_is(syntax::TokenType::WALRUS)) {
+        auto type_expr = mem::make_box<TypeExpression>(start_token, opt::none);
+        parser.advance();
+        return std::pair{std::move(type_expr), true};
+    } else if (parser.peek_token_is(syntax::TokenType::COLON)) {
+        parser.advance();
+        auto explicit_type = TRY(ExplicitType::parse(parser));
+        auto type_expr     = mem::make_box<TypeExpression>(start_token, std::move(explicit_type));
+        if (parser.peek_token_is(syntax::TokenType::ASSIGN)) {
+            parser.advance();
+            return std::pair{std::move(type_expr), true};
+        }
+        return std::pair{std::move(type_expr), false};
+    } else {
+        return Err{parser.peek_error(syntax::TokenType::COLON)};
+    }
+}
+
+} // namespace
+
+auto TypeExpression::parse(syntax::Parser& parser)
+    -> Result<std::pair<mem::Box<Expression>, bool>, syntax::ParserDiagnostic> {
+    auto [type, initialized] = TRY(parse_type_and_initializer(parser));
 
     // Advance again to prepare for rhs
     if (initialized) { parser.advance(); }

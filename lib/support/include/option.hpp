@@ -49,8 +49,15 @@ template <typename T> class Ref {
         return *ptr_;
     }
 
-    auto operator->() const noexcept -> T* { return ptr_; }
-    auto operator*() const noexcept -> T& { return *ptr_; }
+    auto operator->() const noexcept -> T* {
+        assert(ptr_ && "Attempt to access empty optional reference");
+        return ptr_;
+    }
+
+    auto operator*() const noexcept -> T& {
+        assert(ptr_ && "Attempt to access empty optional reference");
+        return *ptr_;
+    }
 
     // Applies F to to underlying reference if present
     template <class F> constexpr auto transform(F&& f) & {
@@ -85,7 +92,8 @@ class Boolean {
     Boolean(None) noexcept : value_{NO_VALUE} {}
     // cppcheck-suppress-end noExplicitConstructor
 
-    [[nodiscard]] auto has_value() const noexcept -> bool { return value_ != NO_VALUE; }
+    [[nodiscard]] auto     has_value() const noexcept -> bool { return value_ != NO_VALUE; }
+    [[nodiscard]] explicit operator bool() const noexcept { return has_value(); }
 
     auto emplace(bool value) noexcept -> void { value_ = value; }
     auto reset() noexcept -> void { value_ = NO_VALUE; }
@@ -102,7 +110,10 @@ class Boolean {
         return static_cast<bool>(value_);
     }
 
-    auto get() const noexcept -> bool { return static_cast<bool>(value_); }
+    auto get() const noexcept -> bool {
+        assert(has_value() && "Attempt to access empty optional boolean");
+        return static_cast<bool>(value_);
+    }
 
     template <class Or> constexpr auto value_or(Or&& or_value) -> bool {
         // This is straight from clang's stdc++ C++23 optional implementation
@@ -113,7 +124,10 @@ class Boolean {
         return has_value() ? this->get() : static_cast<bool>(std::forward<Or>(or_value));
     }
 
-    auto operator*() const noexcept -> bool { return value_; }
+    auto operator*() const noexcept -> bool {
+        assert(has_value() && "Attempt to access empty optional boolean");
+        return value_;
+    }
 
   private:
     static constexpr u8 NO_VALUE = 3;
@@ -187,7 +201,10 @@ class Index {
         return idx_;
     }
 
-    [[nodiscard]] operator usize() const noexcept { return idx_; }
+    auto operator*() const noexcept -> usize {
+        assert(has_value() && "Attempt to access empty optional boolean");
+        return idx_;
+    }
 
   private:
     static constexpr usize NO_VALUE = std::numeric_limits<usize>::max();

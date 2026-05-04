@@ -43,7 +43,7 @@ TEST_CASE("Public import query") {
                 sema::types::Key{sema::TypeKind::MODULE, false, 1},
                 sema::types::Key{sema::TypeKind::MODULE, false, 1}});
 
-        auto&       table      = ctx.analyzer.get_table(ctx.root_mod->root_table_idx);
+        auto&       table      = ctx.analyzer.get_table(*ctx.root_mod->root_table_idx);
         const auto& std_import = table.get_opt("std");
         REQUIRE(std_import);
         CHECK(std_import->is_public() == is_public);

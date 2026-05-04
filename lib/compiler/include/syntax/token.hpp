@@ -323,6 +323,9 @@ struct Token {
     [[nodiscard]] auto is_builtin() const noexcept -> bool;
     [[nodiscard]] auto is_decl_token() const noexcept -> bool;
 
+    // Checks if the token can be used to kick off member parsing
+    [[nodiscard]] auto is_member_token() const noexcept -> bool;
+
     // Check whether the token is an ident, primitive type, or builtin function.
     auto is_valid_ident() const noexcept -> bool;
 

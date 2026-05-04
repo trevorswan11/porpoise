@@ -44,8 +44,8 @@ TEST_CASE("User defined type alias") {
                                               nullptr,
                                               helpers::make_vector<ast::Enumeration>(
                                                   ast::Enumeration{helpers::make_ident("A"), {}}),
-                                              helpers::make_decls())}}),
-                    helpers::make_decls())}});
+                                              helpers::make_members())}}),
+                    helpers::make_members())}});
 }
 
 TEST_CASE("Missing alias") {

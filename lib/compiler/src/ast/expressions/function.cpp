@@ -58,8 +58,10 @@ FunctionExpression::~FunctionExpression() = default;
 
 auto FunctionExpression::accept(Visitor& v) const -> void { v.visit(*this); }
 
+namespace {
+
 // Variadic must be handled first and should break the enclosing loop
-[[nodiscard]] static auto try_parse_variadic(syntax::Parser& parser)
+[[nodiscard]] auto try_parse_variadic(syntax::Parser& parser)
     -> Result<bool, syntax::ParserDiagnostic> {
     bool variadic = false;
     if (parser.peek_token_is(syntax::TokenType::ELLIPSIS)) {
@@ -71,6 +73,8 @@ auto FunctionExpression::accept(Visitor& v) const -> void { v.visit(*this); }
     }
     return variadic;
 }
+
+} // namespace
 
 auto FunctionExpression::parse(syntax::Parser& parser)
     -> Result<mem::Box<Expression>, syntax::ParserDiagnostic> {
@@ -88,7 +92,7 @@ auto FunctionExpression::parse(syntax::Parser& parser)
     } else {
         // The 'self' parameter can be a value type, ref, or mutable ref
         parser.advance();
-        auto self_modifier = TypeModifier::from_token(parser.get_current_token());
+        const TypeModifier self_modifier{parser.get_current_token()};
         if (self_modifier.is_value() && (parser.peek_token_is(syntax::TokenType::COMMA) ||
                                          parser.peek_token_is(syntax::TokenType::RPAREN))) {
             self.emplace(SelfParameter{

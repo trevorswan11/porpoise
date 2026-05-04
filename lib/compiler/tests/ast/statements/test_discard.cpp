@@ -20,7 +20,7 @@ TEST_CASE("Discard statements") {
                                   nullptr,
                                   helpers::make_vector<ast::Enumeration>(
                                       ast::Enumeration{helpers::make_ident("RED"), {}}),
-                                  helpers::make_decls())});
+                                  helpers::make_members())});
 }
 
 TEST_CASE("Malformed discardees") {

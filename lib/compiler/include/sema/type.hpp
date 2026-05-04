@@ -16,16 +16,16 @@
 namespace porpoise::sema {
 
 enum class TypeKind : u8 {
-    INT,
-    LONG,
-    SIZE,
-    UINT,
-    ULONG,
+    I32,
+    I64,
+    ISIZE,
+    U32,
+    U64,
     USIZE,
-    BYTE,
+    U8,
     BOOL,
-    FLOAT,
-    DOUBLE,
+    F32,
+    F64,
     VOID,
     TYPE,
     SLICE,
@@ -175,11 +175,11 @@ class Type {
     }
 
     [[nodiscard]] constexpr auto has_symbol_table_idx() const noexcept -> bool {
-        return scope_table_idx_;
+        return scope_table_idx_.has_value();
     }
 
     [[nodiscard]] constexpr auto get_symbol_table_idx() const noexcept -> usize {
-        return scope_table_idx_;
+        return *scope_table_idx_;
     }
 
     template <typename Resolvee, typename... Args> auto resolve(Args&&... args) noexcept -> void {

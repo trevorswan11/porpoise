@@ -45,7 +45,7 @@ auto UnionExpression::parse(syntax::Parser& parser)
     Fields fields;
     while (!parser.peek_token_is(syntax::TokenType::RBRACE) &&
            !parser.peek_token_is(syntax::TokenType::END)) {
-        if (parser.get_peek_token().is_decl_token()) { break; }
+        if (parser.get_peek_token().is_member_token()) { break; }
 
         TRY(parser.expect_peek(syntax::TokenType::IDENT));
         auto ident = downcast<IdentifierExpression>(TRY(IdentifierExpression::parse(parser)));
@@ -60,7 +60,12 @@ auto UnionExpression::parse(syntax::Parser& parser)
         parser.advance();
     }
 
-    auto members = TRY(parser.parse_member_decls(validate_non_struct_member));
+    auto members =
+        TRY(Members::parse(parser,
+                           Overloaded{[](const mem::Box<DeclStatement>& decl) {
+                                          return Members::validate_non_struct_decl(*decl);
+                                      },
+                                      [](const auto&) { return true; }}));
     TRY(parser.expect_peek(syntax::TokenType::RBRACE));
 
     // Validate here so that there aren't 3 errors spawning from an empty union with decls
@@ -70,9 +75,7 @@ auto UnionExpression::parse(syntax::Parser& parser)
 
 auto UnionExpression::is_equal(const Node& other) const noexcept -> bool {
     const auto& casted = as<UnionExpression>(other);
-    return std::ranges::equal(fields_, casted.fields_) &&
-           std::ranges::equal(
-               members_, casted.members_, [](const auto& a, const auto& b) { return *a == *b; });
+    return std::ranges::equal(fields_, casted.fields_) && members_ == casted.members_;
 }
 
 } // namespace porpoise::ast

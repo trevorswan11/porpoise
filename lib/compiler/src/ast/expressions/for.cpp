@@ -91,7 +91,7 @@ auto ForLoopExpression::parse(syntax::Parser& parser)
             captures.emplace_back(parser.get_current_token());
         } else {
             // Always check for a modifier and advance past it if present
-            const auto modifier = TypeModifier::from_token(parser.get_current_token());
+            const TypeModifier modifier{parser.get_current_token()};
             if (!modifier.is_value()) { parser.advance(); }
 
             auto capture = downcast<IdentifierExpression>(TRY(IdentifierExpression::parse(parser)));

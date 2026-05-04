@@ -205,8 +205,12 @@ auto test_collector_fail(std::string_view failing, Ds&&... expected_diagnostics)
 }
 
 // A common decl for tests formatted as `const name := assign;`
-auto        common_decl(std::string_view name, std::string_view assign) -> ast::DeclStatement;
-inline auto foo_bar_decl() -> ast::DeclStatement { return common_decl("foo", "bar"); }
+auto common_decl(std::string_view name, std::string_view assign, bool constant)
+    -> ast::DeclStatement;
+
+inline auto foo_bar_decl(bool constant = true) -> ast::DeclStatement {
+    return common_decl("foo", "bar", constant);
+}
 
 // Shallowly checks the symbols in the inner scope of a statement
 template <typename... Entries>

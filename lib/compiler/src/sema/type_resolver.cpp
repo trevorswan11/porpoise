@@ -98,23 +98,24 @@ auto TypeResolver::visit(const ast::ImplicitAccessExpression&) -> void {}
 
 auto TypeResolver::visit(const ast::StringExpression&) -> void {}
 
-#define MAKE_PRIMITIVE_RESOLVER(NodeType, kind)                               \
-    auto TypeResolver::visit(const ast::NodeType& node) -> void {             \
-        last_type_.emplace(ctx_.pool.get_builtin_value_type(TypeKind::kind)); \
-        node.set_sema_type(*last_type_);                                      \
+#define MAKE_PRIMITIVE_RESOLVER(NodeType, kind)                                           \
+    auto TypeResolver::visit(const ast::NodeType& node) -> void {                         \
+        last_type_.emplace(ctx_.pool.get_builtin_value_type(TypeKind::kind));             \
+        if (!last_type_->has_resolved()) { last_type_->resolve<types::PrimitiveType>(); } \
+        node.set_sema_type(*last_type_);                                                  \
     }
 
-MAKE_PRIMITIVE_RESOLVER(I32Expression, INT)
-MAKE_PRIMITIVE_RESOLVER(I64Expression, LONG)
-MAKE_PRIMITIVE_RESOLVER(ISizeExpression, SIZE)
-MAKE_PRIMITIVE_RESOLVER(U32Expression, UINT)
-MAKE_PRIMITIVE_RESOLVER(U64Expression, ULONG)
+MAKE_PRIMITIVE_RESOLVER(I32Expression, I32)
+MAKE_PRIMITIVE_RESOLVER(I64Expression, I64)
+MAKE_PRIMITIVE_RESOLVER(ISizeExpression, ISIZE)
+MAKE_PRIMITIVE_RESOLVER(U32Expression, U32)
+MAKE_PRIMITIVE_RESOLVER(U64Expression, U64)
 MAKE_PRIMITIVE_RESOLVER(USizeExpression, USIZE)
-MAKE_PRIMITIVE_RESOLVER(U8Expression, BYTE)
+MAKE_PRIMITIVE_RESOLVER(U8Expression, U8)
 MAKE_PRIMITIVE_RESOLVER(BoolExpression, BOOL)
 MAKE_PRIMITIVE_RESOLVER(VoidExpression, VOID)
-MAKE_PRIMITIVE_RESOLVER(F32Expression, FLOAT)
-MAKE_PRIMITIVE_RESOLVER(F64Expression, DOUBLE)
+MAKE_PRIMITIVE_RESOLVER(F32Expression, F32)
+MAKE_PRIMITIVE_RESOLVER(F64Expression, F64)
 
 auto TypeResolver::visit(const ast::ScopeResolutionExpression&) -> void {}
 

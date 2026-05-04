@@ -112,14 +112,18 @@ TEST_CASE("Correct declaration modifiers") {
          false);
 }
 
-static auto test_decl_fail(std::initializer_list<syntax::Keyword> modifiers,
-                           syntax::ParserDiagnostic&&             expected_error,
-                           std::string_view                       init = "a := 2;") -> void {
+namespace {
+
+auto test_decl_fail(std::initializer_list<syntax::Keyword> modifiers,
+                    syntax::ParserDiagnostic&&             expected_error,
+                    std::string_view                       init = "a := 2;") -> void {
     std::stringstream ss;
     for (const auto& keyword : modifiers) { ss << keyword.first << " "; }
     ss << init;
     helpers::test_parser_fail(ss.view(), std::move(expected_error));
 }
+
+} // namespace
 
 TEST_CASE("Mutability restrictions") {
     const std::array contending_mut{keywords::CONSTEXPR, keywords::VAR, keywords::CONSTANT};

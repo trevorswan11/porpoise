@@ -4,6 +4,7 @@
 
 #include <fmt/ostream.h>
 
+#include "ast/statements/members.hpp"
 #include "ast/visitor.hpp"
 
 #include "indent.hpp"
@@ -30,6 +31,13 @@ class ASTDumper : public Visitor {
         dump_container(list, [this](const auto& node) {
             fmt::print(out_, "{}", indent_.current_branch());
             unwrap_and_accept(node);
+        });
+    }
+
+    template <> void dump_node_list<Members>(const Members& list) {
+        dump_container(list, [this](const auto& node) {
+            fmt::print(out_, "{}", indent_.current_branch());
+            Members::accept(node, *this);
         });
     }
 

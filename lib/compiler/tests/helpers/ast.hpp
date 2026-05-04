@@ -122,10 +122,9 @@ auto make_parameters(Ps&&... params) -> std::vector<ast::FunctionParameter> {
     return make_vector<ast::FunctionParameter>(std::forward<Ps>(params)...);
 }
 
-template <typename... Ds>
-    requires(std::same_as<Ds, ast::DeclStatement> && ...)
-auto make_decls(Ds&&... decls) -> std::vector<mem::Box<ast::DeclStatement>> {
-    return make_vector<mem::Box<ast::DeclStatement>>(mem::make_box<Ds>(std::forward<Ds>(decls))...);
+template <typename... Ms> auto make_members(Ms&&... members) -> ast::Members {
+    return ast::Members{
+        make_vector<ast::Members::Member>(mem::make_box<Ms>(std::forward<Ms>(members))...)};
 }
 
 template <ast::PrimitiveNode N> auto primitive_from(std::string_view str) noexcept -> N {

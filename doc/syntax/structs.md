@@ -21,6 +21,7 @@
         - This parameter has the underlying type of the directly enclosing struct
     - Functions are considered to be top-level within the struct and must be `const`
     - Members can be declared in any order, the compiler is order independent and is free to reorder to optimize
+- Struct 'members' can also be `using` or `import` statements
 - Static members are resolved using the `.` operator
 - Instance members are resolved using the `.` operator
 

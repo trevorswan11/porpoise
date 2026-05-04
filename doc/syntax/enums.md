@@ -24,3 +24,4 @@ const a: Colors = .red; // Equivalent
     - Attempting to emplace an instance variable in an enum is not supported
         - This means that all non-function declarations must be explicitly marked `static`
     - These members must appear after all enumeration values
+- Enum 'members' can also be `using` or `import` statements

@@ -172,10 +172,6 @@ class Parser {
                                                       bool        require_semicolon = true)
         -> Result<mem::NullableBox<ast::Statement>, ParserDiagnostic>;
 
-    // Parses a member declaration list for user-defined types
-    [[nodiscard]] auto parse_member_decls(ast::MemberValidator validator = nullptr)
-        -> Result<ast::Members, ParserDiagnostic>;
-
     static auto try_get_prefix_fn(TokenType tt) noexcept -> opt::Option<PrefixFn>;
     static auto try_get_poll_infix_fn(TokenType tt) noexcept -> opt::Option<InfixFn>;
 
