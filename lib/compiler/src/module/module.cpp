@@ -43,7 +43,7 @@ auto Module::print_diagnostics(std::ostream& os) const -> void {
 auto ModuleManager::try_get_file_module(const std::filesystem::path& path,
                                         const std::filesystem::path& parent_path)
     -> Result<mem::NonNull<Module>, Diagnostic> {
-    assert((parent_path.empty() || parent_path.is_absolute()) &&
+    ASSERT((parent_path.empty() || parent_path.is_absolute()) &&
            "Parent path must be absolute or empty");
     if (!path.is_relative()) {
         return make_mod_err(fmt::format("Requested file '{}' is absolute", path.string()),

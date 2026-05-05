@@ -122,7 +122,7 @@ auto ExplicitType::accept(Visitor& v) const -> void { v.visit(*this); }
         }
 
         // Function types cannot have bodies
-        assert(!function->has_body() && "Function type has body");
+        ASSERT(!function->has_body(), "Function type has body");
         return ExplicitType{modifier, std::move(function)};
     }
 

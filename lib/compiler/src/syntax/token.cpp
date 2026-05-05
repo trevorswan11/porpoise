@@ -1,11 +1,11 @@
 #include <algorithm>
-#include <cassert>
 #include <cctype>
 
 #include "syntax/builtins.hpp"
 #include "syntax/keywords.hpp"
 #include "syntax/token.hpp"
 
+#include "assert.hpp"
 #include "enum.hpp"
 
 namespace porpoise::syntax {
@@ -106,7 +106,7 @@ auto suffix_length(TokenType tt) noexcept -> usize {
 } // namespace token_type
 
 auto Token::materialize_string() const -> std::string {
-    assert(type == TokenType::STRING || type == TokenType::MULTILINE_STRING);
+    ASSERT(type == TokenType::STRING || type == TokenType::MULTILINE_STRING);
 
     // Here we can just trim off the start and finish of the string
     if (type == TokenType::STRING) { return std::string{slice.begin() + 1, slice.end() - 1}; }

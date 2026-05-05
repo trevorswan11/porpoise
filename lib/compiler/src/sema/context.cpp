@@ -20,7 +20,7 @@ auto inject_types(SymbolTable& prelude, TypePool& pool) -> void {
 
         const auto name          = keyword.first;
         auto       insert_result = prelude.insert<VirtualSymbol>(name, keyword);
-        assert(insert_result && "Failed to insert symbol into prelude");
+        ASSERT(insert_result, "Failed to insert symbol into prelude");
 
         auto& symbol = prelude.get(name);
         symbol.set_type(type);
@@ -54,9 +54,9 @@ auto inject_functions(SymbolTable& prelude, TypePool& pool) -> void {
     const auto inject_function =
         [&](const syntax::Builtin& builtin, types::BuiltinParams&& param_types, Type& return_type) {
             for (const auto& param_type : param_types) {
-                assert(param_type->has_resolved() && "Builtins must be fully resolved");
+                ASSERT(param_type->has_resolved(), "Builtins must be fully resolved");
             }
-            assert(return_type.has_resolved() && "Builtins must be fully resolved");
+            ASSERT(return_type.has_resolved(), "Builtins must be fully resolved");
 
             types::Key key{TypeKind::FUNCTION, types::Key::Mutability::IMMUTABLE};
             key.imprint(builtin);
@@ -67,7 +67,7 @@ auto inject_functions(SymbolTable& prelude, TypePool& pool) -> void {
 
             const auto name          = builtin.first;
             auto       insert_result = prelude.insert<VirtualSymbol>(name, builtin);
-            assert(insert_result && "Failed to insert symbol into prelude");
+            ASSERT(insert_result, "Failed to insert symbol into prelude");
 
             auto& symbol = prelude.get(name);
             symbol.set_type(type);

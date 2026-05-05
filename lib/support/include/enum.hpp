@@ -72,7 +72,7 @@ template <MappableEnum E, MappableValue Value> class EnumMap {
     template <typename Self>
     [[nodiscard]] constexpr auto operator[](this Self&& self, E key) noexcept -> decltype(auto) {
         const auto index = magic_enum::enum_index(key);
-        assert(index && "Key must be a valid enumeration");
+        ASSERT(index, "Key must be a valid enumeration");
         return self.map_[*index];
     }
 

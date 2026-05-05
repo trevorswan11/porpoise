@@ -1,6 +1,5 @@
 #pragma once
 
-#include <cassert>
 #include <deque>
 #include <ranges>
 #include <string_view>
@@ -14,6 +13,7 @@
 
 #include "syntax/token.hpp"
 
+#include "assert.hpp"
 #include "iterator.hpp"
 #include "option.hpp"
 #include "result.hpp"
@@ -180,7 +180,7 @@ class SymbolTable {
     template <typename Self>
     [[nodiscard]] auto get(this Self&& self, std::string_view name) noexcept -> auto& {
         auto it = self.symbols_.find(name);
-        assert(it != self.symbols_.end() && "Illegal get on missing key");
+        ASSERT(it != self.symbols_.end(), "Illegal get on missing key");
         return it->second;
     }
 

@@ -4,13 +4,13 @@ namespace porpoise::mod {
 
 auto MemoryLoader::add(const std::filesystem::path& path, const std::string& content) -> void {
     const auto normalized = normalize(path);
-    assert(normalized);
+    ASSERT(normalized);
     files_[*normalized] = std::move(content);
 }
 
 auto MemoryLoader::load(const std::filesystem::path& path) -> Result<std::string, Diagnostic> {
     auto normalized = normalize(path);
-    assert(normalized);
+    ASSERT(normalized);
     auto it = files_.find(normalized->string());
     if (it == files_.end()) {
         return make_mod_err(

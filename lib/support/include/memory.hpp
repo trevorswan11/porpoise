@@ -1,12 +1,12 @@
 #pragma once
 
-#include <cassert>
 #include <memory>
 #include <stdexcept>
 #include <string>
 #include <type_traits>
 #include <utility>
 
+#include "assert.hpp"
 #include "option.hpp"
 
 namespace porpoise {
@@ -51,7 +51,7 @@ struct NullBoxException : public std::logic_error {
 
 // A light unique pointer wrapper that ensures pointer validity at initialization.
 //
-// All methods besides constructors and factories assert this invariant.
+// All methods besides constructors and factories ASSERT this invariant.
 template <typename T, typename D = std::default_delete<T>> class Box {
   public:
     explicit Box(NullableBox<T, D>&& ptr) : ptr_{std::move(ptr)} {
@@ -72,23 +72,16 @@ template <typename T, typename D = std::default_delete<T>> class Box {
     Box(Box&&)                         = default;
     auto operator=(Box&&) -> Box&      = default;
 
-    [[nodiscard]] auto operator*() const noexcept -> T& {
-        assert(ptr_ && "Attempted to dereference a moved-from Box");
-        return *ptr_;
-    }
-
-    [[nodiscard]] auto operator->() const noexcept -> T* {
-        assert(ptr_ && "Attempted to access a moved-from Box");
-        return get();
-    }
+    [[nodiscard]] auto operator*() const noexcept -> T& { return *get(); }
+    [[nodiscard]] auto operator->() const noexcept -> T* { return get(); }
 
     [[nodiscard]] auto release() noexcept -> T* {
-        assert(ptr_ && "Attempted to release a moved-from Box");
+        ASSERT(ptr_, "Attempted to release a moved-from Box");
         return ptr_.release();
     }
 
     [[nodiscard]] auto get() const noexcept -> T* {
-        assert(ptr_ && "Attempted to access a moved-from Box");
+        ASSERT(ptr_, "Attempted to access a moved-from Box");
         return ptr_.get();
     }
 
@@ -162,7 +155,7 @@ class NonNull {
   public:
     // cppcheck-suppress-begin noExplicitConstructor
     constexpr NonNull(T* ptr) noexcept : ptr_{ptr} {
-        assert(ptr_ && "Attempt to create NonNull from nullptr");
+        ASSERT(ptr_, "Attempt to create NonNull from nullptr");
     }
 
     constexpr NonNull(opt::detail::Ref<T> opt) : ptr_{&opt.value()} {}
@@ -174,24 +167,12 @@ class NonNull {
     constexpr NonNull(const NonNull<U>& other) noexcept : ptr_{other.get()} {}
     // cppcheck-suppress-end noExplicitConstructor
 
-    constexpr auto operator->() const noexcept -> T* {
-        assert(ptr_ && "Attempt to access invalid non-null");
+    [[nodiscard]] constexpr auto operator->() const noexcept -> T* { return get(); }
+    [[nodiscard]] constexpr auto operator*() const noexcept -> T& { return *get(); }
+
+    [[nodiscard]] constexpr auto get() const noexcept -> T* {
+        ASSERT(ptr_, "Attempt to access invalid non-null");
         return ptr_;
-    }
-
-    [[nodiscard]] constexpr auto operator*() const noexcept -> T& {
-        assert(ptr_ && "Attempt to access invalid non-null");
-        return *ptr_;
-    }
-
-    constexpr auto get() const noexcept -> T* {
-        assert(ptr_ && "Attempt to access invalid non-null");
-        return ptr_;
-    }
-
-    constexpr explicit operator T() const noexcept {
-        assert(ptr_ && "Attempt to access invalid non-null");
-        return *ptr_;
     }
 
     constexpr bool operator==(const NonNull<T>&) const noexcept = default;

@@ -1,6 +1,5 @@
 #pragma once
 
-#include <cassert>
 #include <span>
 #include <type_traits>
 

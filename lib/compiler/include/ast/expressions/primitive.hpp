@@ -1,6 +1,5 @@
 #pragma once
 
-#include <cassert>
 #include <charconv>
 #include <string>
 #include <utility>
@@ -10,6 +9,8 @@
 #include "ast/node.hpp"
 
 #include "syntax/parser.hpp"
+
+#include "assert.hpp"
 
 namespace porpoise::ast {
 
@@ -39,13 +40,13 @@ template <typename ValueType, bool AssertLast = true>
     }
 
     if constexpr (AssertLast) {
-        assert(result.ptr == last);
+        ASSERT(result.ptr == last);
         if (result.ec == std::errc{}) { return v; }
     } else {
         if (result.ec == std::errc{} && result.ptr == last) { return v; }
     }
 
-    assert(result.ec == std::errc::result_out_of_range);
+    ASSERT(result.ec == std::errc::result_out_of_range);
     return opt::none;
 }
 

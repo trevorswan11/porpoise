@@ -1,12 +1,12 @@
 #pragma once
 
 #include <algorithm>
-#include <cassert>
 #include <concepts>
 #include <vector>
 
 #include "syntax/token.hpp"
 
+#include "assert.hpp"
 #include "memory.hpp"
 #include "option.hpp"
 #include "types.hpp"
@@ -134,14 +134,14 @@ class Node {
 
     // A 'safe' alternative to a raw static cast for nodes. Assertion > UB
     template <LeafNode T> [[nodiscard]] static auto as(const Node& n) noexcept -> const T& {
-        assert(n.is<T>());
+        ASSERT(n.is<T>());
         return static_cast<const T&>(n);
     }
 
     // Transfers ownership and downcasts a boxed node into the requested type.
     template <LeafNode To, NodeSubtype From>
     static auto downcast(mem::Box<From>&& from) -> mem::Box<To> {
-        assert(from && from->template is<To>());
+        ASSERT(from && from->template is<To>());
         return mem::box_into<To>(std::move(from));
     }
 

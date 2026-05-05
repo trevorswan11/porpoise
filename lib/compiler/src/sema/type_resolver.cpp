@@ -1,7 +1,5 @@
-#include <cassert>
-
-#include "sema/type.hpp"
 #include "sema/type_resolver.hpp"
+#include "sema/type.hpp"
 
 #include "ast/ast.hpp"
 

@@ -1,12 +1,11 @@
 #pragma once
 
-#include <cassert>
 #include <concepts>
 #include <limits>
 #include <optional>
 #include <type_traits>
-#include <utility>
 
+#include "assert.hpp"
 #include "types.hpp"
 
 namespace porpoise::opt {
@@ -39,7 +38,7 @@ template <typename T> class Ref {
 
     // Resets the optional and returns the stored reference
     [[nodiscard]] constexpr auto take() noexcept -> T* {
-        assert(ptr_ && "Attempt to access empty optional reference");
+        ASSERT(ptr_, "Attempt to access empty optional reference");
         auto* ptr = ptr_;
         reset();
         return ptr;
@@ -51,12 +50,12 @@ template <typename T> class Ref {
     }
 
     [[nodiscard]] constexpr auto get() const noexcept -> T& {
-        assert(has_value() && "Attempt to access empty optional reference");
+        ASSERT(has_value(), "Attempt to access empty optional reference");
         return *ptr_;
     }
 
     [[nodiscard]] constexpr auto operator->() const noexcept -> T* {
-        assert(ptr_ && "Attempt to access empty optional reference");
+        ASSERT(ptr_, "Attempt to access empty optional reference");
         return ptr_;
     }
 
@@ -117,7 +116,7 @@ class Boolean {
     }
 
     [[nodiscard]] constexpr auto get() const noexcept -> bool {
-        assert(has_value() && "Attempt to access empty optional boolean");
+        ASSERT(has_value(), "Attempt to access empty optional boolean");
         return static_cast<bool>(value_);
     }
 
@@ -212,7 +211,7 @@ class Index {
     }
 
     [[nodiscard]] constexpr auto get() const noexcept -> usize {
-        assert(has_value() && "Attempt to access empty optional enum");
+        ASSERT(has_value(), "Attempt to access empty optional enum");
         return idx_;
     }
 
@@ -268,7 +267,7 @@ template <OptionableEnum E> class Enum {
     }
 
     [[nodiscard]] constexpr auto get() const noexcept -> E {
-        assert(has_value() && "Attempt to access empty optional enum");
+        ASSERT(has_value(), "Attempt to access empty optional enum");
         return value_;
     }
 

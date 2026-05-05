@@ -91,7 +91,6 @@ TEST_CASE("NonNull basic usage") {
 
     CHECK(*ptr == 42);
     CHECK(ptr.get() == &val);
-    CHECK(static_cast<i32>(ptr) == 42);
 }
 
 TEST_CASE("NonNull from optional reference") {

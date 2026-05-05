@@ -21,7 +21,7 @@ class TypeResolver : public ast::Visitor {
   private:
     TypeResolver(mod::Module& collecting, Context& ctx)
         : table_idx_{*collecting.root_table_idx}, ctx_{ctx} {
-        assert(ctx.prelude_index && "TypeResolver must be used post prelude-injection");
+        ASSERT(ctx.prelude_index, "TypeResolver must be used post prelude-injection");
         table_stack_.push(*ctx_.prelude_index);
         table_stack_.push(table_idx_);
     }

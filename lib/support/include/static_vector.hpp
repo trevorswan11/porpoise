@@ -1,13 +1,13 @@
 #pragma once
 
 #include <algorithm>
-#include <cassert>
 #include <cstddef>
 #include <cstring>
 #include <span>
 #include <stdexcept>
 #include <utility>
 
+#include "assert.hpp"
 #include "types.hpp"
 
 namespace porpoise {
@@ -132,7 +132,7 @@ class StaticVector : private detail::StaticVectorStorage<Item, Capacity> {
     template <typename Self>
     [[nodiscard]] constexpr auto operator[](this Self&& self, usize idx) noexcept
         -> decltype(auto) {
-        assert(idx < self.size_ && "StaticVector index out of bounds");
+        ASSERT(idx < self.size_, "StaticVector index out of bounds");
         return self.data()[idx];
     }
 

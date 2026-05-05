@@ -41,7 +41,7 @@ class Arena {
     template <TriviallyDestructible T> [[nodiscard]] auto make_span(usize count) -> std::span<T> {
         static_assert(sizeof(T) <= BLOCK_SIZE, "Block size cannot fit requested type");
         const auto size = sizeof(T) * count;
-        assert(size <= BLOCK_SIZE && "Block size cannot fit requested type count");
+        ASSERT(size <= BLOCK_SIZE, "Block size cannot fit requested type count");
         void* mem = alloc(size, alignof(T));
         return std::span{new (mem) T[count]{}, count};
     }
