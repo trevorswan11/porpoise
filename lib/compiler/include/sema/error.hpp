@@ -19,6 +19,7 @@ enum class Error : u8 {
     MODULE_LOAD_ERROR,
     NON_CALLABLE_EXPRESSION,
     ARITY_MISMATCH,
+    UNDECLARED_IDENTIFIER,
 };
 
 using Diagnostic  = Diagnostic<Error>;

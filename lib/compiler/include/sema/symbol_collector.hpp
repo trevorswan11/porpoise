@@ -6,7 +6,6 @@
 #include "module/module.hpp"
 
 #include "sema/context.hpp"
-#include "sema/pool.hpp"
 #include "sema/symbol.hpp"
 #include "sema/type.hpp"
 
@@ -29,7 +28,7 @@ class SymbolCollector : public ast::Visitor {
         (..., [&] {
             for (const auto& item : pairs.iterable) { pairs.visitor(item); }
         }());
-        last_type_.emplace(ctx_.pool[{kind, false, new_idx}]);
+        last_type_.emplace(ctx_.pool[{kind, types::Key::Mutability::IMMUTABLE, new_idx}]);
         return new_idx;
     }
 

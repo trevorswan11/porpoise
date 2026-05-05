@@ -5,7 +5,6 @@
 #include "module/module.hpp"
 
 #include "sema/context.hpp"
-#include "sema/pool.hpp"
 #include "sema/symbol.hpp"
 
 namespace porpoise::sema {

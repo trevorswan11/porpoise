@@ -100,7 +100,7 @@ auto SymbolCollector::visit(const ast::ForLoopExpression& for_expr) -> void {
     }
     if (for_expr.has_non_break()) { for_expr.get_non_break().accept(*this); }
 
-    last_type_.emplace(ctx_.pool[{TypeKind::BLOCK, false, new_idx}]);
+    last_type_.emplace(ctx_.pool[{TypeKind::BLOCK, types::Key::Mutability::IMMUTABLE, new_idx}]);
     last_type_->set_symbol_table_idx(new_idx);
     for_expr.set_sema_type(*last_type_.take());
 }
@@ -123,7 +123,7 @@ auto SymbolCollector::visit(const ast::FunctionExpression& fn) -> void {
     visit_list(fn.get_parameters());
     if (fn.has_body()) { visit_list(fn.get_body()); }
 
-    last_type_.emplace(ctx_.pool[{TypeKind::FUNCTION, false, new_idx}]);
+    last_type_.emplace(ctx_.pool[{TypeKind::FUNCTION, types::Key::Mutability::IMMUTABLE, new_idx}]);
     last_type_->set_symbol_table_idx(new_idx);
     fn.set_sema_type(*last_type_);
 }
@@ -183,7 +183,8 @@ auto SymbolCollector::visit(const ast::MatchArm& arm) -> void {
     }
     arm.get_dispatch().accept(*this);
 
-    last_type_.emplace(ctx_.pool[{TypeKind::MATCH_ARM, false, new_idx}]);
+    last_type_.emplace(
+        ctx_.pool[{TypeKind::MATCH_ARM, types::Key::Mutability::IMMUTABLE, new_idx}]);
     last_type_->set_symbol_table_idx(new_idx);
     arm.set_sema_type(*last_type_.take());
 }
@@ -241,7 +242,7 @@ auto SymbolCollector::visit(const ast::WhileLoopExpression& while_expr) -> void 
     }
     if (while_expr.has_non_break()) { while_expr.get_non_break().accept(*this); }
 
-    last_type_.emplace(ctx_.pool[{TypeKind::BLOCK, false, new_idx}]);
+    last_type_.emplace(ctx_.pool[{TypeKind::BLOCK, types::Key::Mutability::IMMUTABLE, new_idx}]);
     last_type_->set_symbol_table_idx(new_idx);
     while_expr.set_sema_type(*last_type_.take());
 }
@@ -279,11 +280,12 @@ auto SymbolCollector::visit(const ast::ContinueStatement& continue_stmt) -> void
 auto SymbolCollector::visit(const ast::DeclStatement& decl) -> void {
     // We can stop analyzing early if there's no value
     const auto name = decl.get_ident().get_name();
-    try_declare(name, &decl);
+    if (!try_declare(name, &decl)) { return; };
     if (!decl.has_value()) { return; }
 
     // Valued decls should be evaluated to get shallow types
-    const auto& expr = decl.get_value();
+    auto&       symbol = ctx_.registry.get_from(table_idx_, name);
+    const auto& expr   = decl.get_value();
     if (expr.any<ast::EnumExpression, ast::UnionExpression, ast::StructExpression>()) {
         if (decl.has_modifier(ast::DeclModifiers::CONSTEXPR)) {
             ctx_.diagnostics.emplace_back(
@@ -291,22 +293,27 @@ auto SymbolCollector::visit(const ast::DeclStatement& decl) -> void {
                 Error::REDUNDANT_CONSTEXPR,
                 decl.get_token());
         } else if (!decl.has_modifier(ast::DeclModifiers::CONSTANT)) {
-            ctx_.diagnostics.emplace_back(
-                fmt::format("All {}s must be marked const", expr.display_name()),
-                Error::ILLEGAL_NON_CONST_STATEMENT,
-                decl.get_token());
+            ctx_.poison_symbol(symbol,
+                               fmt::format("All {}s must be marked const", expr.display_name()),
+                               Error::ILLEGAL_NON_CONST_STATEMENT,
+                               decl.get_token());
+        } else {
+            symbol.set_kind(SymbolKind::TYPE);
         }
     } else if (expr.is<ast::FunctionExpression>()) {
         if (!decl.has_modifier(ast::DeclModifiers::CONSTEXPR) &&
             !decl.has_modifier(ast::DeclModifiers::CONSTANT)) {
-            ctx_.diagnostics.emplace_back("All function declarations must be const or constexpr",
-                                          Error::ILLEGAL_NON_CONST_STATEMENT,
-                                          decl.get_token());
+            ctx_.poison_symbol(symbol,
+                               "All function declarations must be const or constexpr",
+                               Error::ILLEGAL_NON_CONST_STATEMENT,
+                               decl.get_token());
+        } else {
+            symbol.set_kind(SymbolKind::CALLABLE);
         }
     }
 
     expr.accept(*this);
-    if (last_type_) { ctx_.registry.get_from(table_idx_, name).emplace_type(*last_type_.take()); }
+    if (last_type_) { ctx_.registry.get_from(table_idx_, name).set_type(*last_type_.take()); }
 }
 
 auto SymbolCollector::visit(const ast::DeferStatement& defer) -> void {
@@ -360,11 +367,16 @@ auto SymbolCollector::visit(const ast::ImportStatement& import_stmt) -> void {
     }
 
     ctx_.try_result(
-        ctx_.registry.insert_into(table_idx_, alias, SymbolicImport{import_stmt, imported_mod}));
+        ctx_.registry.insert_into<SymbolicImport>(table_idx_, alias, import_stmt, imported_mod));
     if (imported_mod) {
-        auto& type = ctx_.pool[{TypeKind::MODULE, false, *imported_mod->root_table_idx}];
+        auto& type = ctx_.pool[{
+            TypeKind::MODULE, types::Key::Mutability::IMMUTABLE, *imported_mod->root_table_idx}];
         import_stmt.set_sema_type(type);
-        ctx_.registry.get_from(table_idx_, alias).emplace_type(type);
+        auto& symbol = ctx_.registry.get_from(table_idx_, alias);
+        symbol.set_type(type);
+        symbol.set_kind(SymbolKind::MODULE);
+    } else {
+        ctx_.poison_symbol(ctx_.registry.get_from(table_idx_, alias));
     }
 }
 
@@ -393,7 +405,9 @@ auto SymbolCollector::visit(const ast::TestStatement& test) -> void {
 }
 
 auto SymbolCollector::visit(const ast::UsingStatement& using_stmt) -> void {
-    try_declare(using_stmt.get_alias().get_name(), &using_stmt);
+    const auto name = using_stmt.get_alias().get_name();
+    try_declare(name, &using_stmt);
+    ctx_.registry.get_from(table_idx_, name).set_kind(SymbolKind::TYPE);
 }
 
 } // namespace porpoise::sema

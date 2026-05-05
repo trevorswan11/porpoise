@@ -7,9 +7,10 @@ namespace porpoise::tests {
 namespace keywords  = syntax::keywords;
 namespace operators = syntax::operators;
 namespace mods      = helpers::type_modifiers;
+namespace mut       = helpers::mut;
 
 TEST_CASE("Function hollow types") {
-    const sema::types::Key key{sema::TypeKind::FUNCTION, false, 1};
+    const sema::types::Key key{sema::TypeKind::FUNCTION, mut::IMMUTABLE, 1};
     auto                   ctx = helpers::test_collector(
         "const a := fn(&self, c: type): void { const foo := bar; };",
         {},
@@ -31,7 +32,8 @@ TEST_CASE("Function hollow types") {
             },
             opt::none,
             key,
-            key});
+            key,
+            sema::SymbolKind::CALLABLE});
 
     helpers::test_hollow_symbols(
         ctx,

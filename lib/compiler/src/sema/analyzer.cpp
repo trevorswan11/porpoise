@@ -21,6 +21,9 @@ auto Analyzer::analyze(const std::filesystem::path& entry_path) -> Result<Unit, 
 
     collect_symbols(*module);
     resolve_types(*module);
+
+    // Perform a final diagnostic flush if poisoned
+    if (module->is_poisoned()) { module->print_diagnostics(error_stream_); }
     return Unit{};
 }
 

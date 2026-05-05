@@ -7,6 +7,8 @@
 
 namespace porpoise::sema {
 
+namespace { constexpr auto IMMUTABLE = types::Key::Mutability::IMMUTABLE; } // namespace
+
 auto TypeResolver::resolve_types(mod::Module& module, Context& ctx) -> mod::ModuleState {
     // Poisoned collection should flush the diagnostics
     if (module.state == mod::ModuleState::POISONED_SYMBOL_COLLECTION) {
@@ -14,7 +16,7 @@ auto TypeResolver::resolve_types(mod::Module& module, Context& ctx) -> mod::Modu
     }
 
     if (module.is_resolvable()) {
-        ctx.make_type_prelude();
+        ctx.inject_prelude();
 
         TypeResolver resolver{module, ctx};
         for (const auto& node : module.tree) { node->accept(resolver); }
@@ -36,8 +38,7 @@ auto TypeResolver::visit(const ast::ArrayExpression& array) -> void {
     const auto size            = array.get_size();
     auto&      item_type       = array.get_item_type().get_sema_type();
     const auto null_terminated = array.is_null_terminated();
-    last_type_.emplace(
-        ctx_.pool[{TypeKind::ARRAY, false, 0, null_terminated, size, item_type.as_marker()}]);
+    last_type_.emplace(ctx_.pool[{TypeKind::ARRAY, IMMUTABLE, null_terminated, size, item_type}]);
     if (!last_type_->has_resolved()) {
         last_type_->resolve<types::Array>(item_type, size, null_terminated);
     }
@@ -103,7 +104,23 @@ auto TypeResolver::visit(const ast::FunctionParameter&) -> void {}
 
 auto TypeResolver::visit(const ast::FunctionExpression&) -> void {}
 
-auto TypeResolver::visit(const ast::IdentifierExpression&) -> void {}
+auto TypeResolver::visit(const ast::IdentifierExpression& ident) -> void {
+    const auto name   = ident.get_name();
+    auto       symbol = ctx_.registry.lookup(table_stack_, name);
+
+    // Check for an undeclared identifier and poison the ident
+    if (!symbol) {
+        ctx_.poison_node(ident,
+                         fmt::format("Use of undeclared identifier '{}'", name),
+                         Error::UNDECLARED_IDENTIFIER,
+                         ident.get_token());
+        return last_type_.emplace(ctx_.get_poison());
+    }
+
+    // Identifiers can be anything that they're symbol is allowed to be
+    ident.set_sema_type(symbol->get_type());
+    last_type_.emplace(symbol->get_type());
+}
 
 auto TypeResolver::visit(const ast::IfExpression&) -> void {}
 
@@ -139,11 +156,11 @@ auto TypeResolver::visit(const ast::ImplicitAccessExpression&) -> void {}
 
 auto TypeResolver::visit(const ast::StringExpression&) -> void {}
 
-#define MAKE_PRIMITIVE_RESOLVER(NodeType, kind)                                           \
-    auto TypeResolver::visit(const ast::NodeType& node) -> void {                         \
-        last_type_.emplace(ctx_.pool.get_builtin_value_type(TypeKind::kind));             \
-        if (!last_type_->has_resolved()) { last_type_->resolve<types::PrimitiveType>(); } \
-        node.set_sema_type(*last_type_);                                                  \
+#define MAKE_PRIMITIVE_RESOLVER(NodeType, kind)                                         \
+    auto TypeResolver::visit(const ast::NodeType& node) -> void {                       \
+        last_type_.emplace(ctx_.pool[{TypeKind::kind, IMMUTABLE}]);                     \
+        if (!last_type_->has_resolved()) { last_type_->resolve<types::BuiltinType>(); } \
+        node.set_sema_type(*last_type_);                                                \
     }
 
 MAKE_PRIMITIVE_RESOLVER(I32Expression, I32)

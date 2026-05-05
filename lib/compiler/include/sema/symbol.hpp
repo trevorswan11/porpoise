@@ -12,7 +12,6 @@
 
 #include "module/module.hpp"
 
-#include "syntax/builtins.hpp"
 #include "syntax/token.hpp"
 
 #include "iterator.hpp"
@@ -45,13 +44,15 @@ class LabelExpression;
 
 namespace sema {
 
-class SymbolicBuiltin {
+// A non-AST-based symbol for primitives and builtins
+class VirtualSymbol {
   public:
-    explicit SymbolicBuiltin(syntax::Builtin builtin) noexcept : token_{builtin} {}
+    explicit VirtualSymbol(const std::pair<std::string_view, syntax::TokenType>& tok) noexcept
+        : token_{tok} {}
 
     [[nodiscard]] auto get_token() const noexcept -> const syntax::Token& { return token_; }
 
-    MAKE_EQ_DELEGATION(SymbolicBuiltin)
+    MAKE_EQ_DELEGATION(VirtualSymbol)
 
   private:
     syntax::Token token_;
@@ -74,7 +75,7 @@ struct SymbolicImport {
     MAKE_EQ_DELEGATION(SymbolicImport)
 };
 
-using SymbolicNode = std::variant<SymbolicBuiltin,
+using SymbolicNode = std::variant<VirtualSymbol,
                                   SymbolicDecl,
                                   SymbolicImport,
                                   SymbolicUsing,
@@ -88,11 +89,30 @@ using SymbolicNode = std::variant<SymbolicBuiltin,
 
 class Type;
 
+enum class SymbolKind : u8 {
+    TYPE,
+    VALUE,
+    CALLABLE,
+    MODULE,
+};
+
 enum class ResolveStatus : u8 {
     UNRESOLVED,
     RESOLVING,
     RESOLVED,
 };
+
+} // namespace sema
+
+namespace opt {
+
+template <> struct SentinelEnum<sema::SymbolKind> {
+    static constexpr auto SENTINEL = EnumLimits<sema::SymbolKind>::max();
+};
+
+} // namespace opt
+
+namespace sema {
 
 class Symbol {
   public:
@@ -104,7 +124,7 @@ class Symbol {
     MAKE_GETTER(name, std::string_view)
     MAKE_GETTER(node, const SymbolicNode&)
 
-    MAKE_VARIANT_UNPACKER(builtin, SymbolicBuiltin, SymbolicBuiltin, node_, std::get)
+    MAKE_VARIANT_UNPACKER(builtin, VirtualSymbol, VirtualSymbol, node_, std::get)
     MAKE_VARIANT_UNPACKER(decl_stmt, ast::DeclStatement, SymbolicDecl, node_, *std::get)
     MAKE_VARIANT_UNPACKER(import_stmt, SymbolicImport, SymbolicImport, node_, std::get)
     MAKE_VARIANT_UNPACKER(using_stmt, ast::UsingStatement, SymbolicUsing, node_, *std::get)
@@ -122,12 +142,16 @@ class Symbol {
     // Can only be true for decls, imports, and type aliases
     [[nodiscard]] auto is_public() const noexcept -> bool;
 
-    auto               emplace_type(Type& type) noexcept -> void { type_.emplace(type); }
     [[nodiscard]] auto has_type() const noexcept -> bool { return type_.has_value(); }
     [[nodiscard]] auto get_type() const noexcept -> Type& { return *type_; }
+    auto               set_type(Type& type) noexcept -> void { type_.emplace(type); }
 
     [[nodiscard]] auto get_status() const noexcept -> ResolveStatus { return status_; }
     auto               set_status(ResolveStatus status) noexcept -> void { status_ = status; }
+
+    [[nodiscard]] auto has_kind() const noexcept -> bool { return kind_.has_value(); }
+    [[nodiscard]] auto get_kind() const noexcept -> SymbolKind { return *kind_; }
+    auto               set_kind(SymbolKind kind) noexcept -> void { kind_ = kind; }
 
     MAKE_EQ_DELEGATION(Symbol)
 
@@ -136,6 +160,7 @@ class Symbol {
     SymbolicNode             node_;
     opt::Option<sema::Type&> type_;
     ResolveStatus            status_{ResolveStatus::UNRESOLVED};
+    opt::Enum<SymbolKind>    kind_;
 };
 
 class SymbolTable {
@@ -149,6 +174,12 @@ class SymbolTable {
     ~SymbolTable()         = default;
 
     MAKE_MOVE_CONSTRUCTABLE_ONLY(SymbolTable)
+
+    // Constructs the symbolic node in place with the provided args
+    template <typename T, typename... Args>
+    auto insert(std::string_view name, Args&&... args) -> Result<Unit, Diagnostic> {
+        return insert(name, SymbolicNode{T{std::forward<Args>(args)...}});
+    }
 
     auto insert(std::string_view name, SymbolicNode node) -> Result<Unit, Diagnostic>;
     auto reserve(usize cap) -> void { symbols_.reserve(cap); }
@@ -244,6 +275,13 @@ class SymbolTableRegistry {
         return tables_.size() - 1;
     }
 
+    // Constructs the symbolic node in place with the provided args
+    template <typename T, typename... Args>
+    [[nodiscard]] auto insert_into(usize table_idx, std::string_view name, Args&&... args)
+        -> Result<Unit, Diagnostic> {
+        return insert_into(table_idx, name, SymbolicNode{T{std::forward<Args>(args)...}});
+    }
+
     [[nodiscard]] auto insert_into(usize table_idx, std::string_view name, SymbolicNode node)
         -> Result<Unit, Diagnostic>;
 
@@ -276,10 +314,11 @@ class SymbolTableRegistry {
 
     // Looks up all levels of the stack for the queried name
     template <typename Self>
-    [[nodiscard]] auto lookup(const SymbolTableStack& stack, std::string_view name) noexcept {
+    [[nodiscard]] auto
+    lookup(this Self&& self, const SymbolTableStack& stack, std::string_view name) noexcept {
         using ReturnType = OPTIONAL_RETURN_TYPE(Symbol);
         for (const auto idx : std::views::reverse(stack)) {
-            if (auto symbol = tables_[idx].get_opt(name)) { return symbol; }
+            if (auto symbol = self.tables_[idx].get_opt(name)) { return symbol; }
         }
         return ReturnType{opt::none};
     }

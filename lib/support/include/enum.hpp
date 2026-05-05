@@ -2,6 +2,7 @@
 
 #include <array>
 #include <concepts>
+#include <limits>
 #include <type_traits>
 #include <utility>
 
@@ -17,23 +18,28 @@ namespace porpoise {
 template <typename Enum>
 concept ValidEnum = std::is_enum_v<Enum>;
 
-template <typename Enum>
-concept ScopedEnum = std::is_scoped_enum_v<Enum>;
-
 using magic_enum::enum_value;
 
+// Returns the minimum value of the present enumerations as the value
 template <ValidEnum E> consteval auto enum_min_value() { return enum_value<E>(0); }
+
+// Returns the minimum value of the present enumerations as the underlying value
 template <ValidEnum E> consteval auto enum_min_underlying() {
     return magic_enum::enum_integer(enum_min_value<E>());
 }
 
+// Returns the maximum value of the present enumerations as the value
 template <ValidEnum E> consteval auto enum_max_value() {
     return enum_value<E>(magic_enum::enum_count<E>() - 1);
 }
 
+// Returns the maximum value of the present enumerations as the underlying value
 template <ValidEnum E> consteval auto enum_max_underlying() {
     return magic_enum::enum_integer(enum_max_value<E>());
 }
+
+// Numeric limits for the enum's underlying type
+template <ValidEnum E> using EnumLimits = std::numeric_limits<std::underlying_type_t<E>>;
 
 // Requires that the enum is in an exclusively bounded range of magic enum bounds
 //

@@ -50,18 +50,21 @@ template <typename T> class Ref {
         return *ptr_;
     }
 
+    [[nodiscard]] constexpr auto get() const noexcept -> T& {
+        assert(has_value() && "Attempt to access empty optional reference");
+        return *ptr_;
+    }
+
     [[nodiscard]] constexpr auto operator->() const noexcept -> T* {
         assert(ptr_ && "Attempt to access empty optional reference");
         return ptr_;
     }
 
-    [[nodiscard]] constexpr auto operator*() const noexcept -> T& {
-        assert(ptr_ && "Attempt to access empty optional reference");
-        return *ptr_;
-    }
+    [[nodiscard]] constexpr auto operator*() const noexcept -> T& { return get(); }
 
     // Applies F to to underlying reference if present
-    template <class F> [[nodiscard]] constexpr auto transform(F&& f) & {
+    template <typename Self, class F>
+    [[nodiscard]] constexpr auto transform(this Self&& self, F&& f) {
         using ResCV = std::invoke_result_t<F, T&>;
         using Res   = std::remove_cv_t<ResCV>;
 
@@ -76,7 +79,7 @@ template <typename T> class Ref {
         using Ret = std::conditional_t<std::is_reference_v<ResCV>,
                                        Ref<std::remove_reference_t<ResCV>>,
                                        std::optional<ResCV>>;
-        if (*this) { return Ret{std::forward<F>(f)(value())}; }
+        if (self.has_value()) { return Ret{std::forward<F>(f)(self.value())}; }
         return Ret{};
     }
 
@@ -101,7 +104,7 @@ class Boolean {
 
     // Resets the optional and returns the stored bool
     [[nodiscard]] constexpr auto take() noexcept -> bool {
-        auto value = value_;
+        const auto value = value_;
         reset();
         return value;
     }
@@ -116,10 +119,7 @@ class Boolean {
         return static_cast<bool>(value_);
     }
 
-    [[nodiscard]] constexpr auto operator*() const noexcept -> bool {
-        assert(has_value() && "Attempt to access empty optional boolean");
-        return value_;
-    }
+    [[nodiscard]] constexpr auto operator*() const noexcept -> bool { return get(); }
 
     template <class Or> [[nodiscard]] constexpr auto value_or(Or&& or_value) -> bool {
         // This is straight from clang's stdc++ C++23 optional implementation
@@ -193,7 +193,7 @@ class Index {
 
     constexpr auto               reset() noexcept -> void { idx_ = NO_VALUE; }
     [[nodiscard]] constexpr auto take() noexcept -> usize {
-        usize idx = idx_;
+        const usize idx = idx_;
         reset();
         return idx;
     }
@@ -203,16 +203,83 @@ class Index {
         return idx_;
     }
 
-    [[nodiscard]] constexpr auto operator*() const noexcept -> usize {
-        assert(has_value() && "Attempt to access empty optional boolean");
+    [[nodiscard]] constexpr auto get() const noexcept -> usize {
+        assert(has_value() && "Attempt to access empty optional enum");
         return idx_;
     }
+
+    [[nodiscard]] constexpr auto operator*() const noexcept -> usize { return get(); }
 
   private:
     static constexpr usize NO_VALUE = std::numeric_limits<usize>::max();
 
   private:
     usize idx_{NO_VALUE};
+};
+
+// Defines a sentinel value for the enum that is the same as its underlying type
+template <typename E> struct SentinelEnum;
+
+template <typename E>
+concept OptionableEnum = ScopedEnum<E> && requires { static_cast<E>(SentinelEnum<E>::SENTINEL); };
+
+// An efficient optional enum representation for enums with a sentinel value
+template <OptionableEnum E> class Enum {
+  public:
+    // cppcheck-suppress-begin noExplicitConstructor
+    constexpr Enum() noexcept : value_{NO_VALUE} {}
+    constexpr Enum(E value) noexcept : value_{value} {}
+    constexpr Enum(None) noexcept : value_{NO_VALUE} {}
+    // cppcheck-suppress-end noExplicitConstructor
+
+    [[nodiscard]] constexpr auto has_value() const noexcept -> bool { return value_ != NO_VALUE; }
+    [[nodiscard]] constexpr explicit operator bool() const noexcept { return has_value(); }
+
+    constexpr auto emplace(E value) noexcept -> void { value_ = value; }
+    constexpr auto reset() noexcept -> void { value_ = NO_VALUE; }
+
+    // Resets the optional and returns the stored value
+    [[nodiscard]] constexpr auto take() noexcept -> E {
+        auto value = value_;
+        reset();
+        return value;
+    }
+
+    [[nodiscard]] constexpr auto value() const -> E {
+        if (!has_value()) { throw std::bad_optional_access(); }
+        return value_;
+    }
+
+    [[nodiscard]] constexpr auto get() const noexcept -> E {
+        assert(has_value() && "Attempt to access empty optional enum");
+        return value_;
+    }
+
+    [[nodiscard]] constexpr auto operator*() const noexcept -> E { return get(); }
+    [[nodiscard]] friend auto    operator==(const Enum& lhs, const Enum& rhs) noexcept
+        -> bool = default;
+
+    template <typename Self, class F>
+    [[nodiscard]] constexpr auto transform(this Self&& self, F&& f) {
+        using Res = std::remove_cv_t<std::invoke_result_t<F, E>>;
+
+        // This is straight from clang's stdc++ C++23 optional implementation
+        static_assert(!std::is_array_v<Res>, "Result of f(value()) should not be an Array");
+        static_assert(!std::is_same_v<Res, std::in_place_t>,
+                      "Result of f(value()) should not be std::in_place_t");
+        static_assert(!std::is_same_v<Res, None>, "Result of f(value()) should not be opt::none");
+        static_assert(std::is_object_v<Res>, "Result of f(value()) should be an object type");
+
+        // Also from clang, but generalized to support reference transform chains
+        if (self.has_value()) { return Option<Res>{std::forward<F>(f)(self.value())}; }
+        return Option<Res>{};
+    }
+
+  private:
+    static constexpr E NO_VALUE = static_cast<E>(SentinelEnum<E>::SENTINEL);
+
+  private:
+    E value_;
 };
 
 } // namespace porpoise::opt

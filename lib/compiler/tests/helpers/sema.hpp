@@ -87,7 +87,11 @@ template <ast::LeafNode N> struct TableEntry<N> {
     N                             node;
     opt::Option<sema::types::Key> node_type_key{opt::none};
     opt::Option<sema::types::Key> symbol_type_key{opt::none};
+    opt::Option<sema::SymbolKind> symbol_kind{opt::none};
 };
+
+template <typename T>
+concept IsLeafEntry = requires { typename T::is_leaf; };
 
 // A helper for creating symbolic imports
 template <> struct TableEntry<ast::ImportStatement> {
@@ -99,6 +103,9 @@ template <> struct TableEntry<ast::ImportStatement> {
     opt::Option<sema::types::Key> symbol_type_key{opt::none};
 };
 
+template <typename T>
+concept IsSymImpEntry = requires { typename T::is_sym_imp; };
+
 // A helper for creating declaration symbols
 template <> struct TableEntry<ast::DeclStatement> {
     using is_decl = void;
@@ -108,22 +115,17 @@ template <> struct TableEntry<ast::DeclStatement> {
     opt::Option<sema::types::Key> node_type_key{opt::none};
     opt::Option<sema::types::Key> value_node_type_key{opt::none};
     opt::Option<sema::types::Key> symbol_type_key{opt::none};
+    opt::Option<sema::SymbolKind> symbol_kind{opt::none};
 };
 
 template <typename T>
 concept IsDeclEntry = requires { typename T::is_decl; };
 
-template <typename T>
-concept IsLeafEntry = requires { typename T::is_leaf; };
-
-template <typename T>
-concept IsSymImpEntry = requires { typename T::is_sym_imp; };
-
 // A type can be emplaced at different levels depending on template specialization
 template <typename EntryT, typename NodeLike>
-auto emplace_node_type_from_entry(sema::Analyzer& analyzer,
-                                  const EntryT&   entry,
-                                  const NodeLike& expected_node) {
+auto emplace_node_metadata_from_entry(sema::Analyzer& analyzer,
+                                      const EntryT&   entry,
+                                      const NodeLike& expected_node) {
     if constexpr (IsLeafEntry<EntryT> || IsSymImpEntry<EntryT>) {
         if (entry.node_type_key) {
             const auto type = analyzer.get_pool().get_opt(*entry.node_type_key);
@@ -141,13 +143,19 @@ auto emplace_node_type_from_entry(sema::Analyzer& analyzer,
 
 // The symbol's upper-level type can be set by optional configuration in the entry
 template <typename EntryT>
-auto emplace_symbol_type_from_entry(sema::Analyzer& analyzer,
-                                    const EntryT&   entry,
-                                    sema::Symbol&   expected_symbol) {
+auto emplace_symbol_metadata_from_entry(sema::Analyzer& analyzer,
+                                        const EntryT&   entry,
+                                        sema::Symbol&   expected_symbol) {
     if (entry.symbol_type_key) {
         const auto type = analyzer.get_pool().get_opt(*entry.symbol_type_key);
         REQUIRE(type);
-        expected_symbol.emplace_type(*type);
+        expected_symbol.set_type(*type);
+    }
+
+    if constexpr (IsLeafEntry<EntryT> || IsDeclEntry<EntryT>) {
+        if (entry.symbol_kind) { expected_symbol.set_kind(*entry.symbol_kind); }
+    } else if (IsSymImpEntry<EntryT>) {
+        expected_symbol.set_kind(sema::SymbolKind::MODULE);
     }
 }
 
@@ -166,7 +174,7 @@ auto test_collector(std::string_view             input,
         REQUIRE(opt);
 
         using EntryT = std::remove_cvref_t<decltype(entries)>;
-        emplace_node_type_from_entry<EntryT>(analyzer, entries, entries.node);
+        emplace_node_metadata_from_entry<EntryT>(analyzer, entries, entries.node);
 
         opt::Option<sema::Symbol> expected;
         if constexpr (IsSymImpEntry<EntryT>) {
@@ -176,7 +184,7 @@ auto test_collector(std::string_view             input,
         }
         REQUIRE(expected);
 
-        emplace_symbol_type_from_entry(analyzer, entries, *expected);
+        emplace_symbol_metadata_from_entry(analyzer, entries, *expected);
         CHECK(*opt == *expected);
     }());
     return std::move(ctx);
@@ -225,12 +233,19 @@ auto test_hollow_symbols(SemaTestContext& ctx, Entries&&... entries) -> void {
         const auto& expected_node = entries.node;
 
         using MakerT = std::remove_cvref_t<decltype(entries)>;
-        emplace_node_type_from_entry<MakerT>(analyzer, entries, expected_node);
+        emplace_node_metadata_from_entry<MakerT>(analyzer, entries, expected_node);
         sema::Symbol expected{name, &expected_node};
 
-        emplace_symbol_type_from_entry(analyzer, entries, expected);
+        emplace_symbol_metadata_from_entry(analyzer, entries, expected);
         CHECK(expected == registry.get_from(1, name));
     }());
 }
+
+namespace mut {
+
+constexpr auto MUTABLE   = sema::types::Key::Mutability::MUTABLE;
+constexpr auto IMMUTABLE = sema::types::Key::Mutability::IMMUTABLE;
+
+} // namespace mut
 
 } // namespace porpoise::tests::helpers

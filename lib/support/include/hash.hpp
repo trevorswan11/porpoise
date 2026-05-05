@@ -9,7 +9,7 @@
 namespace porpoise::hash {
 
 template <typename T>
-concept Hashable = std::is_convertible_v<T, u64>;
+concept Wyhashable = std::is_convertible_v<T, u64>;
 
 namespace wyhash = ankerl::unordered_dense::detail::wyhash;
 
@@ -35,7 +35,7 @@ class Hasher {
 
   private:
     template <typename T> [[nodiscard]] static constexpr auto hash(const T& value) noexcept -> u64 {
-        if constexpr (Hashable<T>) { return wyhash::hash(static_cast<u64>(value)); }
+        if constexpr (Wyhashable<T>) { return wyhash::hash(static_cast<u64>(value)); }
         return ankerl::unordered_dense::hash<T>{}(value);
     }
 

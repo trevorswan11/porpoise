@@ -1,16 +1,42 @@
 #include <algorithm>
 #include <cctype>
 #include <string>
-#include <type_traits>
 
 #include <catch2/catch_test_macros.hpp>
 
 #include "helpers.hpp"
 
+#include "enum.hpp"
 #include "option.hpp"
 #include "types.hpp"
 
-namespace porpoise::tests {
+namespace porpoise {
+
+namespace tests {
+
+enum class NonOptionableEnum : u8 {
+    A,
+    B,
+    C,
+};
+
+enum class OptionableEnum : u8 {
+    A,
+    B,
+    C,
+};
+
+} // namespace tests
+
+namespace opt {
+
+template <> struct SentinelEnum<tests::OptionableEnum> {
+    static constexpr auto SENTINEL = EnumLimits<tests::OptionableEnum>::max();
+};
+
+} // namespace opt
+
+namespace tests {
 
 TEST_CASE("Ref construction checks") {
     STATIC_CHECK_FALSE(std::is_constructible_v<opt::detail::Ref<i32>, i32&&>);
@@ -160,4 +186,36 @@ TEST_CASE("Index wrapper") {
     CHECK(*i == 0);
 }
 
-} // namespace porpoise::tests
+TEST_CASE("OptionableEnum concept") {
+    STATIC_REQUIRE_FALSE(opt::OptionableEnum<i32>);
+    STATIC_REQUIRE_FALSE(opt::OptionableEnum<NonOptionableEnum>);
+    STATIC_REQUIRE(opt::OptionableEnum<OptionableEnum>);
+    STATIC_REQUIRE(sizeof(opt::Enum<OptionableEnum>) == sizeof(OptionableEnum));
+}
+
+TEST_CASE("Optional enum wrapper") {
+    opt::Enum<OptionableEnum> e;
+    CHECK_FALSE(e.has_value());
+    CHECK_THROWS_AS(e.value(), std::bad_optional_access);
+
+    e = OptionableEnum::A;
+    CHECK(e.has_value());
+    CHECK(*e == OptionableEnum::A);
+}
+
+TEST_CASE("Enum transform on value") {
+    opt::Enum<OptionableEnum> e{OptionableEnum::A};
+    const auto res = e.transform([](const OptionableEnum&) { return OptionableEnum::B; });
+    REQUIRE(res);
+    CHECK(*res == OptionableEnum::B);
+}
+
+TEST_CASE("Enum transform on none") {
+    opt::Enum<OptionableEnum> e{};
+    const auto res = e.transform([](const OptionableEnum&) { return OptionableEnum::B; });
+    CHECK_FALSE(res);
+}
+
+} // namespace tests
+
+} // namespace porpoise

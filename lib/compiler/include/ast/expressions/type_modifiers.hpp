@@ -11,7 +11,9 @@
 #include "option.hpp"
 #include "types.hpp"
 
-namespace porpoise::ast {
+namespace porpoise {
+
+namespace ast {
 
 #define MAKE_MUTUALLY_EXCLUSIVE_TYPE_QUERY(name, modifier)  \
     [[nodiscard]] auto is_##name() const noexcept -> bool { \
@@ -19,19 +21,37 @@ namespace porpoise::ast {
         return *underlying_ == modifier;                    \
     }
 
+namespace detail {
+
+enum class Modifier : u8 {
+    REF,
+    MUT_REF,
+    PTR,
+    MUT_PTR,
+    VOLATILE,
+};
+
+} // namespace detail
+
+} // namespace ast
+
+namespace opt {
+
+template <> struct SentinelEnum<ast::detail::Modifier> {
+    static constexpr auto SENTINEL = EnumLimits<ast::detail::Modifier>::max();
+};
+
+} // namespace opt
+
+namespace ast {
+
 class TypeModifier {
   public:
-    enum class Modifier : u8 {
-        REF,
-        MUT_REF,
-        PTR,
-        MUT_PTR,
-        VOLATILE,
-    };
+    using Modifier = detail::Modifier;
 
   public:
     TypeModifier() noexcept = default;
-    explicit TypeModifier(opt::Option<Modifier> underlying) noexcept
+    explicit TypeModifier(opt::Enum<Modifier> underlying) noexcept
         : underlying_{std::move(underlying)} {}
     explicit TypeModifier(const syntax::Token& tok) noexcept;
 
@@ -57,14 +77,16 @@ class TypeModifier {
     }
 
   private:
-    opt::Option<Modifier> underlying_;
+    opt::Enum<Modifier> underlying_;
 
     friend struct fmt::formatter<porpoise::ast::TypeModifier>;
 };
 
 #undef MAKE_MUTUALLY_EXCLUSIVE_TYPE_QUERY
 
-} // namespace porpoise::ast
+} // namespace ast
+
+} // namespace porpoise
 
 template <> struct fmt::formatter<porpoise::ast::TypeModifier> {
     static constexpr auto parse(format_parse_context& ctx) noexcept { return ctx.begin(); }

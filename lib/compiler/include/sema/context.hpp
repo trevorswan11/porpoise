@@ -3,8 +3,8 @@
 #include <ostream>
 
 #include "sema/error.hpp"
-#include "sema/pool.hpp"
 #include "sema/symbol.hpp"
+#include "sema/type.hpp"
 
 #include "module/module.hpp"
 
@@ -56,8 +56,26 @@ struct Context {
     // Gets the already-resolved poison type from the pool
     [[nodiscard]] auto get_poison() -> Type&;
 
+    // Poisons the symbol and constructs an associated diagnostic to insert into the list
+    template <typename... Args> auto poison_symbol(Symbol& symbol, Args&&... args) -> void {
+        if constexpr (sizeof...(args) != 0) {
+            diagnostics.emplace_back(std::forward<Args>(args)...);
+        }
+        symbol.set_type(get_poison());
+        symbol.set_status(ResolveStatus::RESOLVED);
+    }
+
+    // Poisons the node and constructs an associated diagnostic to insert into the list
+    template <ast::LeafNode N, typename... Args>
+    auto poison_node(const N& node, Args&&... args) -> void {
+        if constexpr (sizeof...(args) != 0) {
+            diagnostics.emplace_back(std::forward<Args>(args)...);
+        }
+        node.set_sema_type(get_poison());
+    }
+
     // Creates and injects the builtin/primitive prelude and sets the internal prelude index
-    auto make_type_prelude() -> void;
+    auto inject_prelude() -> void;
 };
 
 } // namespace porpoise::sema

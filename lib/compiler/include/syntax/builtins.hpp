@@ -21,6 +21,7 @@ constexpr Builtin BIT_CAST{"@bitCast", TokenType::BUILTIN_BIT_CAST};
 constexpr Builtin CONST_CAST{"@constCast", TokenType::BUILTIN_CONST_CAST};
 constexpr Builtin VOLATILE_CAST{"@volatileCast", TokenType::BUILTIN_VOLATILE_CAST};
 constexpr Builtin AS{"@as", TokenType::BUILTIN_AS};
+
 constexpr Builtin INT_FROM_PTR{"@intFromPtr", TokenType::BUILTIN_INT_FROM_PTR};
 constexpr Builtin PTR_FROM_INT{"@ptrFromInt", TokenType::BUILTIN_PTR_FROM_INT};
 constexpr Builtin PTR_FROM_ARRAY{"@ptrFromArray", TokenType::BUILTIN_PTR_FROM_ARRAY};
@@ -80,7 +81,6 @@ constexpr auto ALL_BUILTINS = [] {
         builtins::CLZ,
         builtins::CTZ,
         builtins::DIV_MOD,
-        builtins::PANIC,
         builtins::POP_COUNT,
         builtins::SQRT,
         builtins::SIN,
@@ -94,6 +94,7 @@ constexpr auto ALL_BUILTINS = [] {
         builtins::ABS,
         builtins::FLOOR,
         builtins::CEIL,
+        builtins::PANIC,
     };
 
     std::ranges::sort(all_builtins, {}, &Builtin::first);

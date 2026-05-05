@@ -7,12 +7,11 @@
 #include <utility>
 #include <vector>
 
-#include <magic_enum/magic_enum.hpp>
-
 #include <fmt/color.h>
 #include <fmt/format.h>
 
 #include "enum.hpp"
+#include "iterator.hpp"
 #include "option.hpp"
 #include "types.hpp"
 #include "utility.hpp"
@@ -52,6 +51,14 @@ enum class DiagnosticLevel : u8 {
     WARNING,
 };
 
+namespace opt {
+
+template <> struct SentinelEnum<DiagnosticLevel> {
+    static constexpr auto SENTINEL = EnumLimits<DiagnosticLevel>::max();
+};
+
+} // namespace opt
+
 namespace style {
 
 constexpr auto BASE    = fmt::text_style{};
@@ -84,10 +91,10 @@ namespace detail {
 
 // A decomposed diagnostic that contains all information for base formatting
 struct FormattableDiagnostic {
-    const opt::Option<std::string>&     message;
-    std::string_view                    error_name;
-    const opt::Option<SourceLocation>&  location;
-    const opt::Option<DiagnosticLevel>& level;
+    const opt::Option<std::string>&    message;
+    const opt::Option<SourceLocation>& location;
+    std::string_view                   error_name;
+    const opt::Enum<DiagnosticLevel>&  level;
 };
 
 auto format_diagnostic(std::ostream&                   os,
@@ -100,26 +107,26 @@ auto format_diagnostic(std::ostream&                   os,
 template <ScopedEnum E> class Diagnostic {
   public:
     explicit Diagnostic(E err) noexcept : error_{err} {}
-    Diagnostic(E err, usize line, usize column) noexcept : error_{err}, loc_{{line, column}} {}
+    Diagnostic(E err, usize line, usize column) noexcept : loc_{{line, column}}, error_{err} {}
     Diagnostic(opt::Option<std::string> msg, E err, usize line, usize column) noexcept
-        : message_{std::move(msg)}, error_{err}, loc_{{line, column}} {}
+        : message_{std::move(msg)}, loc_{{line, column}}, error_{err} {}
     Diagnostic(opt::Option<std::string> msg, E err) noexcept
         : message_{std::move(msg)}, error_{err} {}
 
     template <Locateable T>
     Diagnostic(opt::Option<std::string> msg, E err, const T& t) noexcept
-        : message_{std::move(msg)}, error_{err}, loc_{SourceInfo<T>::get(t)} {}
+        : message_{std::move(msg)}, loc_{SourceInfo<T>::get(t)}, error_{err} {}
 
-    template <Locateable T> Diagnostic(E err, T t) : error_{err}, loc_{SourceInfo<T>::get(t)} {}
+    template <Locateable T> Diagnostic(E err, T t) : loc_{SourceInfo<T>::get(t)}, error_{err} {}
 
     // Moves the passed diagnostic into a new one with an error code
     Diagnostic(Diagnostic&& other, E err) noexcept
-        : message_{std::move(other.message_)}, error_{err}, loc_{std::move(other.loc_)} {}
+        : message_{std::move(other.message_)}, loc_{std::move(other.loc_)}, error_{err} {}
 
     // Moves the passed diagnostic into a new one with a specified source location
     template <Locateable T>
     Diagnostic(Diagnostic&& other, const T& t) noexcept
-        : message_{std::move(other.message_)}, error_{other.error_}, loc_{SourceInfo<T>::get(t)} {}
+        : message_{std::move(other.message_)}, loc_{SourceInfo<T>::get(t)}, error_{other.error_} {}
 
     [[nodiscard]] auto to_string(const opt::Option<std::string>& source_path = opt::none,
                                  opt::Option<bool> in_terminal = opt::none) const -> std::string {
@@ -129,13 +136,13 @@ template <ScopedEnum E> class Diagnostic {
     }
 
     auto operator==(const Diagnostic& other) const noexcept -> bool {
-        return message_ == other.message_ && error_ == other.error_ && loc_ == other.loc_ &&
+        return message_ == other.message_ && loc_ == other.loc_ && error_ == other.error_ &&
                level_ == other.level_;
     }
 
     MAKE_GETTER(message, const opt::Option<std::string>&)
     [[nodiscard]] auto to_formattable() const noexcept -> detail::FormattableDiagnostic {
-        return {message_, magic_enum::enum_name(error_), loc_, level_};
+        return {message_, loc_, magic_enum::enum_name(error_), level_};
     }
 
     // Diagnostics are always ERROR by default, see `unset_level`
@@ -143,10 +150,10 @@ template <ScopedEnum E> class Diagnostic {
     auto unset_level() noexcept -> void { level_.reset(); }
 
   private:
-    opt::Option<std::string>     message_{};
-    E                            error_;
-    opt::Option<SourceLocation>  loc_{};
-    opt::Option<DiagnosticLevel> level_{DiagnosticLevel::ERROR};
+    opt::Option<std::string>    message_{};
+    opt::Option<SourceLocation> loc_{};
+    E                           error_;
+    opt::Enum<DiagnosticLevel>  level_{DiagnosticLevel::ERROR};
 };
 
 template <typename T> struct is_diagnostic : std::false_type {};

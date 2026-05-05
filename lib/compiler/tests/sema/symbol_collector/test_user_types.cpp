@@ -7,9 +7,10 @@ namespace porpoise::tests {
 namespace keywords  = syntax::keywords;
 namespace operators = syntax::operators;
 namespace mods      = helpers::type_modifiers;
+namespace mut       = helpers::mut;
 
 TEST_CASE("Struct hollow types") {
-    const sema::types::Key key{sema::TypeKind::STRUCT, false, 1};
+    const sema::types::Key key{sema::TypeKind::STRUCT, mut::IMMUTABLE, 1};
     auto                   ctx = helpers::test_collector(
         "const a := struct { var foo := bar; };",
         {},
@@ -26,7 +27,8 @@ TEST_CASE("Struct hollow types") {
             },
             opt::none,
             key,
-            key});
+            key,
+            sema::SymbolKind::TYPE});
 
     helpers::test_hollow_symbols(ctx, helpers::TableEntry{"foo", helpers::foo_bar_decl(false)});
 }
@@ -34,7 +36,7 @@ TEST_CASE("Struct hollow types") {
 TEST_CASE("Enum hollow types") {
     const auto enumeration = [] { return ast::Enumeration{helpers::make_ident("b"), {}}; };
 
-    const sema::types::Key key{sema::TypeKind::ENUM, false, 1};
+    const sema::types::Key key{sema::TypeKind::ENUM, mut::IMMUTABLE, 1};
     auto                   ctx = helpers::test_collector(
         "const a := enum {b};",
         {},
@@ -53,7 +55,8 @@ TEST_CASE("Enum hollow types") {
             },
             opt::none,
             key,
-            key});
+            key,
+            sema::SymbolKind::TYPE});
 
     helpers::test_hollow_symbols(ctx, helpers::TableEntry<ast::Enumeration>{"b", enumeration()});
 }
@@ -70,7 +73,7 @@ TEST_CASE("Enum hollow types with member") {
         };
     };
 
-    const sema::types::Key key{sema::TypeKind::ENUM, false, 1};
+    const sema::types::Key key{sema::TypeKind::ENUM, mut::IMMUTABLE, 1};
     auto                   ctx = helpers::test_collector(
         "const a := enum {b, static const c := 2; };",
         {},
@@ -89,7 +92,8 @@ TEST_CASE("Enum hollow types with member") {
             },
             opt::none,
             key,
-            key});
+            key,
+            sema::SymbolKind::TYPE});
 
     helpers::test_hollow_symbols(ctx,
                                  helpers::TableEntry<ast::Enumeration>{"b", enumeration()},
@@ -102,7 +106,7 @@ TEST_CASE("Union hollow types") {
                                ast::ExplicitType{mods::BASE, helpers::make_ident("i32")}};
     };
 
-    const sema::types::Key key{sema::TypeKind::UNION, false, 1};
+    const sema::types::Key key{sema::TypeKind::UNION, mut::IMMUTABLE, 1};
     auto                   ctx = helpers::test_collector(
         "const a := union { b: i32 };",
         {},
@@ -120,7 +124,8 @@ TEST_CASE("Union hollow types") {
             },
             opt::none,
             key,
-            key});
+            key,
+            sema::SymbolKind::TYPE});
 
     helpers::test_hollow_symbols(ctx, helpers::TableEntry{"b", field()});
 }
@@ -141,7 +146,7 @@ TEST_CASE("Union hollow types with member") {
         };
     };
 
-    const sema::types::Key key{sema::TypeKind::UNION, false, 1};
+    const sema::types::Key key{sema::TypeKind::UNION, mut::IMMUTABLE, 1};
     auto                   ctx = helpers::test_collector(
         "const a := union { b: i32, static const c := 2; };",
         {},
@@ -159,7 +164,8 @@ TEST_CASE("Union hollow types with member") {
             },
             opt::none,
             key,
-            key});
+            key,
+            sema::SymbolKind::TYPE});
 
     helpers::test_hollow_symbols(
         ctx, helpers::TableEntry{"b", field()}, helpers::TableEntry{"c", member()});
@@ -172,14 +178,17 @@ TEST_CASE("Public using query") {
         auto ctx = helpers::test_collector(
             input,
             {},
-            helpers::TableEntry{
+            helpers::TableEntry<ast::UsingStatement>{
                 "I",
                 ast::UsingStatement{syntax::Token{is_public ? keywords::PUBLIC : keywords::USING},
                                     helpers::make_ident("I"),
                                     ast::ExplicitType{
                                         mods::BASE,
                                         helpers::make_ident("i32"),
-                                    }}});
+                                    }},
+                opt::none,
+                opt::none,
+                sema::SymbolKind::TYPE});
 
         auto&       table     = ctx.analyzer.get_table(*ctx.root_mod->root_table_idx);
         const auto& int_alias = table.get_opt("I");

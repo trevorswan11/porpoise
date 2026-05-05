@@ -1,4 +1,4 @@
-#include "sema/pool.hpp"
+#include "sema/type.hpp"
 
 namespace porpoise::sema {
 

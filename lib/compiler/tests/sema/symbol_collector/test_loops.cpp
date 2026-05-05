@@ -6,6 +6,7 @@ namespace porpoise::tests {
 
 namespace keywords  = syntax::keywords;
 namespace operators = syntax::operators;
+namespace mut       = helpers::mut;
 
 TEST_CASE("Do-while loop collection") {
     auto ctx = helpers::test_collector(
@@ -24,7 +25,7 @@ TEST_CASE("Do-while loop collection") {
                 ast::DeclModifiers::CONSTANT,
             },
             opt::none,
-            sema::types::Key{sema::TypeKind::BLOCK, false, 1}});
+            sema::types::Key{sema::TypeKind::BLOCK, mut::IMMUTABLE, 1}});
 
     helpers::test_hollow_symbols(ctx, helpers::TableEntry{"foo", helpers::foo_bar_decl()});
 }
@@ -57,7 +58,7 @@ TEST_CASE("For loop collection") {
                 ast::DeclModifiers::CONSTANT,
             },
             opt::none,
-            sema::types::Key{sema::TypeKind::BLOCK, false, 1}});
+            sema::types::Key{sema::TypeKind::BLOCK, mut::IMMUTABLE, 1}});
 
     helpers::test_hollow_symbols(ctx,
                                  helpers::TableEntry{"i", capture()},
@@ -80,7 +81,7 @@ TEST_CASE("Infinite loop collection") {
                 ast::DeclModifiers::CONSTANT,
             },
             opt::none,
-            sema::types::Key{sema::TypeKind::BLOCK, false, 1}});
+            sema::types::Key{sema::TypeKind::BLOCK, mut::IMMUTABLE, 1}});
 
     helpers::test_hollow_symbols(ctx, helpers::TableEntry{"foo", helpers::foo_bar_decl()});
 }
@@ -108,7 +109,7 @@ TEST_CASE("While loop collection") {
                 ast::DeclModifiers::CONSTANT,
             },
             opt::none,
-            sema::types::Key{sema::TypeKind::BLOCK, false, 1}});
+            sema::types::Key{sema::TypeKind::BLOCK, mut::IMMUTABLE, 1}});
 
     helpers::test_hollow_symbols(ctx, helpers::TableEntry{"foo", helpers::foo_bar_decl()});
 }

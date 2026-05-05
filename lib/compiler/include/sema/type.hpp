@@ -6,6 +6,7 @@
 
 #include <ankerl/unordered_dense.h>
 
+#include "arena.hpp"
 #include "hash.hpp"
 #include "memory.hpp"
 #include "option.hpp"
@@ -43,6 +44,7 @@ enum class TypeKind : u8 {
     MODULE,
 
     AUTO,
+    OPAQUE,
     NORETURN,
 };
 
@@ -52,7 +54,7 @@ namespace types {
 
 struct Poison {};
 
-using PrimitiveType = Unit;
+using BuiltinType = Unit;
 
 struct Slice {
     Type& underlying;
@@ -93,18 +95,24 @@ struct Function {
 };
 
 constexpr usize MAX_BUILTIN_PARAMS{4};
+using BuiltinParams = StaticVector<mem::NonNull<Type>, MAX_BUILTIN_PARAMS>;
 
 struct BuiltinFunction {
-    StaticVector<mem::NonNull<Type>, MAX_BUILTIN_PARAMS> params;
-    Type&                                                return_type;
+    BuiltinParams params;
+    Type&         return_type;
 };
 
 class Key {
   public:
-    template <hash::Hashable... Markers>
-    constexpr Key(
-        TypeKind kind, bool mut, usize idx = 0, bool flag = false, Markers&&... markers) noexcept
-        : kind_{kind}, mut_{mut}, flag_{flag}, idx_{idx} {
+    enum class Mutability : u8 {
+        MUTABLE,
+        IMMUTABLE,
+    };
+
+  public:
+    template <typename... Markers>
+    constexpr Key(TypeKind kind, Mutability mut, Markers&&... markers) noexcept
+        : kind_{kind}, mut_{mut} {
         (..., markers_.combine(markers));
     }
 
@@ -114,15 +122,12 @@ class Key {
     [[nodiscard]] constexpr auto hash() const noexcept -> u64 {
         hash::Hasher h{std::to_underlying(kind_)};
         h.combine(mut_);
-        h.combine(idx_);
-        h.combine(flag_);
         h.combine(markers_);
         return h.finalize();
     }
 
-    constexpr auto emplace_idx(usize idx) noexcept -> void { idx_ = idx; }
-    constexpr auto emplace_flag(bool flag) noexcept -> void { flag_ = flag; }
-    template <hash::Hashable H> constexpr auto emplace_marker(const H& marker) noexcept -> void {
+    // Emplace a hashable marker into the accumulated markers
+    template <typename Marker> constexpr auto imprint(const Marker& marker) noexcept -> void {
         markers_.combine(marker);
     }
 
@@ -130,18 +135,27 @@ class Key {
 
   private:
     TypeKind     kind_;
-    bool         mut_;
-    bool         flag_;
-    usize        idx_;
+    Mutability   mut_;
     hash::Hasher markers_;
 };
 
 } // namespace types
 
+} // namespace porpoise::sema
+
+template <> struct ankerl::unordered_dense::hash<porpoise::sema::types::Key> {
+    using is_avalanching = void;
+    using Key            = porpoise::sema::types::Key;
+    [[nodiscard]] auto operator()(const Key& key) const noexcept { return key.hash(); }
+};
+
+namespace porpoise::sema {
+
+// A semantic type that is entirely owned by an arena of types
 class Type {
   public:
     using Resolved = std::variant<types::Poison,
-                                  types::PrimitiveType,
+                                  types::BuiltinType,
                                   types::Slice,
                                   types::Array,
                                   types::Pointer,
@@ -152,7 +166,6 @@ class Type {
                                   types::BuiltinFunction>;
 
   public:
-    explicit Type(TypeKind kind) noexcept : kind_{kind} {}
     ~Type() = default;
 
     Type(const Type&)                    = delete;
@@ -191,8 +204,8 @@ class Type {
         resolved_.emplace(Resolvee{std::forward<Args>(args)...});
     }
 
-    // Returns the memory address of the Type for a Key's marker
-    [[nodiscard]] constexpr auto as_marker() const noexcept -> u64 {
+    // Returns the memory address of the Type for a Key's hash
+    [[nodiscard]] constexpr auto hash() const noexcept -> u64 {
         return reinterpret_cast<u64>(this);
     }
 
@@ -201,17 +214,43 @@ class Type {
     }
 
   private:
+    explicit Type(TypeKind kind) noexcept : kind_{kind} {}
+
+  private:
     TypeKind              kind_;
     opt::Index            symbol_table_idx_;
     opt::Option<Resolved> resolved_;
+
+    // Initialization is restricted to the pool's arena exclusively
+    friend class mem::Arena;
 };
 
 static_assert(TriviallyDestructible<Type>);
 
+// All associated type lifetimes are tied to the pool
+class TypePool {
+  public:
+    TypePool() noexcept = default;
+    ~TypePool()         = default;
+
+    MAKE_MOVE_CONSTRUCTABLE_ONLY(TypePool)
+
+    // Gets a type by its key or emplace's it into the internal cache
+    [[nodiscard]] auto operator[](const types::Key& key) -> Type& { return get_or_emplace(key); }
+    [[nodiscard]] auto get_opt(const types::Key& key) noexcept -> opt::Option<Type&>;
+
+  private:
+    auto get_or_emplace(const types::Key& key) -> Type&;
+
+  private:
+    mem::Arena                                      arena_;
+    ankerl::unordered_dense::map<types::Key, Type*> cache_;
+};
+
 } // namespace porpoise::sema
 
-template <> struct ankerl::unordered_dense::hash<porpoise::sema::types::Key> {
+template <> struct ankerl::unordered_dense::hash<porpoise::sema::Type> {
     using is_avalanching = void;
-    using Key            = porpoise::sema::types::Key;
-    [[nodiscard]] auto operator()(const Key& key) const noexcept { return key.hash(); }
+    using Type           = porpoise::sema::Type;
+    [[nodiscard]] auto operator()(const Type& type) const noexcept { return type.hash(); }
 };
