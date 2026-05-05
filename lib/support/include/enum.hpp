@@ -2,7 +2,6 @@
 
 #include <array>
 #include <concepts>
-#include <limits>
 #include <type_traits>
 #include <utility>
 
@@ -37,9 +36,6 @@ template <ValidEnum E> consteval auto enum_max_value() {
 template <ValidEnum E> consteval auto enum_max_underlying() {
     return magic_enum::enum_integer(enum_max_value<E>());
 }
-
-// Numeric limits for the enum's underlying type
-template <ValidEnum E> using EnumLimits = std::numeric_limits<std::underlying_type_t<E>>;
 
 // Requires that the enum is in an exclusively bounded range of magic enum bounds
 //

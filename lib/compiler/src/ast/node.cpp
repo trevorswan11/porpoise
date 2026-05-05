@@ -4,6 +4,8 @@
 
 namespace porpoise::ast {
 
+namespace {
+
 constexpr auto NODE_NAMES = [] {
     EnumMap<NodeKind, std::string_view> names{"expression"};
 
@@ -17,6 +19,8 @@ constexpr auto NODE_NAMES = [] {
     }
     return names;
 }();
+
+} // namespace
 
 auto Node::display_name() const noexcept -> std::string_view { return NODE_NAMES[kind_]; }
 

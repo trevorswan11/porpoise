@@ -94,6 +94,8 @@ class Boolean {
     constexpr Boolean() noexcept : value_{NO_VALUE} {}
     constexpr Boolean(bool value) noexcept : value_{static_cast<u8>(value)} {}
     constexpr Boolean(None) noexcept : value_{NO_VALUE} {}
+    constexpr Boolean(const std::optional<bool>& ob) noexcept
+        : value_{ob.transform([](bool b) { return static_cast<u8>(b); }).value_or(NO_VALUE)} {}
     // cppcheck-suppress-end noExplicitConstructor
 
     [[nodiscard]] constexpr auto has_value() const noexcept -> bool { return value_ != NO_VALUE; }
@@ -128,6 +130,10 @@ class Boolean {
         static_assert(std::is_convertible_v<Or, bool>,
                       "Boolean::value_or: Or must be convertible to T");
         return has_value() ? this->get() : static_cast<bool>(std::forward<Or>(or_value));
+    }
+
+    [[nodiscard]] constexpr operator std::optional<bool>() const noexcept {
+        return has_value() ? std::optional<bool>{value_} : opt::none;
     }
 
   private:
@@ -184,6 +190,8 @@ class Index {
     template <Integral Int> constexpr Index(Int i) noexcept {
         if (i >= 0) { idx_ = static_cast<usize>(i); }
     }
+
+    constexpr Index(const std::optional<usize>& oi) noexcept : idx_{oi.value_or(NO_VALUE)} {}
     // cppcheck-suppress-end noExplicitConstructor
 
     [[nodiscard]] constexpr auto     has_value() const noexcept -> bool { return idx_ != NO_VALUE; }
@@ -210,6 +218,10 @@ class Index {
 
     [[nodiscard]] constexpr auto operator*() const noexcept -> usize { return get(); }
 
+    [[nodiscard]] constexpr operator std::optional<usize>() const noexcept {
+        return has_value() ? std::optional<usize>{idx_} : opt::none;
+    }
+
   private:
     static constexpr usize NO_VALUE = std::numeric_limits<usize>::max();
 
@@ -219,6 +231,10 @@ class Index {
 
 // Defines a sentinel value for the enum that is the same as its underlying type
 template <typename E> struct SentinelEnum;
+
+template <ScopedEnum E> struct SentinelEnum<E> {
+    static constexpr auto SENTINEL = std::numeric_limits<std::underlying_type_t<E>>::max();
+};
 
 template <typename E>
 concept OptionableEnum = ScopedEnum<E> && requires { static_cast<E>(SentinelEnum<E>::SENTINEL); };
@@ -230,6 +246,7 @@ template <OptionableEnum E> class Enum {
     constexpr Enum() noexcept : value_{NO_VALUE} {}
     constexpr Enum(E value) noexcept : value_{value} {}
     constexpr Enum(None) noexcept : value_{NO_VALUE} {}
+    constexpr Enum(const std::optional<E>& oe) noexcept : value_{oe.value_or(NO_VALUE)} {}
     // cppcheck-suppress-end noExplicitConstructor
 
     [[nodiscard]] constexpr auto has_value() const noexcept -> bool { return value_ != NO_VALUE; }
@@ -273,6 +290,10 @@ template <OptionableEnum E> class Enum {
         // Also from clang, but generalized to support reference transform chains
         if (self.has_value()) { return Option<Res>{std::forward<F>(f)(self.value())}; }
         return Option<Res>{};
+    }
+
+    [[nodiscard]] constexpr operator std::optional<E>() const noexcept {
+        return has_value() ? std::optional<E>{value_} : opt::none;
     }
 
   private:

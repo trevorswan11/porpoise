@@ -171,6 +171,8 @@ auto Parser::parse_expression(Precedence precedence)
     return nullptr;
 }
 
+namespace {
+
 constexpr auto PREFIX_FNS = [] {
     EnumMap<TokenType, Parser::PrefixFn> fns;
 
@@ -222,10 +224,6 @@ constexpr auto PREFIX_FNS = [] {
     return fns;
 }();
 
-auto Parser::try_get_prefix_fn(TokenType tt) noexcept -> opt::Option<PrefixFn> {
-    return PREFIX_FNS.get_opt(tt);
-}
-
 constexpr auto INFIX_FNS = [] {
     EnumMap<TokenType, Parser::InfixFn> fns;
 
@@ -270,6 +268,12 @@ constexpr auto INFIX_FNS = [] {
 
     return fns;
 }();
+
+} // namespace
+
+auto Parser::try_get_prefix_fn(TokenType tt) noexcept -> opt::Option<PrefixFn> {
+    return PREFIX_FNS.get_opt(tt);
+}
 
 auto Parser::try_get_poll_infix_fn(TokenType tt) noexcept -> opt::Option<InfixFn> {
     return INFIX_FNS.get_opt(tt);

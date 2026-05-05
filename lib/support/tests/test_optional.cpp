@@ -6,50 +6,23 @@
 
 #include "helpers.hpp"
 
-#include "enum.hpp"
 #include "option.hpp"
 #include "types.hpp"
 
-namespace porpoise {
-
-namespace tests {
-
-enum class NonOptionableEnum : u8 {
-    A,
-    B,
-    C,
-};
-
-enum class OptionableEnum : u8 {
-    A,
-    B,
-    C,
-};
-
-} // namespace tests
-
-namespace opt {
-
-template <> struct SentinelEnum<tests::OptionableEnum> {
-    static constexpr auto SENTINEL = EnumLimits<tests::OptionableEnum>::max();
-};
-
-} // namespace opt
-
-namespace tests {
+namespace porpoise::tests {
 
 TEST_CASE("Ref construction checks") {
     STATIC_CHECK_FALSE(std::is_constructible_v<opt::detail::Ref<i32>, i32&&>);
     STATIC_CHECK(TriviallyCopyable<opt::detail::Ref<i32>>);
 }
 
-TEST_CASE("opt::Option template specialization") {
+TEST_CASE("Option template specialization") {
     STATIC_CHECK(std::is_same_v<opt::Option<i32&>, opt::detail::Ref<i32>>);
     STATIC_CHECK(std::is_same_v<opt::Option<const i32&>, opt::detail::Ref<const i32>>);
     STATIC_CHECK(std::is_same_v<opt::Option<i32>, std::optional<i32>>);
 }
 
-TEST_CASE("opt::Option template checks") {
+TEST_CASE("Option template checks") {
     STATIC_CHECK(opt::is_option<opt::Option<int>>::value);
     STATIC_CHECK(opt::is_option<opt::Option<int&>>::value);
     STATIC_CHECK(opt::is_option_v<opt::Option<int>>);
@@ -176,6 +149,21 @@ TEST_CASE("Boolean wrapper") {
     CHECK(b.value_or(false));
 }
 
+TEST_CASE("Boolean-std optional conversion") {
+    std::optional<bool>  std_b{true};
+    opt::detail::Boolean my_b = std_b;
+    REQUIRE(std_b.has_value());
+    CHECK(*std_b == *my_b);
+
+    std::optional<bool> std_extracted = my_b;
+    REQUIRE(std_extracted.has_value());
+    CHECK(*std_extracted);
+
+    std::optional<bool> empty_std;
+    my_b = empty_std;
+    CHECK_FALSE(my_b.has_value());
+}
+
 TEST_CASE("Index wrapper") {
     opt::Index i;
     CHECK_FALSE(i.has_value());
@@ -185,6 +173,29 @@ TEST_CASE("Index wrapper") {
     CHECK(i.has_value());
     CHECK(*i == 0);
 }
+
+TEST_CASE("Index-std optional conversion") {
+    std::optional<usize> std_i{42};
+    opt::Index           my_i = std_i;
+    REQUIRE(std_i.has_value());
+    CHECK(*std_i == *my_i);
+
+    std::optional<usize> std_extracted = my_i;
+    REQUIRE(std_extracted.has_value());
+    CHECK(*std_extracted == 42);
+
+    std::optional<usize> empty_std;
+    my_i = empty_std;
+    CHECK_FALSE(my_i.has_value());
+}
+
+enum NonOptionableEnum : u8 {};
+
+enum class OptionableEnum : u8 {
+    A,
+    B,
+    C,
+};
 
 TEST_CASE("OptionableEnum concept") {
     STATIC_REQUIRE_FALSE(opt::OptionableEnum<i32>);
@@ -216,6 +227,19 @@ TEST_CASE("Enum transform on none") {
     CHECK_FALSE(res);
 }
 
-} // namespace tests
+TEST_CASE("Enum-std optional conversion") {
+    std::optional<OptionableEnum> std_i{OptionableEnum::A};
+    opt::Enum<OptionableEnum>     my_i = std_i;
+    REQUIRE(std_i.has_value());
+    CHECK(*std_i == *my_i);
 
-} // namespace porpoise
+    std::optional<OptionableEnum> std_extracted = my_i;
+    REQUIRE(std_extracted.has_value());
+    CHECK(*std_extracted == OptionableEnum::A);
+
+    std::optional<OptionableEnum> empty_std;
+    my_i = empty_std;
+    CHECK_FALSE(my_i.has_value());
+}
+
+} // namespace porpoise::tests

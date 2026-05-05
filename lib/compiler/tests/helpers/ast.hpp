@@ -171,12 +171,12 @@ auto make_primitive(bool value) noexcept {
 
 namespace type_modifiers {
 
-const ast::TypeModifier BASE{};
-const ast::TypeModifier REF{ast::TypeModifier::Modifier::REF};
-const ast::TypeModifier MUT_REF{ast::TypeModifier::Modifier::MUT_REF};
-const ast::TypeModifier PTR{ast::TypeModifier::Modifier::PTR};
-const ast::TypeModifier MUT_PTR{ast::TypeModifier::Modifier::MUT_PTR};
-const ast::TypeModifier VOLATILE{ast::TypeModifier::Modifier::VOLATILE};
+constexpr ast::TypeModifier BASE{};
+constexpr ast::TypeModifier REF{ast::TypeModifier::Modifier::REF};
+constexpr ast::TypeModifier MUT_REF{ast::TypeModifier::Modifier::MUT_REF};
+constexpr ast::TypeModifier PTR{ast::TypeModifier::Modifier::PTR};
+constexpr ast::TypeModifier MUT_PTR{ast::TypeModifier::Modifier::MUT_PTR};
+constexpr ast::TypeModifier VOLATILE{ast::TypeModifier::Modifier::VOLATILE};
 
 } // namespace type_modifiers
 

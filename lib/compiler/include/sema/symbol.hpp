@@ -102,18 +102,6 @@ enum class ResolveStatus : u8 {
     RESOLVED,
 };
 
-} // namespace sema
-
-namespace opt {
-
-template <> struct SentinelEnum<sema::SymbolKind> {
-    static constexpr auto SENTINEL = EnumLimits<sema::SymbolKind>::max();
-};
-
-} // namespace opt
-
-namespace sema {
-
 class Symbol {
   public:
     Symbol(std::string_view name, const SymbolicNode& node) noexcept : name_{name}, node_{node} {}

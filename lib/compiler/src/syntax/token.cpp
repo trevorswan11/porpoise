@@ -77,6 +77,8 @@ auto misc_from_char(byte c) noexcept -> opt::Option<TokenType> {
     }
 }
 
+namespace {
+
 using SuffixMapping                = std::pair<bool (*)(TokenType), usize>;
 constexpr auto INT_SUFFIX_MAPPINGS = std::to_array<SuffixMapping>({
     {is_i32, 0},
@@ -87,12 +89,16 @@ constexpr auto INT_SUFFIX_MAPPINGS = std::to_array<SuffixMapping>({
     {is_usize_int, 2},
 });
 
+} // namespace
+
 auto suffix_length(TokenType tt) noexcept -> usize {
     if (tt == TokenType::F32) { return 1; }
     if (tt < TokenType::INT_2 || tt > TokenType::UZINT_16) { return 0; }
+
+    // Returns the suffix (second of pair) for the first range that returns true
     return std::ranges::find_if(
                INT_SUFFIX_MAPPINGS,
-               [tt](auto in_range) { return in_range(tt); },
+               [tt](auto* in_range) { return in_range(tt); },
                &SuffixMapping::first)
         ->second;
 }

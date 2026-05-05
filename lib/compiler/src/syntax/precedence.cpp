@@ -4,6 +4,8 @@
 
 namespace porpoise::syntax {
 
+namespace {
+
 constexpr auto ALL_BINDINGS = [] {
     EnumMap<TokenType, opt::Option<Binding>> bindings;
 
@@ -48,6 +50,8 @@ constexpr auto ALL_BINDINGS = [] {
 
     return bindings;
 }();
+
+} // namespace
 
 auto Binding::try_get_from(TokenType tt) noexcept -> opt::Option<Binding> {
     return ALL_BINDINGS[tt];

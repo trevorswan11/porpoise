@@ -48,8 +48,7 @@ TEST_CASE("StaticVector indexing") {
 TEST_CASE("StaticVector with non-trivial type") {
     SECTION("Contrived example") {
         struct Point {
-            i32 x;
-            i32 y;
+            i32 x, y;
             Point(i32 x, i32 y) : x{x}, y{y} {}
         };
 

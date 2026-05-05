@@ -1,5 +1,3 @@
-#include <algorithm>
-#include <array>
 #include <bit>
 
 #include "ast/statements/declaration.hpp"
@@ -9,20 +7,25 @@
 #include "ast/expressions/type.hpp"
 #include "ast/visitor.hpp"
 
+#include "enum.hpp"
+
 namespace porpoise::ast {
 
 namespace {
 
 using ModifierMapping          = std::pair<syntax::TokenType, DeclModifiers>;
-constexpr auto LEGAL_MODIFIERS = std::to_array<ModifierMapping>({
-    {syntax::TokenType::VAR, DeclModifiers::VARIABLE},
-    {syntax::TokenType::CONSTANT, DeclModifiers::CONSTANT},
-    {syntax::TokenType::CONSTEXPR, DeclModifiers::CONSTEXPR},
-    {syntax::TokenType::PUBLIC, DeclModifiers::PUBLIC},
-    {syntax::TokenType::EXTERN, DeclModifiers::EXTERN},
-    {syntax::TokenType::EXPORT, DeclModifiers::EXPORT},
-    {syntax::TokenType::STATIC, DeclModifiers::STATIC},
-});
+constexpr auto LEGAL_MODIFIERS = [] {
+    using TokenType = syntax::TokenType;
+    EnumMap<TokenType, opt::Enum<DeclModifiers>> modifiers{opt::none};
+    modifiers[TokenType::VAR]       = DeclModifiers::VARIABLE;
+    modifiers[TokenType::CONSTANT]  = DeclModifiers::CONSTANT;
+    modifiers[TokenType::CONSTEXPR] = DeclModifiers::CONSTEXPR;
+    modifiers[TokenType::PUBLIC]    = DeclModifiers::PUBLIC;
+    modifiers[TokenType::EXTERN]    = DeclModifiers::EXTERN;
+    modifiers[TokenType::EXPORT]    = DeclModifiers::EXPORT;
+    modifiers[TokenType::STATIC]    = DeclModifiers::STATIC;
+    return modifiers;
+}();
 
 [[nodiscard]] constexpr auto validate_modifiers(DeclModifiers modifiers) noexcept -> bool {
     // Exactly one mutability flag must be set
@@ -41,12 +44,6 @@ constexpr auto LEGAL_MODIFIERS = std::to_array<ModifierMapping>({
     return valid_mut && valid_constexpr && valid_abi;
 }
 
-[[nodiscard]] constexpr auto token_to_modifier(const syntax::Token& tok)
-    -> opt::Option<DeclModifiers> {
-    const auto it = std::ranges::find(LEGAL_MODIFIERS, tok.type, &ModifierMapping::first);
-    return it == LEGAL_MODIFIERS.end() ? opt::none : opt::Option<DeclModifiers>{it->second};
-}
-
 } // namespace
 
 DeclStatement::DeclStatement(const syntax::Token&           start_token,
@@ -63,10 +60,10 @@ auto DeclStatement::accept(Visitor& v) const -> void { v.visit(*this); }
 auto DeclStatement::parse(syntax::Parser& parser)
     -> Result<mem::Box<Statement>, syntax::Diagnostic> {
     const auto start_token = parser.get_current_token();
-    auto       modifiers   = token_to_modifier(start_token).value();
+    auto       modifiers   = LEGAL_MODIFIERS[start_token.type].value();
 
-    opt::Option<DeclModifiers> current_modifier;
-    while ((current_modifier = token_to_modifier(parser.get_peek_token()))) {
+    opt::Enum<DeclModifiers> current_modifier;
+    while ((current_modifier = LEGAL_MODIFIERS[parser.get_peek_token().type])) {
         parser.advance();
         if (modifiers_has(modifiers, *current_modifier)) {
             return make_syntax_err(syntax::Error::DUPLICATE_DECL_MODIFIER, start_token);

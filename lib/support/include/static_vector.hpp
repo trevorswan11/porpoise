@@ -42,7 +42,7 @@ template <TriviallyDestructible Item, usize Capacity> struct StaticVectorStorage
 
 } // namespace detail
 
-// A fixed-size, statically-allocated, zero-allocation container
+// A fixed-size zero-allocation container
 template <typename Item, usize Capacity>
 class StaticVector : private detail::StaticVectorStorage<Item, Capacity> {
   public:

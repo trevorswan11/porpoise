@@ -7,10 +7,11 @@
 #include <utility>
 #include <vector>
 
+#include <magic_enum/magic_enum.hpp>
+
 #include <fmt/color.h>
 #include <fmt/format.h>
 
-#include "enum.hpp"
 #include "iterator.hpp"
 #include "option.hpp"
 #include "types.hpp"
@@ -50,14 +51,6 @@ enum class DiagnosticLevel : u8 {
     ERROR,
     WARNING,
 };
-
-namespace opt {
-
-template <> struct SentinelEnum<DiagnosticLevel> {
-    static constexpr auto SENTINEL = EnumLimits<DiagnosticLevel>::max();
-};
-
-} // namespace opt
 
 namespace style {
 
