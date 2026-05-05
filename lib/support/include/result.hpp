@@ -7,7 +7,8 @@ namespace porpoise {
 template <typename T, typename E> using Result = std::__1::expected<T, E>;
 template <typename E> using Err                = std::__1::unexpected<E>;
 
-template <typename E, typename... Args> auto make_err(Args&&... args) -> Err<E> {
+template <typename E, typename... Args>
+[[nodiscard]] constexpr auto make_err(Args&&... args) -> Err<E> {
     return Err<E>{E{std::forward<Args>(args)...}};
 }
 

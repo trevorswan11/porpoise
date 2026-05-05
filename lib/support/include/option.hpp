@@ -19,49 +19,49 @@ namespace detail {
 template <typename T> class Ref {
   public:
     // cppcheck-suppress-begin noExplicitConstructor
-    Ref() noexcept : ptr_{nullptr} {}
-    Ref(None) noexcept : ptr_{nullptr} {}
-    Ref(T& ref) noexcept : ptr_{&ref} {}
-    Ref(T* ref) noexcept : ptr_{ref} {}
+    constexpr Ref() noexcept : ptr_{nullptr} {}
+    constexpr Ref(None) noexcept : ptr_{nullptr} {}
+    constexpr Ref(T& ref) noexcept : ptr_{&ref} {}
+    constexpr Ref(T* ref) noexcept : ptr_{ref} {}
     Ref(T&&) = delete;
 
     template <typename U>
         requires(std::convertible_to<U*, T*>)
-    Ref(const Ref<U>& other) noexcept : ptr_{other.operator->()} {}
+    constexpr Ref(const Ref<U>& other) noexcept : ptr_{other.operator->()} {}
     // cppcheck-suppress-end noExplicitConstructor
 
-    [[nodiscard]] auto     has_value() const noexcept -> bool { return ptr_ != nullptr; }
-    [[nodiscard]] explicit operator bool() const noexcept { return has_value(); }
+    [[nodiscard]] constexpr auto     has_value() const noexcept -> bool { return ptr_ != nullptr; }
+    [[nodiscard]] constexpr explicit operator bool() const noexcept { return has_value(); }
 
-    auto emplace(T& t) noexcept -> void { ptr_ = &t; }
-    auto emplace(T* t) noexcept -> void { ptr_ = t; }
-    auto reset() noexcept -> void { ptr_ = nullptr; }
+    constexpr auto emplace(T& t) noexcept -> void { ptr_ = &t; }
+    constexpr auto emplace(T* t) noexcept -> void { ptr_ = t; }
+    constexpr auto reset() noexcept -> void { ptr_ = nullptr; }
 
     // Resets the optional and returns the stored reference
-    auto take() noexcept -> T* {
+    [[nodiscard]] constexpr auto take() noexcept -> T* {
         assert(ptr_ && "Attempt to access empty optional reference");
         auto* ptr = ptr_;
         reset();
         return ptr;
     }
 
-    auto value() const -> T& {
+    [[nodiscard]] constexpr auto value() const -> T& {
         if (!ptr_) { throw std::bad_optional_access(); }
         return *ptr_;
     }
 
-    auto operator->() const noexcept -> T* {
+    [[nodiscard]] constexpr auto operator->() const noexcept -> T* {
         assert(ptr_ && "Attempt to access empty optional reference");
         return ptr_;
     }
 
-    auto operator*() const noexcept -> T& {
+    [[nodiscard]] constexpr auto operator*() const noexcept -> T& {
         assert(ptr_ && "Attempt to access empty optional reference");
         return *ptr_;
     }
 
     // Applies F to to underlying reference if present
-    template <class F> constexpr auto transform(F&& f) & {
+    template <class F> [[nodiscard]] constexpr auto transform(F&& f) & {
         using ResCV = std::invoke_result_t<F, T&>;
         using Res   = std::remove_cv_t<ResCV>;
 
@@ -88,46 +88,46 @@ template <typename T> class Ref {
 class Boolean {
   public:
     // cppcheck-suppress-begin noExplicitConstructor
-    Boolean() noexcept : value_{NO_VALUE} {}
-    Boolean(bool value) noexcept : value_{static_cast<u8>(value)} {}
-    Boolean(None) noexcept : value_{NO_VALUE} {}
+    constexpr Boolean() noexcept : value_{NO_VALUE} {}
+    constexpr Boolean(bool value) noexcept : value_{static_cast<u8>(value)} {}
+    constexpr Boolean(None) noexcept : value_{NO_VALUE} {}
     // cppcheck-suppress-end noExplicitConstructor
 
-    [[nodiscard]] auto     has_value() const noexcept -> bool { return value_ != NO_VALUE; }
-    [[nodiscard]] explicit operator bool() const noexcept { return has_value(); }
+    [[nodiscard]] constexpr auto has_value() const noexcept -> bool { return value_ != NO_VALUE; }
+    [[nodiscard]] constexpr explicit operator bool() const noexcept { return has_value(); }
 
-    auto emplace(bool value) noexcept -> void { value_ = value; }
-    auto reset() noexcept -> void { value_ = NO_VALUE; }
+    constexpr auto emplace(bool value) noexcept -> void { value_ = value; }
+    constexpr auto reset() noexcept -> void { value_ = NO_VALUE; }
 
     // Resets the optional and returns the stored bool
-    auto take() noexcept -> bool {
+    [[nodiscard]] constexpr auto take() noexcept -> bool {
         auto value = value_;
         reset();
         return value;
     }
 
-    auto value() const -> bool {
+    [[nodiscard]] constexpr auto value() const -> bool {
         if (!has_value()) { throw std::bad_optional_access(); }
         return static_cast<bool>(value_);
     }
 
-    auto get() const noexcept -> bool {
+    [[nodiscard]] constexpr auto get() const noexcept -> bool {
         assert(has_value() && "Attempt to access empty optional boolean");
         return static_cast<bool>(value_);
     }
 
-    template <class Or> constexpr auto value_or(Or&& or_value) -> bool {
+    [[nodiscard]] constexpr auto operator*() const noexcept -> bool {
+        assert(has_value() && "Attempt to access empty optional boolean");
+        return value_;
+    }
+
+    template <class Or> [[nodiscard]] constexpr auto value_or(Or&& or_value) -> bool {
         // This is straight from clang's stdc++ C++23 optional implementation
         static_assert(std::is_copy_constructible_v<Or>,
                       "Boolean::value_or: T must be copy constructible");
         static_assert(std::is_convertible_v<Or, bool>,
                       "Boolean::value_or: Or must be convertible to T");
         return has_value() ? this->get() : static_cast<bool>(std::forward<Or>(or_value));
-    }
-
-    auto operator*() const noexcept -> bool {
-        assert(has_value() && "Attempt to access empty optional boolean");
-        return value_;
     }
 
   private:
@@ -153,14 +153,15 @@ template <typename T> constexpr bool is_option_v = is_option<T>::value;
 
 // Compares two values, forwarding safety concerns to the comparator.
 template <typename T, typename Comparator>
-auto safe_eq(const Option<T>& a, const Option<T>& b, Comparator cmp) noexcept -> bool {
+constexpr auto safe_eq(const Option<T>& a, const Option<T>& b, Comparator cmp) noexcept -> bool {
     if (a.has_value() != b.has_value()) { return false; }
     if (!a.has_value()) { return true; }
     return cmp(*a, *b);
 }
 
 // Compares two values, delegating equality to the default equality operator.
-template <typename T> auto safe_eq(const Option<T>& a, const Option<T>& b) noexcept -> bool {
+template <typename T>
+constexpr auto safe_eq(const Option<T>& a, const Option<T>& b) noexcept -> bool {
     if (a.has_value() != b.has_value()) { return false; }
     if (!a.has_value()) { return true; }
     return *a == *b;
@@ -173,36 +174,36 @@ template <typename T> auto safe_eq(const Option<T>& a, const Option<T>& b) noexc
 // A minimal, zero-cost optional usize wrapper
 class Index {
   public:
-    Index() noexcept = default;
+    constexpr Index() noexcept = default;
 
     // cppcheck-suppress-begin noExplicitConstructor
-    Index(usize idx) noexcept : idx_{idx} {}
-    Index(std::nullopt_t) noexcept {}
+    constexpr Index(usize idx) noexcept : idx_{idx} {}
+    constexpr Index(std::nullopt_t) noexcept {}
 
     // Any negative value is treated as a sentinel
-    template <Integral Int> Index(Int i) noexcept {
+    template <Integral Int> constexpr Index(Int i) noexcept {
         if (i >= 0) { idx_ = static_cast<usize>(i); }
     }
     // cppcheck-suppress-end noExplicitConstructor
 
-    [[nodiscard]] auto     has_value() const noexcept -> bool { return idx_ != NO_VALUE; }
-    [[nodiscard]] explicit operator bool() const noexcept { return has_value(); }
+    [[nodiscard]] constexpr auto     has_value() const noexcept -> bool { return idx_ != NO_VALUE; }
+    [[nodiscard]] constexpr explicit operator bool() const noexcept { return has_value(); }
 
-    auto emplace(usize idx) noexcept -> void { idx_ = idx; }
+    constexpr auto emplace(usize idx) noexcept -> void { idx_ = idx; }
 
-    auto reset() noexcept -> void { idx_ = NO_VALUE; }
-    auto take() noexcept -> usize {
+    constexpr auto               reset() noexcept -> void { idx_ = NO_VALUE; }
+    [[nodiscard]] constexpr auto take() noexcept -> usize {
         usize idx = idx_;
         reset();
         return idx;
     }
 
-    auto value() const -> usize {
+    [[nodiscard]] constexpr auto value() const -> usize {
         if (!*this) { throw std::bad_optional_access(); }
         return idx_;
     }
 
-    auto operator*() const noexcept -> usize {
+    [[nodiscard]] constexpr auto operator*() const noexcept -> usize {
         assert(has_value() && "Attempt to access empty optional boolean");
         return idx_;
     }

@@ -20,9 +20,12 @@ template <typename Item, usize Capacity> struct StaticVectorStorage {
 
     auto data() noexcept -> Item* { return reinterpret_cast<Item*>(items_); }
 
+    ~StaticVectorStorage() { clear(); }
+
     // The lion is now concerned with freeing non-trivial resources
-    ~StaticVectorStorage() {
-        for (usize i = 0; i < size_; i++) { data()[i].~Item(); }
+    constexpr auto clear() noexcept -> void {
+        for (usize i = 0; i < this->size_; ++i) { data()[i].~Item(); }
+        this->size_ = 0;
     }
 };
 
@@ -32,13 +35,14 @@ template <TriviallyDestructible Item, usize Capacity> struct StaticVectorStorage
     usize size_{0};
 
     auto data() noexcept -> Item* { return reinterpret_cast<Item*>(items_); }
+
+    // The lion does not concern himself with freeing trivial resources
+    constexpr auto clear() noexcept -> void { this->size_ = 0; }
 };
 
 } // namespace detail
 
-// A fixed-size, statically-allocated & zero-allocation container
-//
-// Any constructable type can be stored as construction does not occur until emplacement
+// A fixed-size, statically-allocated, zero-allocation container
 template <typename Item, usize Capacity>
 class StaticVector : private detail::StaticVectorStorage<Item, Capacity> {
   public:
@@ -53,16 +57,16 @@ class StaticVector : private detail::StaticVectorStorage<Item, Capacity> {
     StaticVector() = default;
 
     // Constructs the vector in place by emplacing each item into the buffer
-    template <typename... Is> explicit StaticVector(Is&&... items) {
+    template <typename... Is> constexpr explicit StaticVector(Is&&... items) {
         static_assert(sizeof...(Is) <= Capacity, "Cannot initialize with more items than capacity");
         (..., emplace_back(std::forward<Is>(items)));
     }
 
-    StaticVector(const StaticVector&)
+    constexpr StaticVector(const StaticVector&)
         requires(TriviallyCopyable<Item>)
     = default;
 
-    StaticVector(const StaticVector& other) {
+    constexpr StaticVector(const StaticVector& other) {
         if constexpr (TriviallyCopyable<Item>) {
             this->size_ = other.size_;
             std::memcpy(this->items_, other.items_, this->size_ * sizeof(Item));
@@ -71,7 +75,7 @@ class StaticVector : private detail::StaticVectorStorage<Item, Capacity> {
         }
     }
 
-    StaticVector& operator=(const StaticVector&)
+    constexpr StaticVector& operator=(const StaticVector&)
         requires(TriviallyCopyable<Item>)
     = default;
 
@@ -84,7 +88,7 @@ class StaticVector : private detail::StaticVectorStorage<Item, Capacity> {
         return *this;
     }
 
-    StaticVector(StaticVector&& other) noexcept {
+    constexpr StaticVector(StaticVector&& other) noexcept {
         if constexpr (TriviallyCopyable<Item>) {
             this->size_ = other.size_;
             std::memcpy(this->items_, other.items_, this->size_ * sizeof(Item));
@@ -94,9 +98,9 @@ class StaticVector : private detail::StaticVectorStorage<Item, Capacity> {
         other.clear();
     }
 
-    auto operator=(StaticVector&& other) -> StaticVector& {
+    constexpr auto operator=(StaticVector&& other) -> StaticVector& {
         if (this != &other) {
-            clear();
+            this->clear();
             if constexpr (TriviallyCopyable<Item>) {
                 this->size_ = other.size_;
                 std::memcpy(this->items_, other.items_, this->size_ * sizeof(Item));
@@ -108,17 +112,20 @@ class StaticVector : private detail::StaticVectorStorage<Item, Capacity> {
         return *this;
     }
 
-    template <typename... Args> auto emplace_back(Args&&... args) -> void {
+    template <typename... Args> constexpr auto emplace_back(Args&&... args) -> void {
         if (this->size_ >= Capacity) { throw std::out_of_range{"StaticVector size out of range"}; }
         new (data() + this->size_) Item{std::forward<Args>(args)...};
         this->size_++;
     }
 
-    auto push_back(const Item& item) -> void { emplace_back(item); }
-    auto push_back(Item&& item) -> void { emplace_back(std::move(item)); }
+    constexpr auto push_back(const Item& item) -> void { emplace_back(item); }
+    constexpr auto push_back(Item&& item) -> void { emplace_back(std::move(item)); }
 
-    [[nodiscard]] explicit operator std::span<Item>() noexcept { return {data(), this->size_}; }
-    [[nodiscard]] explicit operator std::span<const Item>() const noexcept {
+    [[nodiscard]] constexpr explicit operator std::span<Item>() noexcept {
+        return {data(), this->size_};
+    }
+
+    [[nodiscard]] constexpr explicit operator std::span<const Item>() const noexcept {
         return {data(), this->size_};
     }
 
@@ -127,12 +134,6 @@ class StaticVector : private detail::StaticVectorStorage<Item, Capacity> {
         -> decltype(auto) {
         assert(idx < self.size_ && "StaticVector index out of bounds");
         return self.data()[idx];
-    }
-
-    // Clears all memory associated with the vector and calls destructors
-    auto clear() noexcept -> void {
-        for (usize i = 0; i < this->size_; i++) { data()[i].~Item(); }
-        this->size_ = 0;
     }
 
     [[nodiscard]] constexpr auto begin() noexcept -> iterator { return data(); }
@@ -146,20 +147,17 @@ class StaticVector : private detail::StaticVectorStorage<Item, Capacity> {
     [[nodiscard]] constexpr auto empty() const noexcept -> bool { return this->size_ == 0; }
     [[nodiscard]] constexpr auto size() const noexcept -> usize { return this->size_; }
 
-    [[nodiscard]] auto data() noexcept -> Item* { return reinterpret_cast<Item*>(this->items_); }
-    [[nodiscard]] auto data() const noexcept -> const Item* {
+    [[nodiscard]] constexpr auto data() noexcept -> Item* {
+        return reinterpret_cast<Item*>(this->items_);
+    }
+
+    [[nodiscard]] constexpr auto data() const noexcept -> const Item* {
         return reinterpret_cast<const Item*>(this->items_);
     }
 
-    // ADL dispatcher for copy assignment
-    friend auto swap(StaticVector& lhs, StaticVector& rhs) noexcept -> void { lhs.swap(rhs); }
-
   private:
     // https://en.cppreference.com/cpp/algorithm/swap
-    auto swap(StaticVector& other) noexcept -> void {
-        if (this == &other) { return; }
-
-        // For trivial types swap the buffers up to the max size used
+    constexpr auto swap(StaticVector& other) noexcept -> void {
         if constexpr (TriviallyCopyable<Item>) {
             const usize max_size = std::max(this->size_, other.size_);
             std::swap_ranges(this->items_, this->items_ + (max_size * sizeof(Item)), other.items_);
@@ -181,6 +179,11 @@ class StaticVector : private detail::StaticVectorStorage<Item, Capacity> {
             smaller.size_ = larger_size;
             larger.size_  = smaller_size;
         }
+    }
+
+    // ADL dispatcher for copy assignment
+    constexpr friend auto swap(StaticVector& lhs, StaticVector& rhs) noexcept -> void {
+        lhs.swap(rhs);
     }
 };
 

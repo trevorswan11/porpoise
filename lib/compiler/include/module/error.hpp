@@ -17,7 +17,8 @@ enum class Error : u8 {
 
 using Diagnostic = Diagnostic<Error>;
 
-template <typename... Args> auto make_mod_err(Args&&... args) -> Err<Diagnostic> {
+template <typename... Args>
+[[nodiscard]] constexpr auto make_mod_err(Args&&... args) -> Err<Diagnostic> {
     return make_err<Diagnostic>(std::forward<Args>(args)...);
 }
 

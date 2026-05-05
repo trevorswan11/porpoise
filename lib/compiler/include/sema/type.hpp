@@ -100,7 +100,8 @@ struct BuiltinFunction {
 class Key {
   public:
     template <hash::Hashable... Markers>
-    Key(TypeKind kind, bool mut, usize idx = 0, bool flag = false, Markers&&... markers) noexcept
+    constexpr Key(
+        TypeKind kind, bool mut, usize idx = 0, bool flag = false, Markers&&... markers) noexcept
         : kind_{kind}, mut_{mut}, idx_{idx}, flag_{flag} {
         (..., markers_.combine(markers));
     }
@@ -108,7 +109,7 @@ class Key {
     MAKE_GETTER(kind, TypeKind)
 
     // This is a high quality hash for the purposes of `unordered_dense`
-    [[nodiscard]] auto hash() const noexcept -> u64 {
+    [[nodiscard]] constexpr auto hash() const noexcept -> u64 {
         hash::Hasher h{std::to_underlying(kind_)};
         h.combine(mut_);
         h.combine(idx_);
@@ -117,13 +118,13 @@ class Key {
         return h.finalize();
     }
 
-    auto                             emplace_idx(usize idx) noexcept -> void { idx_ = idx; }
-    auto                             emplace_flag(bool flag) noexcept -> void { flag_ = flag; }
-    template <hash::Hashable H> auto emplace_marker(const H& marker) noexcept -> void {
+    constexpr auto emplace_idx(usize idx) noexcept -> void { idx_ = idx; }
+    constexpr auto emplace_flag(bool flag) noexcept -> void { flag_ = flag; }
+    template <hash::Hashable H> constexpr auto emplace_marker(const H& marker) noexcept -> void {
         markers_.combine(marker);
     }
 
-    bool operator==(const Key&) const noexcept = default;
+    [[nodiscard]] constexpr auto operator==(const Key&) const noexcept -> bool = default;
 
   private:
     TypeKind     kind_;

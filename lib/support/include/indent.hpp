@@ -19,7 +19,7 @@ class Indent {
   public:
     class Guard {
       public:
-        Guard(Indent& i, bool last) : indent_{i} { indent_.push(last); }
+        constexpr Guard(Indent& i, bool last) : indent_{i} { indent_.push(last); }
         ~Guard() { indent_.pop(); }
 
       private:
@@ -27,10 +27,10 @@ class Indent {
     };
 
   public:
-    auto push(bool last) -> void { levels_.push_back(last); }
-    auto pop() -> void { levels_.pop_back(); }
+    constexpr auto push(bool last) -> void { levels_.push_back(last); }
+    constexpr auto pop() -> void { levels_.pop_back(); }
 
-    [[nodiscard]] auto current_branch() const -> std::string {
+    [[nodiscard]] constexpr auto current_branch() const -> std::string {
         if (levels_.empty()) { return {}; }
         auto res = levels_ | std::views::take(levels_.size() - 1) |
                    std::views::transform(

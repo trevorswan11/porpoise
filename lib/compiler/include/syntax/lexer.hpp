@@ -22,18 +22,18 @@ class Lexer {
         using reference         = const Token&;
 
       public:
-        Iterator(Lexer& lexer, const Token& current_token)
+        constexpr Iterator(Lexer& lexer, const Token& current_token)
             : lexer_{lexer}, current_token_{current_token} {}
 
-        auto operator++() -> Iterator& {
+        constexpr auto operator++() -> Iterator& {
             current_token_ = lexer_.advance();
             return *this;
         }
 
-        auto operator*() const noexcept -> reference { return current_token_; }
-        auto operator->() const noexcept -> pointer { return &current_token_; }
+        constexpr auto operator*() const noexcept -> reference { return current_token_; }
+        constexpr auto operator->() const noexcept -> pointer { return &current_token_; }
 
-        bool operator==(std::default_sentinel_t) const {
+        constexpr auto operator==(std::default_sentinel_t) const noexcept -> bool {
             return current_token_.type == TokenType::END;
         }
 
@@ -44,7 +44,7 @@ class Lexer {
 
     class Snapshot {
       public:
-        explicit Snapshot(const Lexer& l) noexcept
+        constexpr explicit Snapshot(const Lexer& l) noexcept
             : pos_{l.pos_}, peek_pos_{l.peek_pos_}, current_byte_{l.current_byte_},
               line_no_{l.line_no_}, col_no_{l.col_no_} {}
 
@@ -90,7 +90,7 @@ class Lexer {
     auto read_comment() noexcept -> Token;
 
     // Sets the lexer to the snapshot, very cheap operation.
-    auto restore(const Snapshot& state) noexcept -> void {
+    constexpr auto restore(const Snapshot& state) noexcept -> void {
         pos_          = state.pos_;
         peek_pos_     = state.peek_pos_;
         current_byte_ = state.current_byte_;

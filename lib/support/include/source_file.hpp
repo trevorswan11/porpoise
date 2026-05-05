@@ -49,11 +49,11 @@ class SourceFile {
         return get_diagnostic_strings(SourceInfo<T>::get(t));
     }
 
-    operator std::string_view() const noexcept { return source_; }
-    operator const std::string&() const noexcept { return source_; }
+    [[nodiscard]] constexpr operator std::string_view() const noexcept { return source_; }
+    [[nodiscard]] constexpr operator const std::string&() const noexcept { return source_; }
 
-    auto empty() const noexcept -> bool { return source_.empty(); }
-    auto size() const noexcept -> usize { return source_.size(); }
+    constexpr auto empty() const noexcept -> bool { return source_.empty(); }
+    constexpr auto size() const noexcept -> usize { return source_.size(); }
 
   private:
     std::string source_;

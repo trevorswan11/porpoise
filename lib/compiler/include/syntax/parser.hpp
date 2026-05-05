@@ -92,7 +92,8 @@ enum class ParserError : u8 {
 using ParserDiagnostic  = Diagnostic<ParserError>;
 using ParserDiagnostics = DiagnosticList<ParserDiagnostic>;
 
-template <typename... Args> auto make_parser_err(Args&&... args) -> Err<ParserDiagnostic> {
+template <typename... Args>
+[[nodiscard]] constexpr auto make_parser_err(Args&&... args) -> Err<ParserDiagnostic> {
     return make_err<ParserDiagnostic>(std::forward<Args>(args)...);
 }
 

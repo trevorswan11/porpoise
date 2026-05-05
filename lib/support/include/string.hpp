@@ -24,7 +24,7 @@ template <Predicate Pred>
 }
 
 // Trims leftmost spaces
-constexpr auto trim_left(std::string_view str) noexcept -> std::string_view {
+[[nodiscard]] constexpr auto trim_left(std::string_view str) noexcept -> std::string_view {
     return trim_left(str, [](byte b) { return std::isspace(b); });
 }
 
@@ -37,7 +37,7 @@ template <Predicate Pred>
 }
 
 // Trims rightmost spaces
-constexpr auto trim_right(std::string_view str) noexcept -> std::string_view {
+[[nodiscard]] constexpr auto trim_right(std::string_view str) noexcept -> std::string_view {
     return trim_right(str, [](byte b) { return std::isspace(b); });
 }
 
@@ -49,7 +49,7 @@ template <Predicate Pred>
 }
 
 // Trims both ends' spaces
-constexpr auto trim(std::string_view str) noexcept -> std::string_view {
+[[nodiscard]] constexpr auto trim(std::string_view str) noexcept -> std::string_view {
     return trim(str, [](byte b) { return std::isspace(b); });
 }
 

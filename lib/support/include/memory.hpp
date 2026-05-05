@@ -140,9 +140,9 @@ template <typename T, typename... Args>
 
 // Compares two boxes based on the provided comparator
 template <typename T, typename Comparator>
-auto nullable_boxes_eq(const mem::NullableBox<T>& a,
-                       const mem::NullableBox<T>& b,
-                       Comparator                 cmp) noexcept -> bool {
+constexpr auto nullable_boxes_eq(const mem::NullableBox<T>& a,
+                                 const mem::NullableBox<T>& b,
+                                 Comparator                 cmp) noexcept -> bool {
     if (a.operator bool() != b.operator bool()) { return false; }
     if (!a.operator bool()) { return true; }
     return cmp(*a, *b);
@@ -150,8 +150,8 @@ auto nullable_boxes_eq(const mem::NullableBox<T>& a,
 
 // Compares two boxes by using the underlying type's default equality operator
 template <typename T>
-auto nullable_boxes_eq(const mem::NullableBox<T>& a, const mem::NullableBox<T>& b) noexcept
-    -> bool {
+constexpr auto nullable_boxes_eq(const mem::NullableBox<T>& a,
+                                 const mem::NullableBox<T>& b) noexcept -> bool {
     return nullable_boxes_eq<T>(a, b, [](const auto& ae, const auto& be) { return ae == be; });
 }
 
@@ -161,40 +161,40 @@ template <typename T>
 class NonNull {
   public:
     // cppcheck-suppress-begin noExplicitConstructor
-    NonNull(T* ptr) noexcept : ptr_{ptr} {
+    constexpr NonNull(T* ptr) noexcept : ptr_{ptr} {
         assert(ptr_ && "Attempt to create NonNull from nullptr");
     }
 
-    NonNull(opt::detail::Ref<T> opt) : ptr_{&opt.value()} {}
+    constexpr NonNull(opt::detail::Ref<T> opt) : ptr_{&opt.value()} {}
     NonNull(opt::None) = delete;
     NonNull(T&&)       = delete;
 
     template <typename U>
         requires(std::convertible_to<U*, T*>)
-    NonNull(const NonNull<U>& other) noexcept : ptr_{other.get()} {}
+    constexpr NonNull(const NonNull<U>& other) noexcept : ptr_{other.get()} {}
     // cppcheck-suppress-end noExplicitConstructor
 
-    auto operator->() const noexcept -> T* {
+    constexpr auto operator->() const noexcept -> T* {
         assert(ptr_ && "Attempt to access invalid non-null");
         return ptr_;
     }
 
-    auto operator*() const noexcept -> T& {
+    [[nodiscard]] constexpr auto operator*() const noexcept -> T& {
         assert(ptr_ && "Attempt to access invalid non-null");
         return *ptr_;
     }
 
-    auto get() const noexcept -> T* {
+    constexpr auto get() const noexcept -> T* {
         assert(ptr_ && "Attempt to access invalid non-null");
         return ptr_;
     }
 
-    explicit operator T() const noexcept {
+    constexpr explicit operator T() const noexcept {
         assert(ptr_ && "Attempt to access invalid non-null");
         return *ptr_;
     }
 
-    bool operator==(const NonNull<T>&) const noexcept = default;
+    constexpr bool operator==(const NonNull<T>&) const noexcept = default;
 
   private:
     T* ptr_;
