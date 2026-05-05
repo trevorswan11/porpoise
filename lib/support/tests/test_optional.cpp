@@ -14,7 +14,7 @@ namespace porpoise::tests {
 
 TEST_CASE("Ref construction checks") {
     STATIC_CHECK_FALSE(std::is_constructible_v<opt::detail::Ref<i32>, i32&&>);
-    STATIC_CHECK(std::is_trivially_copyable_v<opt::detail::Ref<i32>>);
+    STATIC_CHECK(TriviallyCopyable<opt::detail::Ref<i32>>);
 }
 
 TEST_CASE("opt::Option template specialization") {

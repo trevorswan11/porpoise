@@ -82,7 +82,7 @@ TEST_CASE("Box template checks") {
 TEST_CASE("NonNull construction checks") {
     STATIC_CHECK_FALSE(std::is_constructible_v<mem::NonNull<i32>, i32&&>);
     STATIC_CHECK_FALSE(std::is_constructible_v<mem::NonNull<i32>, opt::None>);
-    STATIC_CHECK(std::is_trivially_copyable_v<mem::NonNull<i32>>);
+    STATIC_CHECK(TriviallyCopyable<mem::NonNull<i32>>);
 }
 
 TEST_CASE("NonNull basic usage") {

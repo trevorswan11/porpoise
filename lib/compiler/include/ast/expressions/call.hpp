@@ -31,7 +31,7 @@ class CallArgument {
     MAKE_EQ_DELEGATION(CallArgument)
 
   private:
-  mutable opt::Option<sema::Type&> sema_type_;
+    mutable opt::Option<sema::Type&>                 sema_type_;
     std::variant<mem::Box<Expression>, ExplicitType> argument_;
 };
 

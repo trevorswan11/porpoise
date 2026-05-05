@@ -2,8 +2,8 @@
 #include <cassert>
 #include <cctype>
 
-#include "syntax/keywords.hpp"
 #include "syntax/builtins.hpp"
+#include "syntax/keywords.hpp"
 #include "syntax/token.hpp"
 
 #include "enum.hpp"

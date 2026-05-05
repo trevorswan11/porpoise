@@ -174,12 +174,27 @@ class NonNull {
     NonNull(const NonNull<U>& other) noexcept : ptr_{other.get()} {}
     // cppcheck-suppress-end noExplicitConstructor
 
-    auto operator->() const noexcept -> T* { return ptr_; }
-    auto operator*() const noexcept -> T& { return *ptr_; }
-    auto get() const noexcept -> T* { return ptr_; }
+    auto operator->() const noexcept -> T* {
+        assert(ptr_ && "Attempt to access invalid non-null");
+        return ptr_;
+    }
 
-    explicit operator T() const noexcept { return *ptr_; }
-    bool     operator==(const NonNull<T>&) const noexcept = default;
+    auto operator*() const noexcept -> T& {
+        assert(ptr_ && "Attempt to access invalid non-null");
+        return *ptr_;
+    }
+
+    auto get() const noexcept -> T* {
+        assert(ptr_ && "Attempt to access invalid non-null");
+        return ptr_;
+    }
+
+    explicit operator T() const noexcept {
+        assert(ptr_ && "Attempt to access invalid non-null");
+        return *ptr_;
+    }
+
+    bool operator==(const NonNull<T>&) const noexcept = default;
 
   private:
     T* ptr_;

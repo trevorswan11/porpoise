@@ -2,10 +2,10 @@
 #include <cctype>
 #include <string_view>
 
+#include "syntax/builtins.hpp"
 #include "syntax/keywords.hpp"
 #include "syntax/lexer.hpp"
 #include "syntax/operators.hpp"
-#include "syntax/builtins.hpp"
 #include "syntax/token.hpp"
 
 #include "string.hpp"

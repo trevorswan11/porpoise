@@ -9,6 +9,7 @@
 #include "hash.hpp"
 #include "memory.hpp"
 #include "option.hpp"
+#include "static_vector.hpp"
 #include "types.hpp"
 #include "utility.hpp"
 #include "variant.hpp"
@@ -89,12 +90,19 @@ struct Function {
     Type&                         return_type;
 };
 
+constexpr usize MAX_BUILTIN_PARAMS{4};
+
+struct BuiltinFunction {
+    StaticVector<mem::NonNull<Type>, MAX_BUILTIN_PARAMS> params;
+    Type&                                                return_type;
+};
+
 class Key {
   public:
     template <hash::Hashable... Markers>
     Key(TypeKind kind, bool mut, usize idx = 0, bool flag = false, Markers&&... markers) noexcept
         : kind_{kind}, mut_{mut}, idx_{idx}, flag_{flag} {
-        (..., [&] { markers_.combine(markers); }());
+        (..., markers_.combine(markers));
     }
 
     MAKE_GETTER(kind, TypeKind)
@@ -137,7 +145,8 @@ class Type {
                                   types::Reference,
                                   types::Enum,
                                   types::Struct,
-                                  types::Function>;
+                                  types::Function,
+                                  types::BuiltinFunction>;
 
   public:
     explicit Type(TypeKind kind) noexcept : kind_{kind} {}
@@ -200,7 +209,7 @@ class Type {
     opt::Option<Resolved> resolved_;
 };
 
-static_assert(std::is_trivially_destructible_v<Type>);
+static_assert(TriviallyDestructible<Type>);
 
 } // namespace porpoise::sema
 
