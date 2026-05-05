@@ -10,16 +10,24 @@ namespace porpoise {
 
 namespace detail {
 
-template <typename T>
-constexpr auto assert_impl(std::source_location loc, const T& condition, std::string_view message)
-    -> void {
+constexpr auto assert_impl(std::source_location loc,
+                           bool                 condition,
+                           std::string_view     message,
+                           std::string_view     expression) -> void {
     if (!condition) {
         if consteval { // cppcheck-suppress syntaxError
-            fmt::println(
-                std::cerr, "{}: {}:{}:{}", message, loc.file_name(), loc.line(), loc.column());
-            std::terminate();
-        } else {
             throw "Compile-time assertion failed";
+        } else {
+            fmt::println(std::cerr,
+                         "{}{}{}{}: {}:{}:{}",
+                         message,
+                         message.empty() ? "" : " (",
+                         expression,
+                         message.empty() ? "" : ")",
+                         loc.file_name(),
+                         loc.line(),
+                         loc.column());
+            std::terminate();
         }
     }
 }
@@ -27,10 +35,12 @@ constexpr auto assert_impl(std::source_location loc, const T& condition, std::st
 } // namespace detail
 
 #ifndef NDEBUG
-#    define ASSERT_1(expression) \
-        ::porpoise::detail::assert_impl(std::source_location::current(), expression, #expression)
+#    define ASSERT_1(expression)         \
+        ::porpoise::detail::assert_impl( \
+            std::source_location::current(), !!(expression), "", #expression)
 #    define ASSERT_2(expression, message) \
-        ::porpoise::detail::assert_impl(std::source_location::current(), expression, message)
+        ::porpoise::detail::assert_impl(  \
+            std::source_location::current(), !!(expression), (message), #expression)
 #else
 #    define ASSERT_1(expression)                         \
         do {                                             \
