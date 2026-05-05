@@ -69,7 +69,7 @@ class MatchExpression : public ExprBase<MatchExpression> {
 
     auto                      accept(Visitor& v) const -> void override;
     [[nodiscard]] static auto parse(syntax::Parser& parser)
-        -> Result<mem::Box<Expression>, syntax::ParserDiagnostic>;
+        -> Result<mem::Box<Expression>, syntax::Diagnostic>;
 
     MAKE_GETTER(matcher, const Expression&, *)
     MAKE_GETTER(arms, std::span<const MatchArm>)

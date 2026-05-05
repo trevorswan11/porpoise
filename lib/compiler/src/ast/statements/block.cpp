@@ -7,7 +7,7 @@ namespace porpoise::ast {
 auto BlockStatement::accept(Visitor& v) const -> void { v.visit(*this); }
 
 auto BlockStatement::parse(syntax::Parser& parser)
-    -> Result<mem::Box<Statement>, syntax::ParserDiagnostic> {
+    -> Result<mem::Box<Statement>, syntax::Diagnostic> {
     const auto start_token = parser.get_current_token();
 
     Statements statements;

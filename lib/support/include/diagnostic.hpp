@@ -158,7 +158,7 @@ concept DiagnosticType = is_diagnostic_v<T>;
 
 template <DiagnosticType D> class DiagnosticList {
   public:
-    MAKE_ITERATOR(Diagnostics, std::vector<D>, diagnostics_)
+    MAKE_ITERATOR(Diagnostics, std::vector<D>, diagnostics_) // cppcheck-suppress syntaxError
 
   public:
     explicit DiagnosticList(opt::Option<bool> in_terminal = opt::none) noexcept

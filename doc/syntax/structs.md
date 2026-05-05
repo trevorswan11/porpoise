@@ -57,14 +57,6 @@ Foo.foo;                                           // Members (static and non-st
 Foo.worker_three();                                // The same goes for functions
 ```
 
-- Structs can be marked `packed` to prevent the compiler from reordering members or from adding additional padding
-
-```porpoise
-const Bar := packed struct {
-    // ...
-};
-```
-
 - There is no inheritance
 - Interfaces are not natively supported
 

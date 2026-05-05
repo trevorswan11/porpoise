@@ -41,6 +41,9 @@ enum class TypeKind : u8 {
     BLOCK,
     MATCH_ARM,
     MODULE,
+
+    AUTO,
+    NORETURN,
 };
 
 class Type;
@@ -81,7 +84,6 @@ struct Union {
 };
 
 struct Struct {
-    bool                          packed;
     std::span<mem::NonNull<Type>> members;
 };
 
@@ -102,7 +104,7 @@ class Key {
     template <hash::Hashable... Markers>
     constexpr Key(
         TypeKind kind, bool mut, usize idx = 0, bool flag = false, Markers&&... markers) noexcept
-        : kind_{kind}, mut_{mut}, idx_{idx}, flag_{flag} {
+        : kind_{kind}, mut_{mut}, flag_{flag}, idx_{idx} {
         (..., markers_.combine(markers));
     }
 
@@ -129,8 +131,8 @@ class Key {
   private:
     TypeKind     kind_;
     bool         mut_;
-    usize        idx_;
     bool         flag_;
+    usize        idx_;
     hash::Hasher markers_;
 };
 
@@ -159,7 +161,7 @@ class Type {
     auto operator=(Type&&) -> Type&      = delete;
 
     MAKE_GETTER(kind, TypeKind)
-    MAKE_OPTIONAL_UNPACKER(resolved, Resolved, resolved_, *)
+    MAKE_OPTIONAL_UNPACKER(resolved, const Resolved&, resolved_, *)
 
     // Unpacks T from the resolved type assuming the type has been resolved to T
     template <typename T, typename Self> [[nodiscard]] auto as(this Self&& self) -> auto& {
@@ -180,16 +182,10 @@ class Type {
 
     // Intended for use on pass 1 only
     constexpr auto set_symbol_table_idx(usize idx) noexcept -> void {
-        scope_table_idx_.emplace(idx);
+        symbol_table_idx_.emplace(idx);
     }
 
-    [[nodiscard]] constexpr auto has_symbol_table_idx() const noexcept -> bool {
-        return scope_table_idx_.has_value();
-    }
-
-    [[nodiscard]] constexpr auto get_symbol_table_idx() const noexcept -> usize {
-        return *scope_table_idx_;
-    }
+    MAKE_OPTIONAL_UNPACKER(symbol_table_idx, usize, symbol_table_idx_, *)
 
     template <typename Resolvee, typename... Args> auto resolve(Args&&... args) noexcept -> void {
         resolved_.emplace(Resolvee{std::forward<Args>(args)...});
@@ -206,7 +202,7 @@ class Type {
 
   private:
     TypeKind              kind_;
-    opt::Index            scope_table_idx_;
+    opt::Index            symbol_table_idx_;
     opt::Option<Resolved> resolved_;
 };
 

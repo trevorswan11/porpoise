@@ -167,8 +167,8 @@ constexpr auto safe_eq(const Option<T>& a, const Option<T>& b) noexcept -> bool 
     return *a == *b;
 }
 
-#define MAKE_OPTIONAL_UNPACKER(name, ReturnType, member, deref)                                  \
-    [[nodiscard]] auto get_##name() const noexcept -> const ReturnType& { return deref member; } \
+#define MAKE_OPTIONAL_UNPACKER(name, ConstReturnType, member, deref)                           \
+    [[nodiscard]] auto get_##name() const noexcept -> ConstReturnType { return deref member; } \
     [[nodiscard]] auto has_##name() const noexcept -> bool { return member.has_value(); }
 
 // A minimal, zero-cost optional usize wrapper

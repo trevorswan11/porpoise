@@ -207,30 +207,26 @@ TEST_CASE("Function type restrictions") {
     });
     for (const auto& illegal : illegals) {
         helpers::test_parser_fail(
-            illegal,
-            syntax::ParserDiagnostic{syntax::ParserError::ILLEGAL_FUNCTION_TYPE_MODIFIER, 0, 7});
+            illegal, syntax::Diagnostic{syntax::Error::ILLEGAL_FUNCTION_TYPE_MODIFIER, 0, 7});
     }
 }
 
 TEST_CASE("Bodied function type") {
-    helpers::test_parser_fail(
-        "var a: *mut fn(): void { b; };",
-        syntax::ParserDiagnostic{syntax::ParserError::EXPLICIT_FN_TYPE_HAS_BODY, 0, 12},
-        syntax::ParserDiagnostic{"No prefix parse function for RBRACE(}) found",
-                                 syntax::ParserError::MISSING_PREFIX_PARSER,
-                                 std::pair{0uz, 28uz}});
+    helpers::test_parser_fail("var a: *mut fn(): void { b; };",
+                              syntax::Diagnostic{syntax::Error::EXPLICIT_FN_TYPE_HAS_BODY, 0, 12},
+                              syntax::Diagnostic{"No prefix parse function for RBRACE(}) found",
+                                                 syntax::Error::MISSING_PREFIX_PARSER,
+                                                 std::pair{0uz, 28uz}});
 }
 
 TEST_CASE("Function return type restrictions") {
-    helpers::test_parser_fail(
-        "var a: fn(): &void;",
-        syntax::ParserDiagnostic{syntax::ParserError::ILLEGAL_VOID_TYPE_MODIFIER, 0, 13});
-    helpers::test_parser_fail(
-        "var a: fn(): &type;",
-        syntax::ParserDiagnostic{syntax::ParserError::ILLEGAL_TYPE_TYPE_MODIFIER, 0, 13});
+    helpers::test_parser_fail("var a: fn(): &void;",
+                              syntax::Diagnostic{syntax::Error::ILLEGAL_VOID_TYPE_MODIFIER, 0, 13});
+    helpers::test_parser_fail("var a: fn(): &type;",
+                              syntax::Diagnostic{syntax::Error::ILLEGAL_TYPE_TYPE_MODIFIER, 0, 13});
     helpers::test_parser_fail(
         "var a: fn(): &noreturn;",
-        syntax::ParserDiagnostic{syntax::ParserError::ILLEGAL_NORETURN_TYPE_MODIFIER, 0, 13});
+        syntax::Diagnostic{syntax::Error::ILLEGAL_NORETURN_TYPE_MODIFIER, 0, 13});
 }
 
 } // namespace porpoise::tests

@@ -21,12 +21,9 @@ class StructExpression : public ExprBase<StructExpression> {
 
     auto                      accept(Visitor& v) const -> void override;
     [[nodiscard]] static auto parse(syntax::Parser& parser)
-        -> Result<mem::Box<Expression>, syntax::ParserDiagnostic>;
+        -> Result<mem::Box<Expression>, syntax::Diagnostic>;
 
     MAKE_GETTER(members, const Members&)
-    [[nodiscard]] auto is_packed() const noexcept -> bool {
-        return start_token_.type == syntax::TokenType::PACKED;
-    }
 
   protected:
     auto is_equal(const Node& other) const noexcept -> bool override;

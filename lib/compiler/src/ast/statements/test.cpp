@@ -15,7 +15,7 @@ TestStatement::~TestStatement() = default;
 auto TestStatement::accept(Visitor& v) const -> void { v.visit(*this); }
 
 auto TestStatement::parse(syntax::Parser& parser)
-    -> Result<mem::Box<Statement>, syntax::ParserDiagnostic> {
+    -> Result<mem::Box<Statement>, syntax::Diagnostic> {
     const auto start_token = parser.get_current_token();
 
     mem::NullableBox<StringExpression> description;
@@ -26,8 +26,7 @@ auto TestStatement::parse(syntax::Parser& parser)
 
         // Empty strings aren't supported since one should just use no description
         if (description->get_value().empty()) {
-            return make_parser_err(syntax::ParserError::EMPTY_TEST_DESCRIPTION,
-                                   description->get_token());
+            return make_syntax_err(syntax::Error::EMPTY_TEST_DESCRIPTION, description->get_token());
         }
     }
 

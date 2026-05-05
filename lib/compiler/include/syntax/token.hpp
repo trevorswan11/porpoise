@@ -9,17 +9,11 @@
 
 #include "diagnostic.hpp"
 #include "option.hpp"
-#include "result.hpp"
 #include "types.hpp"
 
 namespace porpoise {
 
 namespace syntax {
-
-enum class TokenError : u8 {
-    NON_STRING_TOKEN,
-    UNEXPECTED_CHAR,
-};
 
 enum class TokenType : u8 {
     END,
@@ -164,7 +158,6 @@ enum class TokenType : u8 {
     PUBLIC,
     EXTERN,
     EXPORT,
-    PACKED,
     VOLATILE,
     STATIC,
     NORETURN,
@@ -300,8 +293,6 @@ auto suffix_length(TokenType tt) noexcept -> usize;
 
 } // namespace token_type
 
-using TokenDiagnostic = Diagnostic<TokenError>;
-
 struct Token {
     TokenType        type{};
     std::string_view slice{};
@@ -318,7 +309,8 @@ struct Token {
     explicit Token(const std::pair<std::string_view, TokenType>& tok) noexcept
         : type{tok.second}, slice{tok.first} {}
 
-    [[nodiscard]] auto promote() const -> Result<std::string, TokenDiagnostic>;
+    // Materializes the token, asserting that it was a string token
+    [[nodiscard]] auto materialize_string() const -> std::string;
     [[nodiscard]] auto is_primitive() const noexcept -> bool;
     [[nodiscard]] auto is_builtin() const noexcept -> bool;
     [[nodiscard]] auto is_decl_token() const noexcept -> bool;

@@ -40,7 +40,7 @@ class LabelExpression : public ExprBase<LabelExpression> {
 
     auto                      accept(Visitor& v) const -> void override;
     [[nodiscard]] static auto parse(syntax::Parser& parser, mem::Box<Expression> name)
-        -> Result<mem::Box<Expression>, syntax::ParserDiagnostic>;
+        -> Result<mem::Box<Expression>, syntax::Diagnostic>;
 
     MAKE_GETTER(name, const IdentifierExpression&, *)
     MAKE_VARIANT_UNPACKER(
@@ -64,7 +64,7 @@ class LabelExpression : public ExprBase<LabelExpression> {
 
   private:
     [[nodiscard]] static auto deconstruct_body(mem::Box<ast::Statement>&& raw_stmt)
-        -> Result<LabeledNode, syntax::ParserDiagnostic>;
+        -> Result<LabeledNode, syntax::Diagnostic>;
 
   private:
     mem::Box<IdentifierExpression> name_;

@@ -44,20 +44,20 @@ auto into_expression_statement(const N& node) -> const ast::ExpressionStatement&
 
 // Tests a syntactically failing input against the expected generated errors
 template <typename... Ds>
-    requires(std::same_as<Ds, syntax::ParserDiagnostic> && ...)
+    requires(std::same_as<Ds, syntax::Diagnostic> && ...)
 auto test_parser_fail(std::string_view failing, Ds&&... expected_diagnostics) -> void {
     syntax::Parser p{failing};
     auto [ast, errors] = p.consume();
     REQUIRE(ast.empty());
-    helpers::check_errors_against<syntax::ParserDiagnostic>(
-        errors, std::forward<Ds>(expected_diagnostics)...);
+    helpers::check_errors_against<syntax::Diagnostic>(errors,
+                                                      std::forward<Ds>(expected_diagnostics)...);
 }
 
 template <ast::LeafNode N> auto test_stmt(std::string_view input, const N& expected) -> void {
     syntax::Parser p{input};
     auto [ast, errors] = p.consume();
 
-    check_errors<syntax::ParserDiagnostic>(errors);
+    check_errors<syntax::Diagnostic>(errors);
     REQUIRE(ast.size() == 1);
 
     const auto  actual{std::move(ast[0])};

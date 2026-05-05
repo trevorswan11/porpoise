@@ -100,7 +100,7 @@ ExpressionStatement
     │   └─ Inner: IdentifierExpression: B
     └─ Inner: IdentifierExpression: C
 ExpressionStatement
-└─ Expr: StructExpression (packed)
+└─ Expr: StructExpression
     ├─ DeclStatement (a)
     │   ├─ Modifiers: VARIABLE
     │   ├─ Type: ExplicitType (modifier: BASE)

@@ -24,7 +24,7 @@ class WhileLoopExpression : public ExprBase<WhileLoopExpression> {
 
     auto                      accept(Visitor& v) const -> void override;
     [[nodiscard]] static auto parse(syntax::Parser& parser)
-        -> Result<mem::Box<Expression>, syntax::ParserDiagnostic>;
+        -> Result<mem::Box<Expression>, syntax::Diagnostic>;
 
     MAKE_GETTER(condition, const Expression&, *)
     MAKE_NULLABLE_BOX_UNPACKER(continuation, Expression, continuation_, *)

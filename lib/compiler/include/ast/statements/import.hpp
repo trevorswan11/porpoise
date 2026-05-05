@@ -60,7 +60,7 @@ class ImportStatement : public StmtBase<ImportStatement> {
 
     auto                      accept(Visitor& v) const -> void override;
     [[nodiscard]] static auto parse(syntax::Parser& parser)
-        -> Result<mem::Box<Statement>, syntax::ParserDiagnostic>;
+        -> Result<mem::Box<Statement>, syntax::Diagnostic>;
 
     MAKE_VARIANT_UNPACKER(library_import, LibraryImport, LibraryImport, imported_, std::get)
     MAKE_VARIANT_UNPACKER(file_import, FileImport, FileImport, imported_, std::get)

@@ -49,7 +49,7 @@ class CallExpression : public ExprBase<CallExpression> {
 
     auto                      accept(Visitor& v) const -> void override;
     [[nodiscard]] static auto parse(syntax::Parser& parser, mem::Box<Expression> function)
-        -> Result<mem::Box<Expression>, syntax::ParserDiagnostic>;
+        -> Result<mem::Box<Expression>, syntax::Diagnostic>;
 
     MAKE_GETTER(function, const Expression&, *)
     MAKE_GETTER(arguments, std::span<const CallArgument>)

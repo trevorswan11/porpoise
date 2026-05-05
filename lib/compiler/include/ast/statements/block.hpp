@@ -26,7 +26,7 @@ class BlockStatement : public StmtBase<BlockStatement> {
 
     auto                      accept(Visitor& v) const -> void override;
     [[nodiscard]] static auto parse(syntax::Parser& parser)
-        -> Result<mem::Box<Statement>, syntax::ParserDiagnostic>;
+        -> Result<mem::Box<Statement>, syntax::Diagnostic>;
 
   protected:
     auto is_equal(const Node& other) const noexcept -> bool override {

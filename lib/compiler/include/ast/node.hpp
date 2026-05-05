@@ -5,8 +5,6 @@
 #include <concepts>
 #include <vector>
 
-#include <magic_enum/magic_enum.hpp>
-
 #include "syntax/token.hpp"
 
 #include "memory.hpp"
@@ -159,7 +157,6 @@ class Node {
     const syntax::Token              start_token_;
     const NodeKind                   kind_;
     mutable opt::Option<sema::Type&> sema_type_;
-    friend class ExplicitType;
 };
 
 using AST = std::vector<mem::Box<Node>>;

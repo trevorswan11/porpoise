@@ -10,7 +10,7 @@
 
 #include "sema/error.hpp"
 
-#include "syntax/parser.hpp"
+#include "syntax/error.hpp"
 
 #include "module/source_loader.hpp"
 
@@ -18,6 +18,7 @@
 #include "result.hpp"
 #include "source_file.hpp"
 #include "utility.hpp"
+#include "variant.hpp"
 
 namespace porpoise::mod {
 
@@ -34,7 +35,7 @@ enum class ModuleState : u8 {
 };
 
 // cppcheck-suppress-begin internalAstError
-using DiagnosticListVariant = std::variant<Unit, syntax::ParserDiagnostics, sema::Diagnostics>;
+using DiagnosticListVariant = std::variant<Unit, syntax::Diagnostics, sema::Diagnostics>;
 // cppcheck-suppress-end internalAstError
 
 #define MAKE_MODULE_DIAGNOSTIC_UNPACKER(name, checker, DiagType)                \
@@ -58,7 +59,7 @@ struct Module {
 
     DiagnosticListVariant diagnostics{Unit{}};
 
-    MAKE_MODULE_DIAGNOSTIC_UNPACKER(parser_diagnostics, is_errored, syntax::ParserDiagnostics)
+    MAKE_MODULE_DIAGNOSTIC_UNPACKER(parser_diagnostics, is_errored, syntax::Diagnostics)
     MAKE_MODULE_DIAGNOSTIC_UNPACKER(sema_diagnostics, is_poisoned, sema::Diagnostics)
 
     MAKE_VARIANT_MATCHER(diagnostics)

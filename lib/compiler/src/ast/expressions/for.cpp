@@ -55,13 +55,13 @@ ForLoopExpression::~ForLoopExpression() = default;
 auto ForLoopExpression::accept(Visitor& v) const -> void { v.visit(*this); }
 
 auto ForLoopExpression::parse(syntax::Parser& parser)
-    -> Result<mem::Box<Expression>, syntax::ParserDiagnostic> {
+    -> Result<mem::Box<Expression>, syntax::Diagnostic> {
     const auto start_token = parser.get_current_token();
 
     // Iterables have to be surrounded by parentheses
     TRY(parser.expect_peek(syntax::TokenType::LPAREN));
     if (parser.peek_token_is(syntax::TokenType::RPAREN)) {
-        return make_parser_err(syntax::ParserError::FOR_MISSING_ITERABLES, start_token);
+        return make_syntax_err(syntax::Error::FOR_MISSING_ITERABLES, start_token);
     }
 
     std::vector<mem::Box<Expression>> iterables;
@@ -106,16 +106,14 @@ auto ForLoopExpression::parse(syntax::Parser& parser)
     TRY(parser.expect_peek(syntax::TokenType::LBRACE));
     auto block = downcast<BlockStatement>(TRY(BlockStatement::parse(parser)));
     auto non_break =
-        TRY(parser.try_parse_restricted_alternate(syntax::ParserError::ILLEGAL_LOOP_NON_BREAK));
+        TRY(parser.try_parse_restricted_alternate(syntax::Error::ILLEGAL_LOOP_NON_BREAK));
 
     // The number of captures must align with the number of iterables
     if (captures.size() != iterables.size()) {
-        return make_parser_err(syntax::ParserError::FOR_ITERABLE_CAPTURE_MISMATCH, start_token);
+        return make_syntax_err(syntax::Error::FOR_ITERABLE_CAPTURE_MISMATCH, start_token);
     }
 
-    if (block->empty()) {
-        return make_parser_err(syntax::ParserError::EMPTY_FOR_LOOP, block->get_token());
-    }
+    if (block->empty()) { return make_syntax_err(syntax::Error::EMPTY_LOOP, block->get_token()); }
 
     return mem::make_box<ForLoopExpression>(start_token,
                                             std::move(iterables),

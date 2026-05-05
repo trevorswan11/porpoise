@@ -7,7 +7,7 @@ namespace porpoise::ast {
 auto ReturnStatement::accept(Visitor& v) const noexcept -> void { v.visit(*this); }
 
 auto ReturnStatement::parse(syntax::Parser& parser)
-    -> Result<mem::Box<Statement>, syntax::ParserDiagnostic> {
+    -> Result<mem::Box<Statement>, syntax::Diagnostic> {
     const auto start_token = parser.get_current_token();
 
     mem::NullableBox<Expression> value;

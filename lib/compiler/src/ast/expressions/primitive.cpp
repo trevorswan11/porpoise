@@ -11,12 +11,9 @@ namespace porpoise::ast {
 auto StringExpression::accept(Visitor& v) const -> void { v.visit(*this); }
 
 auto StringExpression::parse(syntax::Parser& parser)
-    -> Result<mem::Box<Expression>, syntax::ParserDiagnostic> {
+    -> Result<mem::Box<Expression>, syntax::Diagnostic> {
     const auto start_token = parser.get_current_token();
-    const auto promoted    = start_token.promote();
-    if (!promoted) { return make_parser_err(syntax::ParserError::MALFORMED_STRING, start_token); }
-
-    return mem::make_box<StringExpression>(start_token, *promoted);
+    return mem::make_box<StringExpression>(start_token, start_token.materialize_string());
 }
 
 auto I32Expression::accept(Visitor& v) const -> void { v.visit(*this); }
@@ -28,7 +25,7 @@ auto USizeExpression::accept(Visitor& v) const -> void { v.visit(*this); }
 auto U8Expression::accept(Visitor& v) const -> void { v.visit(*this); }
 
 auto U8Expression::parse(syntax::Parser& parser)
-    -> Result<mem::Box<Expression>, syntax::ParserDiagnostic> {
+    -> Result<mem::Box<Expression>, syntax::Diagnostic> {
     const auto start_token = parser.get_current_token();
     const auto slice       = start_token.slice;
     if (slice[1] != '\\') { return mem::make_box<U8Expression>(start_token, slice[1]); }
@@ -43,7 +40,7 @@ auto U8Expression::parse(syntax::Parser& parser)
     case '\'': value = '\''; break;
     case '"':  value = '"'; break;
     case '0':  value = '\0'; break;
-    default:   return make_parser_err(syntax::ParserError::UNKNOWN_CHARACTER_ESCAPE, start_token);
+    default:   return make_syntax_err(syntax::Error::UNKNOWN_CHARACTER_ESCAPE, start_token);
     }
 
     return mem::make_box<U8Expression>(start_token, value);
@@ -72,14 +69,14 @@ auto F64Expression::is_equal(const Node& other) const noexcept -> bool {
 auto BoolExpression::accept(Visitor& v) const -> void { v.visit(*this); }
 
 auto BoolExpression::parse(syntax::Parser& parser)
-    -> Result<mem::Box<Expression>, syntax::ParserDiagnostic> {
+    -> Result<mem::Box<Expression>, syntax::Diagnostic> {
     return mem::make_box<BoolExpression>(parser.get_current_token());
 }
 
 auto VoidExpression::accept(Visitor& v) const -> void { v.visit(*this); }
 
 auto VoidExpression::parse(syntax::Parser& parser)
-    -> Result<mem::Box<Expression>, syntax::ParserDiagnostic> {
+    -> Result<mem::Box<Expression>, syntax::Diagnostic> {
     const auto start_token = parser.get_current_token();
     TRY(parser.expect_peek(syntax::TokenType::RBRACE));
     return mem::make_box<VoidExpression>(start_token);

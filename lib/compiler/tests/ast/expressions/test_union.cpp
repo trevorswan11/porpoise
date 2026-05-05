@@ -138,36 +138,34 @@ TEST_CASE("Non-decl union members") {
 TEST_CASE("Illegal union field name") {
     helpers::test_parser_fail(
         "union { 2: i32 };",
-        syntax::ParserDiagnostic{
-            "Expected token IDENT, found INT_10", syntax::ParserError::UNEXPECTED_TOKEN, 0, 8});
+        syntax::Diagnostic{
+            "Expected token IDENT, found INT_10", syntax::Error::UNEXPECTED_TOKEN, 0, 8});
 }
 
 TEST_CASE("Illegal union field type") {
-    helpers::test_parser_fail(
-        "union { a: 2 };",
-        syntax::ParserDiagnostic{syntax::ParserError::ILLEGAL_EXPLICIT_TYPE, 0, 9});
+    helpers::test_parser_fail("union { a: 2 };",
+                              syntax::Diagnostic{syntax::Error::ILLEGAL_EXPLICIT_TYPE, 0, 9});
 }
 
 TEST_CASE("Empty union") {
-    helpers::test_parser_fail("union { };",
-                              syntax::ParserDiagnostic{syntax::ParserError::EMPTY_UNION, 0, 0});
+    helpers::test_parser_fail("union { };", syntax::Diagnostic{syntax::Error::EMPTY_UNION, 0, 0});
 }
 
 TEST_CASE("Empty union with decl") {
     helpers::test_parser_fail("union { const b := fn(&self, a: A): C { c; }; };",
-                              syntax::ParserDiagnostic{syntax::ParserError::EMPTY_UNION, 0, 0});
+                              syntax::Diagnostic{syntax::Error::EMPTY_UNION, 0, 0});
 }
 
 TEST_CASE("Out of order union") {
     helpers::test_parser_fail("union { a: i32, const b := fn(&self, a: A): C { c; }; b: i32, };",
-                              syntax::ParserDiagnostic{"Expected token SEMICOLON, found COMMA",
-                                                       syntax::ParserError::UNEXPECTED_TOKEN,
-                                                       std::pair{0uz, 60uz}});
+                              syntax::Diagnostic{"Expected token SEMICOLON, found COMMA",
+                                                 syntax::Error::UNEXPECTED_TOKEN,
+                                                 std::pair{0uz, 60uz}});
 }
 
 TEST_CASE("Non-static non-function union decl") {
     helpers::test_parser_fail("union { a: i32, const b := 2; };",
-                              syntax::ParserDiagnostic{syntax::ParserError::INVALID_MEMBER, 0, 16});
+                              syntax::Diagnostic{syntax::Error::INVALID_MEMBER, 0, 16});
 }
 
 } // namespace porpoise::tests

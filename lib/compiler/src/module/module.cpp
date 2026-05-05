@@ -1,5 +1,7 @@
 #include <fmt/format.h>
 
+#include "syntax/parser.hpp"
+
 #include "module/module.hpp"
 
 #include "diagnostic.hpp"

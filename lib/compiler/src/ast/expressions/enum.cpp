@@ -34,7 +34,7 @@ EnumExpression::~EnumExpression() = default;
 auto EnumExpression::accept(Visitor& v) const -> void { v.visit(*this); }
 
 auto EnumExpression::parse(syntax::Parser& parser)
-    -> Result<mem::Box<Expression>, syntax::ParserDiagnostic> {
+    -> Result<mem::Box<Expression>, syntax::Diagnostic> {
     const auto start_token = parser.get_current_token();
 
     mem::NullableBox<IdentifierExpression> underlying;
@@ -74,9 +74,7 @@ auto EnumExpression::parse(syntax::Parser& parser)
     TRY(parser.expect_peek(syntax::TokenType::RBRACE));
 
     // Validate here so that there aren't 3 errors spawning from an empty enum with decls
-    if (enumerations.empty()) {
-        return make_parser_err(syntax::ParserError::EMPTY_ENUM, start_token);
-    }
+    if (enumerations.empty()) { return make_syntax_err(syntax::Error::EMPTY_ENUM, start_token); }
     return mem::make_box<EnumExpression>(
         start_token, std::move(underlying), std::move(enumerations), std::move(members));
 }

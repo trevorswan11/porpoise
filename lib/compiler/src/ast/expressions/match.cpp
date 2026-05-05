@@ -44,14 +44,14 @@ MatchExpression::~MatchExpression() = default;
 auto MatchExpression::accept(Visitor& v) const -> void { v.visit(*this); }
 
 auto MatchExpression::parse(syntax::Parser& parser)
-    -> Result<mem::Box<Expression>, syntax::ParserDiagnostic> {
+    -> Result<mem::Box<Expression>, syntax::Diagnostic> {
     const auto start_token = parser.get_current_token();
 
     // Conditions have to be surrounded by parentheses
     TRY(parser.expect_peek(syntax::TokenType::LPAREN));
     parser.advance();
     if (parser.current_token_is(syntax::TokenType::RPAREN)) {
-        return make_parser_err(syntax::ParserError::MATCH_EXPR_MISSING_CONDITION, start_token);
+        return make_syntax_err(syntax::Error::MATCH_EXPR_MISSING_CONDITION, start_token);
     }
 
     auto matcher = TRY(parser.parse_expression());
@@ -60,7 +60,7 @@ auto MatchExpression::parse(syntax::Parser& parser)
     TRY(parser.expect_peek(syntax::TokenType::LBRACE));
     if (parser.peek_token_is(syntax::TokenType::RBRACE)) {
         parser.advance();
-        return make_parser_err(syntax::ParserError::ARMLESS_MATCH_EXPR, start_token);
+        return make_syntax_err(syntax::Error::ARMLESS_MATCH_EXPR, start_token);
     }
 
     std::vector<MatchArm> arms;
@@ -92,12 +92,12 @@ auto MatchExpression::parse(syntax::Parser& parser)
         // The resulting statement must be restricted like an if branch
         parser.advance();
         auto consequence =
-            TRY(parser.parse_restricted_statement(syntax::ParserError::ILLEGAL_MATCH_ARM, false));
+            TRY(parser.parse_restricted_statement(syntax::Error::ILLEGAL_MATCH_ARM, false));
         arms.emplace_back(std::move(pattern), std::move(capture), std::move(consequence));
     }
     TRY(parser.expect_peek(syntax::TokenType::RBRACE));
     auto catch_all =
-        TRY(parser.try_parse_restricted_alternate(syntax::ParserError::ILLEGAL_MATCH_CATCH_ALL));
+        TRY(parser.try_parse_restricted_alternate(syntax::Error::ILLEGAL_MATCH_CATCH_ALL));
 
     return mem::make_box<MatchExpression>(
         start_token, std::move(matcher), std::move(arms), std::move(catch_all));

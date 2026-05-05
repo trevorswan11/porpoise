@@ -32,7 +32,7 @@ class Members {
     // The validator need not check if the node fits in the Member variant
     template <typename MemberValidator>
     [[nodiscard]] static auto parse(syntax::Parser& parser, MemberValidator&& validator)
-        -> Result<Members, syntax::ParserDiagnostic> {
+        -> Result<Members, syntax::Diagnostic> {
         MemberList members;
         while (!parser.peek_token_is(syntax::TokenType::RBRACE) &&
                !parser.peek_token_is(syntax::TokenType::END)) {
@@ -42,8 +42,8 @@ class Members {
             // Downcast the parsed member into the specific member variant and check
             auto member = TRY(deconstruct_member(std::move(parsed_member)));
             if (!std::visit(std::forward<MemberValidator>(validator), member)) {
-                return make_parser_err(
-                    syntax::ParserError::INVALID_MEMBER,
+                return make_syntax_err(
+                    syntax::Error::INVALID_MEMBER,
                     std::visit([](const auto& m) -> auto& { return m->get_token(); }, member));
             }
             members.emplace_back(std::move(member));
@@ -58,7 +58,7 @@ class Members {
 
   private:
     [[nodiscard]] static auto deconstruct_member(mem::Box<Statement> member)
-        -> Result<Member, syntax::ParserDiagnostic> {
+        -> Result<Member, syntax::Diagnostic> {
         switch (member->get_kind()) {
         case NodeKind::DECL_STATEMENT:
             return Member{Node::downcast<DeclStatement>(std::move(member))};
@@ -66,7 +66,7 @@ class Members {
             return Member{Node::downcast<UsingStatement>(std::move(member))};
         case NodeKind::IMPORT_STATEMENT:
             return Member{Node::downcast<ImportStatement>(std::move(member))};
-        default: return make_parser_err(syntax::ParserError::INVALID_MEMBER, member->get_token());
+        default: return make_syntax_err(syntax::Error::INVALID_MEMBER, member->get_token());
         }
     }
 

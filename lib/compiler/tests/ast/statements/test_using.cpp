@@ -51,22 +51,22 @@ TEST_CASE("User defined type alias") {
 TEST_CASE("Missing alias") {
     helpers::test_parser_fail(
         "using &[0x2uz][N]*E;",
-        syntax::ParserDiagnostic{
-            "Expected token IDENT, found BW_AND", syntax::ParserError::UNEXPECTED_TOKEN, 0, 6});
+        syntax::Diagnostic{
+            "Expected token IDENT, found BW_AND", syntax::Error::UNEXPECTED_TOKEN, 0, 6});
 }
 
 TEST_CASE("Missing type") {
     helpers::test_parser_fail(
         "using T;",
-        syntax::ParserDiagnostic{
-            "Expected token ASSIGN, found SEMICOLON", syntax::ParserError::UNEXPECTED_TOKEN, 0, 7});
+        syntax::Diagnostic{
+            "Expected token ASSIGN, found SEMICOLON", syntax::Error::UNEXPECTED_TOKEN, 0, 7});
 }
 
 TEST_CASE("Illegal identifier alias") {
     helpers::test_parser_fail(
         "using type = T;",
-        syntax::ParserDiagnostic{
-            "Expected token IDENT, found TYPE_TYPE", syntax::ParserError::UNEXPECTED_TOKEN, 0, 6});
+        syntax::Diagnostic{
+            "Expected token IDENT, found TYPE_TYPE", syntax::Error::UNEXPECTED_TOKEN, 0, 6});
 }
 
 } // namespace porpoise::tests

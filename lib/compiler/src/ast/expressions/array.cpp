@@ -28,7 +28,7 @@ ArrayExpression::~ArrayExpression() = default;
 auto ArrayExpression::accept(Visitor& v) const -> void { v.visit(*this); }
 
 auto ArrayExpression::parse(syntax::Parser& parser)
-    -> Result<mem::Box<Expression>, syntax::ParserDiagnostic> {
+    -> Result<mem::Box<Expression>, syntax::Diagnostic> {
     const auto start_token = parser.get_current_token();
 
     auto                         null_terminated = false;
@@ -39,7 +39,7 @@ auto ArrayExpression::parse(syntax::Parser& parser)
     } else if (!parser.peek_token_is(syntax::TokenType::RBRACKET)) {
         parser.advance();
         if (parser.current_token_is(syntax::TokenType::RBRACKET)) {
-            return make_parser_err(syntax::ParserError::MISSING_ARRAY_SIZE_TOKEN, start_token);
+            return make_syntax_err(syntax::Error::MISSING_ARRAY_SIZE_TOKEN, start_token);
         } else if (!parser.current_token_is(syntax::TokenType::UNDERSCORE)) {
             size = mem::nullable_box_from(TRY(parser.parse_expression()));
         }
@@ -51,7 +51,7 @@ auto ArrayExpression::parse(syntax::Parser& parser)
         }
     } else {
         // There needs to be a token for the size for array literals
-        return make_parser_err(syntax::ParserError::MISSING_ARRAY_SIZE_TOKEN, start_token);
+        return make_syntax_err(syntax::Error::MISSING_ARRAY_SIZE_TOKEN, start_token);
     }
 
     TRY(parser.expect_peek(syntax::TokenType::RBRACKET));

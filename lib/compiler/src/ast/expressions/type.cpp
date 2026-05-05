@@ -34,7 +34,7 @@ ExplicitType::~ExplicitType() = default;
 auto ExplicitType::accept(Visitor& v) const -> void { v.visit(*this); }
 
 [[nodiscard]] auto ExplicitType::parse(syntax::Parser& parser)
-    -> Result<ExplicitType, syntax::ParserDiagnostic> {
+    -> Result<ExplicitType, syntax::Diagnostic> {
     // Always check for a modifier and advance past it if present
     const auto         modifier_token = parser.get_peek_token();
     const TypeModifier modifier{modifier_token};
@@ -80,13 +80,11 @@ auto ExplicitType::accept(Visitor& v) const -> void { v.visit(*this); }
         if (!modifier.is_value()) {
             switch (peek_token.type) {
             case syntax::TokenType::TYPE_TYPE:
-                return make_parser_err(syntax::ParserError::ILLEGAL_TYPE_TYPE_MODIFIER,
-                                       modifier_token);
+                return make_syntax_err(syntax::Error::ILLEGAL_TYPE_TYPE_MODIFIER, modifier_token);
             case syntax::TokenType::VOID_TYPE:
-                return make_parser_err(syntax::ParserError::ILLEGAL_VOID_TYPE_MODIFIER,
-                                       modifier_token);
+                return make_syntax_err(syntax::Error::ILLEGAL_VOID_TYPE_MODIFIER, modifier_token);
             case syntax::TokenType::NORETURN:
-                return make_parser_err(syntax::ParserError::ILLEGAL_NORETURN_TYPE_MODIFIER,
+                return make_syntax_err(syntax::Error::ILLEGAL_NORETURN_TYPE_MODIFIER,
                                        modifier_token);
             default: break;
             }
@@ -104,7 +102,7 @@ auto ExplicitType::accept(Visitor& v) const -> void { v.visit(*this); }
                 return ExplicitType{modifier, Node::downcast<CallExpression>(std::move(parsed))};
             }
 
-            return make_parser_err(syntax::ParserError::ILLEGAL_EXPLICIT_TYPE, parsed->get_token());
+            return make_syntax_err(syntax::Error::ILLEGAL_EXPLICIT_TYPE, parsed->get_token());
         }
 
         return ExplicitType{
@@ -120,7 +118,7 @@ auto ExplicitType::accept(Visitor& v) const -> void { v.visit(*this); }
 
         auto function = Node::downcast<FunctionExpression>(std::move(type_expr));
         if (!(modifier.is_value() || modifier.is_ptr())) {
-            return make_parser_err(syntax::ParserError::ILLEGAL_FUNCTION_TYPE_MODIFIER, type_start);
+            return make_syntax_err(syntax::Error::ILLEGAL_FUNCTION_TYPE_MODIFIER, type_start);
         }
 
         // Function types cannot have bodies
@@ -131,7 +129,7 @@ auto ExplicitType::accept(Visitor& v) const -> void { v.visit(*this); }
     // The user-defined types can be handled by parsing any expression and verifying it
     parser.advance();
     if (parser.current_token_is(syntax::TokenType::END)) {
-        return make_parser_err(syntax::ParserError::MISSING_EXPLICIT_TYPE, type_start);
+        return make_syntax_err(syntax::Error::MISSING_EXPLICIT_TYPE, type_start);
     }
 
     switch (auto user = TRY(parser.parse_expression()); user->get_kind()) {
@@ -143,7 +141,7 @@ auto ExplicitType::accept(Visitor& v) const -> void { v.visit(*this); }
         return ExplicitType{modifier, Node::downcast<UnionExpression>(std::move(user))};
     default: break;
     }
-    return make_parser_err(syntax::ParserError::ILLEGAL_EXPLICIT_TYPE, type_start);
+    return make_syntax_err(syntax::Error::ILLEGAL_EXPLICIT_TYPE, type_start);
 }
 
 auto ExplicitType::get_token() const noexcept -> const syntax::Token& {
@@ -177,7 +175,7 @@ namespace {
 
 // Parses the explicit type if present and checks for an upcoming assignment for init
 [[nodiscard]] auto parse_type_and_initializer(syntax::Parser& parser)
-    -> Result<std::pair<mem::Box<Expression>, bool>, syntax::ParserDiagnostic> {
+    -> Result<std::pair<mem::Box<Expression>, bool>, syntax::Diagnostic> {
     // The start start token is always offset as this is called irregularly
     const auto start_token = parser.get_peek_token();
 
@@ -202,7 +200,7 @@ namespace {
 } // namespace
 
 auto TypeExpression::parse(syntax::Parser& parser)
-    -> Result<std::pair<mem::Box<Expression>, bool>, syntax::ParserDiagnostic> {
+    -> Result<std::pair<mem::Box<Expression>, bool>, syntax::Diagnostic> {
     auto [type, initialized] = TRY(parse_type_and_initializer(parser));
 
     // Advance again to prepare for rhs

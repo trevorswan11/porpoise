@@ -24,20 +24,20 @@ TEST_CASE("Nested scope") {
 TEST_CASE("Missing inner scope") {
     helpers::test_parser_fail(
         "A:: ;",
-        syntax::ParserDiagnostic{
-            "Expected token IDENT, found SEMICOLON", syntax::ParserError::UNEXPECTED_TOKEN, 0, 4});
+        syntax::Diagnostic{
+            "Expected token IDENT, found SEMICOLON", syntax::Error::UNEXPECTED_TOKEN, 0, 4});
 }
 
 TEST_CASE("Illegal inner scope") {
     helpers::test_parser_fail(
         "A::2;",
-        syntax::ParserDiagnostic{
-            "Expected token IDENT, found INT_10", syntax::ParserError::UNEXPECTED_TOKEN, 0, 3});
+        syntax::Diagnostic{
+            "Expected token IDENT, found INT_10", syntax::Error::UNEXPECTED_TOKEN, 0, 3});
 }
 
 TEST_CASE("Illegal outer scope") {
-    helpers::test_parser_fail(
-        "2::A;", syntax::ParserDiagnostic{syntax::ParserError::ILLEGAL_OUTER_SCOPE_TYPE, 0, 0});
+    helpers::test_parser_fail("2::A;",
+                              syntax::Diagnostic{syntax::Error::ILLEGAL_OUTER_SCOPE_TYPE, 0, 0});
 }
 
 } // namespace porpoise::tests

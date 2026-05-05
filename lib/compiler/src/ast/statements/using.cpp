@@ -22,7 +22,7 @@ UsingStatement::~UsingStatement() = default;
 auto UsingStatement::accept(Visitor& v) const -> void { v.visit(*this); }
 
 auto UsingStatement::parse(syntax::Parser& parser)
-    -> Result<mem::Box<Statement>, syntax::ParserDiagnostic> {
+    -> Result<mem::Box<Statement>, syntax::Diagnostic> {
     // A start token of public is guaranteed to be followed by an import
     const auto start_token = parser.get_current_token();
     if (parser.current_token_is(syntax::TokenType::PUBLIC)) { parser.advance(); }

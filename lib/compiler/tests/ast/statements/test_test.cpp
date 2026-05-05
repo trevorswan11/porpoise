@@ -41,14 +41,13 @@ TEST_CASE("Empty test") {
 TEST_CASE("Non-terminated test") {
     helpers::test_parser_fail(
         "test {",
-        syntax::ParserDiagnostic{
-            "Expected token RBRACE, found END", syntax::ParserError::UNEXPECTED_TOKEN, 0, 6});
+        syntax::Diagnostic{
+            "Expected token RBRACE, found END", syntax::Error::UNEXPECTED_TOKEN, 0, 6});
 }
 
 TEST_CASE("Empty test description") {
-    helpers::test_parser_fail(
-        R"(test "" {};)",
-        syntax::ParserDiagnostic{syntax::ParserError::EMPTY_TEST_DESCRIPTION, 0, 5});
+    helpers::test_parser_fail(R"(test "" {};)",
+                              syntax::Diagnostic{syntax::Error::EMPTY_TEST_DESCRIPTION, 0, 5});
 }
 
 } // namespace porpoise::tests

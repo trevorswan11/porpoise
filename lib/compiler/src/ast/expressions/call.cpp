@@ -44,7 +44,7 @@ CallExpression::~CallExpression() = default;
 auto CallExpression::accept(Visitor& v) const -> void { v.visit(*this); }
 
 auto CallExpression::parse(syntax::Parser& parser, mem::Box<Expression> function)
-    -> Result<mem::Box<Expression>, syntax::ParserDiagnostic> {
+    -> Result<mem::Box<Expression>, syntax::Diagnostic> {
     std::vector<CallArgument> arguments;
     // Guaranteed to roll back if there is an error
     const auto parse_expr_unsuccessful = [&]() {
@@ -62,7 +62,7 @@ auto CallExpression::parse(syntax::Parser& parser, mem::Box<Expression> function
     while (!parser.peek_token_is(syntax::TokenType::RPAREN) &&
            !parser.peek_token_is(syntax::TokenType::END)) {
         if (parser.peek_token_is(syntax::TokenType::COMMA)) {
-            return make_parser_err(syntax::ParserError::COMMA_WITH_MISSING_CALL_ARGUMENT,
+            return make_syntax_err(syntax::Error::COMMA_WITH_MISSING_CALL_ARGUMENT,
                                    parser.get_peek_token());
         }
 

@@ -24,7 +24,7 @@ constexpr std::string_view input{R"(
     while (true) : (i += 1) {a;} else return b;
     var f_ptr: *fn(&a, *mut B, ...): &[0x2uz][N]*E;
     A::B::C;
-    packed struct { var a: Foo = bar; const b := fn(*mut this, a: A, b: *B): C { c; }; };
+    struct { var a: Foo = bar; const b := fn(*mut this, a: A, b: *B): C { c; }; };
     &a; &mut b; *a;
     match (a) { b => |c| d; e => |_| f; g => h; } else d;
     loop { a; };
@@ -68,7 +68,7 @@ constexpr std::string_view expected{
 TEST_CASE("Comprehensive dump") {
     syntax::Parser p{input};
     auto [ast, errors] = p.consume();
-    helpers::check_errors<syntax::ParserDiagnostic>(errors);
+    helpers::check_errors<syntax::Diagnostic>(errors);
 
     std::ostringstream oss;
     ast::ASTDumper     dumper{oss};

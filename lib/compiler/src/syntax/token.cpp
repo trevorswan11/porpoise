@@ -99,18 +99,11 @@ auto suffix_length(TokenType tt) noexcept -> usize {
 
 } // namespace token_type
 
-auto Token::promote() const -> Result<std::string, TokenDiagnostic> {
-    if (type != TokenType::STRING && type != TokenType::MULTILINE_STRING) {
-        return Err{TokenDiagnostic{TokenError::NON_STRING_TOKEN, line, column}};
-    }
+auto Token::materialize_string() const -> std::string {
+    assert(type == TokenType::STRING || type == TokenType::MULTILINE_STRING);
 
     // Here we can just trim off the start and finish of the string
-    if (type == TokenType::STRING) {
-        if (slice.size() < 2) {
-            return Err{TokenDiagnostic{TokenError::UNEXPECTED_CHAR, line, column}};
-        }
-        return std::string{slice.begin() + 1, slice.end() - 1};
-    }
+    if (type == TokenType::STRING) { return std::string{slice.begin() + 1, slice.end() - 1}; }
 
     std::string builder{};
     builder.reserve(slice.size());

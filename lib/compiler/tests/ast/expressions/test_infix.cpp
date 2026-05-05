@@ -344,19 +344,17 @@ TEST_CASE("Scope resolution precedence") {
 TEST_CASE("Illegal infix node") {
     helpers::test_parser_fail(
         "a and import std;",
-        syntax::ParserDiagnostic{"No prefix parse function for IMPORT(import) found",
-                                 syntax::ParserError::MISSING_PREFIX_PARSER,
-                                 std::pair{0uz, 6uz}});
+        syntax::Diagnostic{"No prefix parse function for IMPORT(import) found",
+                           syntax::Error::MISSING_PREFIX_PARSER,
+                           std::pair{0uz, 6uz}});
 }
 
 TEST_CASE("Non-terminated infix") {
-    helpers::test_parser_fail(
-        "a and;",
-        syntax::ParserDiagnostic{"No prefix parse function for SEMICOLON(;) found",
-                                 syntax::ParserError::MISSING_PREFIX_PARSER,
-                                 std::pair{0uz, 5uz}});
-    helpers::test_parser_fail(
-        "a and", syntax::ParserDiagnostic{syntax::ParserError::INFIX_MISSING_RHS, 0, 2});
+    helpers::test_parser_fail("a and;",
+                              syntax::Diagnostic{"No prefix parse function for SEMICOLON(;) found",
+                                                 syntax::Error::MISSING_PREFIX_PARSER,
+                                                 std::pair{0uz, 5uz}});
+    helpers::test_parser_fail("a and", syntax::Diagnostic{syntax::Error::INFIX_MISSING_RHS, 0, 2});
 }
 
 } // namespace porpoise::tests

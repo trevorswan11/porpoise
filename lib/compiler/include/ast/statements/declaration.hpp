@@ -54,7 +54,7 @@ class DeclStatement : public StmtBase<DeclStatement> {
 
     auto                      accept(Visitor& v) const -> void override;
     [[nodiscard]] static auto parse(syntax::Parser& parser)
-        -> Result<mem::Box<Statement>, syntax::ParserDiagnostic>;
+        -> Result<mem::Box<Statement>, syntax::Diagnostic>;
 
     MAKE_GETTER(ident, const IdentifierExpression&, *)
     MAKE_GETTER(type, const TypeExpression&, *)

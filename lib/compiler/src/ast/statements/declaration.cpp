@@ -61,7 +61,7 @@ DeclStatement::~DeclStatement() = default;
 auto DeclStatement::accept(Visitor& v) const -> void { v.visit(*this); }
 
 auto DeclStatement::parse(syntax::Parser& parser)
-    -> Result<mem::Box<Statement>, syntax::ParserDiagnostic> {
+    -> Result<mem::Box<Statement>, syntax::Diagnostic> {
     const auto start_token = parser.get_current_token();
     auto       modifiers   = token_to_modifier(start_token).value();
 
@@ -69,13 +69,13 @@ auto DeclStatement::parse(syntax::Parser& parser)
     while ((current_modifier = token_to_modifier(parser.get_peek_token()))) {
         parser.advance();
         if (modifiers_has(modifiers, *current_modifier)) {
-            return make_parser_err(syntax::ParserError::DUPLICATE_DECL_MODIFIER, start_token);
+            return make_syntax_err(syntax::Error::DUPLICATE_DECL_MODIFIER, start_token);
         }
         modifiers |= *current_modifier;
     }
 
     if (!validate_modifiers(modifiers)) {
-        return make_parser_err(syntax::ParserError::ILLEGAL_DECL_MODIFIERS, start_token);
+        return make_syntax_err(syntax::Error::ILLEGAL_DECL_MODIFIERS, start_token);
     }
 
     TRY(parser.expect_peek(syntax::TokenType::IDENT));
@@ -89,13 +89,13 @@ auto DeclStatement::parse(syntax::Parser& parser)
 
         // If there is a value, then there cannot be an extern keyword
         if (modifiers_has(modifiers, DeclModifiers::EXTERN)) {
-            return make_parser_err(syntax::ParserError::EXTERN_VALUE_INITIALIZED, start_token);
+            return make_syntax_err(syntax::Error::EXTERN_VALUE_INITIALIZED, start_token);
         }
     } else if ((modifiers_has(modifiers, DeclModifiers::CONSTANT) &&
                 !modifiers_has(modifiers, DeclModifiers::EXTERN)) ||
                modifiers_has(modifiers, DeclModifiers::CONSTEXPR)) {
         // Constant decls must be declared with a value unless they are extern
-        return make_parser_err(syntax::ParserError::CONST_DECL_MISSING_VALUE, start_token);
+        return make_syntax_err(syntax::Error::CONST_DECL_MISSING_VALUE, start_token);
     }
 
     if (!parser.current_token_is(syntax::TokenType::SEMICOLON)) {

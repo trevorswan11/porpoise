@@ -414,7 +414,7 @@ auto ASTDumper::visit(const ScopeResolutionExpression& scope_resolve) -> void {
 }
 
 auto ASTDumper::visit(const StructExpression& struct_expr) -> void {
-    fmt::println(out_, "StructExpression{}", struct_expr.is_packed() ? " (packed)" : "");
+    fmt::println(out_, "StructExpression");
     dump_node_list(struct_expr.get_members());
 }
 

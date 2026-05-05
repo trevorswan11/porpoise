@@ -70,15 +70,14 @@ TEST_CASE("Type arguments in call") {
 
 TEST_CASE("No arguments with comma") {
     helpers::test_parser_fail(
-        "func(,)",
-        syntax::ParserDiagnostic{syntax::ParserError::COMMA_WITH_MISSING_CALL_ARGUMENT, 0, 5});
+        "func(,)", syntax::Diagnostic{syntax::Error::COMMA_WITH_MISSING_CALL_ARGUMENT, 0, 5});
 }
 
 TEST_CASE("Non-comma separated arguments") {
     helpers::test_parser_fail(
         "func(1 2)",
-        syntax::ParserDiagnostic{
-            "Expected token COMMA, found INT_10", syntax::ParserError::UNEXPECTED_TOKEN, 0, 7});
+        syntax::Diagnostic{
+            "Expected token COMMA, found INT_10", syntax::Error::UNEXPECTED_TOKEN, 0, 7});
 }
 
 } // namespace porpoise::tests

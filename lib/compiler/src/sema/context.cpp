@@ -9,7 +9,7 @@ auto Context::get_poison() -> Type& {
 }
 
 auto Context::make_type_prelude() -> void {
-    // This should only ever do work once even if it is called more
+    // This should only ever do work once
     if (prelude_index) { return; }
     const auto prelude = registry.create();
 

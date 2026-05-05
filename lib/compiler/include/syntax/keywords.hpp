@@ -54,7 +54,6 @@ constexpr Keyword AS{"as", TokenType::AS};
 constexpr Keyword PUBLIC{"pub", TokenType::PUBLIC};
 constexpr Keyword EXTERN{"extern", TokenType::EXTERN};
 constexpr Keyword EXPORT{"export", TokenType::EXPORT};
-constexpr Keyword PACKED{"packed", TokenType::PACKED};
 constexpr Keyword VOLATILE{"volatile", TokenType::VOLATILE};
 constexpr Keyword STATIC{"static", TokenType::STATIC};
 constexpr Keyword NORETURN{"noreturn", TokenType::NORETURN};
@@ -79,9 +78,8 @@ constexpr auto ALL_KEYWORDS = [] {
         keywords::BOOL,      keywords::VOID,         keywords::TYPE,
         keywords::AUTO,      keywords::OPAQUE,       keywords::AS,
         keywords::PUBLIC,    keywords::EXTERN,       keywords::EXPORT,
-        keywords::PACKED,    keywords::VOLATILE,     keywords::STATIC,
-        keywords::NORETURN,  keywords::NULLPTR,      keywords::USING,
-        keywords::TEST,
+        keywords::VOLATILE,  keywords::STATIC,       keywords::NORETURN,
+        keywords::NULLPTR,   keywords::USING,        keywords::TEST,
     };
 
     std::ranges::sort(all_keywords, {}, &Keyword::first);

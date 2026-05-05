@@ -50,25 +50,24 @@ TEST_CASE("Incorrectly terminated jumps") {
     const auto inputs = std::to_array<std::string_view>({"return", "continue", "break"});
     for (const auto& input : inputs) {
         helpers::test_parser_fail(input,
-                                  syntax::ParserDiagnostic{"Expected token SEMICOLON, found END",
-                                                           syntax::ParserError::UNEXPECTED_TOKEN,
-                                                           std::pair{0uz, input.size()}});
+                                  syntax::Diagnostic{"Expected token SEMICOLON, found END",
+                                                     syntax::Error::UNEXPECTED_TOKEN,
+                                                     std::pair{0uz, input.size()}});
     }
 
     helpers::test_parser_fail(
         "return return",
-        syntax::ParserDiagnostic{"No prefix parse function for RETURN(return) found",
-                                 syntax::ParserError::MISSING_PREFIX_PARSER,
-                                 std::pair{0uz, 7uz}});
+        syntax::Diagnostic{"No prefix parse function for RETURN(return) found",
+                           syntax::Error::MISSING_PREFIX_PARSER,
+                           std::pair{0uz, 7uz}});
 }
 
 TEST_CASE("Illegal continue/break control flow") {
     helpers::test_parser_fail("continue 4;",
-                              syntax::ParserDiagnostic{syntax::ParserError::VALUED_CONTINUE, 0, 0});
+                              syntax::Diagnostic{syntax::Error::VALUED_CONTINUE, 0, 0});
 
-    helpers::test_parser_fail(
-        "break 4;",
-        syntax::ParserDiagnostic{syntax::ParserError::VALUED_BREAK_MISSING_LABEL, 0, 0});
+    helpers::test_parser_fail("break 4;",
+                              syntax::Diagnostic{syntax::Error::VALUED_BREAK_MISSING_LABEL, 0, 0});
 }
 
 } // namespace porpoise::tests

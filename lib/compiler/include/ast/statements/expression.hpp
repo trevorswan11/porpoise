@@ -20,7 +20,7 @@ class ExpressionStatement : public StmtBase<ExpressionStatement> {
 
     auto                      accept(Visitor& v) const -> void override;
     [[nodiscard]] static auto parse(syntax::Parser& parser, bool require_semicolon)
-        -> Result<mem::Box<Statement>, syntax::ParserDiagnostic>;
+        -> Result<mem::Box<Statement>, syntax::Diagnostic>;
 
     MAKE_GETTER(expression, const Expression&, *)
 
@@ -33,7 +33,8 @@ class ExpressionStatement : public StmtBase<ExpressionStatement> {
   private:
     mem::Box<Expression> expression_;
 
-    friend class LabelExpression; // The label expression moves the expression out when parsing
+    // Label expression moves the expression out when parsing
+    friend class LabelExpression;
 };
 
 } // namespace porpoise::ast

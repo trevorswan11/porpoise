@@ -57,19 +57,18 @@ template <typename Derived, typename T> class PrimitiveExpression : public ExprB
     PrimitiveExpression(const syntax::Token& start_token, value_type value) noexcept
         : ExprBase<Derived>{start_token}, value_{std::move(value)} {}
 
-    static auto parse(syntax::Parser& parser)
-        -> Result<mem::Box<Expression>, syntax::ParserDiagnostic>
+    static auto parse(syntax::Parser& parser) -> Result<mem::Box<Expression>, syntax::Diagnostic>
         requires(!disable_default_parse<Derived>::value)
     {
         const auto start_token = parser.get_current_token();
         auto       value = parse_primitive_value<value_type>(start_token.slice, start_token.type);
         if (value) { return mem::make_box<Derived>(start_token, *value); }
 
-        return make_parser_err(std::is_same_v<value_type, f64>
-                                   ? syntax::ParserError::DOUBLE_OVERFLOW
+        return make_syntax_err(std::is_same_v<value_type, f64>
+                                   ? syntax::Error::DOUBLE_OVERFLOW
                                    : (std::is_same_v<value_type, f32>
-                                          ? syntax::ParserError::FLOAT_OVERFLOW
-                                          : syntax::ParserError::INTEGER_OVERFLOW),
+                                          ? syntax::Error::FLOAT_OVERFLOW
+                                          : syntax::Error::INTEGER_OVERFLOW),
                                start_token);
     }
 
@@ -95,7 +94,7 @@ class StringExpression : public PrimitiveExpression<StringExpression, std::strin
 
     auto                      accept(Visitor& v) const -> void override;
     [[nodiscard]] static auto parse(syntax::Parser& parser)
-        -> Result<mem::Box<Expression>, syntax::ParserDiagnostic>;
+        -> Result<mem::Box<Expression>, syntax::Diagnostic>;
 };
 template <> struct disable_default_parse<StringExpression> : std::true_type {};
 
@@ -175,7 +174,7 @@ class U8Expression : public PrimitiveExpression<U8Expression, u8> {
 
     auto                      accept(Visitor& v) const -> void override;
     [[nodiscard]] static auto parse(syntax::Parser& parser)
-        -> Result<mem::Box<Expression>, syntax::ParserDiagnostic>;
+        -> Result<mem::Box<Expression>, syntax::Diagnostic>;
 };
 template <> struct disable_default_parse<U8Expression> : std::true_type {};
 
@@ -222,7 +221,7 @@ class BoolExpression : public ExprBase<BoolExpression> {
 
     auto                      accept(Visitor& v) const -> void override;
     [[nodiscard]] static auto parse(syntax::Parser& parser)
-        -> Result<mem::Box<Expression>, syntax::ParserDiagnostic>;
+        -> Result<mem::Box<Expression>, syntax::Diagnostic>;
 
     [[nodiscard]] auto get_value() const noexcept -> bool {
         return start_token_.type == syntax::TokenType::BOOLEAN_TRUE;
@@ -247,7 +246,7 @@ class VoidExpression : public ExprBase<VoidExpression> {
 
     auto                      accept(Visitor& v) const -> void override;
     [[nodiscard]] static auto parse(syntax::Parser& parser)
-        -> Result<mem::Box<Expression>, syntax::ParserDiagnostic>;
+        -> Result<mem::Box<Expression>, syntax::Diagnostic>;
 
   protected:
     auto is_equal(const Node&) const noexcept -> bool override { return true; }
