@@ -6,7 +6,7 @@
 
 namespace porpoise {
 
-// A simple counter that provides RAII-based up/down counting
+// A simple counter that with RAII-based up/down counting
 template <Integral Underlying> class Counter {
   public:
     class Guard {

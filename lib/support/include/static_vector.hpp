@@ -20,6 +20,7 @@ template <typename Item, usize Capacity> struct StaticVectorStorage {
 
     auto data() noexcept -> Item* { return reinterpret_cast<Item*>(items_); }
 
+    // The lion is now concerned with freeing non-trivial resources
     ~StaticVectorStorage() {
         for (usize i = 0; i < size_; i++) { data()[i].~Item(); }
     }

@@ -170,7 +170,7 @@ template <typename T> auto safe_eq(const Option<T>& a, const Option<T>& b) noexc
     [[nodiscard]] auto get_##name() const noexcept -> const ReturnType& { return deref member; } \
     [[nodiscard]] auto has_##name() const noexcept -> bool { return member.has_value(); }
 
-// A minimal usize wrapper that provides zero-cost optional behavior
+// A minimal, zero-cost optional usize wrapper
 class Index {
   public:
     Index() noexcept = default;

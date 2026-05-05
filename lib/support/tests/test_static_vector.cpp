@@ -75,75 +75,74 @@ TEST_CASE("StaticVector span conversion") {
     CHECK(std::ranges::equal(s, vec));
 }
 
-TEST_CASE("StaticVector RAII") {
-    using Tracker = helpers::RAIITracker;
-    SECTION("Destructor correctness") {
-        Tracker::reset();
-        {
-            StaticVector<Tracker, 5> vec;
-            vec.emplace_back();
-            vec.emplace_back();
-        }
-        CHECK(Tracker::destruct_count == 2);
-    }
+using Tracker = helpers::RAIITracker;
 
-    SECTION("Copy correctness") {
-        Tracker::reset();
-        {
-            StaticVector<Tracker, 3> original;
-            original.emplace_back();
-            original.emplace_back();
-
-            SECTION("Copy constructor") {
-                StaticVector<Tracker, 3> copy = original;
-                CHECK(copy.size() == 2);
-                CHECK(Tracker::copy_count == 2);
-
-                // 2 in original, 2 in copy
-                CHECK(Tracker::live_count == 4);
-            }
-
-            SECTION("Copy assignment") {
-                StaticVector<Tracker, 3> assigned;
-                assigned = original;
-                CHECK(assigned.size() == 2);
-
-                // Copy internally followed by move
-                CHECK(Tracker::copy_count == 2);
-            }
-        }
-        CHECK(Tracker::live_count == 0);
-    }
-
-    SECTION("Move correctness") {
-        Tracker::reset();
-        {
-            StaticVector<Tracker, 3> original;
-            original.emplace_back();
-            original.emplace_back();
-
-            StaticVector<Tracker, 3> destination = std::move(original);
-            CHECK(destination.size() == 2);
-            CHECK(original.empty());
-            CHECK(Tracker::move_count == 2);
-            CHECK(Tracker::live_count == 2);
-        }
-        CHECK(Tracker::live_count == 0);
-    }
-
-    SECTION("Self assignment") {
-        Tracker::reset();
-        StaticVector<Tracker, 3> vec;
+TEST_CASE("StaticVector destructor correctness") {
+    Tracker::reset();
+    {
+        StaticVector<Tracker, 5> vec;
         vec.emplace_back();
+        vec.emplace_back();
+    }
+    CHECK(Tracker::destruct_count == 2);
+}
+
+TEST_CASE("StaticVector copy correctness") {
+    Tracker::reset();
+    {
+        StaticVector<Tracker, 3> original;
+        original.emplace_back();
+        original.emplace_back();
+
+        SECTION("Copy constructor") {
+            StaticVector<Tracker, 3> copy = original;
+            CHECK(copy.size() == 2);
+            CHECK(Tracker::copy_count == 2);
+
+            // 2 in original, 2 in copy
+            CHECK(Tracker::live_count == 4);
+        }
+
+        SECTION("Copy assignment") {
+            StaticVector<Tracker, 3> assigned;
+            assigned = original;
+            CHECK(assigned.size() == 2);
+
+            // Copy internally followed by move
+            CHECK(Tracker::copy_count == 2);
+        }
+    }
+    CHECK(Tracker::live_count == 0);
+}
+
+TEST_CASE("StaticVector move correctness") {
+    Tracker::reset();
+    {
+        StaticVector<Tracker, 3> original;
+        original.emplace_back();
+        original.emplace_back();
+
+        StaticVector<Tracker, 3> destination = std::move(original);
+        CHECK(destination.size() == 2);
+        CHECK(original.empty());
+        CHECK(Tracker::move_count == 2);
+        CHECK(Tracker::live_count == 2);
+    }
+    CHECK(Tracker::live_count == 0);
+}
+
+TEST_CASE("Self assignment") {
+    Tracker::reset();
+    StaticVector<Tracker, 3> vec;
+    vec.emplace_back();
 
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wself-assign-overloaded"
-        vec = vec;
+    vec = vec;
 #pragma clang diagnostic pop
 
-        assert(vec.size() == 1);
-        assert(Tracker::live_count == 1);
-    }
+    CHECK(vec.size() == 1);
+    CHECK(Tracker::live_count == 1);
 }
 
 } // namespace porpoise::tests

@@ -112,7 +112,7 @@ template <ScopedEnum E> class Diagnostic {
 
     template <Locateable T> Diagnostic(E err, T t) : error_{err}, loc_{SourceInfo<T>::get(t)} {}
 
-    // Moves the passed diagnostic into a new one with a error code
+    // Moves the passed diagnostic into a new one with an error code
     Diagnostic(Diagnostic&& other, E err) noexcept
         : message_{std::move(other.message_)}, error_{err}, loc_{std::move(other.loc_)} {}
 
