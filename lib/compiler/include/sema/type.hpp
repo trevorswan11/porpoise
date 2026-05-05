@@ -16,6 +16,7 @@
 namespace porpoise::sema {
 
 enum class TypeKind : u8 {
+    POISON,
     I32,
     I64,
     ISIZE,
@@ -44,6 +45,8 @@ enum class TypeKind : u8 {
 class Type;
 
 namespace types {
+
+struct Poison {};
 
 using PrimitiveType = Unit;
 
@@ -126,7 +129,8 @@ class Key {
 
 class Type {
   public:
-    using Resolved = std::variant<types::PrimitiveType,
+    using Resolved = std::variant<types::Poison,
+                                  types::PrimitiveType,
                                   types::Slice,
                                   types::Array,
                                   types::Pointer,
@@ -148,18 +152,19 @@ class Type {
     MAKE_OPTIONAL_UNPACKER(resolved, Resolved, resolved_, *)
 
     // Unpacks T from the resolved type assuming the type has been resolved to T
-    template <typename Self, typename T> [[nodiscard]] auto as(this Self&& self) -> auto& {
+    template <typename T, typename Self> [[nodiscard]] auto as(this Self&& self) -> auto& {
         return std::get<T>(self.resolved_.value());
     }
 
     // Tries to unpack T, returning an empty option instead of throwing an exception
-    template <typename Self, typename T> [[nodiscard]] auto as_opt(this Self&& self) noexcept {
-        if (!self.resolved_) { return opt::none; }
+    template <typename T, typename Self> [[nodiscard]] auto as_opt(this Self&& self) noexcept {
         using ReturnType = std::conditional_t<std::is_const_v<std::remove_reference_t<Self>>,
                                               opt::Option<const T&>,
                                               opt::Option<T&>>;
 
-        if (!std::holds_alternative<T>(*self.resolved_)) { return ReturnType{opt::none}; }
+        if (!self.resolved_ || !std::holds_alternative<T>(*self.resolved_)) {
+            return ReturnType{opt::none};
+        }
         return ReturnType{std::get<T>(*self.resolved_)};
     }
 
@@ -181,7 +186,13 @@ class Type {
     }
 
     // Returns the memory address of the Type for a Key's marker
-    [[nodiscard]] auto as_marker() const noexcept -> u64 { return reinterpret_cast<u64>(this); }
+    [[nodiscard]] constexpr auto as_marker() const noexcept -> u64 {
+        return reinterpret_cast<u64>(this);
+    }
+
+    [[nodiscard]] constexpr auto is_poison() const noexcept -> bool {
+        return kind_ == TypeKind::POISON;
+    }
 
   private:
     TypeKind              kind_;

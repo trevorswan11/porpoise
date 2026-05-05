@@ -5,7 +5,7 @@
 
 #include <catch2/catch_test_macros.hpp>
 
-#include "syntax/keywords.hpp"
+#include "syntax/builtins.hpp"
 #include "syntax/lexer.hpp"
 #include "syntax/token.hpp"
 

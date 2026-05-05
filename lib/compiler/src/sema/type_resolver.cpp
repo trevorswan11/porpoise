@@ -7,14 +7,16 @@
 
 namespace porpoise::sema {
 
-auto TypeResolver::resolve_types(mod::Module& module, const Context& ctx) -> mod::ModuleState {
+auto TypeResolver::resolve_types(mod::Module& module, Context& ctx) -> mod::ModuleState {
     // Poisoned collection should flush the diagnostics
     if (module.state == mod::ModuleState::POISONED_SYMBOL_COLLECTION) {
         module.print_diagnostics(ctx.error_stream);
     }
 
     if (module.is_resolvable()) {
-        TypeResolver resolver{ctx};
+        ctx.make_type_prelude();
+
+        TypeResolver resolver{module, ctx};
         for (const auto& node : module.tree) { node->accept(resolver); }
 
         if (!ctx.diagnostics.empty() || module.is_poisoned()) {
@@ -42,9 +44,48 @@ auto TypeResolver::visit(const ast::ArrayExpression& array) -> void {
     array.set_sema_type(*last_type_);
 }
 
-auto TypeResolver::visit(const ast::CallArgument&) -> void {}
+auto TypeResolver::visit(const ast::CallArgument& arg) -> void {
+    arg.match([this](const auto& a) { unwrap_and_accept(a); });
+    arg.set_sema_type(*last_type_.take());
+}
 
-auto TypeResolver::visit(const ast::CallExpression&) -> void {}
+auto TypeResolver::visit(const ast::CallExpression& call) -> void {
+    // The call can only yield a non-poison type if the function is valid
+    call.get_function().accept(*this);
+    mem::NonNull<Type> callee_type = last_type_.take();
+    if (!callee_type->has_resolved() || callee_type->is_poison()) {
+        call.set_sema_type(ctx_.get_poison());
+        last_type_.emplace(ctx_.get_poison());
+        return visit_list(call.get_arguments());
+    }
+
+    // Verify that the type in the function is callable and store the return type
+    auto function_type = callee_type->as_opt<types::Function>();
+    if (!function_type) {
+        ctx_.diagnostics.emplace_back("Expression is not callable",
+                                      Error::NON_CALLABLE_EXPRESSION,
+                                      call.get_function().get_token());
+        call.set_sema_type(ctx_.get_poison());
+        last_type_.emplace(ctx_.get_poison());
+        return visit_list(call.get_arguments());
+    }
+    call.get_function().set_sema_type(*callee_type);
+
+    // Check the arity of the function against params before resetting last type
+    const auto& params    = function_type->params;
+    const auto& arguments = call.get_arguments();
+    visit_list(arguments);
+
+    if (arguments.size() != params.size()) {
+        ctx_.diagnostics.emplace_back(
+            fmt::format("Expected {} arguments but found {}", params.size(), arguments.size()),
+            Error::ARITY_MISMATCH,
+            call.get_token());
+    }
+
+    call.set_sema_type(function_type->return_type);
+    last_type_.emplace(function_type->return_type);
+}
 
 auto TypeResolver::visit(const ast::DoWhileLoopExpression&) -> void {}
 
@@ -141,9 +182,13 @@ auto TypeResolver::visit(const ast::DeclStatement&) -> void {}
 
 auto TypeResolver::visit(const ast::DeferStatement&) -> void {}
 
-auto TypeResolver::visit(const ast::DiscardStatement&) -> void {}
+auto TypeResolver::visit(const ast::DiscardStatement& discard) -> void {
+    discard.get_discarded().accept(*this);
+}
 
-auto TypeResolver::visit(const ast::ExpressionStatement&) -> void {}
+auto TypeResolver::visit(const ast::ExpressionStatement& expr) -> void {
+    expr.get_expression().accept(*this);
+}
 
 auto TypeResolver::visit(const ast::ImportStatement&) -> void {}
 

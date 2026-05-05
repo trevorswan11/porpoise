@@ -18,8 +18,8 @@ class TypePool {
 
     // Gets a type by its key or emplace's it into the internal cache
     [[nodiscard]] auto operator[](const types::Key& key) -> Type& { return get_or_emplace(key); }
-    [[nodiscard]] auto get(const types::Key& key) noexcept -> opt::Option<Type&>;
-    [[nodiscard]] auto get_builtin_value_type(TypeKind kind) noexcept -> Type& {
+    [[nodiscard]] auto get_opt(const types::Key& key) noexcept -> opt::Option<Type&>;
+    [[nodiscard]] auto get_builtin_value_type(TypeKind kind) -> Type& {
         return get_or_emplace({kind, false, 0});
     }
 

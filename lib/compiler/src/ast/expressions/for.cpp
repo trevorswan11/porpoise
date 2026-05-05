@@ -24,8 +24,8 @@ auto ForLoopCapture::accept(Visitor& v) const -> void { v.visit(*this); }
 
 auto ForLoopCapture::get_token() const noexcept -> const syntax::Token& {
     return std::visit(
-        Overloaded{[](const syntax::Token& tok) -> const syntax::Token& { return tok; },
-                   [](const Valued& valued) -> const syntax::Token& {
+        Overloaded{[](const syntax::Token& tok) -> auto& { return tok; },
+                   [](const Valued& valued) -> auto& {
                        return valued.get_ident().get_token();
                    }},
         underlying_);

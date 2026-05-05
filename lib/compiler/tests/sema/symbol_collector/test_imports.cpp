@@ -61,7 +61,7 @@ TEST_CASE("Circular imports") {
 
     auto        ctx      = helpers::analyze(root, a_porp, MockFile{"b.porp", b_porp});
     const auto& registry = ctx.analyzer.get_registry();
-    REQUIRE(registry.size() == 2);
+    REQUIRE(registry.size() == 3);
 
     CHECK(registry.get_from_opt(0, "b"));
     CHECK(registry.get_from_opt(1, "a"));
@@ -84,7 +84,7 @@ TEST_CASE("Diamond dependencies") {
                                 MockFile{"b.porp", diamond},
                                 MockFile{"std.porp", std_porp, "std"});
     const auto& registry = ctx.analyzer.get_registry();
-    REQUIRE(registry.size() == 4);
+    REQUIRE(registry.size() == 5);
 
     CHECK(registry.get_from_opt(0, "a"));
     CHECK(registry.get_from_opt(0, "b"));
@@ -100,7 +100,7 @@ TEST_CASE("Self import") {
 
     auto        ctx      = helpers::analyze(root, self_porp);
     const auto& registry = ctx.analyzer.get_registry();
-    REQUIRE(registry.size() == 1);
+    REQUIRE(registry.size() == 2);
     CHECK(registry.get_from_opt(0, "self"));
 }
 

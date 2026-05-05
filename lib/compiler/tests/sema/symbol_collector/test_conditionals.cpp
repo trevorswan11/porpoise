@@ -37,13 +37,13 @@ TEST_CASE("If expression collection") {
 
     // Set the semantic type of the consequence
     auto cons = helpers::make_block_stmt(helpers::foo_bar_decl());
-    auto type = analyzer.get_pool().get({sema::TypeKind::BLOCK, false, 1});
+    auto type = analyzer.get_pool().get_opt({sema::TypeKind::BLOCK, false, 1});
     REQUIRE(type);
     cons->set_sema_type(*type);
 
     // Set the semantic type of the alternate
     auto alt = helpers::make_block_stmt<true>(helpers::foo_bar_decl());
-    type     = analyzer.get_pool().get({sema::TypeKind::BLOCK, false, 2});
+    type     = analyzer.get_pool().get_opt({sema::TypeKind::BLOCK, false, 2});
     REQUIRE(type);
     alt->set_sema_type(*type);
 
@@ -84,20 +84,20 @@ TEST_CASE("Match expression collection") {
 
     const auto make_match_block = [&]<bool Nullable = false>(usize table_idx) {
         auto       blk  = helpers::make_block_stmt<Nullable>(helpers::foo_bar_decl());
-        const auto type = analyzer.get_pool().get({sema::TypeKind::BLOCK, false, table_idx});
+        const auto type = analyzer.get_pool().get_opt({sema::TypeKind::BLOCK, false, table_idx});
         REQUIRE(type);
         blk->set_sema_type(*type);
         return blk;
     };
 
     // Create the first arm with semantic info
-    auto type = analyzer.get_pool().get({sema::TypeKind::MATCH_ARM, false, 1});
+    auto type = analyzer.get_pool().get_opt({sema::TypeKind::MATCH_ARM, false, 1});
     REQUIRE(type);
     ast::MatchArm arm1{helpers::make_ident("c"), helpers::make_ident("d"), make_match_block(2)};
     arm1.set_sema_type(*type);
 
     // Create the second arm with semantic info
-    type = analyzer.get_pool().get({sema::TypeKind::MATCH_ARM, false, 3});
+    type = analyzer.get_pool().get_opt({sema::TypeKind::MATCH_ARM, false, 3});
     REQUIRE(type);
     ast::MatchArm arm2{helpers::make_ident("e"), Unit{}, make_match_block(4)};
     arm2.set_sema_type(*type);

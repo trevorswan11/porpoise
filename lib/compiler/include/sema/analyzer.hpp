@@ -1,11 +1,10 @@
 #pragma once
 
-#include <iostream>
-#include <string>
-#include <vector>
+#include <ostream>
 
 #include "module/module.hpp"
 
+#include "sema/context.hpp"
 #include "sema/pool.hpp"
 #include "sema/symbol.hpp"
 
@@ -17,7 +16,8 @@ class Analyzer {
     explicit Analyzer(mod::ModuleManager& modules,
                       std::ostream&       error_stream,
                       opt::Option<bool>   in_terminal) noexcept
-        : modules_{modules}, error_stream_{error_stream}, in_terminal_{in_terminal} {}
+        : modules_{modules}, error_stream_{error_stream}, in_terminal_{in_terminal},
+          ctx_{modules_, registry_, pool_, Diagnostics{in_terminal_}, error_stream_} {}
     ~Analyzer() = default;
 
     MAKE_MOVE_CONSTRUCTABLE_ONLY(Analyzer)
@@ -37,8 +37,8 @@ class Analyzer {
     MAKE_DEDUCING_GETTER(registry, SymbolTableRegistry&)
     MAKE_DEDUCING_GETTER(pool, TypePool&)
 
-    auto collect_symbols(mod::Module& module) -> void;
-    auto resolve_types(mod::Module& module) -> void;
+    auto collect_symbols(mod::Module& module) -> mod::ModuleState;
+    auto resolve_types(mod::Module& module) -> mod::ModuleState;
 
   private:
     mod::ModuleManager& modules_;
@@ -47,7 +47,7 @@ class Analyzer {
     std::ostream&       error_stream_;
     opt::Option<bool>   in_terminal_;
 
-    std::vector<std::string> collection_stack_;
+    Context ctx_;
 };
 
 } // namespace porpoise::sema

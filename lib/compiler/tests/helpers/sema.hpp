@@ -126,13 +126,13 @@ auto emplace_node_type_from_entry(sema::Analyzer& analyzer,
                                   const NodeLike& expected_node) {
     if constexpr (IsLeafEntry<EntryT> || IsSymImpEntry<EntryT>) {
         if (entry.node_type_key) {
-            const auto type = analyzer.get_pool().get(*entry.node_type_key);
+            const auto type = analyzer.get_pool().get_opt(*entry.node_type_key);
             REQUIRE(type);
             expected_node.set_sema_type(*type);
         }
     } else if constexpr (IsDeclEntry<EntryT>) {
         if (entry.value_node_type_key && expected_node.has_value()) {
-            const auto type = analyzer.get_pool().get(*entry.value_node_type_key);
+            const auto type = analyzer.get_pool().get_opt(*entry.value_node_type_key);
             REQUIRE(type);
             expected_node.get_value().set_sema_type(*type);
         }
@@ -145,7 +145,7 @@ auto emplace_symbol_type_from_entry(sema::Analyzer& analyzer,
                                     const EntryT&   entry,
                                     sema::Symbol&   expected_symbol) {
     if (entry.symbol_type_key) {
-        const auto type = analyzer.get_pool().get(*entry.symbol_type_key);
+        const auto type = analyzer.get_pool().get_opt(*entry.symbol_type_key);
         REQUIRE(type);
         expected_symbol.emplace_type(*type);
     }

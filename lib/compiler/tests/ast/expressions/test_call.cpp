@@ -4,7 +4,7 @@
 
 namespace porpoise::tests {
 
-namespace keywords  = syntax::keywords;
+namespace builtins  = syntax::builtins;
 namespace operators = syntax::operators;
 namespace mods      = helpers::type_modifiers;
 
@@ -24,7 +24,7 @@ TEST_CASE("Call with void expression") {
 }
 
 TEST_CASE("Trailing comma") {
-    const syntax::Token func{keywords::builtins::SIN};
+    const syntax::Token func{builtins::SIN};
     helpers::test_expr_stmt(
         "@sin(23.6, );",
         ast::CallExpression{func,
@@ -34,7 +34,7 @@ TEST_CASE("Trailing comma") {
 }
 
 TEST_CASE("Builtin with multiple arguments") {
-    const syntax::Token func{keywords::builtins::AS};
+    const syntax::Token func{builtins::AS};
     helpers::test_expr_stmt(
         "@as(i32, a);",
         ast::CallExpression{func,

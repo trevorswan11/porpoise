@@ -2,6 +2,7 @@
 
 #include <cassert>
 #include <deque>
+#include <ranges>
 #include <string_view>
 #include <vector>
 
@@ -11,6 +12,7 @@
 
 #include "module/module.hpp"
 
+#include "syntax/builtins.hpp"
 #include "syntax/token.hpp"
 
 #include "iterator.hpp"
@@ -43,6 +45,18 @@ class LabelExpression;
 
 namespace sema {
 
+class SymbolicBuiltin {
+  public:
+    explicit SymbolicBuiltin(syntax::Builtin builtin) noexcept : token_{builtin} {}
+
+    [[nodiscard]] auto get_token() const noexcept -> const syntax::Token& { return token_; }
+
+    MAKE_EQ_DELEGATION(SymbolicBuiltin)
+
+  private:
+    syntax::Token token_;
+};
+
 using SymbolicDecl        = mem::NonNull<const ast::DeclStatement>;
 using SymbolicUsing       = mem::NonNull<const ast::UsingStatement>;
 using SymbolicUnionField  = mem::NonNull<const ast::UnionField>;
@@ -60,7 +74,8 @@ struct SymbolicImport {
     MAKE_EQ_DELEGATION(SymbolicImport)
 };
 
-using SymbolicNode = std::variant<SymbolicDecl,
+using SymbolicNode = std::variant<SymbolicBuiltin,
+                                  SymbolicDecl,
                                   SymbolicImport,
                                   SymbolicUsing,
                                   SymbolicUnionField,
@@ -81,7 +96,7 @@ enum class ResolveStatus : u8 {
 
 class Symbol {
   public:
-    Symbol(std::string_view name, SymbolicNode node) noexcept : name_{name}, node_{node} {}
+    Symbol(std::string_view name, const SymbolicNode& node) noexcept : name_{name}, node_{node} {}
     ~Symbol() = default;
 
     MAKE_MOVE_CONSTRUCTABLE_ONLY(Symbol)
@@ -89,6 +104,7 @@ class Symbol {
     MAKE_GETTER(name, std::string_view)
     MAKE_GETTER(node, const SymbolicNode&)
 
+    MAKE_VARIANT_UNPACKER(builtin, SymbolicBuiltin, SymbolicBuiltin, node_, std::get)
     MAKE_VARIANT_UNPACKER(decl_stmt, ast::DeclStatement, SymbolicDecl, node_, *std::get)
     MAKE_VARIANT_UNPACKER(import_stmt, SymbolicImport, SymbolicImport, node_, std::get)
     MAKE_VARIANT_UNPACKER(using_stmt, ast::UsingStatement, SymbolicUsing, node_, *std::get)
@@ -166,6 +182,7 @@ class SymbolTable {
 
 class SymbolTableStack {
   public:
+    // A basic push/pop RAII guard, see `Scope`
     class Guard {
       public:
         Guard(SymbolTableStack& s, usize idx) noexcept : stack_{s} { stack_.push(idx); }
@@ -173,6 +190,21 @@ class SymbolTableStack {
 
       private:
         SymbolTableStack& stack_;
+    };
+
+    // An extension of `Guard` that also resets the old index upon destruction
+    class Scope {
+      public:
+        Scope(SymbolTableStack& s, usize new_idx, usize& old_idx) noexcept
+            : guard_{s, new_idx}, idx_ref_{old_idx}, old_idx_{old_idx} {
+            old_idx = new_idx;
+        }
+        ~Scope() { idx_ref_ = old_idx_; }
+
+      private:
+        SymbolTableStack::Guard guard_;
+        usize&                  idx_ref_;
+        usize                   old_idx_;
     };
 
     MAKE_ITERATOR(Stack, std::vector<usize>, stack_)
@@ -191,6 +223,11 @@ class SymbolTableStack {
   private:
     Stack stack_;
 };
+
+#define OPTIONAL_RETURN_TYPE(Underlying)                               \
+    std::conditional_t<std::is_const_v<std::remove_reference_t<Self>>, \
+                       opt::Option<const Underlying&>,                 \
+                       opt::Option<Underlying&>>;
 
 class SymbolTableRegistry {
   public:
@@ -215,9 +252,7 @@ class SymbolTableRegistry {
     }
 
     template <typename Self> [[nodiscard]] auto get_opt(this Self&& self, usize idx) noexcept {
-        using ReturnType = std::conditional_t<std::is_const_v<std::remove_reference_t<Self>>,
-                                              opt::Option<const SymbolTable&>,
-                                              opt::Option<SymbolTable&>>;
+        using ReturnType = OPTIONAL_RETURN_TYPE(SymbolTable);
         if (idx >= self.tables_.size()) { return ReturnType{opt::none}; }
         return ReturnType{self.tables_[idx]};
     }
@@ -229,20 +264,31 @@ class SymbolTableRegistry {
 
     template <typename Self>
     [[nodiscard]] auto get_from_opt(this Self&& self, usize idx, std::string_view name) noexcept {
-        using ReturnType = std::conditional_t<std::is_const_v<std::remove_reference_t<Self>>,
-                                              opt::Option<const Symbol&>,
-                                              opt::Option<Symbol&>>;
+        using ReturnType = OPTIONAL_RETURN_TYPE(Symbol);
         if (idx >= self.tables_.size()) { return ReturnType{opt::none}; }
         return self.tables_[idx].get_opt(name);
     }
 
+    // Looks up all levels of the stack for possible illegal shadowing of the name
     [[nodiscard]] auto is_shadowing(const SymbolTableStack& stack,
                                     std::string_view        name,
                                     SymbolicNode node) noexcept -> Result<Unit, Diagnostic>;
 
+    // Looks up all levels of the stack for the queried name
+    template <typename Self>
+    [[nodiscard]] auto lookup(const SymbolTableStack& stack, std::string_view name) noexcept {
+        using ReturnType = OPTIONAL_RETURN_TYPE(Symbol);
+        for (const auto idx : std::views::reverse(stack)) {
+            if (auto symbol = tables_[idx].get_opt(name)) { return symbol; }
+        }
+        return ReturnType{opt::none};
+    }
+
   private:
     Tables tables_;
 };
+
+#undef OPTIONAL_RETURN_TYPE
 
 } // namespace sema
 

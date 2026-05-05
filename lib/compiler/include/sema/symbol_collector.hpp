@@ -17,28 +17,7 @@ namespace porpoise::sema {
 // An AST walker that performs 0 type checking
 class SymbolCollector : public ast::Visitor {
   public:
-    // Manages a new scopes symbol table
-    class Scope {
-      public:
-        Scope(SymbolTableStack& s, usize new_idx, usize& old_idx) noexcept
-            : guard_{s, new_idx}, idx_ref_{old_idx}, old_idx_{old_idx} {
-            old_idx = new_idx;
-        }
-        ~Scope() { idx_ref_ = old_idx_; }
-
-      private:
-        SymbolTableStack::Guard guard_;
-        usize&                  idx_ref_;
-        usize                   old_idx_;
-    };
-
-  public:
-    SymbolCollector(mod::Module& collecting, const Context& ctx) noexcept
-        : collecting_{collecting}, table_idx_{*collecting.root_table_idx}, ctx_{ctx} {
-        table_stack_.push(table_idx_);
-    }
-
-    static auto collect_symbols(mod::Module& module, const Context& ctx) -> mod::ModuleState;
+    static auto collect_symbols(mod::Module& module, Context& ctx) -> mod::ModuleState;
 
     MAKE_AST_VISITOR_OVERRIDES()
 
@@ -73,10 +52,19 @@ class SymbolCollector : public ast::Visitor {
     }
 
   private:
+    using Scope = SymbolTableStack::Scope;
+
+  private:
+    SymbolCollector(mod::Module& collecting, Context& ctx)
+        : collecting_{collecting}, table_idx_{*collecting.root_table_idx}, ctx_{ctx} {
+        table_stack_.push(table_idx_);
+    }
+
+  private:
     mod::Module&       collecting_;
     usize              table_idx_;
     SymbolTableStack   table_stack_;
-    Context            ctx_;
+    Context&           ctx_;
     opt::Option<Type&> last_type_;
 
     DefaultCounter in_expr_scope_;

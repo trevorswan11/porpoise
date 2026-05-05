@@ -39,6 +39,7 @@ template <typename T> class Ref {
 
     // Resets the optional and returns the stored reference
     auto take() noexcept -> T* {
+        assert(ptr_ && "Attempt to access empty optional reference");
         auto* ptr = ptr_;
         reset();
         return ptr;

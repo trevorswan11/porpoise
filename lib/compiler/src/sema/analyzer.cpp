@@ -1,4 +1,5 @@
 #include "sema/analyzer.hpp"
+
 #include "sema/error.hpp"
 #include "sema/symbol_collector.hpp"
 #include "sema/type_resolver.hpp"
@@ -23,15 +24,13 @@ auto Analyzer::analyze(const std::filesystem::path& entry_path) -> Result<Unit, 
     return Unit{};
 }
 
-auto Analyzer::collect_symbols(mod::Module& module) -> void {
-    Diagnostics diagnostics{in_terminal_};
-    SymbolCollector::collect_symbols(module,
-                                     {modules_, registry_, pool_, diagnostics, error_stream_});
+auto Analyzer::collect_symbols(mod::Module& module) -> mod::ModuleState {
+    return SymbolCollector::collect_symbols(module, ctx_);
 }
 
-auto Analyzer::resolve_types(mod::Module& module) -> void {
-    Diagnostics diagnostics{in_terminal_};
-    TypeResolver::resolve_types(module, {modules_, registry_, pool_, diagnostics, error_stream_});
+auto Analyzer::resolve_types(mod::Module& module) -> mod::ModuleState {
+    Context ctx = ctx_;
+    return TypeResolver::resolve_types(module, ctx);
 }
 
 } // namespace porpoise::sema

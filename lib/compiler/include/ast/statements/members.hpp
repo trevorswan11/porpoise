@@ -44,8 +44,7 @@ class Members {
             if (!std::visit(std::forward<MemberValidator>(validator), member)) {
                 return make_parser_err(
                     syntax::ParserError::INVALID_MEMBER,
-                    std::visit([](const auto& m) -> const syntax::Token& { return m->get_token(); },
-                               member));
+                    std::visit([](const auto& m) -> auto& { return m->get_token(); }, member));
             }
             members.emplace_back(std::move(member));
         }

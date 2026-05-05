@@ -26,9 +26,12 @@ class CallArgument {
     MAKE_VARIANT_UNPACKER(type, ExplicitType, ExplicitType, argument_, std::get)
     MAKE_VARIANT_MATCHER(argument_)
 
+    MAKE_AST_SEMA_TYPE_FNS()
+
     MAKE_EQ_DELEGATION(CallArgument)
 
   private:
+  mutable opt::Option<sema::Type&> sema_type_;
     std::variant<mem::Box<Expression>, ExplicitType> argument_;
 };
 

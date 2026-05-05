@@ -11,8 +11,13 @@
 
 #include "ast/ast.hpp"
 
+// IWYU pragma: begin_exports
+
+#include "syntax/builtins.hpp"
 #include "syntax/keywords.hpp"
-#include "syntax/operators.hpp" // IWYU pragma: export
+#include "syntax/operators.hpp"
+
+// IWYU pragma: end_exports
 
 #include "string.hpp"
 

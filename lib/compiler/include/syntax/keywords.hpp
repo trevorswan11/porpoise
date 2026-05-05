@@ -62,50 +62,6 @@ constexpr Keyword NULLPTR{"nullptr", TokenType::NULLPTR};
 constexpr Keyword USING{"using", TokenType::USING};
 constexpr Keyword TEST{"test", TokenType::TEST};
 
-namespace builtins {
-
-constexpr Keyword ALIGN_CAST{"@alignCast", TokenType::BUILTIN_ALIGN_CAST};
-constexpr Keyword PTR_CAST{"@ptrCast", TokenType::BUILTIN_PTR_CAST};
-constexpr Keyword BIT_CAST{"@bitCast", TokenType::BUILTIN_BIT_CAST};
-constexpr Keyword CONST_CAST{"@constCast", TokenType::BUILTIN_CONST_CAST};
-constexpr Keyword VOLATILE_CAST{"@volatileCast", TokenType::BUILTIN_VOLATILE_CAST};
-constexpr Keyword AS{"@as", TokenType::BUILTIN_AS};
-constexpr Keyword INT_FROM_PTR{"@intFromPtr", TokenType::BUILTIN_INT_FROM_PTR};
-constexpr Keyword PTR_FROM_INT{"@ptrFromInt", TokenType::BUILTIN_PTR_FROM_INT};
-constexpr Keyword PTR_FROM_ARRAY{"@ptrFromArray", TokenType::BUILTIN_PTR_FROM_ARRAY};
-constexpr Keyword SLICE_FROM_PTR{"@sliceFromPtr", TokenType::BUILTIN_SLICE_FROM_PTR};
-
-constexpr Keyword ALIGN_OF{"@alignOf", TokenType::BUILTIN_ALIGN_OF};
-constexpr Keyword SIZE_OF{"@sizeOf", TokenType::BUILTIN_SIZE_OF};
-constexpr Keyword TYPE_OF{"@typeOf", TokenType::BUILTIN_TYPE_OF};
-constexpr Keyword TAG_NAME{"@tagName", TokenType::BUILTIN_TAG_NAME};
-
-constexpr Keyword MEMCPY{"@memcpy", TokenType::BUILTIN_MEMCPY};
-constexpr Keyword MEMSET{"@memset", TokenType::BUILTIN_MEMSET};
-constexpr Keyword MEMMOVE{"@memmove", TokenType::BUILTIN_MEMMOVE};
-
-constexpr Keyword MUL_ADD{"@mulAdd", TokenType::BUILTIN_MUL_ADD};
-constexpr Keyword CLZ{"@clz", TokenType::BUILTIN_CLZ};
-constexpr Keyword CTZ{"@ctz", TokenType::BUILTIN_CTZ};
-constexpr Keyword DIV_MOD{"@divMod", TokenType::BUILTIN_DIV_MOD};
-constexpr Keyword POP_COUNT{"@popCount", TokenType::BUILTIN_POP_COUNT};
-constexpr Keyword SQRT{"@sqrt", TokenType::BUILTIN_SQRT};
-constexpr Keyword SIN{"@sin", TokenType::BUILTIN_SIN};
-constexpr Keyword COS{"@cos", TokenType::BUILTIN_COS};
-constexpr Keyword TAN{"@tan", TokenType::BUILTIN_TAN};
-constexpr Keyword EXP{"@exp", TokenType::BUILTIN_EXP};
-constexpr Keyword EXP2{"@exp2", TokenType::BUILTIN_EXP2};
-constexpr Keyword LOG{"@log", TokenType::BUILTIN_LOG};
-constexpr Keyword LOG2{"@log2", TokenType::BUILTIN_LOG2};
-constexpr Keyword LOG10{"@log10", TokenType::BUILTIN_LOG10};
-constexpr Keyword ABS{"@abs", TokenType::BUILTIN_ABS};
-constexpr Keyword FLOOR{"@floor", TokenType::BUILTIN_FLOOR};
-constexpr Keyword CEIL{"@ceil", TokenType::BUILTIN_CEIL};
-
-constexpr Keyword PANIC{"@panic", TokenType::BUILTIN_PANIC};
-
-} // namespace builtins
-
 } // namespace keywords
 
 constexpr auto ALL_KEYWORDS = [] {
@@ -151,55 +107,5 @@ constexpr auto ALL_PRIMITIVES = std::array{
     keywords::BOOL.second,
     keywords::VOID.second,
 };
-
-constexpr auto ALL_BUILTINS = [] {
-    namespace builtins = keywords::builtins;
-    auto all_builtins  = std::array{
-        builtins::ALIGN_CAST,
-        builtins::PTR_CAST,
-        builtins::BIT_CAST,
-        builtins::CONST_CAST,
-        builtins::VOLATILE_CAST,
-        builtins::AS,
-        builtins::INT_FROM_PTR,
-        builtins::PTR_FROM_INT,
-        builtins::PTR_FROM_ARRAY,
-        builtins::SLICE_FROM_PTR,
-        builtins::ALIGN_OF,
-        builtins::SIZE_OF,
-        builtins::TYPE_OF,
-        builtins::TAG_NAME,
-        builtins::MEMCPY,
-        builtins::MEMSET,
-        builtins::MEMMOVE,
-        builtins::MUL_ADD,
-        builtins::CLZ,
-        builtins::CTZ,
-        builtins::DIV_MOD,
-        builtins::PANIC,
-        builtins::POP_COUNT,
-        builtins::SQRT,
-        builtins::SIN,
-        builtins::COS,
-        builtins::TAN,
-        builtins::EXP,
-        builtins::EXP2,
-        builtins::LOG,
-        builtins::LOG2,
-        builtins::LOG10,
-        builtins::ABS,
-        builtins::FLOOR,
-        builtins::CEIL,
-    };
-
-    std::ranges::sort(all_builtins, {}, &Keyword::first);
-    return all_builtins;
-}();
-
-constexpr auto get_builtin(std::string_view sv) noexcept -> opt::Option<Keyword> {
-    const auto it = std::ranges::lower_bound(ALL_BUILTINS, sv, {}, &Keyword::first);
-    if (it == ALL_BUILTINS.end() || it->first != sv) { return opt::none; }
-    return opt::Option<Keyword>{*it};
-}
 
 } // namespace porpoise::syntax

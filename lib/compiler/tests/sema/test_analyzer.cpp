@@ -29,7 +29,7 @@ TEST_CASE("Full sema pipeline") {
     auto ctx = helpers::analyze(
         root, main_porp, MockFile{"std.porp", std_porp, "std"}, MockFile{"io.porp", io_porp});
     const auto& registry = ctx.analyzer.get_registry();
-    REQUIRE(registry.size() == 5);
+    REQUIRE(registry.size() == 6);
 
     CHECK(registry.get_from_opt(0, "std"));
     CHECK(registry.get_from_opt(0, "main"));

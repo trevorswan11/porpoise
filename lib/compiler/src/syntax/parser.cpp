@@ -2,6 +2,7 @@
 #include <magic_enum/magic_enum.hpp>
 
 #include "syntax/keywords.hpp"
+#include "syntax/builtins.hpp"
 #include "syntax/parser.hpp"
 #include "syntax/precedence.hpp"
 #include "syntax/token.hpp"

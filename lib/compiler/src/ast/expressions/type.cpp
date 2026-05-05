@@ -148,8 +148,8 @@ auto ExplicitType::accept(Visitor& v) const -> void { v.visit(*this); }
 
 auto ExplicitType::get_token() const noexcept -> const syntax::Token& {
     return match(Overloaded{
-        [](const auto& t) -> const syntax::Token& { return t->get_token(); },
-        [](const ExplicitArrayType& a) -> const syntax::Token& { return a.get_token(); }});
+        [](const auto& t) -> auto& { return t->get_token(); },
+        [](const ExplicitArrayType& a) -> auto& { return a.get_token(); }});
 }
 
 auto ExplicitType::is_equal(const ExplicitType& other) const noexcept -> bool {
