@@ -1,6 +1,7 @@
 #include <fmt/format.h>
 #include <magic_enum/magic_enum.hpp>
 
+#include "syntax/builtins.hpp"
 #include "syntax/keywords.hpp"
 #include "syntax/parser.hpp"
 #include "syntax/precedence.hpp"
@@ -12,9 +13,6 @@
 
 namespace porpoise::syntax {
 
-Parser::Checkpoint::Checkpoint(const Parser& parser) noexcept
-    : snapshot_{parser.lexer_}, current_{parser.current_token_}, peek_{parser.peek_token_} {}
-
 auto Parser::reset(std::string_view input) noexcept -> void { *this = Parser{input}; }
 
 auto Parser::advance(u8 times) noexcept -> const Token& {
@@ -25,10 +23,10 @@ auto Parser::advance(u8 times) noexcept -> const Token& {
     return current_token_;
 }
 
-auto Parser::consume() -> std::pair<ast::AST, ParserDiagnostics> {
+auto Parser::consume() -> std::pair<ast::AST, Diagnostics> {
     reset(input_);
-    ast::AST          ast;
-    ParserDiagnostics diagnostics;
+    ast::AST    ast;
+    Diagnostics diagnostics;
 
     while (!current_token_is(TokenType::END)) {
         // Advance through any amount of semicolons
@@ -62,7 +60,7 @@ auto Parser::consume() -> std::pair<ast::AST, ParserDiagnostics> {
     return {std::move(ast), std::move(diagnostics)};
 }
 
-auto Parser::expect_peek(TokenType expected) -> Result<Unit, ParserDiagnostic> {
+auto Parser::expect_peek(TokenType expected) -> Result<Unit, Diagnostic> {
     if (peek_token_is(expected)) {
         advance();
         return {};
@@ -70,12 +68,12 @@ auto Parser::expect_peek(TokenType expected) -> Result<Unit, ParserDiagnostic> {
     return Err{peek_error(expected)};
 }
 
-auto Parser::peek_error(TokenType expected) -> ParserDiagnostic {
-    return ParserDiagnostic{fmt::format("Expected token {}, found {}",
-                                        magic_enum::enum_name(expected),
-                                        magic_enum::enum_name(peek_token_.type)),
-                            ParserError::UNEXPECTED_TOKEN,
-                            peek_token_};
+auto Parser::peek_error(TokenType expected) -> Diagnostic {
+    return Diagnostic{fmt::format("Expected token {}, found {}",
+                                  magic_enum::enum_name(expected),
+                                  magic_enum::enum_name(peek_token_.type)),
+                      Error::UNEXPECTED_TOKEN,
+                      peek_token_};
 }
 
 auto Parser::get_current_precedence() const noexcept
@@ -96,7 +94,7 @@ auto Parser::get_peek_precedence() const noexcept -> std::pair<Precedence, opt::
 }
 
 auto Parser::parse_statement(bool require_semicolon)
-    -> Result<mem::Box<ast::Statement>, ParserDiagnostic> {
+    -> Result<mem::Box<ast::Statement>, Diagnostic> {
     // Not all decls are public so the condition needs to be rechecked
     if (current_token_.type == TokenType::PUBLIC) {
         switch (peek_token_.type) {
@@ -123,17 +121,17 @@ auto Parser::parse_statement(bool require_semicolon)
 }
 
 auto Parser::parse_expression(Precedence precedence)
-    -> Result<mem::Box<ast::Expression>, ParserDiagnostic> {
+    -> Result<mem::Box<ast::Expression>, Diagnostic> {
     if (current_token_is(TokenType::END)) {
-        return make_parser_err(ParserError::END_OF_TOKEN_STREAM, current_token_);
+        return make_syntax_err(Error::END_OF_TOKEN_STREAM, current_token_);
     }
 
     const auto& prefix = try_get_prefix_fn(current_token_.type);
     if (!prefix) {
-        return make_parser_err(fmt::format("No prefix parse function for {}({}) found",
+        return make_syntax_err(fmt::format("No prefix parse function for {}({}) found",
                                            magic_enum::enum_name(current_token_.type),
                                            current_token_.slice),
-                               ParserError::MISSING_PREFIX_PARSER,
+                               Error::MISSING_PREFIX_PARSER,
                                current_token_);
     }
     auto lhs_expression = TRY((*prefix)(*this));
@@ -148,8 +146,8 @@ auto Parser::parse_expression(Precedence precedence)
     return lhs_expression;
 }
 
-[[nodiscard]] auto Parser::parse_restricted_statement(ParserError error, bool require_semicolon)
-    -> Result<mem::Box<ast::Statement>, ParserDiagnostic> {
+[[nodiscard]] auto Parser::parse_restricted_statement(Error error, bool require_semicolon)
+    -> Result<mem::Box<ast::Statement>, Diagnostic> {
     auto clause = TRY(parse_statement(require_semicolon));
 
     // The clause can only be a jump, block, or expression statement
@@ -158,13 +156,13 @@ auto Parser::parse_expression(Precedence precedence)
                      ast::ContinueStatement,
                      ast::ReturnStatement,
                      ast::BlockStatement>()) {
-        return make_parser_err(error, clause->get_token());
+        return make_syntax_err(error, clause->get_token());
     }
     return clause;
 }
 
-[[nodiscard]] auto Parser::try_parse_restricted_alternate(ParserError error, bool require_semicolon)
-    -> Result<mem::NullableBox<ast::Statement>, ParserDiagnostic> {
+[[nodiscard]] auto Parser::try_parse_restricted_alternate(Error error, bool require_semicolon)
+    -> Result<mem::NullableBox<ast::Statement>, Diagnostic> {
     if (peek_token_is(TokenType::ELSE)) {
         // Advance twice to actually look at the statement's first token
         advance(2);
@@ -173,24 +171,7 @@ auto Parser::parse_expression(Precedence precedence)
     return nullptr;
 }
 
-auto Parser::parse_member_decls(ast::MemberValidator validator)
-    -> Result<ast::Members, ParserDiagnostic> {
-    ast::Members members;
-    while (!peek_token_is(syntax::TokenType::RBRACE) && !peek_token_is(syntax::TokenType::END)) {
-        advance();
-        auto member = TRY(parse_statement(true));
-        if (!member->is<ast::DeclStatement>()) {
-            return make_parser_err(syntax::ParserError::INVALID_MEMBER, member->get_token());
-        }
-
-        // Check the decl against the validator if provided
-        if (validator && !validator(ast::Node::as<ast::DeclStatement>(*member))) {
-            return make_parser_err(syntax::ParserError::INVALID_MEMBER, member->get_token());
-        }
-        members.emplace_back(ast::Node::downcast<ast::DeclStatement>(std::move(member)));
-    }
-    return members;
-}
+namespace {
 
 constexpr auto PREFIX_FNS = [] {
     EnumMap<TokenType, Parser::PrefixFn> fns;
@@ -215,7 +196,6 @@ constexpr auto PREFIX_FNS = [] {
     fns[TokenType::LPAREN]           = ast::GroupedExpression::parse;
     fns[TokenType::IF]               = ast::IfExpression::parse;
     fns[TokenType::FUNCTION]         = ast::FunctionExpression::parse;
-    fns[TokenType::PACKED]           = ast::StructExpression::parse;
     fns[TokenType::STRUCT]           = ast::StructExpression::parse;
     fns[TokenType::UNION]            = ast::UnionExpression::parse;
     fns[TokenType::ENUM]             = ast::EnumExpression::parse;
@@ -243,10 +223,6 @@ constexpr auto PREFIX_FNS = [] {
 
     return fns;
 }();
-
-auto Parser::try_get_prefix_fn(TokenType tt) noexcept -> opt::Option<PrefixFn> {
-    return PREFIX_FNS.get_opt(tt);
-}
 
 constexpr auto INFIX_FNS = [] {
     EnumMap<TokenType, Parser::InfixFn> fns;
@@ -292,6 +268,12 @@ constexpr auto INFIX_FNS = [] {
 
     return fns;
 }();
+
+} // namespace
+
+auto Parser::try_get_prefix_fn(TokenType tt) noexcept -> opt::Option<PrefixFn> {
+    return PREFIX_FNS.get_opt(tt);
+}
 
 auto Parser::try_get_poll_infix_fn(TokenType tt) noexcept -> opt::Option<InfixFn> {
     return INFIX_FNS.get_opt(tt);

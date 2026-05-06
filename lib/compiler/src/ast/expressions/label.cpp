@@ -22,10 +22,10 @@ LabelExpression::~LabelExpression() = default;
 auto LabelExpression::accept(Visitor& v) const -> void { v.visit(*this); }
 
 auto LabelExpression::parse(syntax::Parser& parser, mem::Box<Expression> name)
-    -> Result<mem::Box<Expression>, syntax::ParserDiagnostic> {
+    -> Result<mem::Box<Expression>, syntax::Diagnostic> {
     const auto& start_token = name->get_token();
     if (!name->is<IdentifierExpression>()) {
-        return make_parser_err(syntax::ParserError::ILLEGAL_LABEL, start_token);
+        return make_syntax_err(syntax::Error::ILLEGAL_LABEL, start_token);
     }
     parser.advance();
 
@@ -49,7 +49,7 @@ auto LabelExpression::is_equal(const Node& other) const noexcept -> bool {
 }
 
 auto LabelExpression::deconstruct_body(mem::Box<ast::Statement>&& raw_stmt)
-    -> Result<LabeledNode, syntax::ParserDiagnostic> {
+    -> Result<LabeledNode, syntax::Diagnostic> {
     switch (raw_stmt->get_kind()) {
     case NodeKind::EXPRESSION_STATEMENT: {
         auto expr_stmt = Node::downcast<ExpressionStatement>(std::move(raw_stmt));
@@ -67,13 +67,11 @@ auto LabelExpression::deconstruct_body(mem::Box<ast::Statement>&& raw_stmt)
         case NodeKind::WHILE_LOOP_EXPRESSION:
             return Node::downcast<WhileLoopExpression>(std::move(expr_stmt->expression_));
         default:
-            return make_parser_err(syntax::ParserError::ILLEGAL_LABEL_EXPRESSION,
-                                   expr_stmt->get_token());
+            return make_syntax_err(syntax::Error::ILLEGAL_LABEL_EXPRESSION, expr_stmt->get_token());
         }
     }
     case NodeKind::BLOCK_STATEMENT: return Node::downcast<BlockStatement>(std::move(raw_stmt));
-    default:
-        return make_parser_err(syntax::ParserError::ILLEGAL_LABEL_STATEMENT, raw_stmt->get_token());
+    default:                        return make_syntax_err(syntax::Error::ILLEGAL_LABEL_STATEMENT, raw_stmt->get_token());
     }
 }
 

@@ -4,6 +4,7 @@
 
 #include "ast/expressions/type.hpp"
 #include "ast/node.hpp"
+#include "ast/statements/members.hpp"
 
 #include "syntax/parser.hpp"
 
@@ -46,11 +47,11 @@ class UnionExpression : public ExprBase<UnionExpression> {
 
     auto                      accept(Visitor& v) const -> void override;
     [[nodiscard]] static auto parse(syntax::Parser& parser)
-        -> Result<mem::Box<Expression>, syntax::ParserDiagnostic>;
+        -> Result<mem::Box<Expression>, syntax::Diagnostic>;
 
     MAKE_GETTER(fields, std::span<const UnionField>)
     [[nodiscard]] auto has_members() const noexcept -> bool { return !members_.empty(); }
-    MAKE_GETTER(members, MembersView)
+    MAKE_GETTER(members, const Members&)
 
   protected:
     auto is_equal(const Node& other) const noexcept -> bool override;

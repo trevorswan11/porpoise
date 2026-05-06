@@ -7,22 +7,13 @@
 #include <fmt/format.h>
 #include <magic_enum/magic_enum.hpp>
 
-#include "diagnostic/diagnostic.hpp"
-
-#include "diagnostic/source_location.hpp"
-
+#include "diagnostic.hpp"
 #include "option.hpp"
-#include "result.hpp"
 #include "types.hpp"
 
 namespace porpoise {
 
 namespace syntax {
-
-enum class TokenError : u8 {
-    NON_STRING_TOKEN,
-    UNEXPECTED_CHAR,
-};
 
 enum class TokenType : u8 {
     END,
@@ -145,6 +136,8 @@ enum class TokenType : u8 {
     BREAK,
     IMPORT,
     TYPE_TYPE,
+    AUTO_TYPE,
+    OPAQUE_TYPE,
     DO,
     AS,
     DEFER,
@@ -165,42 +158,47 @@ enum class TokenType : u8 {
     PUBLIC,
     EXTERN,
     EXPORT,
-    PACKED,
     VOLATILE,
     STATIC,
     NORETURN,
     NULLPTR,
 
-    TYPEOF,
-    SIZEOF,
-    ALIGNOF,
-    PTR_ADD,
-    PTR_SUB,
-    PTR_FROM_ARRAY,
-    SLICE_FROM_PTR,
-    PTR_IDX,
-    PTR_FROM_INT,
-    INT_FROM_PTR,
-    SIN,
-    COS,
-    TAN,
-    SQRT,
-    LOG,
-    LOG_10,
-    LOG_2,
-    MIN,
-    MAX,
-    MOD,
-    DIVMOD,
-    TRUNC,
-    CAST,
-    CEIL,
-    FLOOR,
-    EXP,
-    EXP_2,
-    POW,
-    CLZ, // Count leading zeroes
-    CTZ, // Count trailing zeroes
+    BUILTIN_ALIGN_CAST,
+    BUILTIN_PTR_CAST,
+    BUILTIN_BIT_CAST,
+    BUILTIN_CONST_CAST,
+    BUILTIN_VOLATILE_CAST,
+    BUILTIN_AS,
+    BUILTIN_INT_FROM_PTR,
+    BUILTIN_PTR_FROM_INT,
+    BUILTIN_PTR_FROM_ARRAY,
+    BUILTIN_SLICE_FROM_PTR,
+    BUILTIN_ALIGN_OF,
+    BUILTIN_SIZE_OF,
+    BUILTIN_TYPE_OF,
+    BUILTIN_TAG_NAME,
+    BUILTIN_MEMCPY,
+    BUILTIN_MEMSET,
+    BUILTIN_MEMMOVE,
+    BUILTIN_MUL_ADD,
+    BUILTIN_CLZ, // Count leading zeroes
+    BUILTIN_CTZ, // Count trailing zeroes
+    BUILTIN_DIV_MOD,
+    BUILTIN_POP_COUNT,
+    BUILTIN_SQRT,
+    BUILTIN_SIN,
+    BUILTIN_COS,
+    BUILTIN_TAN,
+    BUILTIN_EXP,
+    BUILTIN_EXP2,
+    BUILTIN_LOG,
+    BUILTIN_LOG2,
+    BUILTIN_LOG10,
+    BUILTIN_ABS,
+    BUILTIN_FLOOR,
+    BUILTIN_CEIL,
+
+    BUILTIN_PANIC,
 
     ILLEGAL,
 };
@@ -295,8 +293,6 @@ auto suffix_length(TokenType tt) noexcept -> usize;
 
 } // namespace token_type
 
-using TokenDiagnostic = Diagnostic<TokenError>;
-
 struct Token {
     TokenType        type{};
     std::string_view slice{};
@@ -308,15 +304,17 @@ struct Token {
     Token(TokenType tt, std::string_view slice, usize line, usize column) noexcept
         : type{tt}, slice{slice}, line{line}, column{column} {}
 
-    explicit Token(std::pair<TokenType, std::string_view> tok) noexcept
-        : type{tok.first}, slice{tok.second} {}
-    explicit Token(std::pair<std::string_view, TokenType> tok) noexcept
+    explicit Token(const std::pair<std::string_view, TokenType>& tok) noexcept
         : type{tok.second}, slice{tok.first} {}
 
-    [[nodiscard]] auto promote() const -> Result<std::string, TokenDiagnostic>;
+    // Materializes the token, asserting that it was a string token
+    [[nodiscard]] auto materialize_string() const -> std::string;
     [[nodiscard]] auto is_primitive() const noexcept -> bool;
     [[nodiscard]] auto is_builtin() const noexcept -> bool;
     [[nodiscard]] auto is_decl_token() const noexcept -> bool;
+
+    // Checks if the token can be used to kick off member parsing
+    [[nodiscard]] auto is_member_token() const noexcept -> bool;
 
     // Check whether the token is an ident, primitive type, or builtin function.
     auto is_valid_ident() const noexcept -> bool;

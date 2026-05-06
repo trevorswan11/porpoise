@@ -26,9 +26,12 @@ class CallArgument {
     MAKE_VARIANT_UNPACKER(type, ExplicitType, ExplicitType, argument_, std::get)
     MAKE_VARIANT_MATCHER(argument_)
 
+    MAKE_AST_SEMA_TYPE_FNS()
+
     MAKE_EQ_DELEGATION(CallArgument)
 
   private:
+    mutable opt::Option<sema::Type&>                 sema_type_;
     std::variant<mem::Box<Expression>, ExplicitType> argument_;
 };
 
@@ -46,7 +49,7 @@ class CallExpression : public ExprBase<CallExpression> {
 
     auto                      accept(Visitor& v) const -> void override;
     [[nodiscard]] static auto parse(syntax::Parser& parser, mem::Box<Expression> function)
-        -> Result<mem::Box<Expression>, syntax::ParserDiagnostic>;
+        -> Result<mem::Box<Expression>, syntax::Diagnostic>;
 
     MAKE_GETTER(function, const Expression&, *)
     MAKE_GETTER(arguments, std::span<const CallArgument>)

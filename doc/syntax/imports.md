@@ -13,10 +13,7 @@ import "node.porp"; // Illegal, file imports always require alias
 pub import "node.porp" as node; // Public file import with alias
 ```
 - The filepath given to the import should be relative to the asking file, _not_ to a local project 'root'
-- Imports are evaluated lazily
-    - An unreferenced import will not be compiled
-    - Unreferenced symbols from an import will not be compiled
-    - This prevents the issue of circular imports without needing to implement a macro system or `pragma`
+- Import statements can be used anywhere in your program, though they do not yield a value (hence why they are not called expressions) 
 
 ## Library Import Declaration
 - Libraries are declared by indicating that a file is a root of an import tree

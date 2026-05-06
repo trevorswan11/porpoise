@@ -82,7 +82,7 @@ TEST_CASE("Box template checks") {
 TEST_CASE("NonNull construction checks") {
     STATIC_CHECK_FALSE(std::is_constructible_v<mem::NonNull<i32>, i32&&>);
     STATIC_CHECK_FALSE(std::is_constructible_v<mem::NonNull<i32>, opt::None>);
-    STATIC_CHECK(std::is_trivially_copyable_v<mem::NonNull<i32>>);
+    STATIC_CHECK(TriviallyCopyable<mem::NonNull<i32>>);
 }
 
 TEST_CASE("NonNull basic usage") {
@@ -91,17 +91,16 @@ TEST_CASE("NonNull basic usage") {
 
     CHECK(*ptr == 42);
     CHECK(ptr.get() == &val);
-    CHECK(static_cast<i32>(ptr) == 42);
 }
 
 TEST_CASE("NonNull from optional reference") {
-    i32                 val = 10;
-    const opt::Ref<i32> opt{val};
+    i32                         val = 10;
+    const opt::detail::Ref<i32> opt{val};
 
     const mem::NonNull<i32> ptr{opt};
     CHECK(*ptr == 10);
 
-    const opt::Ref<i32> empty;
+    const opt::detail::Ref<i32> empty;
     CHECK_THROWS_AS(mem::NonNull<i32>{empty}, std::bad_optional_access);
 }
 

@@ -2,7 +2,6 @@
 
 #include <cstddef>
 #include <span>
-#include <type_traits>
 #include <utility>
 
 #include "memory.hpp"
@@ -31,8 +30,7 @@ class Arena {
     // cppcheck-suppress-begin [unreadVariable, internalAstError]
 
     // Asserts that the requested type is at most 64KB
-    template <typename T, typename... Args>
-        requires(std::is_trivially_destructible_v<T>)
+    template <TriviallyDestructible T, typename... Args>
     [[nodiscard]] auto make(Args&&... args) -> mem::NonNull<T> {
         static_assert(sizeof(T) <= BLOCK_SIZE, "Block size cannot fit requested type");
         void* mem = alloc(sizeof(T), alignof(T));
@@ -40,12 +38,10 @@ class Arena {
     }
 
     // Asserts that the requested type-count product can fit in 64KB
-    template <typename T>
-        requires(std::is_trivially_destructible_v<T>)
-    [[nodiscard]] auto make_span(usize count) -> std::span<T> {
+    template <TriviallyDestructible T> [[nodiscard]] auto make_span(usize count) -> std::span<T> {
         static_assert(sizeof(T) <= BLOCK_SIZE, "Block size cannot fit requested type");
         const auto size = sizeof(T) * count;
-        assert(size <= BLOCK_SIZE && "Block size cannot fit requested type count");
+        ASSERT(size <= BLOCK_SIZE, "Block size cannot fit requested type count");
         void* mem = alloc(size, alignof(T));
         return std::span{new (mem) T[count]{}, count};
     }

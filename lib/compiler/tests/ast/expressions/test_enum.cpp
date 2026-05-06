@@ -16,7 +16,7 @@ TEST_CASE("Basic enums") {
                                                     ast::Enumeration{helpers::make_ident("A"), {}},
                                                     ast::Enumeration{helpers::make_ident("B"), {}},
                                                     ast::Enumeration{helpers::make_ident("C"), {}}),
-                                                helpers::make_decls()});
+                                                helpers::make_members()});
 
     helpers::test_expr_stmt(
         "enum {A = 1, B = T, };",
@@ -27,7 +27,7 @@ TEST_CASE("Basic enums") {
                 ast::Enumeration{helpers::make_ident("A"),
                                  helpers::make_primitive<ast::I32Expression, true>("1")},
                 ast::Enumeration{helpers::make_ident("B"), helpers::make_ident<true>("T")}),
-            helpers::make_decls()});
+            helpers::make_members()});
 }
 
 TEST_CASE("Underlying type") {
@@ -40,7 +40,7 @@ TEST_CASE("Underlying type") {
                 ast::Enumeration{helpers::make_ident("RED"),
                                  helpers::make_primitive<ast::U32Expression, true>("3u")},
                 ast::Enumeration{helpers::make_ident("B"), {}}),
-            helpers::make_decls()});
+            helpers::make_members()});
 
     helpers::test_expr_stmt(
         "enum : U {A = 0x4uz};",
@@ -49,7 +49,7 @@ TEST_CASE("Underlying type") {
                             helpers::make_vector<ast::Enumeration>(ast::Enumeration{
                                 helpers::make_ident("A"),
                                 helpers::make_primitive<ast::USizeExpression, true>("0x4uz")}),
-                            helpers::make_decls()});
+                            helpers::make_members()});
 }
 
 TEST_CASE("Enum with decls") {
@@ -62,7 +62,7 @@ TEST_CASE("Enum with decls") {
                 helpers::make_vector<ast::Enumeration>(
                     ast::Enumeration{helpers::make_ident("A"),
                                      helpers::make_primitive<ast::I64Expression, true>("2l")}),
-                helpers::make_decls(
+                helpers::make_members(
                     ast::DeclStatement{
                         syntax::Token{keywords::CONSTANT},
                         helpers::make_ident("b"),
@@ -94,36 +94,51 @@ TEST_CASE("Enum with decls") {
     test(fmt::format(format_str, ","));
 }
 
+TEST_CASE("Non-decl enum members") {
+    helpers::test_expr_stmt(
+        "enum : i64 { A, import std; using I = i32; };",
+        ast::EnumExpression{
+            syntax::Token{keywords::ENUM},
+            helpers::make_ident<true>("i64"),
+            helpers::make_vector<ast::Enumeration>(ast::Enumeration{helpers::make_ident("A"), {}}),
+            helpers::make_members(
+                ast::ImportStatement{syntax::Token{keywords::IMPORT},
+                                     ast::LibraryImport{helpers::make_ident("std"), {}}},
+                ast::UsingStatement{syntax::Token{keywords::USING},
+                                    helpers::make_ident("I"),
+                                    ast::ExplicitType{
+                                        mods::BASE,
+                                        helpers::make_ident("i32"),
+                                    }})});
+}
+
 TEST_CASE("Empty enum") {
-    helpers::test_parser_fail("enum {};",
-                              syntax::ParserDiagnostic{syntax::ParserError::EMPTY_ENUM, 0, 0});
-    helpers::test_parser_fail("enum : T {};",
-                              syntax::ParserDiagnostic{syntax::ParserError::EMPTY_ENUM, 0, 0});
+    helpers::test_parser_fail("enum {};", syntax::Diagnostic{syntax::Error::EMPTY_ENUM, 0, 0});
+    helpers::test_parser_fail("enum : T {};", syntax::Diagnostic{syntax::Error::EMPTY_ENUM, 0, 0});
 }
 
 TEST_CASE("Illegal underlying type") {
-    helpers::test_parser_fail(
-        "enum : 4 {A};", syntax::ParserDiagnostic{syntax::ParserError::ILLEGAL_IDENTIFIER, 0, 7});
-    helpers::test_parser_fail(
-        R"(enum : "e" {A};)",
-        syntax::ParserDiagnostic{syntax::ParserError::ILLEGAL_IDENTIFIER, 0, 7});
+    helpers::test_parser_fail("enum : 4 {A};",
+                              syntax::Diagnostic{syntax::Error::ILLEGAL_IDENTIFIER, 0, 7});
+    helpers::test_parser_fail(R"(enum : "e" {A};)",
+                              syntax::Diagnostic{syntax::Error::ILLEGAL_IDENTIFIER, 0, 7});
 }
 
 TEST_CASE("Empty enum with decl") {
     helpers::test_parser_fail("enum : i64 { const b := fn(&self, a: A): C { c; }; };",
-                              syntax::ParserDiagnostic{syntax::ParserError::EMPTY_ENUM, 0, 0});
+                              syntax::Diagnostic{syntax::Error::EMPTY_ENUM, 0, 0});
 }
 
 TEST_CASE("Out of order enum") {
     helpers::test_parser_fail("enum : i64 { A = 2l const b := fn(&self, a: A): C { c; }; B = 2l };",
-                              syntax::ParserDiagnostic{"Expected token SEMICOLON, found RBRACE",
-                                                       syntax::ParserError::UNEXPECTED_TOKEN,
-                                                       std::pair{0uz, 65uz}});
+                              syntax::Diagnostic{"Expected token SEMICOLON, found RBRACE",
+                                                 syntax::Error::UNEXPECTED_TOKEN,
+                                                 std::pair{0uz, 65uz}});
 }
 
-TEST_CASE("Non-static non-function enum member") {
+TEST_CASE("Non-static non-function enum decl") {
     helpers::test_parser_fail("enum { A = i32{} const b := 2; };",
-                              syntax::ParserDiagnostic{syntax::ParserError::INVALID_MEMBER, 0, 17});
+                              syntax::Diagnostic{syntax::Error::INVALID_MEMBER, 0, 17});
 }
 
 } // namespace porpoise::tests

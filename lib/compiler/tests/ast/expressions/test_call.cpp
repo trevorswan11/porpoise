@@ -4,7 +4,7 @@
 
 namespace porpoise::tests {
 
-namespace keywords  = syntax::keywords;
+namespace builtins  = syntax::builtins;
 namespace operators = syntax::operators;
 namespace mods      = helpers::type_modifiers;
 
@@ -24,7 +24,7 @@ TEST_CASE("Call with void expression") {
 }
 
 TEST_CASE("Trailing comma") {
-    const syntax::Token func{keywords::builtins::SIN};
+    const syntax::Token func{builtins::SIN};
     helpers::test_expr_stmt(
         "@sin(23.6, );",
         ast::CallExpression{func,
@@ -34,14 +34,13 @@ TEST_CASE("Trailing comma") {
 }
 
 TEST_CASE("Builtin with multiple arguments") {
-    const syntax::Token func{keywords::builtins::PTR_ADD};
+    const syntax::Token func{builtins::AS};
     helpers::test_expr_stmt(
-        "@ptrAdd(a, 4uz);",
-        ast::CallExpression{
-            func,
-            helpers::make_ident(func),
-            helpers::make_vector<ast::CallArgument>(
-                helpers::make_ident("a"), helpers::make_primitive<ast::USizeExpression>("4uz"))});
+        "@as(i32, a);",
+        ast::CallExpression{func,
+                            helpers::make_ident(func),
+                            helpers::make_vector<ast::CallArgument>(helpers::make_ident("i32"),
+                                                                    helpers::make_ident("a"))});
 }
 
 TEST_CASE("Type arguments in call") {
@@ -71,15 +70,14 @@ TEST_CASE("Type arguments in call") {
 
 TEST_CASE("No arguments with comma") {
     helpers::test_parser_fail(
-        "func(,)",
-        syntax::ParserDiagnostic{syntax::ParserError::COMMA_WITH_MISSING_CALL_ARGUMENT, 0, 5});
+        "func(,)", syntax::Diagnostic{syntax::Error::COMMA_WITH_MISSING_CALL_ARGUMENT, 0, 5});
 }
 
 TEST_CASE("Non-comma separated arguments") {
     helpers::test_parser_fail(
         "func(1 2)",
-        syntax::ParserDiagnostic{
-            "Expected token COMMA, found INT_10", syntax::ParserError::UNEXPECTED_TOKEN, 0, 7});
+        syntax::Diagnostic{
+            "Expected token COMMA, found INT_10", syntax::Error::UNEXPECTED_TOKEN, 0, 7});
 }
 
 } // namespace porpoise::tests

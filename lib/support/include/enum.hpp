@@ -17,20 +17,22 @@ namespace porpoise {
 template <typename Enum>
 concept ValidEnum = std::is_enum_v<Enum>;
 
-template <typename Enum>
-concept ScopedEnum = std::is_scoped_enum_v<Enum>;
-
 using magic_enum::enum_value;
 
+// Returns the minimum value of the present enumerations as the value
 template <ValidEnum E> consteval auto enum_min_value() { return enum_value<E>(0); }
+
+// Returns the minimum value of the present enumerations as the underlying value
 template <ValidEnum E> consteval auto enum_min_underlying() {
     return magic_enum::enum_integer(enum_min_value<E>());
 }
 
+// Returns the maximum value of the present enumerations as the value
 template <ValidEnum E> consteval auto enum_max_value() {
     return enum_value<E>(magic_enum::enum_count<E>() - 1);
 }
 
+// Returns the maximum value of the present enumerations as the underlying value
 template <ValidEnum E> consteval auto enum_max_underlying() {
     return magic_enum::enum_integer(enum_max_value<E>());
 }
@@ -70,7 +72,7 @@ template <MappableEnum E, MappableValue Value> class EnumMap {
     template <typename Self>
     [[nodiscard]] constexpr auto operator[](this Self&& self, E key) noexcept -> decltype(auto) {
         const auto index = magic_enum::enum_index(key);
-        assert(index && "Key must be a valid enumeration");
+        ASSERT(index, "Key must be a valid enumeration");
         return self.map_[*index];
     }
 

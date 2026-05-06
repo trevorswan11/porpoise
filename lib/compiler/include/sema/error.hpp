@@ -1,8 +1,6 @@
 #pragma once
 
-#include "diagnostic/diagnostic.hpp"
-#include "diagnostic/list.hpp"
-
+#include "diagnostic.hpp"
 #include "result.hpp"
 
 namespace porpoise::sema {
@@ -17,21 +15,18 @@ enum class Error : u8 {
     REDUNDANT_CONSTEXPR,
     INVALID_TABLE_IDX,
     SHADOWING_DECLARATION,
-    CIRCULAR_DEPENDENCY,
     ILLEGAL_TEST_LOCATION,
-    NORMALIZATION_FAILED,
-    PATH_DOES_NOT_EXIST,
-    PATH_IS_NOT_FILE,
-    FAILED_TO_OPEN_FILE,
-    MODULE_ALREADY_EXISTS,
-    MODULE_DOES_NOT_EXIST,
-    IMPORT_NOT_RELATIVE,
+    MODULE_LOAD_ERROR,
+    NON_CALLABLE_EXPRESSION,
+    ARITY_MISMATCH,
+    UNDECLARED_IDENTIFIER,
 };
 
 using Diagnostic  = Diagnostic<Error>;
 using Diagnostics = DiagnosticList<Diagnostic>;
 
-template <typename... Args> auto make_sema_err(Args&&... args) -> Err<Diagnostic> {
+template <typename... Args>
+[[nodiscard]] constexpr auto make_sema_err(Args&&... args) -> Err<Diagnostic> {
     return make_err<Diagnostic>(std::forward<Args>(args)...);
 }
 

@@ -11,7 +11,7 @@
 namespace porpoise::tests {
 
 constexpr std::string_view input{R"(
-    [_]*N{a, b, c, d, e, 3, "54" };
+    [_:0]*N{a, b, c, d, e, 3, "54" };
     a <= b or c == d and e;
     a or b[3uz] == !c;
     continue;
@@ -24,7 +24,7 @@ constexpr std::string_view input{R"(
     while (true) : (i += 1) {a;} else return b;
     var f_ptr: *fn(&a, *mut B, ...): &[0x2uz][N]*E;
     A::B::C;
-    packed struct { var a: Foo = bar; const b := fn(*mut this, a: A, b: *B): C { c; }; };
+    struct { var a: Foo = bar; const b := fn(*mut this, a: A, b: *B): C { c; }; };
     &a; &mut b; *a;
     match (a) { b => |c| d; e => |_| f; g => h; } else d;
     loop { a; };
@@ -34,7 +34,7 @@ constexpr std::string_view input{R"(
     fn(*mut this, a: A, b: *B, ): i32 { c; };
     for (arr, l, p) |i, &mut j, _| { a; } else return b;
     enum : u64 {A = 1ul, B = T, C, };
-    @ptrAdd(a, 4uz);
+    @as(i32, a);
     using T = i32;
     a(&mut r, t, *[N:0]u8);
     .a;
@@ -68,7 +68,7 @@ constexpr std::string_view expected{
 TEST_CASE("Comprehensive dump") {
     syntax::Parser p{input};
     auto [ast, errors] = p.consume();
-    helpers::check_errors<syntax::ParserDiagnostic>(errors);
+    helpers::check_errors<syntax::Diagnostic>(errors);
 
     std::ostringstream oss;
     ast::ASTDumper     dumper{oss};

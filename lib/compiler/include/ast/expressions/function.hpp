@@ -71,13 +71,13 @@ class FunctionExpression : public ExprBase<FunctionExpression> {
 
     auto                      accept(Visitor& v) const -> void override;
     [[nodiscard]] static auto parse(syntax::Parser& parser)
-        -> Result<mem::Box<Expression>, syntax::ParserDiagnostic>;
+        -> Result<mem::Box<Expression>, syntax::Diagnostic>;
 
     // Meant to be called by the explicit type parser only
     [[nodiscard]] static auto parse_type(syntax::Parser& parser)
-        -> Result<mem::Box<Expression>, syntax::ParserDiagnostic>;
+        -> Result<mem::Box<Expression>, syntax::Diagnostic>;
 
-    MAKE_OPTIONAL_UNPACKER(self, SelfParameter, self_, *)
+    MAKE_OPTIONAL_UNPACKER(self, const SelfParameter&, self_, *)
     MAKE_GETTER(parameters, std::span<const FunctionParameter>)
     [[nodiscard]] auto has_parameters() const noexcept -> bool { return !parameters_.empty(); }
     [[nodiscard]] auto is_variadic() const noexcept -> bool { return variadic_; }

@@ -22,7 +22,7 @@ class DoWhileLoopExpression : public ExprBase<DoWhileLoopExpression> {
 
     auto                      accept(Visitor& v) const -> void override;
     [[nodiscard]] static auto parse(syntax::Parser& parser)
-        -> Result<mem::Box<Expression>, syntax::ParserDiagnostic>;
+        -> Result<mem::Box<Expression>, syntax::Diagnostic>;
 
     MAKE_GETTER(block, const BlockStatement&, *)
     MAKE_GETTER(condition, const Expression&, *)

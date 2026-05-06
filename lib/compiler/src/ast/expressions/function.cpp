@@ -58,9 +58,10 @@ FunctionExpression::~FunctionExpression() = default;
 
 auto FunctionExpression::accept(Visitor& v) const -> void { v.visit(*this); }
 
+namespace {
+
 // Variadic must be handled first and should break the enclosing loop
-[[nodiscard]] static auto try_parse_variadic(syntax::Parser& parser)
-    -> Result<bool, syntax::ParserDiagnostic> {
+[[nodiscard]] auto try_parse_variadic(syntax::Parser& parser) -> Result<bool, syntax::Diagnostic> {
     bool variadic = false;
     if (parser.peek_token_is(syntax::TokenType::ELLIPSIS)) {
         parser.advance();
@@ -72,8 +73,10 @@ auto FunctionExpression::accept(Visitor& v) const -> void { v.visit(*this); }
     return variadic;
 }
 
+} // namespace
+
 auto FunctionExpression::parse(syntax::Parser& parser)
-    -> Result<mem::Box<Expression>, syntax::ParserDiagnostic> {
+    -> Result<mem::Box<Expression>, syntax::Diagnostic> {
     const auto start_token = parser.get_current_token();
     TRY(parser.expect_peek(syntax::TokenType::LPAREN));
 
@@ -88,7 +91,7 @@ auto FunctionExpression::parse(syntax::Parser& parser)
     } else {
         // The 'self' parameter can be a value type, ref, or mutable ref
         parser.advance();
-        auto self_modifier = TypeModifier::from_token(parser.get_current_token());
+        const TypeModifier self_modifier{parser.get_current_token()};
         if (self_modifier.is_value() && (parser.peek_token_is(syntax::TokenType::COMMA) ||
                                          parser.peek_token_is(syntax::TokenType::RPAREN))) {
             self.emplace(SelfParameter{
@@ -125,7 +128,7 @@ auto FunctionExpression::parse(syntax::Parser& parser)
 
             // There are no default values for parameters, and they must be explicitly typed
             if (initialized || !type->has_explicit_type()) {
-                return make_parser_err(syntax::ParserError::FUNCTION_PARAMETER_HAS_DEFAULT_VALUE,
+                return make_syntax_err(syntax::Error::FN_PARAMETER_HAS_DEFAULT_VALUE,
                                        type->get_token());
             }
 
@@ -134,7 +137,7 @@ auto FunctionExpression::parse(syntax::Parser& parser)
                 // noreturn is not allowed for parameters
                 if (explicit_type.get_ident_type().get_token().type ==
                     syntax::TokenType::NORETURN) {
-                    return make_parser_err(syntax::ParserError::FUNCTION_PARAMETER_IS_NORETURN,
+                    return make_syntax_err(syntax::Error::FN_PARAMETER_IS_NORETURN,
                                            type->get_token());
                 }
             }
@@ -153,7 +156,7 @@ auto FunctionExpression::parse(syntax::Parser& parser)
 
     // If there is opening brace then just return without a body
     if (!parser.peek_token_is(syntax::TokenType::LBRACE)) {
-        return make_parser_err(syntax::ParserError::FN_DECLARATION_WITHOUT_BODY, start_token);
+        return make_syntax_err(syntax::Error::FN_DECLARATION_WITHOUT_BODY, start_token);
     }
 
     // Otherwise there must be a well-formed block
@@ -168,7 +171,7 @@ auto FunctionExpression::parse(syntax::Parser& parser)
 }
 
 auto FunctionExpression::parse_type(syntax::Parser& parser)
-    -> Result<mem::Box<Expression>, syntax::ParserDiagnostic> {
+    -> Result<mem::Box<Expression>, syntax::Diagnostic> {
     const auto start_token = parser.get_current_token();
     TRY(parser.expect_peek(syntax::TokenType::LPAREN));
 
@@ -189,8 +192,7 @@ auto FunctionExpression::parse_type(syntax::Parser& parser)
                 // noreturn is not allowed for parameters
                 const auto& token = type.get_ident_type().get_token();
                 if (token.type == syntax::TokenType::NORETURN) {
-                    return make_parser_err(syntax::ParserError::FUNCTION_PARAMETER_IS_NORETURN,
-                                           token);
+                    return make_syntax_err(syntax::Error::FN_PARAMETER_IS_NORETURN, token);
                 }
             }
 
@@ -206,7 +208,7 @@ auto FunctionExpression::parse_type(syntax::Parser& parser)
     TRY(parser.expect_peek(syntax::TokenType::COLON));
     auto return_type = TRY(ExplicitType::parse(parser));
     if (parser.peek_token_is(syntax::TokenType::LBRACE)) {
-        return make_parser_err(syntax::ParserError::EXPLICIT_FN_TYPE_HAS_BODY, start_token);
+        return make_syntax_err(syntax::Error::EXPLICIT_FN_TYPE_HAS_BODY, start_token);
     }
 
     return mem::make_box<FunctionExpression>(

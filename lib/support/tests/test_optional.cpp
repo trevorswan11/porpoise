@@ -1,7 +1,6 @@
 #include <algorithm>
 #include <cctype>
 #include <string>
-#include <type_traits>
 
 #include <catch2/catch_test_macros.hpp>
 
@@ -12,18 +11,18 @@
 
 namespace porpoise::tests {
 
-TEST_CASE("OptRef construction checks") {
-    STATIC_CHECK_FALSE(std::is_constructible_v<opt::Ref<i32>, i32&&>);
-    STATIC_CHECK(std::is_trivially_copyable_v<opt::Ref<i32>>);
+TEST_CASE("Ref construction checks") {
+    STATIC_CHECK_FALSE(std::is_constructible_v<opt::detail::Ref<i32>, i32&&>);
+    STATIC_CHECK(TriviallyCopyable<opt::detail::Ref<i32>>);
 }
 
-TEST_CASE("opt::Option template specialization") {
-    STATIC_CHECK(std::is_same_v<opt::Option<i32&>, opt::Ref<i32>>);
-    STATIC_CHECK(std::is_same_v<opt::Option<const i32&>, opt::Ref<const i32>>);
+TEST_CASE("Option template specialization") {
+    STATIC_CHECK(std::is_same_v<opt::Option<i32&>, opt::detail::Ref<i32>>);
+    STATIC_CHECK(std::is_same_v<opt::Option<const i32&>, opt::detail::Ref<const i32>>);
     STATIC_CHECK(std::is_same_v<opt::Option<i32>, std::optional<i32>>);
 }
 
-TEST_CASE("opt::Option template checks") {
+TEST_CASE("Option template checks") {
     STATIC_CHECK(opt::is_option<opt::Option<int>>::value);
     STATIC_CHECK(opt::is_option<opt::Option<int&>>::value);
     STATIC_CHECK(opt::is_option_v<opt::Option<int>>);
@@ -31,9 +30,9 @@ TEST_CASE("opt::Option template checks") {
     STATIC_CHECK_FALSE(opt::is_option_v<int>);
 }
 
-TEST_CASE("OptRef basic construction") {
-    i32                 val = 42;
-    const opt::Ref<i32> opt{val};
+TEST_CASE("Ref basic construction") {
+    i32                         val = 42;
+    const opt::detail::Ref<i32> opt{val};
 
     CHECK(opt.has_value());
     CHECK(static_cast<bool>(opt));
@@ -43,41 +42,41 @@ TEST_CASE("OptRef basic construction") {
     CHECK(&*opt == &val);
 }
 
-TEST_CASE("OptRef null use & access") {
+TEST_CASE("Ref null use & access") {
     SECTION("Default") {
-        const opt::Ref<i32> opt{};
+        const opt::detail::Ref<i32> opt{};
         CHECK_FALSE(opt.has_value());
         CHECK_THROWS_AS(opt.value(), std::bad_optional_access);
     }
 
     SECTION("Explicit") {
-        const opt::Ref<i32> opt{opt::none};
+        const opt::detail::Ref<i32> opt{opt::none};
         CHECK_FALSE(opt.has_value());
         CHECK_THROWS_AS(opt.value(), std::bad_optional_access);
     }
 }
 
-TEST_CASE("OptRef conversions") {
+TEST_CASE("Ref conversions") {
     SECTION("Non-const -> const") {
-        i32                       val = 42;
-        const opt::Ref<i32>       mut_opt{val};
-        const opt::Ref<const i32> const_opt{mut_opt};
+        i32                               val = 42;
+        const opt::detail::Ref<i32>       mut_opt{val};
+        const opt::detail::Ref<const i32> const_opt{mut_opt};
         CHECK(const_opt.has_value());
         CHECK(*const_opt == 42);
     }
 
     SECTION("Derived -> Base") {
-        helpers::Derived                 d;
-        const opt::Ref<helpers::Derived> d_opt{d};
-        const opt::Ref<helpers::Base>    base_opt = d_opt;
+        helpers::Derived                         d;
+        const opt::detail::Ref<helpers::Derived> d_opt{d};
+        const opt::detail::Ref<helpers::Base>    base_opt = d_opt;
         CHECK(base_opt.has_value());
         CHECK(base_opt->x == 10);
     }
 }
 
-TEST_CASE("OptRef reassignment") {
-    i32           a = 1, b = 2;
-    opt::Ref<i32> opt{a};
+TEST_CASE("Ref reassignment") {
+    i32                   a = 1, b = 2;
+    opt::detail::Ref<i32> opt{a};
     CHECK(*opt == 1);
 
     opt = b;
@@ -87,9 +86,9 @@ TEST_CASE("OptRef reassignment") {
     CHECK_FALSE(opt.has_value());
 }
 
-TEST_CASE("OptRef mutability") {
-    i32                 val = 42;
-    const opt::Ref<i32> opt{val};
+TEST_CASE("Ref mutability") {
+    i32                         val = 42;
+    const opt::detail::Ref<i32> opt{val};
     CHECK(*opt == 42);
 
     *opt = 1;
@@ -120,6 +119,127 @@ TEST_CASE("Safe optional custom equality") {
         return std::ranges::equal(
             a, b, [](byte ac, byte bc) { return std::tolower(ac) == std::tolower(bc); });
     }));
+}
+
+TEST_CASE("Ref transform on value") {
+    i32               i = 9;
+    opt::Option<i32&> opt_i{i};
+
+    const auto res = opt_i.transform([](const i32& i) { return i + 2; });
+    REQUIRE(res);
+    CHECK(*res == 11);
+}
+
+TEST_CASE("Ref transform on none") {
+    opt::Option<i32&> opt_i{};
+
+    const auto res = opt_i.transform([](const i32& i) { return i + 2; });
+    CHECK_FALSE(res);
+}
+
+TEST_CASE("Boolean wrapper") {
+    opt::detail::Boolean b;
+    CHECK_FALSE(b.has_value());
+    CHECK_THROWS_AS(b.value(), std::bad_optional_access);
+    CHECK_FALSE(b.value_or(false));
+    CHECK_FALSE(b.value_or(0));
+
+    b = true;
+    CHECK(b.has_value());
+    CHECK(b.value_or(false));
+}
+
+TEST_CASE("Boolean-std optional conversion") {
+    std::optional<bool>  std_b{true};
+    opt::detail::Boolean my_b = std_b;
+    REQUIRE(std_b.has_value());
+    CHECK(*std_b == *my_b);
+
+    std::optional<bool> std_extracted = my_b;
+    REQUIRE(std_extracted.has_value());
+    CHECK(*std_extracted);
+
+    std::optional<bool> empty_std;
+    my_b = empty_std;
+    CHECK_FALSE(my_b.has_value());
+}
+
+TEST_CASE("Index wrapper") {
+    opt::Index i;
+    CHECK_FALSE(i.has_value());
+    CHECK_THROWS_AS(i.value(), std::bad_optional_access);
+
+    i = 0;
+    CHECK(i.has_value());
+    CHECK(*i == 0);
+}
+
+TEST_CASE("Index-std optional conversion") {
+    std::optional<usize> std_i{42};
+    opt::Index           my_i = std_i;
+    REQUIRE(std_i.has_value());
+    CHECK(*std_i == *my_i);
+
+    std::optional<usize> std_extracted = my_i;
+    REQUIRE(std_extracted.has_value());
+    CHECK(*std_extracted == 42);
+
+    std::optional<usize> empty_std;
+    my_i = empty_std;
+    CHECK_FALSE(my_i.has_value());
+}
+
+enum NonOptionableEnum : u8 {};
+
+enum class OptionableEnum : u8 {
+    A,
+    B,
+    C,
+};
+
+TEST_CASE("OptionableEnum concept") {
+    STATIC_REQUIRE_FALSE(opt::OptionableEnum<i32>);
+    STATIC_REQUIRE_FALSE(opt::OptionableEnum<NonOptionableEnum>);
+    STATIC_REQUIRE(opt::OptionableEnum<OptionableEnum>);
+    STATIC_REQUIRE(sizeof(opt::Enum<OptionableEnum>) == sizeof(OptionableEnum));
+}
+
+TEST_CASE("Optional enum wrapper") {
+    opt::Enum<OptionableEnum> e;
+    CHECK_FALSE(e.has_value());
+    CHECK_THROWS_AS(e.value(), std::bad_optional_access);
+
+    e = OptionableEnum::A;
+    CHECK(e.has_value());
+    CHECK(*e == OptionableEnum::A);
+}
+
+TEST_CASE("Enum transform on value") {
+    opt::Enum<OptionableEnum> e{OptionableEnum::A};
+    const auto res = e.transform([](const OptionableEnum&) { return OptionableEnum::B; });
+    REQUIRE(res);
+    CHECK(*res == OptionableEnum::B);
+}
+
+TEST_CASE("Enum transform on none") {
+    opt::Enum<OptionableEnum> e{};
+    const auto res = e.transform([](const OptionableEnum&) { return OptionableEnum::B; });
+    CHECK_FALSE(res);
+}
+
+TEST_CASE("Enum-std optional conversion") {
+    std::optional<OptionableEnum> std_i{OptionableEnum::A};
+    opt::Enum<OptionableEnum>     my_i = std_i;
+    REQUIRE(std_i.has_value());
+    CHECK(*std_i == *my_i);
+
+    std::optional<OptionableEnum> std_extracted = my_i;
+    REQUIRE(std_extracted.has_value());
+    CHECK(*std_extracted == OptionableEnum::A);
+
+    std::optional<OptionableEnum> empty_std;
+    my_i = empty_std;
+    CHECK_FALSE(my_i.has_value());
 }
 
 } // namespace porpoise::tests

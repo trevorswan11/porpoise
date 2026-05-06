@@ -1,7 +1,7 @@
 # Arrays
 ## Declarations
 - Arrays are defined with 3 key components
-    - A size: This must be an underscore (signifying inferred size), a compile time constant (denoted with `constexpr`), or a usize integer literal (suffix `uz`)
+    - A size: This must be an underscore (signifying inferred size), a compile time constant (previously declared with `constexpr`), or an integer literal (suffix `uz`)
     - A type: This can be any valid type, but it must be present and cannot be inferred
     - Items: These items must be of the type specified, and must match the provided size if provided
 - Arrays are immutably sized, though internal elements can be mutable based on the provided type
@@ -14,13 +14,13 @@
 
 - Arrays do not decay to pointers implicitly as they do in C
 - To call a C function that takes in a pointer that is actually an array, you can use the builtin `@ptrFromArray`
-    - This erases the underlying size of the array and is not reversible. It is only recommended for use with C interop
+    - This erases the underlying size of the array and is not trivially reversible. It is only recommended for use with C interop
 - If you have a pointer and its size, you can recreate a porpoise-style slice using the `@sliceFromPtr` builtin
 
 ## Types
 - There are two types of Array types 
     - Array types are extremely similar to their declaration counterpart, requiring two key components
-        - A size: This must be a compile time constant or a usize integer literal
+        - A size: This must be a compile time constant integer or integer literal coercible to a usize
         - A type: This can be any valid type, but it must be present and cannot be inferred. It can be as deeply nested as you'd like (i.e. `[2uz][2uz]i32`)
     - Slice types differ from array types in that they lack a size. They are composed of:
         - An open-close bracket pair with nothing in between
@@ -48,19 +48,19 @@ var a: &[]&*mut T; // Analogous slice type
     - This can be used to chain array indexing as: `const val := matrix[0uz][1uz];`
 - Indexing an array with a range returns a slice that is exactly the size specified by said range
 - An attempt to index outside of the bounds of an array results in a crash
-- If an array has decayed to a pointer, there are a few ways to interact with the memory through builtins:
-    - `@ptrAdd(ptr, offset)`: Returns a pointer to the value at `ptr + offset`
-    - `@ptrSub(ptr, offset)`: Returns a pointer to the value at `ptr - offset`
-    - `@ptrIdx(ptr, offset)`: Returns a pointer to the value at `offset`
-- It is not necessary to scale the offset by the size of the underlying item type
-    - This is a footgun from C that is handled internally by porpoise
-- These builtins are `not` safety checked, and illegal access has undefined behavior
-    - They should be avoided unless strictly necessary (i.e. working with highly performance-critical code or C-interop)
 
 ## Memory layout
 - Arrays and slices of bytes are not implicitly null terminated
     - If you wish to make a non-null terminated slice a null terminated one, you must do so explicitly
-        - You can indicate that a slice or array is null terminated by explicitly annotating the type with `:0`
+    - You can indicate that a slice or array is null terminated by annotating the size with `:0`
+```porpoise
+const a := [_:0]u8{'a', 'b', '\0' }; // Inferred Size ending with a null byte
+var a: [:0]i32; // Null terminated slice type
+var a: [5uz:0]i32; // Null terminated array type
+```
+- Note that the size of the array type is baked into the null terminated flag, they are not summed
+    - This means the size `[5uz:0]` means size 5 with the element at index 4 a null byte
+
 ### Arrays
 - Arrays are guaranteed to be contiguous in memory
 - Arrays do not support implicit sentinel termination, the size provided to an array at initialization is exactly the size of that array during use

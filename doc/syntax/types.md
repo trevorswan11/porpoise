@@ -1,12 +1,13 @@
 # Types
 ## Explicit Types
 - Types in porpoise are first class values and can be assigned to values and passed to functions
-- There are 4 different explicit type modifiers in porpoise
+- There are 5 different explicit type modifiers in porpoise
     - `*`: Denotes a constant pointer
     - `*mut`: Denotes a mutable pointer
     - `&`: Denotes a constant reference
     - `&mut`: Denotes a mutable reference
-- These modifiers act in an opposite way to languages like C, C++, and Zig, while behaving similar to Rust
+    - `volatile`: Denotes a [volatile](https://en.wikipedia.org/wiki/Volatile_(computer_programming)) value, preventing certain compiler optimizations for the sake of correctness
+- Most of these modifiers act in an opposite way to languages like C, C++, and Zig, while behaving similar to Rust
     - Mutability is opt-in, with everything else being constant by default
 - There are 4 different explicit types in porpoise
     - Identifier types: Consist of an identifier (either a keyword or user defined type)
@@ -96,3 +97,16 @@ const Hand := union {
     - There is no string type in porpoise. Instead you must use an array or slice of bytes (i.e. `[]u8` or `[N]u8`)
 - `bool`: True (`true`) or false (`false`)
 - `void`: The unit type, this can be declared using empty curly braces `{}`
+
+## Special Types
+- `type`: A type encapsulating the information presented in this documentation
+    - Useful for generic programming where a struct is returned from a function to create a custom container or type
+- `auto`: This type is used to tell function signatures that the type should be deduced by the call arguments
+    - This is restricted to values and cannot be used to represent a type, see the `type` type
+    - This is valid for parameters and for the return type
+    - It can also be used in declarations, but this behaves the same as the walrus (`:=`) inference operator
+- `opaque`: This type indicates a type that is not known to the compiler for some reason
+    - Opaque types must be behind a pointer and cannot be dereferenced (mutability is allowed, but references are not)
+    - This exists to fulfill the need introduced by C's `void*` idiom
+- `noreturn`: Used to indicate that a function will never return to the caller
+    - This is only valid on functions and does not support type modifiers

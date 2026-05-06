@@ -21,6 +21,7 @@
         - This parameter has the underlying type of the directly enclosing struct
     - Functions are considered to be top-level within the struct and must be `const`
     - Members can be declared in any order, the compiler is order independent and is free to reorder to optimize
+- Struct 'members' can also be `using` or `import` statements
 - Static members are resolved using the `.` operator
 - Instance members are resolved using the `.` operator
 
@@ -54,14 +55,6 @@ const Foo := struct {           // Standard declaration with type inference
 
 Foo.foo;                                           // Members (static and non-static) are resolved using the '.' operator
 Foo.worker_three();                                // The same goes for functions
-```
-
-- Structs can be marked `packed` to prevent the compiler from reordering members or from adding additional padding
-
-```porpoise
-const Bar := packed struct {
-    // ...
-};
 ```
 
 - There is no inheritance

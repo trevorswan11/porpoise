@@ -74,7 +74,7 @@ class ExplicitType {
 
     auto                      accept(Visitor& v) const -> void;
     [[nodiscard]] static auto parse(syntax::Parser& parser)
-        -> Result<ExplicitType, syntax::ParserDiagnostic>;
+        -> Result<ExplicitType, syntax::Diagnostic>;
 
     MAKE_GETTER(modifier, const TypeModifier&)
     MAKE_GETTER(type, const ExplicitTypeVariant&)
@@ -92,11 +92,14 @@ class ExplicitType {
     MAKE_VARIANT_MATCHER(type_)
     [[nodiscard]] auto get_token() const noexcept -> const syntax::Token&;
 
+    MAKE_AST_SEMA_TYPE_FNS()
+
     MAKE_EQ_DELEGATION(ExplicitType)
 
   private:
-    TypeModifier        modifier_;
-    ExplicitTypeVariant type_;
+    mutable opt::Option<sema::Type&> sema_type_;
+    TypeModifier                     modifier_;
+    ExplicitTypeVariant              type_;
 };
 
 class TypeExpression : public ExprBase<TypeExpression> {
@@ -111,9 +114,9 @@ class TypeExpression : public ExprBase<TypeExpression> {
 
     auto                      accept(Visitor& v) const -> void override;
     [[nodiscard]] static auto parse(syntax::Parser& parser)
-        -> Result<std::pair<mem::Box<Expression>, bool>, syntax::ParserDiagnostic>;
+        -> Result<std::pair<mem::Box<Expression>, bool>, syntax::Diagnostic>;
 
-    MAKE_OPTIONAL_UNPACKER(explicit_type, ExplicitType, explicit_, *)
+    MAKE_OPTIONAL_UNPACKER(explicit_type, const ExplicitType&, explicit_, *)
 
   protected:
     auto is_equal(const Node& other) const noexcept -> bool override;

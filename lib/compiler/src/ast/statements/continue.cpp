@@ -13,7 +13,7 @@ ContinueStatement::~ContinueStatement() = default;
 auto ContinueStatement::accept(Visitor& v) const noexcept -> void { v.visit(*this); }
 
 auto ContinueStatement::parse(syntax::Parser& parser)
-    -> Result<mem::Box<Statement>, syntax::ParserDiagnostic> {
+    -> Result<mem::Box<Statement>, syntax::Diagnostic> {
     const auto start_token = parser.get_current_token();
 
     // Labels are optional
@@ -28,7 +28,7 @@ auto ContinueStatement::parse(syntax::Parser& parser)
     // Values can never be present in a continue
     if (!parser.peek_token_is(syntax::TokenType::END) &&
         !parser.peek_token_is(syntax::TokenType::SEMICOLON)) {
-        return make_parser_err(syntax::ParserError::VALUED_CONTINUE, start_token);
+        return make_syntax_err(syntax::Error::VALUED_CONTINUE, start_token);
     }
 
     TRY(parser.expect_peek(syntax::TokenType::SEMICOLON));

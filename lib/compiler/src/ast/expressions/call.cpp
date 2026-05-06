@@ -2,13 +2,16 @@
 
 #include "ast/expressions/call.hpp"
 
-#include "ast/expressions/enum.hpp" // IWYU pragma: keep
+// IWYU pragma: begin_keeps
+#include "ast/expressions/enum.hpp"
 #include "ast/expressions/function.hpp"
-#include "ast/expressions/identifier.hpp"    // IWYU pragma: keep
-#include "ast/expressions/scope_resolve.hpp" // IWYU pragma: keep
-#include "ast/expressions/struct.hpp"        // IWYU pragma: keep
+#include "ast/expressions/identifier.hpp"
+#include "ast/expressions/scope_resolve.hpp"
+#include "ast/expressions/struct.hpp"
 #include "ast/expressions/type.hpp"
-#include "ast/expressions/union.hpp" // IWYU pragma: keep
+#include "ast/expressions/union.hpp"
+// IWYU pragma: end_keeps
+
 #include "ast/visitor.hpp"
 
 namespace porpoise::ast {
@@ -41,7 +44,7 @@ CallExpression::~CallExpression() = default;
 auto CallExpression::accept(Visitor& v) const -> void { v.visit(*this); }
 
 auto CallExpression::parse(syntax::Parser& parser, mem::Box<Expression> function)
-    -> Result<mem::Box<Expression>, syntax::ParserDiagnostic> {
+    -> Result<mem::Box<Expression>, syntax::Diagnostic> {
     std::vector<CallArgument> arguments;
     // Guaranteed to roll back if there is an error
     const auto parse_expr_unsuccessful = [&]() {
@@ -59,7 +62,7 @@ auto CallExpression::parse(syntax::Parser& parser, mem::Box<Expression> function
     while (!parser.peek_token_is(syntax::TokenType::RPAREN) &&
            !parser.peek_token_is(syntax::TokenType::END)) {
         if (parser.peek_token_is(syntax::TokenType::COMMA)) {
-            return make_parser_err(syntax::ParserError::COMMA_WITH_MISSING_CALL_ARGUMENT,
+            return make_syntax_err(syntax::Error::COMMA_WITH_MISSING_CALL_ARGUMENT,
                                    parser.get_peek_token());
         }
 

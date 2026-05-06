@@ -22,7 +22,7 @@ class BreakStatement : public StmtBase<BreakStatement> {
 
     auto                      accept(Visitor& v) const noexcept -> void override;
     [[nodiscard]] static auto parse(syntax::Parser& parser)
-        -> Result<mem::Box<Statement>, syntax::ParserDiagnostic>;
+        -> Result<mem::Box<Statement>, syntax::Diagnostic>;
 
     MAKE_NULLABLE_BOX_UNPACKER(expression, Expression, expression_, *)
     MAKE_NULLABLE_BOX_UNPACKER(label, IdentifierExpression, label_, *)

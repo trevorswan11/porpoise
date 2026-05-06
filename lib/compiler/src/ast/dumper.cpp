@@ -20,6 +20,12 @@ auto ASTDumper::visit(const ArrayExpression& array) -> void {
     }
 
     {
+        const Indent::Guard g_inner{indent_, false};
+        fmt::println(
+            out_, "{}Null terminated: {}", indent_.current_branch(), array.is_null_terminated());
+    }
+
+    {
         const Indent::Guard g{indent_, false};
         fmt::print(out_, "{}Type: ", indent_.current_branch());
         visit(array.get_item_type());
@@ -408,7 +414,7 @@ auto ASTDumper::visit(const ScopeResolutionExpression& scope_resolve) -> void {
 }
 
 auto ASTDumper::visit(const StructExpression& struct_expr) -> void {
-    fmt::println(out_, "StructExpression{}", struct_expr.is_packed() ? " (packed)" : "");
+    fmt::println(out_, "StructExpression");
     dump_node_list(struct_expr.get_members());
 }
 

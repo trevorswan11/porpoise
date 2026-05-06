@@ -1,17 +1,19 @@
 #pragma once
 
-#include <cassert>
 #include <deque>
+#include <ranges>
 #include <string_view>
 #include <vector>
 
 #include <ankerl/unordered_dense.h>
 
 #include "sema/error.hpp"
-#include "sema/module/module.hpp"
+
+#include "module/module.hpp"
 
 #include "syntax/token.hpp"
 
+#include "assert.hpp"
 #include "iterator.hpp"
 #include "option.hpp"
 #include "result.hpp"
@@ -42,6 +44,20 @@ class LabelExpression;
 
 namespace sema {
 
+// A non-AST-based symbol for primitives and builtins
+class VirtualSymbol {
+  public:
+    explicit VirtualSymbol(const std::pair<std::string_view, syntax::TokenType>& tok) noexcept
+        : token_{tok} {}
+
+    [[nodiscard]] auto get_token() const noexcept -> const syntax::Token& { return token_; }
+
+    MAKE_EQ_DELEGATION(VirtualSymbol)
+
+  private:
+    syntax::Token token_;
+};
+
 using SymbolicDecl        = mem::NonNull<const ast::DeclStatement>;
 using SymbolicUsing       = mem::NonNull<const ast::UsingStatement>;
 using SymbolicUnionField  = mem::NonNull<const ast::UnionField>;
@@ -53,14 +69,14 @@ using SymbolicArm         = mem::NonNull<const ast::MatchArm>;
 using SymbolicLabel       = mem::NonNull<const ast::LabelExpression>;
 
 struct SymbolicImport {
-    mem::NonNull<const ast::ImportStatement> node;
-    opt::Option<mod::Module&>                imported_mod;
+    const ast::ImportStatement& node;
+    opt::Option<mod::Module&>   imported_mod;
 
     MAKE_EQ_DELEGATION(SymbolicImport)
 };
 
-// No other nodes can ever be at the top level
-using SymbolicNode = std::variant<SymbolicDecl,
+using SymbolicNode = std::variant<VirtualSymbol,
+                                  SymbolicDecl,
                                   SymbolicImport,
                                   SymbolicUsing,
                                   SymbolicUnionField,
@@ -73,6 +89,13 @@ using SymbolicNode = std::variant<SymbolicDecl,
 
 class Type;
 
+enum class SymbolKind : u8 {
+    TYPE,
+    VALUE,
+    CALLABLE,
+    MODULE,
+};
+
 enum class ResolveStatus : u8 {
     UNRESOLVED,
     RESOLVING,
@@ -81,7 +104,7 @@ enum class ResolveStatus : u8 {
 
 class Symbol {
   public:
-    Symbol(std::string_view name, SymbolicNode node) noexcept : name_{name}, node_{node} {}
+    Symbol(std::string_view name, const SymbolicNode& node) noexcept : name_{name}, node_{node} {}
     ~Symbol() = default;
 
     MAKE_MOVE_CONSTRUCTABLE_ONLY(Symbol)
@@ -89,6 +112,7 @@ class Symbol {
     MAKE_GETTER(name, std::string_view)
     MAKE_GETTER(node, const SymbolicNode&)
 
+    MAKE_VARIANT_UNPACKER(builtin, VirtualSymbol, VirtualSymbol, node_, std::get)
     MAKE_VARIANT_UNPACKER(decl_stmt, ast::DeclStatement, SymbolicDecl, node_, *std::get)
     MAKE_VARIANT_UNPACKER(import_stmt, SymbolicImport, SymbolicImport, node_, std::get)
     MAKE_VARIANT_UNPACKER(using_stmt, ast::UsingStatement, SymbolicUsing, node_, *std::get)
@@ -106,12 +130,16 @@ class Symbol {
     // Can only be true for decls, imports, and type aliases
     [[nodiscard]] auto is_public() const noexcept -> bool;
 
-    auto               emplace_type(Type& type) noexcept -> void { type_.emplace(type); }
     [[nodiscard]] auto has_type() const noexcept -> bool { return type_.has_value(); }
     [[nodiscard]] auto get_type() const noexcept -> Type& { return *type_; }
+    auto               set_type(Type& type) noexcept -> void { type_.emplace(type); }
 
     [[nodiscard]] auto get_status() const noexcept -> ResolveStatus { return status_; }
     auto               set_status(ResolveStatus status) noexcept -> void { status_ = status; }
+
+    [[nodiscard]] auto has_kind() const noexcept -> bool { return kind_.has_value(); }
+    [[nodiscard]] auto get_kind() const noexcept -> SymbolKind { return *kind_; }
+    auto               set_kind(SymbolKind kind) noexcept -> void { kind_ = kind; }
 
     MAKE_EQ_DELEGATION(Symbol)
 
@@ -120,6 +148,7 @@ class Symbol {
     SymbolicNode             node_;
     opt::Option<sema::Type&> type_;
     ResolveStatus            status_{ResolveStatus::UNRESOLVED};
+    opt::Enum<SymbolKind>    kind_;
 };
 
 class SymbolTable {
@@ -134,6 +163,12 @@ class SymbolTable {
 
     MAKE_MOVE_CONSTRUCTABLE_ONLY(SymbolTable)
 
+    // Constructs the symbolic node in place with the provided args
+    template <typename T, typename... Args>
+    auto insert(std::string_view name, Args&&... args) -> Result<Unit, Diagnostic> {
+        return insert(name, SymbolicNode{T{std::forward<Args>(args)...}});
+    }
+
     auto insert(std::string_view name, SymbolicNode node) -> Result<Unit, Diagnostic>;
     auto reserve(usize cap) -> void { symbols_.reserve(cap); }
 
@@ -145,7 +180,7 @@ class SymbolTable {
     template <typename Self>
     [[nodiscard]] auto get(this Self&& self, std::string_view name) noexcept -> auto& {
         auto it = self.symbols_.find(name);
-        assert(it != self.symbols_.end() && "Illegal get on missing key");
+        ASSERT(it != self.symbols_.end(), "Illegal get on missing key");
         return it->second;
     }
 
@@ -166,6 +201,7 @@ class SymbolTable {
 
 class SymbolTableStack {
   public:
+    // A basic push/pop RAII guard, see `Scope`
     class Guard {
       public:
         Guard(SymbolTableStack& s, usize idx) noexcept : stack_{s} { stack_.push(idx); }
@@ -173,6 +209,21 @@ class SymbolTableStack {
 
       private:
         SymbolTableStack& stack_;
+    };
+
+    // An extension of `Guard` that also resets the old index upon destruction
+    class Scope {
+      public:
+        Scope(SymbolTableStack& s, usize new_idx, usize& old_idx) noexcept
+            : guard_{s, new_idx}, idx_ref_{old_idx}, old_idx_{old_idx} {
+            old_idx = new_idx;
+        }
+        ~Scope() { idx_ref_ = old_idx_; }
+
+      private:
+        SymbolTableStack::Guard guard_;
+        usize&                  idx_ref_;
+        usize                   old_idx_;
     };
 
     MAKE_ITERATOR(Stack, std::vector<usize>, stack_)
@@ -192,6 +243,11 @@ class SymbolTableStack {
     Stack stack_;
 };
 
+#define OPTIONAL_RETURN_TYPE(Underlying)                               \
+    std::conditional_t<std::is_const_v<std::remove_reference_t<Self>>, \
+                       opt::Option<const Underlying&>,                 \
+                       opt::Option<Underlying&>>;
+
 class SymbolTableRegistry {
   public:
     MAKE_ITERATOR(Tables, std::deque<SymbolTable>, tables_)
@@ -207,6 +263,13 @@ class SymbolTableRegistry {
         return tables_.size() - 1;
     }
 
+    // Constructs the symbolic node in place with the provided args
+    template <typename T, typename... Args>
+    [[nodiscard]] auto insert_into(usize table_idx, std::string_view name, Args&&... args)
+        -> Result<Unit, Diagnostic> {
+        return insert_into(table_idx, name, SymbolicNode{T{std::forward<Args>(args)...}});
+    }
+
     [[nodiscard]] auto insert_into(usize table_idx, std::string_view name, SymbolicNode node)
         -> Result<Unit, Diagnostic>;
 
@@ -215,9 +278,7 @@ class SymbolTableRegistry {
     }
 
     template <typename Self> [[nodiscard]] auto get_opt(this Self&& self, usize idx) noexcept {
-        using ReturnType = std::conditional_t<std::is_const_v<std::remove_reference_t<Self>>,
-                                              opt::Option<const SymbolTable&>,
-                                              opt::Option<SymbolTable&>>;
+        using ReturnType = OPTIONAL_RETURN_TYPE(SymbolTable);
         if (idx >= self.tables_.size()) { return ReturnType{opt::none}; }
         return ReturnType{self.tables_[idx]};
     }
@@ -229,20 +290,32 @@ class SymbolTableRegistry {
 
     template <typename Self>
     [[nodiscard]] auto get_from_opt(this Self&& self, usize idx, std::string_view name) noexcept {
-        using ReturnType = std::conditional_t<std::is_const_v<std::remove_reference_t<Self>>,
-                                              opt::Option<const Symbol&>,
-                                              opt::Option<Symbol&>>;
+        using ReturnType = OPTIONAL_RETURN_TYPE(Symbol);
         if (idx >= self.tables_.size()) { return ReturnType{opt::none}; }
         return self.tables_[idx].get_opt(name);
     }
 
+    // Looks up all levels of the stack for possible illegal shadowing of the name
     [[nodiscard]] auto is_shadowing(const SymbolTableStack& stack,
                                     std::string_view        name,
                                     SymbolicNode node) noexcept -> Result<Unit, Diagnostic>;
 
+    // Looks up all levels of the stack for the queried name
+    template <typename Self>
+    [[nodiscard]] auto
+    lookup(this Self&& self, const SymbolTableStack& stack, std::string_view name) noexcept {
+        using ReturnType = OPTIONAL_RETURN_TYPE(Symbol);
+        for (const auto idx : std::views::reverse(stack)) {
+            if (auto symbol = self.tables_[idx].get_opt(name)) { return symbol; }
+        }
+        return ReturnType{opt::none};
+    }
+
   private:
     Tables tables_;
 };
+
+#undef OPTIONAL_RETURN_TYPE
 
 } // namespace sema
 

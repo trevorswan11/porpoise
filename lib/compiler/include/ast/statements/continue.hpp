@@ -21,7 +21,7 @@ class ContinueStatement : public StmtBase<ContinueStatement> {
 
     auto                      accept(Visitor& v) const noexcept -> void override;
     [[nodiscard]] static auto parse(syntax::Parser& parser)
-        -> Result<mem::Box<Statement>, syntax::ParserDiagnostic>;
+        -> Result<mem::Box<Statement>, syntax::Diagnostic>;
 
     MAKE_NULLABLE_BOX_UNPACKER(label, IdentifierExpression, label_, *)
 

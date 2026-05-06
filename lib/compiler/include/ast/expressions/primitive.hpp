@@ -1,6 +1,5 @@
 #pragma once
 
-#include <cassert>
 #include <charconv>
 #include <string>
 #include <utility>
@@ -11,6 +10,8 @@
 
 #include "syntax/parser.hpp"
 
+#include "assert.hpp"
+
 namespace porpoise::ast {
 
 // cppcheck-suppress-begin [constParameterReference, duplInheritedMember]
@@ -18,6 +19,10 @@ namespace porpoise::ast {
 // A necessarily instantiable Node with an underlying primitive value type.
 template <typename N>
 concept PrimitiveNode = LeafNode<N> && requires { typename N::value_type; };
+
+// A primitive node without an explicit underlying payload
+template <typename N>
+concept LightPrimitiveNode = PrimitiveNode<N> && requires { typename N::is_light; };
 
 template <typename ValueType, bool AssertLast = true>
 [[nodiscard]] auto parse_primitive_value(std::string_view slice, syntax::TokenType type) noexcept
@@ -35,13 +40,13 @@ template <typename ValueType, bool AssertLast = true>
     }
 
     if constexpr (AssertLast) {
-        assert(result.ptr == last);
+        ASSERT(result.ptr == last);
         if (result.ec == std::errc{}) { return v; }
     } else {
         if (result.ec == std::errc{} && result.ptr == last) { return v; }
     }
 
-    assert(result.ec == std::errc::result_out_of_range);
+    ASSERT(result.ec == std::errc::result_out_of_range);
     return opt::none;
 }
 
@@ -53,19 +58,18 @@ template <typename Derived, typename T> class PrimitiveExpression : public ExprB
     PrimitiveExpression(const syntax::Token& start_token, value_type value) noexcept
         : ExprBase<Derived>{start_token}, value_{std::move(value)} {}
 
-    static auto parse(syntax::Parser& parser)
-        -> Result<mem::Box<Expression>, syntax::ParserDiagnostic>
+    static auto parse(syntax::Parser& parser) -> Result<mem::Box<Expression>, syntax::Diagnostic>
         requires(!disable_default_parse<Derived>::value)
     {
         const auto start_token = parser.get_current_token();
         auto       value = parse_primitive_value<value_type>(start_token.slice, start_token.type);
         if (value) { return mem::make_box<Derived>(start_token, *value); }
 
-        return make_parser_err(std::is_same_v<value_type, f64>
-                                   ? syntax::ParserError::DOUBLE_OVERFLOW
+        return make_syntax_err(std::is_same_v<value_type, f64>
+                                   ? syntax::Error::DOUBLE_OVERFLOW
                                    : (std::is_same_v<value_type, f32>
-                                          ? syntax::ParserError::FLOAT_OVERFLOW
-                                          : syntax::ParserError::INTEGER_OVERFLOW),
+                                          ? syntax::Error::FLOAT_OVERFLOW
+                                          : syntax::Error::INTEGER_OVERFLOW),
                                start_token);
     }
 
@@ -91,7 +95,7 @@ class StringExpression : public PrimitiveExpression<StringExpression, std::strin
 
     auto                      accept(Visitor& v) const -> void override;
     [[nodiscard]] static auto parse(syntax::Parser& parser)
-        -> Result<mem::Box<Expression>, syntax::ParserDiagnostic>;
+        -> Result<mem::Box<Expression>, syntax::Diagnostic>;
 };
 template <> struct disable_default_parse<StringExpression> : std::true_type {};
 
@@ -171,7 +175,7 @@ class U8Expression : public PrimitiveExpression<U8Expression, u8> {
 
     auto                      accept(Visitor& v) const -> void override;
     [[nodiscard]] static auto parse(syntax::Parser& parser)
-        -> Result<mem::Box<Expression>, syntax::ParserDiagnostic>;
+        -> Result<mem::Box<Expression>, syntax::Diagnostic>;
 };
 template <> struct disable_default_parse<U8Expression> : std::true_type {};
 
@@ -185,6 +189,7 @@ class F32Expression : public PrimitiveExpression<F32Expression, f32> {
 
     auto accept(Visitor& v) const -> void override;
 
+  protected:
     auto is_equal(const Node& other) const noexcept -> bool override;
 };
 
@@ -198,38 +203,55 @@ class F64Expression : public PrimitiveExpression<F64Expression, f64> {
 
     auto accept(Visitor& v) const -> void override;
 
+  protected:
     auto is_equal(const Node& other) const noexcept -> bool override;
 };
 
-class BoolExpression : public PrimitiveExpression<BoolExpression, bool> {
+class BoolExpression : public ExprBase<BoolExpression> {
+  public:
+    using value_type = bool;
+    using is_light   = void;
+
   public:
     static constexpr auto KIND = NodeKind::BOOL_EXPRESSION;
 
   public:
-    using PrimitiveExpression::PrimitiveExpression;
+    explicit BoolExpression(const syntax::Token& start_token) noexcept : ExprBase{start_token} {}
+
     MAKE_MOVE_CONSTRUCTABLE_ONLY(BoolExpression)
 
     auto                      accept(Visitor& v) const -> void override;
     [[nodiscard]] static auto parse(syntax::Parser& parser)
-        -> Result<mem::Box<Expression>, syntax::ParserDiagnostic>;
+        -> Result<mem::Box<Expression>, syntax::Diagnostic>;
 
-    operator bool() const noexcept { return value_; }
+    [[nodiscard]] auto get_value() const noexcept -> bool {
+        return start_token_.type == syntax::TokenType::BOOLEAN_TRUE;
+    }
+
+  protected:
+    auto is_equal(const Node&) const noexcept -> bool override { return true; }
 };
-template <> struct disable_default_parse<BoolExpression> : std::true_type {};
 
-class VoidExpression : public PrimitiveExpression<VoidExpression, Unit> {
+class VoidExpression : public ExprBase<VoidExpression> {
+  public:
+    using value_type = Unit;
+    using is_light   = void;
+
   public:
     static constexpr auto KIND = NodeKind::VOID_EXPRESSION;
 
   public:
-    using PrimitiveExpression::PrimitiveExpression;
+    explicit VoidExpression(const syntax::Token& start_token) noexcept : ExprBase{start_token} {}
+
     MAKE_MOVE_CONSTRUCTABLE_ONLY(VoidExpression)
 
     auto                      accept(Visitor& v) const -> void override;
     [[nodiscard]] static auto parse(syntax::Parser& parser)
-        -> Result<mem::Box<Expression>, syntax::ParserDiagnostic>;
+        -> Result<mem::Box<Expression>, syntax::Diagnostic>;
+
+  protected:
+    auto is_equal(const Node&) const noexcept -> bool override { return true; }
 };
-template <> struct disable_default_parse<VoidExpression> : std::true_type {};
 
 // cppcheck-suppress-end [constParameterReference, duplInheritedMember]
 

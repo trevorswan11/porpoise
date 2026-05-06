@@ -2,16 +2,20 @@
 
 namespace porpoise::tests::helpers {
 
+namespace keywords  = syntax::keywords;
+namespace operators = syntax::operators;
+
 SemaTestContext::SemaTestContext(const std::vector<MockFile>& imports,
                                  const std::filesystem::path& root_path,
-                                 std::string_view             input)
-    : loader{mem::make_box<sema::mod::MemoryLoader>()}, manager{*loader}, analyzer{manager},
-      root_mod{[&] {
+                                 std::string_view             input,
+                                 std::ostream&                error_stream)
+    : loader{mem::make_box<mod::MemoryLoader>()}, manager{*loader},
+      analyzer{manager, error_stream, false}, root_mod{[&] {
           loader->add(root_path, std::string{input});
           for (const auto& mock : imports) {
               loader->add(mock.path, std::string{mock.source});
               if (mock.name) {
-                  REQUIRE(manager.add_porpoise_module(std::string{*mock.name}, mock.path));
+                  REQUIRE(manager.add_library_module(std::string{*mock.name}, mock.path));
               }
           }
 
@@ -22,15 +26,15 @@ SemaTestContext::SemaTestContext(const std::vector<MockFile>& imports,
 
 auto collect(std::string_view input, const std::vector<MockFile>& imports)
     -> std::pair<SemaTestContext, usize> {
-    SemaTestContext ctx{imports, test_file, input};
+    SemaTestContext ctx{imports, TEST_FILENAME, input};
     auto            test_mod = ctx.root_mod;
     REQUIRE_FALSE(test_mod->has_parser_diagnostics());
     ctx.analyzer.collect_symbols(*test_mod);
 
-    return {std::move(ctx), test_mod->root_table_idx};
+    return {std::move(ctx), *test_mod->root_table_idx};
 }
 
-auto collect_and_validate(std::string_view input, const std::vector<MockFile>& imports)
+auto collect_and_check(std::string_view input, const std::vector<MockFile>& imports)
     -> std::pair<SemaTestContext, usize> {
     auto [ctx, idx] = collect(input, imports);
     if (ctx.root_mod->has_sema_diagnostics()) {
@@ -39,13 +43,14 @@ auto collect_and_validate(std::string_view input, const std::vector<MockFile>& i
     return {std::move(ctx), idx};
 }
 
-auto common_decl(std::string_view name, std::string_view assign) -> ast::DeclStatement {
+auto common_decl(std::string_view name, std::string_view assign, bool constant)
+    -> ast::DeclStatement {
     return ast::DeclStatement{
-        syntax::Token{syntax::keywords::CONSTANT},
+        syntax::Token{constant ? keywords::CONSTANT : keywords::VAR},
         make_ident(name),
-        mem::make_box<ast::TypeExpression>(syntax::Token{syntax::operators::WALRUS}, opt::none),
+        mem::make_box<ast::TypeExpression>(syntax::Token{operators::WALRUS}, opt::none),
         make_ident<true>(assign),
-        ast::DeclModifiers::CONSTANT,
+        constant ? ast::DeclModifiers::CONSTANT : ast::DeclModifiers::VARIABLE,
     };
 }
 

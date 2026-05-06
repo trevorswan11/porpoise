@@ -1,6 +1,6 @@
-#include <cassert>
-
 #include "arena.hpp"
+
+#include "assert.hpp"
 
 namespace porpoise::mem {
 
@@ -43,7 +43,7 @@ auto Arena::Block::alloc(Arena& a, usize size, usize align) -> void* {
     if (!a.head_) {
         a.head_ = block;
     } else {
-        assert(a.current_);
+        ASSERT(a.current_);
         a.current_->next = block;
     }
 

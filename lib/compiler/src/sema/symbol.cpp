@@ -9,8 +9,12 @@
 
 namespace porpoise::sema {
 
+auto VirtualSymbol::is_equal(const VirtualSymbol& other) const noexcept -> bool {
+    return token_.type == other.token_.type && token_.slice == other.token_.slice;
+}
+
 auto SymbolicImport::is_equal(const SymbolicImport& other) const noexcept -> bool {
-    return *node == *other.node;
+    return node == other.node;
 }
 
 auto Symbol::is_equal(const Symbol& other) const noexcept -> bool {
@@ -23,27 +27,30 @@ auto Symbol::is_equal(const Symbol& other) const noexcept -> bool {
                        },
                        [&other](const SymbolicImport& v) {
                            return v == std::get<std::remove_cvref_t<decltype(v)>>(other.node_);
+                       },
+                       [&other](const VirtualSymbol& v) {
+                           return v == std::get<std::remove_cvref_t<decltype(v)>>(other.node_);
                        }},
             node_);
     const auto types_eq = opt::safe_eq<Type&>(
         type_, other.type_, [](const Type& a, const Type& b) { return &a == &b; });
 
     const auto status_eq = status_ == other.status_;
-    return status_eq && names_eq && nodes_eq && types_eq;
+    const auto kind_eq   = kind_ == other.kind_;
+    return status_eq && names_eq && nodes_eq && types_eq && kind_eq;
 }
 
 auto Symbol::get_node_token() const noexcept -> const syntax::Token& {
     return match(
-        Overloaded{[](const auto& node) -> const syntax::Token& { return node->get_token(); },
-                   [](const SymbolicImport& inner) -> const syntax::Token& {
-                       return inner.node->get_token();
-                   }});
+        Overloaded{[](const auto& node) -> auto& { return node->get_token(); },
+                   [](const SymbolicImport& inner) -> auto& { return inner.node.get_token(); },
+                   [](const VirtualSymbol& inner) -> auto& { return inner.get_token(); }});
 }
 
 auto Symbol::is_public() const noexcept -> bool {
     return match(Overloaded{
         [](const SymbolicDecl& decl) { return decl->has_modifier(ast::DeclModifiers::PUBLIC); },
-        [](const SymbolicImport& import_stmt) { return import_stmt.node->is_public(); },
+        [](const SymbolicImport& import_stmt) { return import_stmt.node.is_public(); },
         [](const SymbolicUsing& using_stmt) { return using_stmt->is_public(); },
         [](const auto&) { return false; }});
 }
@@ -59,11 +66,12 @@ auto SymbolTable::insert(std::string_view name, SymbolicNode node) -> Result<Uni
                         name,
                         SourceInfo<syntax::Token>::get(it->second.get_node_token())),
             Error::IDENTIFIER_REDECLARATION,
-            std::visit(Overloaded{[](const auto& inner) -> auto& { return inner->get_token(); },
-                                  [](const SymbolicImport& inner) -> auto& {
-                                      return inner.node->get_token();
-                                  }},
-                       node));
+            std::visit(
+                Overloaded{
+                    [](const auto& inner) -> auto& { return inner->get_token(); },
+                    [](const SymbolicImport& inner) -> auto& { return inner.node.get_token(); },
+                    [](const VirtualSymbol& inner) -> auto& { return inner.get_token(); }},
+                node));
     }
     return Unit{};
 }
@@ -88,14 +96,18 @@ auto SymbolTableRegistry::insert_into(usize table_idx, std::string_view name, Sy
                                     return SourceInfo<syntax::Token>::get(inner->get_token());
                                 },
                                 [](const SymbolicImport& inner) {
-                                    return SourceInfo<syntax::Token>::get(inner.node->get_token());
+                                    return SourceInfo<syntax::Token>::get(inner.node.get_token());
+                                },
+                                [](const VirtualSymbol& inner) {
+                                    return SourceInfo<syntax::Token>::get(inner.get_token());
                                 }})),
                 Error::SHADOWING_DECLARATION,
-                std::visit(Overloaded{[](const auto& inner) -> auto& { return inner->get_token(); },
-                                      [](const SymbolicImport& inner) -> auto& {
-                                          return inner.node->get_token();
-                                      }},
-                           node));
+                std::visit(
+                    Overloaded{
+                        [](const auto& inner) -> auto& { return inner->get_token(); },
+                        [](const SymbolicImport& inner) -> auto& { return inner.node.get_token(); },
+                        [](const VirtualSymbol& inner) -> auto& { return inner.get_token(); }},
+                    node));
         }
     }
     return Unit{};

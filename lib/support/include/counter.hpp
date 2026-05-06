@@ -6,12 +6,12 @@
 
 namespace porpoise {
 
-// A simple counter that provides RAII-based up/down counting
+// A simple counter that with RAII-based up/down counting
 template <Integral Underlying> class Counter {
   public:
     class Guard {
       public:
-        explicit Guard(Counter& c) : c_{&c} { c_->increment(); }
+        constexpr explicit Guard(Counter& c) : c_{&c} { c_->increment(); }
         ~Guard() {
             if (c_) { c_->decrement(); }
         }
@@ -27,29 +27,29 @@ template <Integral Underlying> class Counter {
     };
 
   public:
-    auto increment() noexcept -> void { count_ += ONE; }
-    auto decrement() noexcept -> void { count_ -= ONE; }
+    constexpr auto increment() noexcept -> void { count_ += ONE; }
+    constexpr auto decrement() noexcept -> void { count_ -= ONE; }
 
-    operator bool() noexcept { return count_ != ZERO; }
-    operator Underlying() noexcept { return static_cast<Underlying>(count_); }
+    constexpr operator bool() noexcept { return count_ != ZERO; }
+    constexpr operator Underlying() noexcept { return static_cast<Underlying>(count_); }
 
-    auto operator<=>(const Counter&) const noexcept        = default;
-    auto operator==(const Counter&) const noexcept -> bool = default;
+    constexpr auto operator<=>(const Counter&) const noexcept        = default;
+    constexpr auto operator==(const Counter&) const noexcept -> bool = default;
 
     template <typename T>
         requires(std::is_convertible_v<T, Underlying>)
-    auto operator==(const T& other) const noexcept -> bool {
+    constexpr auto operator==(const T& other) const noexcept -> bool {
         return count_ == static_cast<Underlying>(other);
     }
 
     template <typename T>
         requires(std::is_convertible_v<T, Underlying>)
-    auto operator<=>(const T& other) const noexcept {
+    constexpr auto operator<=>(const T& other) const noexcept {
         return count_ <=> static_cast<Underlying>(other);
     }
 
     // Creates an RAII incrementor/decrementor object
-    [[nodiscard]] auto guard() noexcept -> Guard { return Guard{*this}; }
+    [[nodiscard]] constexpr auto guard() noexcept -> Guard { return Guard{*this}; }
 
   private:
     static constexpr auto ZERO = static_cast<Underlying>(0);

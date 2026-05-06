@@ -11,8 +11,13 @@
 
 #include "ast/ast.hpp"
 
+// IWYU pragma: begin_exports
+
+#include "syntax/builtins.hpp"
 #include "syntax/keywords.hpp"
-#include "syntax/operators.hpp" // IWYU pragma: export
+#include "syntax/operators.hpp"
+
+// IWYU pragma: end_exports
 
 #include "string.hpp"
 
@@ -39,20 +44,20 @@ auto into_expression_statement(const N& node) -> const ast::ExpressionStatement&
 
 // Tests a syntactically failing input against the expected generated errors
 template <typename... Ds>
-    requires(std::same_as<Ds, syntax::ParserDiagnostic> && ...)
+    requires(std::same_as<Ds, syntax::Diagnostic> && ...)
 auto test_parser_fail(std::string_view failing, Ds&&... expected_diagnostics) -> void {
     syntax::Parser p{failing};
     auto [ast, errors] = p.consume();
     REQUIRE(ast.empty());
-    helpers::check_errors_against<syntax::ParserDiagnostic>(
-        errors, std::forward<Ds>(expected_diagnostics)...);
+    helpers::check_errors_against<syntax::Diagnostic>(errors,
+                                                      std::forward<Ds>(expected_diagnostics)...);
 }
 
 template <ast::LeafNode N> auto test_stmt(std::string_view input, const N& expected) -> void {
     syntax::Parser p{input};
     auto [ast, errors] = p.consume();
 
-    check_errors<syntax::ParserDiagnostic>(errors);
+    check_errors<syntax::Diagnostic>(errors);
     REQUIRE(ast.size() == 1);
 
     const auto  actual{std::move(ast[0])};
@@ -122,10 +127,9 @@ auto make_parameters(Ps&&... params) -> std::vector<ast::FunctionParameter> {
     return make_vector<ast::FunctionParameter>(std::forward<Ps>(params)...);
 }
 
-template <typename... Ds>
-    requires(std::same_as<Ds, ast::DeclStatement> && ...)
-auto make_decls(Ds&&... decls) -> std::vector<mem::Box<ast::DeclStatement>> {
-    return make_vector<mem::Box<ast::DeclStatement>>(mem::make_box<Ds>(std::forward<Ds>(decls))...);
+template <typename... Ms> auto make_members(Ms&&... members) -> ast::Members {
+    return ast::Members{
+        make_vector<ast::Members::Member>(mem::make_box<Ms>(std::forward<Ms>(members))...)};
 }
 
 template <ast::PrimitiveNode N> auto primitive_from(std::string_view str) noexcept -> N {
@@ -154,7 +158,7 @@ template <ast::PrimitiveNode N, bool Nullable = false>
     requires(std::same_as<N, ast::VoidExpression>)
 auto make_primitive() noexcept {
     return make_leaf_node<ast::VoidExpression, Nullable>(
-        syntax::Token{syntax::TokenType::LBRACE, "{"}, Unit{});
+        syntax::Token{syntax::TokenType::LBRACE, "{"});
 }
 
 template <ast::PrimitiveNode N, bool Nullable = false>
@@ -162,16 +166,17 @@ template <ast::PrimitiveNode N, bool Nullable = false>
 auto make_primitive(bool value) noexcept {
     const syntax::Token tok{value ? syntax::keywords::BOOLEAN_TRUE
                                   : syntax::keywords::BOOLEAN_FALSE};
-    return make_leaf_node<ast::BoolExpression, Nullable>(tok, value ? true : false);
+    return make_leaf_node<ast::BoolExpression, Nullable>(tok);
 }
 
 namespace type_modifiers {
 
-const ast::TypeModifier BASE{};
-const ast::TypeModifier REF{ast::TypeModifier::Modifier::REF};
-const ast::TypeModifier MUT_REF{ast::TypeModifier::Modifier::MUT_REF};
-const ast::TypeModifier PTR{ast::TypeModifier::Modifier::PTR};
-const ast::TypeModifier MUT_PTR{ast::TypeModifier::Modifier::MUT_PTR};
+constexpr ast::TypeModifier BASE{};
+constexpr ast::TypeModifier REF{ast::TypeModifier::Modifier::REF};
+constexpr ast::TypeModifier MUT_REF{ast::TypeModifier::Modifier::MUT_REF};
+constexpr ast::TypeModifier PTR{ast::TypeModifier::Modifier::PTR};
+constexpr ast::TypeModifier MUT_PTR{ast::TypeModifier::Modifier::MUT_PTR};
+constexpr ast::TypeModifier VOLATILE{ast::TypeModifier::Modifier::VOLATILE};
 
 } // namespace type_modifiers
 

@@ -4,54 +4,33 @@
 
 #include "syntax/token.hpp"
 
-#include "variant.hpp"
-
 namespace porpoise::tests {
 
-using syntax::TokenError;
 using syntax::TokenType;
 
 namespace helpers {
 
-auto test_token_promotion(std::string_view                           input,
-                          TokenType                                  type,
-                          std::variant<std::string_view, TokenError> expected) -> void {
+auto test_token_promotion(std::string_view input, TokenType type, std::string_view expected)
+    -> void {
     const syntax::Token tok{type, input, 0, 0};
-    const auto          promoted = tok.promote();
-
-    std::visit(Overloaded{[&promoted](const std::string_view& string) {
-                              CHECK(promoted);
-                              CHECK(*promoted == string);
-                          },
-                          [&promoted](const TokenError& error) {
-                              CHECK_FALSE(promoted);
-                              CHECK(promoted.error() == syntax::TokenDiagnostic{error, 0, 0});
-                          }},
-               expected);
+    const auto          promoted = tok.materialize_string();
+    CHECK(promoted == expected);
 }
 
-auto test_string(std::string_view input, std::variant<std::string_view, TokenError> expected) {
+auto test_string(std::string_view input, std::string_view expected) {
     test_token_promotion(input, TokenType::STRING, expected);
 }
 
-auto test_ml_string(std::string_view input, std::variant<std::string_view, TokenError> expected) {
+auto test_ml_string(std::string_view input, std::string_view expected) {
     test_token_promotion(input, TokenType::MULTILINE_STRING, expected);
 }
 
 } // namespace helpers
 
-TEST_CASE("Promotion of invalid tokens") {
-    helpers::test_token_promotion("1", TokenType::INT_10, TokenError::NON_STRING_TOKEN);
-}
-
 TEST_CASE("Promotion of standard string literals") {
     helpers::test_string(R"("Hello, World!")", "Hello, World!");
     helpers::test_string(R"(""Hello, World!"")", R"("Hello, World!")");
     helpers::test_string(R"("")", "");
-}
-
-TEST_CASE("Malformed string literal") {
-    helpers::test_token_promotion(R"(")", TokenType::STRING, TokenError::UNEXPECTED_CHAR);
 }
 
 TEST_CASE("Promotion of multiline literals") {

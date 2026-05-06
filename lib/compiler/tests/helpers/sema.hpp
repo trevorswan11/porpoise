@@ -9,12 +9,13 @@
 
 #include "sema/analyzer.hpp"
 #include "sema/error.hpp"
-#include "sema/module/memory_loader.hpp"
 #include "sema/symbol.hpp"
+
+#include "module/memory_loader.hpp"
 
 namespace porpoise::tests::helpers {
 
-constexpr std::string_view test_file{"test.porp"};
+constexpr std::string_view TEST_FILENAME{"test.porp"};
 
 struct MockFile {
     std::string_view              path;
@@ -23,15 +24,16 @@ struct MockFile {
 };
 
 struct SemaTestContext {
-    mem::Box<sema::mod::MemoryLoader> loader;
-    sema::mod::ModuleManager          manager;
-    sema::Analyzer                    analyzer;
-    mem::NonNull<sema::mod::Module>   root_mod;
+    mem::Box<mod::MemoryLoader> loader;
+    mod::ModuleManager          manager;
+    sema::Analyzer              analyzer;
+    mem::NonNull<mod::Module>   root_mod;
 
     // The root is automatically added to the internal loader and can be immediately analyzed
     explicit SemaTestContext(const std::vector<MockFile>& imports,
                              const std::filesystem::path& root_path,
-                             std::string_view             input);
+                             std::string_view             input,
+                             std::ostream&                error_stream = std::cerr);
 };
 
 // Collects the assumed-syntactically-valid input and returns the analyzer and parent table index.
@@ -39,16 +41,20 @@ struct SemaTestContext {
     -> std::pair<SemaTestContext, usize>;
 
 // Collects the assumed-syntactically-valid input and checks for no errors
-auto collect_and_validate(std::string_view input, const std::vector<MockFile>& imports = {})
+auto collect_and_check(std::string_view input, const std::vector<MockFile>& imports = {})
     -> std::pair<SemaTestContext, usize>;
 
 // Runs the entire Analyzer on the provided input without checking semantic validity (no errors)
 template <typename... Mocks>
     requires(std::same_as<Mocks, MockFile> && ...)
-auto analyze_unchecked(std::string_view root_path, std::string_view input, Mocks&&... mocks)
-    -> SemaTestContext {
-    SemaTestContext ctx{
-        helpers::make_vector<MockFile>(std::forward<Mocks>(mocks)...), root_path, input};
+auto analyze_unchecked(std::string_view root_path,
+                       std::ostream&    error_stream,
+                       std::string_view input,
+                       Mocks&&... mocks) -> SemaTestContext {
+    SemaTestContext ctx{helpers::make_vector<MockFile>(std::forward<Mocks>(mocks)...),
+                        root_path,
+                        input,
+                        error_stream};
     REQUIRE_FALSE(ctx.root_mod->has_parser_diagnostics());
 
     auto& analyzer = ctx.analyzer;
@@ -61,7 +67,7 @@ template <typename... Mocks>
     requires(std::same_as<Mocks, MockFile> && ...)
 auto analyze(std::string_view root_path, std::string_view input, Mocks&&... mocks)
     -> SemaTestContext {
-    auto ctx = analyze_unchecked(root_path, input, std::forward<Mocks>(mocks)...);
+    auto ctx = analyze_unchecked(root_path, std::cerr, input, std::forward<Mocks>(mocks)...);
     REQUIRE_FALSE(ctx.root_mod->has_sema_diagnostics());
     return ctx;
 }
@@ -75,45 +81,60 @@ template <typename N> struct TableEntry {
 
 // A helper for creating leaf-node-based symbols
 template <ast::LeafNode N> struct TableEntry<N> {
-    using IsLeaf = void;
+    using is_leaf = void;
 
     std::string_view              name;
     N                             node;
     opt::Option<sema::types::Key> node_type_key{opt::none};
     opt::Option<sema::types::Key> symbol_type_key{opt::none};
+    opt::Option<sema::SymbolKind> symbol_kind{opt::none};
 };
+
+template <typename T>
+concept IsLeafEntry = requires { typename T::is_leaf; };
+
+// A helper for creating symbolic imports
+template <> struct TableEntry<ast::ImportStatement> {
+    using is_sym_imp = void;
+
+    std::string_view              name;
+    ast::ImportStatement          node;
+    opt::Option<sema::types::Key> node_type_key{opt::none};
+    opt::Option<sema::types::Key> symbol_type_key{opt::none};
+};
+
+template <typename T>
+concept IsSymImpEntry = requires { typename T::is_sym_imp; };
 
 // A helper for creating declaration symbols
 template <> struct TableEntry<ast::DeclStatement> {
-    using IsDecl = void;
+    using is_decl = void;
 
     std::string_view              name;
     ast::DeclStatement            node;
     opt::Option<sema::types::Key> node_type_key{opt::none};
     opt::Option<sema::types::Key> value_node_type_key{opt::none};
     opt::Option<sema::types::Key> symbol_type_key{opt::none};
+    opt::Option<sema::SymbolKind> symbol_kind{opt::none};
 };
 
 template <typename T>
-concept IsDeclEntry = requires { typename T::IsDecl; };
-
-template <typename T>
-concept IsLeafEntry = requires { typename T::IsLeaf; };
+concept IsDeclEntry = requires { typename T::is_decl; };
 
 // A type can be emplaced at different levels depending on template specialization
 template <typename EntryT, typename NodeLike>
-auto emplace_node_type_from_entry(sema::Analyzer& analyzer,
-                                  const EntryT&   entry,
-                                  const NodeLike& expected_node) {
-    if constexpr (IsLeafEntry<EntryT>) {
+auto emplace_node_metadata_from_entry(sema::Analyzer& analyzer,
+                                      const EntryT&   entry,
+                                      const NodeLike& expected_node) {
+    if constexpr (IsLeafEntry<EntryT> || IsSymImpEntry<EntryT>) {
         if (entry.node_type_key) {
-            const auto type = analyzer.get_pool().get(*entry.node_type_key);
+            const auto type = analyzer.get_pool().get_opt(*entry.node_type_key);
             REQUIRE(type);
             expected_node.set_sema_type(*type);
         }
     } else if constexpr (IsDeclEntry<EntryT>) {
         if (entry.value_node_type_key && expected_node.has_value()) {
-            const auto type = analyzer.get_pool().get(*entry.value_node_type_key);
+            const auto type = analyzer.get_pool().get_opt(*entry.value_node_type_key);
             REQUIRE(type);
             expected_node.get_value().set_sema_type(*type);
         }
@@ -122,13 +143,19 @@ auto emplace_node_type_from_entry(sema::Analyzer& analyzer,
 
 // The symbol's upper-level type can be set by optional configuration in the entry
 template <typename EntryT>
-auto emplace_symbol_type_from_entry(sema::Analyzer& analyzer,
-                                    const EntryT&   entry,
-                                    sema::Symbol&   expected_symbol) {
+auto emplace_symbol_metadata_from_entry(sema::Analyzer& analyzer,
+                                        const EntryT&   entry,
+                                        sema::Symbol&   expected_symbol) {
     if (entry.symbol_type_key) {
-        const auto type = analyzer.get_pool().get(*entry.symbol_type_key);
+        const auto type = analyzer.get_pool().get_opt(*entry.symbol_type_key);
         REQUIRE(type);
-        expected_symbol.emplace_type(*type);
+        expected_symbol.set_type(*type);
+    }
+
+    if constexpr (IsLeafEntry<EntryT> || IsDeclEntry<EntryT>) {
+        if (entry.symbol_kind) { expected_symbol.set_kind(*entry.symbol_kind); }
+    } else if (IsSymImpEntry<EntryT>) {
+        expected_symbol.set_kind(sema::SymbolKind::MODULE);
     }
 }
 
@@ -137,7 +164,7 @@ template <typename... Entries>
 auto test_collector(std::string_view             input,
                     const std::vector<MockFile>& imports,
                     Entries&&... entries) -> SemaTestContext {
-    auto [ctx, idx]      = collect_and_validate(input, imports);
+    auto [ctx, idx]      = collect_and_check(input, imports);
     auto&       analyzer = ctx.analyzer;
     const auto& actual   = analyzer.get_table(idx);
     CHECK(actual.size() == sizeof...(Entries));
@@ -146,18 +173,18 @@ auto test_collector(std::string_view             input,
         const auto opt = actual.get_opt(entries.name);
         REQUIRE(opt);
 
-        using MakerT = std::remove_cvref_t<decltype(entries)>;
-        emplace_node_type_from_entry<MakerT>(analyzer, entries, entries.node);
+        using EntryT = std::remove_cvref_t<decltype(entries)>;
+        emplace_node_metadata_from_entry<EntryT>(analyzer, entries, entries.node);
 
         opt::Option<sema::Symbol> expected;
-        if constexpr (std::is_same_v<sema::SymbolicImport, decltype(entries.node)>) {
-            expected.emplace(entries.name, entries.node);
+        if constexpr (IsSymImpEntry<EntryT>) {
+            expected.emplace(entries.name, sema::SymbolicImport{entries.node, opt::none});
         } else {
             expected.emplace(entries.name, &entries.node);
         }
         REQUIRE(expected);
 
-        emplace_symbol_type_from_entry(analyzer, entries, *expected);
+        emplace_symbol_metadata_from_entry(analyzer, entries, *expected);
         CHECK(*opt == *expected);
     }());
     return std::move(ctx);
@@ -186,8 +213,12 @@ auto test_collector_fail(std::string_view failing, Ds&&... expected_diagnostics)
 }
 
 // A common decl for tests formatted as `const name := assign;`
-auto        common_decl(std::string_view name, std::string_view assign) -> ast::DeclStatement;
-inline auto foo_bar_decl() -> ast::DeclStatement { return common_decl("foo", "bar"); }
+auto common_decl(std::string_view name, std::string_view assign, bool constant)
+    -> ast::DeclStatement;
+
+inline auto foo_bar_decl(bool constant = true) -> ast::DeclStatement {
+    return common_decl("foo", "bar", constant);
+}
 
 // Shallowly checks the symbols in the inner scope of a statement
 template <typename... Entries>
@@ -202,12 +233,19 @@ auto test_hollow_symbols(SemaTestContext& ctx, Entries&&... entries) -> void {
         const auto& expected_node = entries.node;
 
         using MakerT = std::remove_cvref_t<decltype(entries)>;
-        emplace_node_type_from_entry<MakerT>(analyzer, entries, expected_node);
+        emplace_node_metadata_from_entry<MakerT>(analyzer, entries, expected_node);
         sema::Symbol expected{name, &expected_node};
 
-        emplace_symbol_type_from_entry(analyzer, entries, expected);
+        emplace_symbol_metadata_from_entry(analyzer, entries, expected);
         CHECK(expected == registry.get_from(1, name));
     }());
 }
+
+namespace mut {
+
+constexpr auto MUTABLE   = sema::types::Key::Mutability::MUTABLE;
+constexpr auto IMMUTABLE = sema::types::Key::Mutability::IMMUTABLE;
+
+} // namespace mut
 
 } // namespace porpoise::tests::helpers

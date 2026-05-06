@@ -27,7 +27,16 @@ using f64 = double;
 
 using byte = std::string_view::value_type;
 
-template <typename Int>
-concept Integral = std::is_integral_v<Int> && !std::same_as<Int, bool>;
+template <typename T>
+concept Integral = std::is_integral_v<T> && !std::same_as<T, bool>;
+
+template <typename T>
+concept TriviallyDestructible = std::is_trivially_destructible_v<T>;
+
+template <typename T>
+concept TriviallyCopyable = std::is_trivially_copyable_v<T>;
+
+template <typename T>
+concept ScopedEnum = std::is_scoped_enum_v<T>;
 
 } // namespace porpoise

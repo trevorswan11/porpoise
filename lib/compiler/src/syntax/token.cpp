@@ -1,10 +1,11 @@
 #include <algorithm>
-#include <cassert>
 #include <cctype>
 
+#include "syntax/builtins.hpp"
 #include "syntax/keywords.hpp"
 #include "syntax/token.hpp"
 
+#include "assert.hpp"
 #include "enum.hpp"
 
 namespace porpoise::syntax {
@@ -76,6 +77,8 @@ auto misc_from_char(byte c) noexcept -> opt::Option<TokenType> {
     }
 }
 
+namespace {
+
 using SuffixMapping                = std::pair<bool (*)(TokenType), usize>;
 constexpr auto INT_SUFFIX_MAPPINGS = std::to_array<SuffixMapping>({
     {is_i32, 0},
@@ -86,30 +89,27 @@ constexpr auto INT_SUFFIX_MAPPINGS = std::to_array<SuffixMapping>({
     {is_usize_int, 2},
 });
 
+} // namespace
+
 auto suffix_length(TokenType tt) noexcept -> usize {
     if (tt == TokenType::F32) { return 1; }
     if (tt < TokenType::INT_2 || tt > TokenType::UZINT_16) { return 0; }
+
+    // Returns the suffix (second of pair) for the first range that returns true
     return std::ranges::find_if(
                INT_SUFFIX_MAPPINGS,
-               [tt](auto in_range) { return in_range(tt); },
+               [tt](auto* in_range) { return in_range(tt); },
                &SuffixMapping::first)
         ->second;
 }
 
 } // namespace token_type
 
-auto Token::promote() const -> Result<std::string, TokenDiagnostic> {
-    if (type != TokenType::STRING && type != TokenType::MULTILINE_STRING) {
-        return Err{TokenDiagnostic{TokenError::NON_STRING_TOKEN, line, column}};
-    }
+auto Token::materialize_string() const -> std::string {
+    ASSERT(type == TokenType::STRING || type == TokenType::MULTILINE_STRING);
 
     // Here we can just trim off the start and finish of the string
-    if (type == TokenType::STRING) {
-        if (slice.size() < 2) {
-            return Err{TokenDiagnostic{TokenError::UNEXPECTED_CHAR, line, column}};
-        }
-        return std::string{slice.begin() + 1, slice.end() - 1};
-    }
+    if (type == TokenType::STRING) { return std::string{slice.begin() + 1, slice.end() - 1}; }
 
     std::string builder{};
     builder.reserve(slice.size());
@@ -159,9 +159,23 @@ auto Token::is_decl_token() const noexcept -> bool {
     }
 }
 
+auto Token::is_member_token() const noexcept -> bool {
+    switch (type) {
+    case TokenType::IMPORT:
+    case TokenType::USING:  return true;
+    default:                return is_decl_token();
+    }
+}
+
 auto Token::is_valid_ident() const noexcept -> bool {
-    return type == TokenType::IDENT || type == TokenType::NORETURN ||
-           type == TokenType::TYPE_TYPE || is_primitive() || is_builtin();
+    switch (type) {
+    case TokenType::IDENT:
+    case TokenType::NORETURN:
+    case TokenType::TYPE_TYPE:
+    case TokenType::AUTO_TYPE:
+    case TokenType::OPAQUE_TYPE: return true;
+    default:                     return is_primitive() || is_builtin();
+    }
 }
 
 } // namespace porpoise::syntax

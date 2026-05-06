@@ -36,3 +36,4 @@ match (h1) {
     - Attempting to emplace an instance variable in an union is not supported
         - This means that all non-function declarations must be explicitly marked `static`
     - These members must appear after all fields
+- Union 'members' can also be `using` or `import` statements

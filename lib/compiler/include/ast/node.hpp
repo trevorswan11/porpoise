@@ -1,15 +1,12 @@
 #pragma once
 
 #include <algorithm>
-#include <cassert>
 #include <concepts>
-#include <span>
 #include <vector>
-
-#include <magic_enum/magic_enum.hpp>
 
 #include "syntax/token.hpp"
 
+#include "assert.hpp"
 #include "memory.hpp"
 #include "option.hpp"
 #include "types.hpp"
@@ -109,12 +106,12 @@ class Node {
 
     virtual auto accept(Visitor& v) const -> void = 0;
 
-    auto get_token() const noexcept -> const syntax::Token& { return start_token_; }
-    auto get_kind() const noexcept -> NodeKind { return kind_; }
+    [[nodiscard]] auto get_token() const noexcept -> const syntax::Token& { return start_token_; }
+    [[nodiscard]] auto get_kind() const noexcept -> NodeKind { return kind_; }
 
     MAKE_AST_SEMA_TYPE_FNS()
 
-    friend auto operator==(const Node& lhs, const Node& rhs) noexcept -> bool {
+    [[nodiscard]] friend auto operator==(const Node& lhs, const Node& rhs) noexcept -> bool {
         if (lhs.kind_ != rhs.kind_) { return false; }
         if (lhs.start_token_.type != rhs.start_token_.type) { return false; }
         if (lhs.start_token_.slice != rhs.start_token_.slice) { return false; }
@@ -127,21 +124,24 @@ class Node {
         return lhs.is_equal(rhs);
     }
 
-    template <LeafNode T> auto     is() const noexcept -> bool { return kind_ == T::KIND; }
-    template <LeafNode... Ts> auto any() const noexcept -> bool {
+    template <LeafNode T> [[nodiscard]] constexpr auto is() const noexcept -> bool {
+        return kind_ == T::KIND;
+    }
+
+    template <LeafNode... Ts> [[nodiscard]] constexpr auto any() const noexcept -> bool {
         return ((kind_ == Ts::KIND) || ...);
     }
 
     // A 'safe' alternative to a raw static cast for nodes. Assertion > UB
     template <LeafNode T> [[nodiscard]] static auto as(const Node& n) noexcept -> const T& {
-        assert(n.is<T>());
+        ASSERT(n.is<T>());
         return static_cast<const T&>(n);
     }
 
     // Transfers ownership and downcasts a boxed node into the requested type.
     template <LeafNode To, NodeSubtype From>
     static auto downcast(mem::Box<From>&& from) -> mem::Box<To> {
-        assert(from && from->template is<To>());
+        ASSERT(from && from->template is<To>());
         return mem::box_into<To>(std::move(from));
     }
 
@@ -157,11 +157,9 @@ class Node {
     const syntax::Token              start_token_;
     const NodeKind                   kind_;
     mutable opt::Option<sema::Type&> sema_type_;
-    friend class ExplicitType;
 };
 
-using AST     = std::vector<mem::Box<Node>>;
-using ASTView = std::span<const mem::Box<Node>>;
+using AST = std::vector<mem::Box<Node>>;
 
 template <typename Derived, typename Base> class NodeBase : public Base {
   protected:
@@ -193,11 +191,6 @@ template <typename Derived> class StmtBase : public NodeBase<Derived, Statement>
   protected:
     using NodeBase<Derived, Statement>::NodeBase;
 };
-
-class DeclStatement;
-using Members         = std::vector<mem::Box<DeclStatement>>;
-using MembersView     = std::span<const mem::Box<DeclStatement>>;
-using MemberValidator = bool(const DeclStatement&);
 
 } // namespace ast
 

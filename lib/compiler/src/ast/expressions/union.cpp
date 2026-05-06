@@ -38,14 +38,14 @@ UnionExpression::~UnionExpression() = default;
 auto UnionExpression::accept(Visitor& v) const -> void { v.visit(*this); }
 
 auto UnionExpression::parse(syntax::Parser& parser)
-    -> Result<mem::Box<Expression>, syntax::ParserDiagnostic> {
+    -> Result<mem::Box<Expression>, syntax::Diagnostic> {
     const auto start_token = parser.get_current_token();
     TRY(parser.expect_peek(syntax::TokenType::LBRACE));
 
     Fields fields;
     while (!parser.peek_token_is(syntax::TokenType::RBRACE) &&
            !parser.peek_token_is(syntax::TokenType::END)) {
-        if (parser.get_peek_token().is_decl_token()) { break; }
+        if (parser.get_peek_token().is_member_token()) { break; }
 
         TRY(parser.expect_peek(syntax::TokenType::IDENT));
         auto ident = downcast<IdentifierExpression>(TRY(IdentifierExpression::parse(parser)));
@@ -60,19 +60,22 @@ auto UnionExpression::parse(syntax::Parser& parser)
         parser.advance();
     }
 
-    auto members = TRY(parser.parse_member_decls(validate_non_struct_member));
+    auto members =
+        TRY(Members::parse(parser,
+                           Overloaded{[](const mem::Box<DeclStatement>& decl) {
+                                          return Members::validate_non_struct_decl(*decl);
+                                      },
+                                      [](const auto&) { return true; }}));
     TRY(parser.expect_peek(syntax::TokenType::RBRACE));
 
     // Validate here so that there aren't 3 errors spawning from an empty union with decls
-    if (fields.empty()) { return make_parser_err(syntax::ParserError::EMPTY_UNION, start_token); }
+    if (fields.empty()) { return make_syntax_err(syntax::Error::EMPTY_UNION, start_token); }
     return mem::make_box<UnionExpression>(start_token, std::move(fields), std::move(members));
 }
 
 auto UnionExpression::is_equal(const Node& other) const noexcept -> bool {
     const auto& casted = as<UnionExpression>(other);
-    return std::ranges::equal(fields_, casted.fields_) &&
-           std::ranges::equal(
-               members_, casted.members_, [](const auto& a, const auto& b) { return *a == *b; });
+    return std::ranges::equal(fields_, casted.fields_) && members_ == casted.members_;
 }
 
 } // namespace porpoise::ast

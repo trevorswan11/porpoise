@@ -31,14 +31,14 @@ ImportStatement::~ImportStatement() = default;
 auto ImportStatement::accept(Visitor& v) const -> void { v.visit(*this); }
 
 auto ImportStatement::parse(syntax::Parser& parser)
-    -> Result<mem::Box<Statement>, syntax::ParserDiagnostic> {
+    -> Result<mem::Box<Statement>, syntax::Diagnostic> {
     // A start token of public is guaranteed to be followed by an import
     const auto start_token = parser.get_current_token();
     if (parser.current_token_is(syntax::TokenType::PUBLIC)) { parser.advance(); }
 
     auto imported_core = TRY( // cppcheck-suppress internalAstError
         ([&] -> Result<std::variant<mem::Box<IdentifierExpression>, mem::Box<StringExpression>>,
-                       syntax::ParserDiagnostic> {
+                       syntax::Diagnostic> {
             if (parser.peek_token_is(syntax::TokenType::IDENT)) {
                 TRY(parser.expect_peek(syntax::TokenType::IDENT));
                 return downcast<IdentifierExpression>(TRY(IdentifierExpression::parse(parser)));
@@ -47,13 +47,11 @@ auto ImportStatement::parse(syntax::Parser& parser)
                 auto string = downcast<StringExpression>(TRY(StringExpression::parse(parser)));
 
                 if (string->get_value().empty()) {
-                    return make_parser_err(syntax::ParserError::EMPTY_USER_IMPORT,
-                                           string->get_token());
+                    return make_syntax_err(syntax::Error::EMPTY_USER_IMPORT, string->get_token());
                 }
                 return string;
             } else {
-                return make_parser_err(syntax::ParserError::ILLEGAL_IMPORT_TYPE,
-                                       parser.get_peek_token());
+                return make_syntax_err(syntax::Error::ILLEGAL_IMPORT_TYPE, parser.get_peek_token());
             }
         }()));
 
@@ -65,7 +63,7 @@ auto ImportStatement::parse(syntax::Parser& parser)
         imported_alias = mem::nullable_box_from(
             downcast<IdentifierExpression>(TRY(IdentifierExpression::parse(parser))));
     } else if (std::holds_alternative<mem::Box<StringExpression>>(imported_core)) {
-        return make_parser_err(syntax::ParserError::USER_IMPORT_MISSING_ALIAS, start_token);
+        return make_syntax_err(syntax::Error::USER_IMPORT_MISSING_ALIAS, start_token);
     }
 
     if (!parser.current_token_is(syntax::TokenType::SEMICOLON)) {

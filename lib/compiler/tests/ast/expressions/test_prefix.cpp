@@ -32,8 +32,7 @@ TEST_CASE("Implicit access expression") {
 
 TEST_CASE("Illegal implicit access operand") {
     helpers::test_parser_fail(
-        ".a::b",
-        syntax::ParserDiagnostic{syntax::ParserError::ILLEGAL_IMPLICIT_ACCESS_OPERAND, 0, 1});
+        ".a::b", syntax::Diagnostic{syntax::Error::ILLEGAL_IMPLICIT_ACCESS_OPERAND, 0, 1});
 }
 
 TEST_CASE("Reference expressions") {
@@ -42,14 +41,12 @@ TEST_CASE("Reference expressions") {
 }
 
 TEST_CASE("Prefix without operand") {
-    helpers::test_parser_fail(
-        ".", syntax::ParserDiagnostic{syntax::ParserError::PREFIX_MISSING_OPERAND, 0, 0});
+    helpers::test_parser_fail(".", syntax::Diagnostic{syntax::Error::PREFIX_MISSING_OPERAND, 0, 0});
 
-    helpers::test_parser_fail(
-        "!;",
-        syntax::ParserDiagnostic{"No prefix parse function for SEMICOLON(;) found",
-                                 syntax::ParserError::MISSING_PREFIX_PARSER,
-                                 std::pair{0uz, 1uz}});
+    helpers::test_parser_fail("!;",
+                              syntax::Diagnostic{"No prefix parse function for SEMICOLON(;) found",
+                                                 syntax::Error::MISSING_PREFIX_PARSER,
+                                                 std::pair{0uz, 1uz}});
 }
 
 } // namespace porpoise::tests

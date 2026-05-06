@@ -93,33 +93,29 @@ TEST_CASE("Labeled block") {
 }
 
 TEST_CASE("Non-ident label") {
-    helpers::test_parser_fail("2: {};",
-                              syntax::ParserDiagnostic{syntax::ParserError::ILLEGAL_LABEL, 0, 0});
+    helpers::test_parser_fail("2: {};", syntax::Diagnostic{syntax::Error::ILLEGAL_LABEL, 0, 0});
 }
 
 TEST_CASE("Illegal label expressions") {
-    helpers::test_parser_fail(
-        "a: 3;", syntax::ParserDiagnostic{syntax::ParserError::ILLEGAL_LABEL_EXPRESSION, 0, 3});
+    helpers::test_parser_fail("a: 3;",
+                              syntax::Diagnostic{syntax::Error::ILLEGAL_LABEL_EXPRESSION, 0, 3});
 
-    helpers::test_parser_fail(
-        "a: b;", syntax::ParserDiagnostic{syntax::ParserError::ILLEGAL_LABEL_EXPRESSION, 0, 3});
+    helpers::test_parser_fail("a: b;",
+                              syntax::Diagnostic{syntax::Error::ILLEGAL_LABEL_EXPRESSION, 0, 3});
 
-    helpers::test_parser_fail(
-        "a: b();", syntax::ParserDiagnostic{syntax::ParserError::ILLEGAL_LABEL_EXPRESSION, 0, 3});
+    helpers::test_parser_fail("a: b();",
+                              syntax::Diagnostic{syntax::Error::ILLEGAL_LABEL_EXPRESSION, 0, 3});
 
-    helpers::test_parser_fail(
-        "a: b: c: {};",
-        syntax::ParserDiagnostic{syntax::ParserError::ILLEGAL_LABEL_EXPRESSION, 0, 6});
+    helpers::test_parser_fail("a: b: c: {};",
+                              syntax::Diagnostic{syntax::Error::ILLEGAL_LABEL_EXPRESSION, 0, 6});
 }
 
 TEST_CASE("Illegal label statements") {
-    helpers::test_parser_fail(
-        "a: defer 3;",
-        syntax::ParserDiagnostic{syntax::ParserError::ILLEGAL_LABEL_STATEMENT, 0, 3});
+    helpers::test_parser_fail("a: defer 3;",
+                              syntax::Diagnostic{syntax::Error::ILLEGAL_LABEL_STATEMENT, 0, 3});
 
-    helpers::test_parser_fail(
-        "a: return 3;",
-        syntax::ParserDiagnostic{syntax::ParserError::ILLEGAL_LABEL_STATEMENT, 0, 3});
+    helpers::test_parser_fail("a: return 3;",
+                              syntax::Diagnostic{syntax::Error::ILLEGAL_LABEL_STATEMENT, 0, 3});
 }
 
 } // namespace porpoise::tests

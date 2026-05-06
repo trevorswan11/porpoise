@@ -14,7 +14,7 @@ BreakStatement::~BreakStatement() = default;
 auto BreakStatement::accept(Visitor& v) const noexcept -> void { v.visit(*this); }
 
 auto BreakStatement::parse(syntax::Parser& parser)
-    -> Result<mem::Box<Statement>, syntax::ParserDiagnostic> {
+    -> Result<mem::Box<Statement>, syntax::Diagnostic> {
     const auto start_token = parser.get_current_token();
 
     // Labels are optional
@@ -35,7 +35,7 @@ auto BreakStatement::parse(syntax::Parser& parser)
     }
 
     if (value && !label) {
-        return make_parser_err(syntax::ParserError::VALUED_BREAK_MISSING_LABEL, start_token);
+        return make_syntax_err(syntax::Error::VALUED_BREAK_MISSING_LABEL, start_token);
     }
     TRY(parser.expect_peek(syntax::TokenType::SEMICOLON));
     return mem::make_box<BreakStatement>(start_token, std::move(label), std::move(value));

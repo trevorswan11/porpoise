@@ -1,9 +1,9 @@
 #pragma once
 
-#include <algorithm>
 #include <utility>
 
 #include <fmt/format.h>
+
 #include <magic_enum/magic_enum.hpp>
 
 #include "syntax/token.hpp"
@@ -13,10 +13,10 @@
 
 namespace porpoise::ast {
 
-#define MAKE_MUTUALLY_EXCLUSIVE_TYPE_QUERY(name, modifier)  \
-    [[nodiscard]] auto is_##name() const noexcept -> bool { \
-        if (is_value()) { return false; }                   \
-        return *underlying_ == modifier;                    \
+#define MAKE_MUTUALLY_EXCLUSIVE_TYPE_QUERY(name, modifier)            \
+    [[nodiscard]] constexpr auto is_##name() const noexcept -> bool { \
+        if (is_value()) { return false; }                             \
+        return *underlying_ == modifier;                              \
     }
 
 class TypeModifier {
@@ -26,48 +26,39 @@ class TypeModifier {
         MUT_REF,
         PTR,
         MUT_PTR,
+        VOLATILE,
     };
 
   public:
-    TypeModifier() noexcept = default;
-    explicit TypeModifier(opt::Option<Modifier> underlying) noexcept
+    constexpr TypeModifier() noexcept = default;
+    constexpr explicit TypeModifier(opt::Enum<Modifier> underlying) noexcept
         : underlying_{std::move(underlying)} {}
-
-    static constexpr auto from_token(const syntax::Token& tok) noexcept -> TypeModifier {
-        const auto it = std::ranges::find(LEGAL_MODIFIERS, tok.type, &ModifierMapping::first);
-        return it == LEGAL_MODIFIERS.end() ? TypeModifier{opt::none} : TypeModifier{it->second};
-    }
+    explicit TypeModifier(const syntax::Token& tok) noexcept;
 
     // Whether or not the type is a 'value' type (no modifier), mutually exclusive result.
-    [[nodiscard]] auto is_value() const noexcept -> bool { return !underlying_; }
+    [[nodiscard]] constexpr auto is_value() const noexcept -> bool { return !underlying_; }
 
     MAKE_MUTUALLY_EXCLUSIVE_TYPE_QUERY(mutable_ref, Modifier::MUT_REF)
     MAKE_MUTUALLY_EXCLUSIVE_TYPE_QUERY(const_ref, Modifier::REF)
-    [[nodiscard]] auto is_ref() const noexcept -> bool {
+    [[nodiscard]] constexpr auto is_ref() const noexcept -> bool {
         return is_mutable_ref() || is_const_ref();
     }
 
     MAKE_MUTUALLY_EXCLUSIVE_TYPE_QUERY(mutable_ptr, Modifier::MUT_PTR)
     MAKE_MUTUALLY_EXCLUSIVE_TYPE_QUERY(const_ptr, Modifier::PTR)
-    [[nodiscard]] auto is_ptr() const noexcept -> bool {
+    [[nodiscard]] constexpr auto is_ptr() const noexcept -> bool {
         return is_mutable_ptr() || is_const_ptr();
     }
 
-    friend auto operator==(const TypeModifier& lhs, const TypeModifier& rhs) noexcept -> bool {
+    MAKE_MUTUALLY_EXCLUSIVE_TYPE_QUERY(volatile, Modifier::VOLATILE)
+
+    constexpr friend auto operator==(const TypeModifier& lhs, const TypeModifier& rhs) noexcept
+        -> bool {
         return lhs.underlying_ == rhs.underlying_;
     }
 
   private:
-    using ModifierMapping                 = std::pair<syntax::TokenType, Modifier>;
-    static constexpr auto LEGAL_MODIFIERS = std::to_array<ModifierMapping>({
-        {syntax::TokenType::BW_AND, Modifier::REF},
-        {syntax::TokenType::AND_MUT, Modifier::MUT_REF},
-        {syntax::TokenType::STAR, Modifier::PTR},
-        {syntax::TokenType::STAR_MUT, Modifier::MUT_PTR},
-    });
-
-  private:
-    opt::Option<Modifier> underlying_;
+    opt::Enum<Modifier> underlying_;
 
     friend struct fmt::formatter<porpoise::ast::TypeModifier>;
 };

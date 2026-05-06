@@ -13,3 +13,9 @@ A WIP reference of the porpoise programming language
 - [structs](syntax/structs.md)
 - [types](syntax/types.md)
 - [unions](syntax/unions.md)
+
+## Compiler Internals
+- [builtins](syntax/builtins.md)
+
+## Standard Library
+WIP

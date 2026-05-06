@@ -5,108 +5,27 @@
 
 #include "ast/node.hpp"
 
+#include "syntax/error.hpp"
 #include "syntax/lexer.hpp"
 #include "syntax/precedence.hpp"
 #include "syntax/token.hpp"
 
-#include "diagnostic/diagnostic.hpp"
-#include "diagnostic/list.hpp"
-
+#include "result.hpp"
 #include "variant.hpp"
 
-namespace porpoise {
-
-namespace syntax {
-
-enum class ParserError : u8 {
-    UNEXPECTED_TOKEN,
-    MISSING_TRAILING_COMMA,
-    MISSING_PREFIX_PARSER,
-    INFIX_MISSING_RHS,
-    ILLEGAL_IDENTIFIER,
-    END_OF_TOKEN_STREAM,
-    CONST_DECL_MISSING_VALUE,
-    EMPTY_USER_IMPORT,
-    ILLEGAL_IMPORT_TYPE,
-    USER_IMPORT_MISSING_ALIAS,
-    DUPLICATE_DECL_MODIFIER,
-    ILLEGAL_DECL_MODIFIERS,
-    INTEGER_OVERFLOW,
-    FLOAT_OVERFLOW,
-    DOUBLE_OVERFLOW,
-    UNKNOWN_CHARACTER_ESCAPE,
-    MALFORMED_STRING,
-    PREFIX_MISSING_OPERAND,
-    INDEX_MISSING_EXPRESSION,
-    ILLEGAL_IMPLICIT_ACCESS_OPERAND,
-    ILLEGAL_INITIALIZER_OBJECT,
-    DISCARD_MISSING_DISCARDEE,
-    ILLEGAL_BLOCK_STATEMENT,
-    EMPTY_LOOP,
-    WHILE_MISSING_CONDITION,
-    INVALID_MEMBER,
-    PACKED_AFTER_STRUCT_KEYWORD,
-    EMPTY_STRUCT,
-    EXTERN_VALUE_INITIALIZED,
-    ILLEGAL_LOOP_NON_BREAK,
-    FOR_MISSING_ITERABLES,
-    ILLEGAL_FOR_LOOP_CAPTURE,
-    EMPTY_FOR_LOOP,
-    FOR_ITERABLE_CAPTURE_MISMATCH,
-    ILLEGAL_FOR_LOOP_DISCARD,
-    EMPTY_WHILE_CONTINUATION,
-    EMPTY_WHILE_LOOP,
-    IF_MISSING_CONDITION,
-    ILLEGAL_IF_BRANCH,
-    MISSING_ARRAY_SIZE_TOKEN,
-    ILLEGAL_ARRAY_SIZE_TYPE,
-    EXPLICIT_ARRAY_SIZE_MISMATCH,
-    MATCH_EXPR_MISSING_CONDITION,
-    ARMLESS_MATCH_EXPR,
-    ILLEGAL_MATCH_ARM,
-    ILLEGAL_MATCH_CATCH_ALL,
-    FUNCTION_PARAMETER_HAS_DEFAULT_VALUE,
-    FUNCTION_PARAMETER_IS_NORETURN,
-    ILLEGAL_FUNCTION_DEFINITION,
-    ILLEGAL_TYPE_MODIFIER,
-    ILLEGAL_EXPLICIT_TYPE,
-    MISSING_EXPLICIT_TYPE,
-    EXPLICIT_FN_TYPE_HAS_BODY,
-    FN_DECLARATION_WITHOUT_BODY,
-    ILLEGAL_OUTER_SCOPE_TYPE,
-    ILLEGAL_FUNCTION_TYPE_MODIFIER,
-    ILLEGAL_NORETURN_TYPE_MODIFIER,
-    ILLEGAL_VOID_TYPE_MODIFIER,
-    ILLEGAL_TYPE_TYPE_MODIFIER,
-    COMMA_WITH_MISSING_CALL_ARGUMENT,
-    EMPTY_UNION,
-    EMPTY_ENUM,
-    ILLEGAL_DEFERRED_STATEMENT,
-    DEFER_MISSING_DEFERREE,
-    EMPTY_TEST_DESCRIPTION,
-    VALUED_BREAK_MISSING_LABEL,
-    VALUED_CONTINUE,
-    ILLEGAL_LABEL,
-    ILLEGAL_LABEL_EXPRESSION,
-    ILLEGAL_LABEL_STATEMENT,
-};
-
-using ParserDiagnostic  = Diagnostic<ParserError>;
-using ParserDiagnostics = DiagnosticList<ParserDiagnostic>;
-
-template <typename... Args> auto make_parser_err(Args&&... args) -> Err<ParserDiagnostic> {
-    return make_err<ParserDiagnostic>(std::forward<Args>(args)...);
-}
+namespace porpoise::syntax {
 
 class Parser {
   public:
-    using PrefixFn = Result<mem::Box<ast::Expression>, ParserDiagnostic> (*)(Parser&);
-    using InfixFn =
-        Result<mem::Box<ast::Expression>, ParserDiagnostic> (*)(Parser&, mem::Box<ast::Expression>);
+    using PrefixFn = Result<mem::Box<ast::Expression>, Diagnostic> (*)(Parser&);
+    using InfixFn  = Result<mem::Box<ast::Expression>, Diagnostic> (*)(Parser&,
+                                                                      mem::Box<ast::Expression>);
 
     class Checkpoint {
       public:
-        explicit Checkpoint(const Parser& p) noexcept;
+        explicit Checkpoint(const Parser& parser) noexcept
+            : snapshot_{parser.lexer_}, current_{parser.current_token_}, peek_{parser.peek_token_} {
+        }
 
       private:
         Lexer::Snapshot snapshot_;
@@ -130,7 +49,7 @@ class Parser {
       private:
         Parser&            p_;
         Parser::Checkpoint checkpoint_;
-        bool               committed_ = false;
+        bool               committed_{false};
     };
 
   public:
@@ -142,7 +61,7 @@ class Parser {
     // Advances the parser, returning the resulting current token.
     // This is a no-op at end of stream.
     auto advance(u8 times = 1) noexcept -> const Token&;
-    auto consume() -> std::pair<ast::AST, ParserDiagnostics>;
+    auto consume() -> std::pair<ast::AST, Diagnostics>;
 
     auto get_current_token() const noexcept -> const Token& { return current_token_; }
     auto get_peek_token() const noexcept -> const Token& { return peek_token_; }
@@ -151,32 +70,27 @@ class Parser {
     auto peek_token_is(TokenType t) const noexcept -> bool { return peek_token_.type == t; }
 
     // Advances the cursor tokens only if the expected token type matches the actual peek token.
-    [[nodiscard]] auto expect_peek(TokenType expected) -> Result<Unit, ParserDiagnostic>;
+    [[nodiscard]] auto expect_peek(TokenType expected) -> Result<Unit, Diagnostic>;
 
     // Indiscriminately returns an error citing the peek token.
-    [[nodiscard]] auto peek_error(TokenType expected) -> ParserDiagnostic;
+    [[nodiscard]] auto peek_error(TokenType expected) -> Diagnostic;
 
     auto get_current_precedence() const noexcept -> std::pair<Precedence, opt::Option<Binding>>;
     auto get_peek_precedence() const noexcept -> std::pair<Precedence, opt::Option<Binding>>;
 
     [[nodiscard]] auto parse_statement(bool require_semicolon)
-        -> Result<mem::Box<ast::Statement>, ParserDiagnostic>;
+        -> Result<mem::Box<ast::Statement>, Diagnostic>;
     [[nodiscard]] auto parse_expression(Precedence precedence = Precedence::LOWEST)
-        -> Result<mem::Box<ast::Expression>, ParserDiagnostic>;
+        -> Result<mem::Box<ast::Expression>, Diagnostic>;
 
     // Assumes that the current token is looking at the start of the expression.
     // The resulting statement can only be a jump, block, or expression statement.
-    [[nodiscard]] auto parse_restricted_statement(ParserError error, bool require_semicolon = true)
-        -> Result<mem::Box<ast::Statement>, ParserDiagnostic>;
+    [[nodiscard]] auto parse_restricted_statement(Error error, bool require_semicolon = true)
+        -> Result<mem::Box<ast::Statement>, Diagnostic>;
 
     // Parses a restricted statement only if an else token is currently looked at.
-    [[nodiscard]] auto try_parse_restricted_alternate(ParserError error,
-                                                      bool        require_semicolon = true)
-        -> Result<mem::NullableBox<ast::Statement>, ParserDiagnostic>;
-
-    // Parses a member declaration list for user-defined types
-    [[nodiscard]] auto parse_member_decls(ast::MemberValidator validator = nullptr)
-        -> Result<ast::Members, ParserDiagnostic>;
+    [[nodiscard]] auto try_parse_restricted_alternate(Error error, bool require_semicolon = true)
+        -> Result<mem::NullableBox<ast::Statement>, Diagnostic>;
 
     static auto try_get_prefix_fn(TokenType tt) noexcept -> opt::Option<PrefixFn>;
     static auto try_get_poll_infix_fn(TokenType tt) noexcept -> opt::Option<InfixFn>;
@@ -196,6 +110,4 @@ class Parser {
     Token            peek_token_{};
 };
 
-} // namespace syntax
-
-} // namespace porpoise
+} // namespace porpoise::syntax

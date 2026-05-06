@@ -1,6 +1,7 @@
 R"(ExpressionStatement
 └─ Expr: ArrayExpression
     ├─ Size: (inferred)
+    ├─ Null terminated: true
     ├─ Type: ExplicitType (modifier: PTR)
     │   └─ IdentifierExpression: N
     └─ Items:
@@ -99,7 +100,7 @@ ExpressionStatement
     │   └─ Inner: IdentifierExpression: B
     └─ Inner: IdentifierExpression: C
 ExpressionStatement
-└─ Expr: StructExpression (packed)
+└─ Expr: StructExpression
     ├─ DeclStatement (a)
     │   ├─ Modifiers: VARIABLE
     │   ├─ Type: ExplicitType (modifier: BASE)
@@ -228,10 +229,10 @@ ExpressionStatement
         └─ Name: IdentifierExpression: C
 ExpressionStatement
 └─ Expr: CallExpression
-    ├─ Callee: IdentifierExpression: @ptrAdd (builtin)
+    ├─ Callee: IdentifierExpression: @as (builtin)
     └─ Arguments:
-        ├─ IdentifierExpression: a
-        └─ USizeExpression: 4
+        ├─ IdentifierExpression: i32 (primitive)
+        └─ IdentifierExpression: a
 UsingStatement
 ├─ Public: false
 ├─ Alias: IdentifierExpression: T
@@ -285,6 +286,7 @@ ExpressionStatement
 ExpressionStatement
 └─ Expr: ArrayExpression
     ├─ Size: USizeExpression: 1
+    ├─ Null terminated: false
     ├─ Type: ExplicitType (modifier: BASE)
     │   └─ IdentifierExpression: A
     └─ Items:

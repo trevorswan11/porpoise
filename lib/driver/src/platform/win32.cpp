@@ -10,10 +10,14 @@
 
 namespace porpoise::driver::win32 {
 
-static std::atomic<i32> REF_COUNT{0};
-static UINT             ORIGINAL_CODE_PAGE   = 0;
-static DWORD            ORIGINAL_STDOUT_MODE = 0;
-static DWORD            ORIGINAL_STDERR_MODE = 0;
+namespace {
+
+std::atomic<i32> REF_COUNT{0};
+UINT             ORIGINAL_CODE_PAGE   = 0;
+DWORD            ORIGINAL_STDOUT_MODE = 0;
+DWORD            ORIGINAL_STDERR_MODE = 0;
+
+} // namespace
 
 RichConsole::RichConsole() noexcept {
     if (REF_COUNT.fetch_add(1) > 0) { return; }

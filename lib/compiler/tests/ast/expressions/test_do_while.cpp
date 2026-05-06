@@ -16,27 +16,26 @@ TEST_CASE("Correct do-while") {
 
 TEST_CASE("Empty do-while") {
     helpers::test_parser_fail("do {} while (true);",
-                              syntax::ParserDiagnostic{syntax::ParserError::EMPTY_LOOP, 0, 3});
+                              syntax::Diagnostic{syntax::Error::EMPTY_LOOP, 0, 3});
 }
 
 TEST_CASE("Missing do-while condition") {
-    helpers::test_parser_fail(
-        "do {a; } while ();",
-        syntax::ParserDiagnostic{syntax::ParserError::WHILE_MISSING_CONDITION, 0, 15});
+    helpers::test_parser_fail("do {a; } while ();",
+                              syntax::Diagnostic{syntax::Error::WHILE_MISSING_CONDITION, 0, 15});
 }
 
 TEST_CASE("Unclosed do-while body") {
     helpers::test_parser_fail("do { while (true);",
-                              syntax::ParserDiagnostic{"Expected token LBRACE, found SEMICOLON",
-                                                       syntax::ParserError::UNEXPECTED_TOKEN,
-                                                       std::pair{0uz, 17uz}});
+                              syntax::Diagnostic{"Expected token LBRACE, found SEMICOLON",
+                                                 syntax::Error::UNEXPECTED_TOKEN,
+                                                 std::pair{0uz, 17uz}});
 }
 
 TEST_CASE("Unclosed do-while condition") {
     helpers::test_parser_fail("do {a; } while (true;",
-                              syntax::ParserDiagnostic{"Expected token RPAREN, found SEMICOLON",
-                                                       syntax::ParserError::UNEXPECTED_TOKEN,
-                                                       std::pair{0uz, 20uz}});
+                              syntax::Diagnostic{"Expected token RPAREN, found SEMICOLON",
+                                                 syntax::Error::UNEXPECTED_TOKEN,
+                                                 std::pair{0uz, 20uz}});
 }
 
 } // namespace porpoise::tests

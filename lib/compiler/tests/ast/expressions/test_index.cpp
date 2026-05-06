@@ -26,8 +26,8 @@ TEST_CASE("Index on an index") {
 }
 
 TEST_CASE("No index") {
-    helpers::test_parser_fail(
-        "arr[]", syntax::ParserDiagnostic{syntax::ParserError::INDEX_MISSING_EXPRESSION, 0, 0});
+    helpers::test_parser_fail("arr[]",
+                              syntax::Diagnostic{syntax::Error::INDEX_MISSING_EXPRESSION, 0, 0});
 }
 
 } // namespace porpoise::tests

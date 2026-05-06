@@ -25,8 +25,8 @@ class BlockStatement : public StmtBase<BlockStatement> {
     MAKE_MOVE_CONSTRUCTABLE_ONLY(BlockStatement)
 
     auto                      accept(Visitor& v) const -> void override;
-    [[nodiscard]] static auto parse(syntax::Parser& parser, bool allow_imports = false)
-        -> Result<mem::Box<Statement>, syntax::ParserDiagnostic>;
+    [[nodiscard]] static auto parse(syntax::Parser& parser)
+        -> Result<mem::Box<Statement>, syntax::Diagnostic>;
 
   protected:
     auto is_equal(const Node& other) const noexcept -> bool override {
