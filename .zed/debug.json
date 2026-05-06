@@ -1,0 +1,49 @@
+// Project-local debug tasks
+//
+// For more documentation on how to configure debug tasks,
+// see: https://zed.dev/docs/debugger
+[
+    {
+        "adapter": "CodeLLDB",
+        "label": "porpoise (C++)",
+        "request": "launch",
+        "name": "porpoise",
+        "program": "zig-out/bin/porpoise",
+        "args": [
+            "ast"
+        ],
+        "stopOnEntry": false,
+    },
+    {
+        "adapter": "CodeLLDB",
+        "label": "test-compiler (C++)",
+        "request": "launch",
+        "name": "test-compiler",
+        "program": "zig-out/tests/compiler",
+        "stopOnEntry": false,
+    },
+    {
+        "adapter": "CodeLLDB",
+        "label": "test-support (C++)",
+        "request": "launch",
+        "name": "test-support",
+        "program": "zig-out/tests/support",
+        "stopOnEntry": false,
+    },
+    {
+        "adapter": "CodeLLDB",
+        "label": "test-driver (C++)",
+        "request": "launch",
+        "name": "test-driver",
+        "program": "zig-out/tests/driver",
+        "stopOnEntry": false,
+    },
+    {
+        "adapter": "CodeLLDB",
+        "label": "test-harness (Zig)",
+        "request": "launch",
+        "name": "test-harness",
+        "program": "zig-out/tests/harness",
+        "stopOnEntry": false,
+    }
+]
