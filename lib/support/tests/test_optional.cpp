@@ -197,15 +197,15 @@ enum class OptionableEnum : u8 {
     C,
 };
 
-TEST_CASE("OptionableEnum concept") {
-    STATIC_REQUIRE_FALSE(opt::OptionableEnum<i32>);
-    STATIC_REQUIRE_FALSE(opt::OptionableEnum<NonOptionableEnum>);
-    STATIC_REQUIRE(opt::OptionableEnum<OptionableEnum>);
-    STATIC_REQUIRE(sizeof(opt::Enum<OptionableEnum>) == sizeof(OptionableEnum));
+TEST_CASE("CompactOpt with enum") {
+    STATIC_REQUIRE_FALSE(traits::Compactable<i32>);
+    STATIC_REQUIRE_FALSE(traits::Compactable<NonOptionableEnum>);
+    STATIC_REQUIRE(traits::Compactable<OptionableEnum>);
+    STATIC_REQUIRE(sizeof(opt::Option<OptionableEnum>) == sizeof(OptionableEnum));
 }
 
 TEST_CASE("Optional enum wrapper") {
-    opt::Enum<OptionableEnum> e;
+    opt::Option<OptionableEnum> e;
     CHECK_FALSE(e.has_value());
     CHECK_THROWS_AS(e.value(), std::bad_optional_access);
 
@@ -215,21 +215,21 @@ TEST_CASE("Optional enum wrapper") {
 }
 
 TEST_CASE("Enum transform on value") {
-    opt::Enum<OptionableEnum> e{OptionableEnum::A};
+    opt::Option<OptionableEnum> e{OptionableEnum::A};
     const auto res = e.transform([](const OptionableEnum&) { return OptionableEnum::B; });
     REQUIRE(res);
     CHECK(*res == OptionableEnum::B);
 }
 
 TEST_CASE("Enum transform on none") {
-    opt::Enum<OptionableEnum> e{};
+    opt::Option<OptionableEnum> e{};
     const auto res = e.transform([](const OptionableEnum&) { return OptionableEnum::B; });
     CHECK_FALSE(res);
 }
 
 TEST_CASE("Enum-std optional conversion") {
     std::optional<OptionableEnum> std_i{OptionableEnum::A};
-    opt::Enum<OptionableEnum>     my_i = std_i;
+    opt::Option<OptionableEnum>   my_i = std_i;
     REQUIRE(std_i.has_value());
     CHECK(*std_i == *my_i);
 

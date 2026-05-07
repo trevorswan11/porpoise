@@ -16,7 +16,7 @@ namespace {
 using ModifierMapping          = std::pair<syntax::TokenType, DeclModifiers>;
 constexpr auto LEGAL_MODIFIERS = [] {
     using TokenType = syntax::TokenType;
-    EnumMap<TokenType, opt::Enum<DeclModifiers>> modifiers{opt::none};
+    EnumMap<TokenType, opt::Option<DeclModifiers>> modifiers{opt::none};
     modifiers[TokenType::VAR]       = DeclModifiers::VARIABLE;
     modifiers[TokenType::CONSTANT]  = DeclModifiers::CONSTANT;
     modifiers[TokenType::CONSTEXPR] = DeclModifiers::CONSTEXPR;
@@ -62,7 +62,7 @@ auto DeclStatement::parse(syntax::Parser& parser)
     const auto start_token = parser.get_current_token();
     auto       modifiers   = LEGAL_MODIFIERS[start_token.type].value();
 
-    opt::Enum<DeclModifiers> current_modifier;
+    opt::Option<DeclModifiers> current_modifier;
     while ((current_modifier = LEGAL_MODIFIERS[parser.get_peek_token().type])) {
         parser.advance();
         if (modifiers_has(modifiers, *current_modifier)) {

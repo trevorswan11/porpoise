@@ -10,7 +10,7 @@ using Modifier           = TypeModifier::Modifier;
 using ModifierMapping    = std::pair<syntax::TokenType, Modifier>;
 constexpr auto MODIFIERS = [] {
     using TokenType = syntax::TokenType;
-    EnumMap<TokenType, opt::Enum<Modifier>> modifiers{opt::none};
+    EnumMap<TokenType, opt::Option<Modifier>> modifiers{opt::none};
     modifiers[TokenType::BW_AND]   = Modifier::REF;
     modifiers[TokenType::AND_MUT]  = Modifier::MUT_REF;
     modifiers[TokenType::STAR]     = Modifier::PTR;

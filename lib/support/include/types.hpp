@@ -39,4 +39,7 @@ concept TriviallyCopyable = std::is_trivially_copyable_v<T>;
 template <typename T>
 concept ScopedEnum = std::is_scoped_enum_v<T>;
 
+template <typename T>
+concept Reference = std::is_reference_v<T>;
+
 } // namespace porpoise

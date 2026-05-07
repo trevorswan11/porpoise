@@ -64,7 +64,7 @@ auto SymbolTable::insert(std::string_view name, SymbolicNode node) -> Result<Uni
         return make_sema_err(
             fmt::format("Redeclaration of symbol '{}'. Previous declaration here: {}",
                         name,
-                        SourceInfo<syntax::Token>::get(it->second.get_node_token())),
+                        traits::SourceInfo<syntax::Token>::get(it->second.get_node_token())),
             Error::IDENTIFIER_REDECLARATION,
             std::visit(
                 Overloaded{
@@ -89,18 +89,19 @@ auto SymbolTableRegistry::insert_into(usize table_idx, std::string_view name, Sy
     for (const auto idx : stack | std::views::take(stack.size() - 1)) {
         if (const auto symbol = get(idx).get_opt(name)) {
             return make_sema_err(
-                fmt::format("Attempt to shadow identifier '{}'. Previous declaration here: {}",
-                            name,
-                            symbol->match(Overloaded{
-                                [](const auto& inner) {
-                                    return SourceInfo<syntax::Token>::get(inner->get_token());
-                                },
-                                [](const SymbolicImport& inner) {
-                                    return SourceInfo<syntax::Token>::get(inner.node.get_token());
-                                },
-                                [](const VirtualSymbol& inner) {
-                                    return SourceInfo<syntax::Token>::get(inner.get_token());
-                                }})),
+                fmt::format(
+                    "Attempt to shadow identifier '{}'. Previous declaration here: {}",
+                    name,
+                    symbol->match(Overloaded{
+                        [](const auto& inner) {
+                            return traits::SourceInfo<syntax::Token>::get(inner->get_token());
+                        },
+                        [](const SymbolicImport& inner) {
+                            return traits::SourceInfo<syntax::Token>::get(inner.node.get_token());
+                        },
+                        [](const VirtualSymbol& inner) {
+                            return traits::SourceInfo<syntax::Token>::get(inner.get_token());
+                        }})),
                 Error::SHADOWING_DECLARATION,
                 std::visit(
                     Overloaded{

@@ -11,7 +11,7 @@ LineOffsets::LineOffsets(std::string_view input) {
     }
 }
 
-auto SourceFile::get_diagnostic_strings(const SourceLocation& loc) const
+auto SourceFile::get_diagnostic_strings_at(const SourceLocation& loc) const
     -> std::pair<std::string_view, opt::Option<std::string>> {
     if (loc.line > offsets_.size()) { return {"<invalid line>", opt::none}; }
 

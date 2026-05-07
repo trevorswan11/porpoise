@@ -148,7 +148,7 @@ class Symbol {
     SymbolicNode             node_;
     opt::Option<sema::Type&> type_;
     ResolveStatus            status_{ResolveStatus::UNRESOLVED};
-    opt::Enum<SymbolKind>    kind_;
+    opt::Option<SymbolKind>  kind_;
 };
 
 class SymbolTable {

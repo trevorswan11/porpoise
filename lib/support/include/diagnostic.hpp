@@ -32,6 +32,8 @@ struct SourceLocation {
     }
 };
 
+namespace traits {
+
 template <typename T> struct SourceInfo;
 
 template <typename T>
@@ -44,6 +46,12 @@ template <> struct SourceInfo<std::pair<usize, usize>> {
         return {p.first, p.second};
     }
 };
+
+template <> struct SourceInfo<SourceLocation> {
+    static auto get(const SourceLocation& loc) -> SourceLocation { return loc; }
+};
+
+} // namespace traits
 
 namespace mod { struct Module; } // namespace mod
 
@@ -84,10 +92,10 @@ namespace detail {
 
 // A decomposed diagnostic that contains all information for base formatting
 struct FormattableDiagnostic {
-    const opt::Option<std::string>&    message;
-    const opt::Option<SourceLocation>& location;
-    std::string_view                   error_name;
-    const opt::Enum<DiagnosticLevel>&  level;
+    const opt::Option<std::string>&     message;
+    const opt::Option<SourceLocation>&  location;
+    std::string_view                    error_name;
+    const opt::Option<DiagnosticLevel>& level;
 };
 
 auto format_diagnostic(std::ostream&                   os,
@@ -106,20 +114,22 @@ template <ScopedEnum E> class Diagnostic {
     Diagnostic(opt::Option<std::string> msg, E err) noexcept
         : message_{std::move(msg)}, error_{err} {}
 
-    template <Locateable T>
+    template <traits::Locateable T>
     Diagnostic(opt::Option<std::string> msg, E err, const T& t) noexcept
-        : message_{std::move(msg)}, loc_{SourceInfo<T>::get(t)}, error_{err} {}
+        : message_{std::move(msg)}, loc_{traits::SourceInfo<T>::get(t)}, error_{err} {}
 
-    template <Locateable T> Diagnostic(E err, T t) : loc_{SourceInfo<T>::get(t)}, error_{err} {}
+    template <traits::Locateable T>
+    Diagnostic(E err, T t) : loc_{traits::SourceInfo<T>::get(t)}, error_{err} {}
 
     // Moves the passed diagnostic into a new one with an error code
     Diagnostic(Diagnostic&& other, E err) noexcept
         : message_{std::move(other.message_)}, loc_{std::move(other.loc_)}, error_{err} {}
 
     // Moves the passed diagnostic into a new one with a specified source location
-    template <Locateable T>
+    template <traits::Locateable T>
     Diagnostic(Diagnostic&& other, const T& t) noexcept
-        : message_{std::move(other.message_)}, loc_{SourceInfo<T>::get(t)}, error_{other.error_} {}
+        : message_{std::move(other.message_)}, loc_{traits::SourceInfo<T>::get(t)},
+          error_{other.error_} {}
 
     [[nodiscard]] auto to_string(const opt::Option<std::string>& source_path = opt::none,
                                  opt::Option<bool> in_terminal = opt::none) const -> std::string {
@@ -143,10 +153,10 @@ template <ScopedEnum E> class Diagnostic {
     auto unset_level() noexcept -> void { level_.reset(); }
 
   private:
-    opt::Option<std::string>    message_{};
-    opt::Option<SourceLocation> loc_{};
-    E                           error_;
-    opt::Enum<DiagnosticLevel>  level_{DiagnosticLevel::ERROR};
+    opt::Option<std::string>     message_{};
+    opt::Option<SourceLocation>  loc_{};
+    E                            error_;
+    opt::Option<DiagnosticLevel> level_{DiagnosticLevel::ERROR};
 };
 
 template <typename T> struct is_diagnostic : std::false_type {};

@@ -41,12 +41,8 @@ class SourceFile {
     MAKE_MOVE_ONLY(SourceFile)
 
     // Returns the trimmed relevant line in the source along with a caret to the column if possible
-    [[nodiscard]] auto get_diagnostic_strings(const SourceLocation& loc) const
-        -> std::pair<std::string_view, opt::Option<std::string>>;
-
-    // Extracts the source location from the locateable value to retrieve the diagnostic
-    template <Locateable T> [[nodiscard]] auto get_diagnostic_strings(const T& t) const {
-        return get_diagnostic_strings(SourceInfo<T>::get(t));
+    template <traits::Locateable T> [[nodiscard]] auto get_diagnostic_strings(const T& t) const {
+        return get_diagnostic_strings_at(traits::SourceInfo<T>::get(t));
     }
 
     [[nodiscard]] constexpr operator std::string_view() const noexcept { return source_; }
@@ -54,6 +50,10 @@ class SourceFile {
 
     constexpr auto empty() const noexcept -> bool { return source_.empty(); }
     constexpr auto size() const noexcept -> usize { return source_.size(); }
+
+  private:
+    [[nodiscard]] auto get_diagnostic_strings_at(const SourceLocation& loc) const
+        -> std::pair<std::string_view, opt::Option<std::string>>;
 
   private:
     std::string source_;

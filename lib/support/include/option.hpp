@@ -8,7 +8,32 @@
 #include "assert.hpp"
 #include "types.hpp"
 
-namespace porpoise::opt {
+namespace porpoise {
+
+namespace traits {
+
+template <typename T> struct Nullable;
+
+// When true, allows the type to be used in a compact optional representation
+template <typename T>
+concept Compactable = !Reference<T> && requires(const T& t) {
+    { Nullable<T>::invalid() } -> std::same_as<T>;
+    { Nullable<T>::is_valid(t) } -> std::same_as<bool>;
+};
+
+template <ScopedEnum E> struct Nullable<E> {
+    [[nodiscard]] static constexpr auto invalid() noexcept -> E {
+        return static_cast<E>(std::numeric_limits<std::underlying_type_t<E>>::max());
+    }
+
+    [[nodiscard]] static constexpr auto is_valid(const E& e) noexcept -> bool {
+        return e != invalid();
+    }
+};
+
+} // namespace traits
+
+namespace opt {
 
 using None          = std::nullopt_t;
 constexpr None none = std::nullopt;
@@ -86,6 +111,11 @@ template <typename T> class Ref {
     T* ptr_;
 };
 
+// Returns the Ref version of the optional type if required
+template <typename T>
+using TryDispatchRef =
+    std::conditional_t<Reference<T>, Ref<std::remove_reference_t<T>>, std::optional<T>>;
+
 // An efficient optional representation of boolean values
 class Boolean {
   public:
@@ -142,18 +172,99 @@ class Boolean {
     u8 value_;
 };
 
+// An efficient optional enum representation for enums with a sentinel value
+template <traits::Compactable T> class CompactOpt {
+  public:
+    // cppcheck-suppress-begin noExplicitConstructor
+    constexpr CompactOpt() noexcept : value_{NO_VALUE} {}
+    constexpr CompactOpt(const T& value) noexcept : value_{value} {}
+    constexpr CompactOpt(None) noexcept : value_{NO_VALUE} {}
+    constexpr CompactOpt(const std::optional<T>& opt) noexcept : value_{opt.value_or(NO_VALUE)} {}
+    // cppcheck-suppress-end noExplicitConstructor
+
+    [[nodiscard]] constexpr auto has_value() const noexcept -> bool {
+        return traits::Nullable<T>::is_valid(value_);
+    }
+
+    [[nodiscard]] constexpr explicit operator bool() const noexcept { return has_value(); }
+
+    constexpr auto emplace(const T& value) noexcept -> void { value_ = value; }
+    constexpr auto reset() noexcept -> void { value_ = NO_VALUE; }
+
+    // Resets the optional and returns the stored value
+    [[nodiscard]] constexpr auto take() noexcept -> T {
+        auto value = value_;
+        reset();
+        return value;
+    }
+
+    [[nodiscard]] constexpr auto value() const -> T {
+        if (!has_value()) { throw std::bad_optional_access(); }
+        return value_;
+    }
+
+    [[nodiscard]] constexpr auto get() const noexcept -> T {
+        ASSERT(has_value(), "Attempt to access empty compact optional");
+        return value_;
+    }
+
+    [[nodiscard]] constexpr auto operator*() const noexcept -> T { return get(); }
+    [[nodiscard]] friend auto    operator==(const CompactOpt& lhs, const CompactOpt& rhs) noexcept
+        -> bool = default;
+
+    template <typename Self, class F>
+    [[nodiscard]] constexpr auto transform(this Self&& self, F&& f) {
+        using Res = std::remove_cv_t<std::invoke_result_t<F, T>>;
+
+        // This is straight from clang's stdc++ C++23 optional implementation
+        static_assert(!std::is_array_v<Res>, "Result of f(value()) should not be an Array");
+        static_assert(!std::is_same_v<Res, std::in_place_t>,
+                      "Result of f(value()) should not be std::in_place_t");
+        static_assert(!std::is_same_v<Res, None>, "Result of f(value()) should not be opt::none");
+        static_assert(std::is_object_v<Res>, "Result of f(value()) should be an object type");
+
+        // Also from clang, but generalized to support reference transform chains
+        using Ret = TryDispatchRef<Res>;
+        return self.has_value() ? Ret{std::forward<F>(f)(self.value())} : Ret{};
+    }
+
+    [[nodiscard]] constexpr operator std::optional<T>() const noexcept {
+        return has_value() ? std::optional<T>{value_} : opt::none;
+    }
+
+  private:
+    static constexpr T NO_VALUE = traits::Nullable<T>::invalid();
+
+  private:
+    T value_;
+};
+
+template <typename T> struct OptionImpl {
+    using type = std::optional<T>;
+};
+
+template <Reference T> struct OptionImpl<T> {
+    using type = Ref<std::remove_reference_t<T>>;
+};
+
+template <> struct OptionImpl<bool> {
+    using type = Boolean;
+};
+
+template <traits::Compactable T> struct OptionImpl<T> {
+    using type = CompactOpt<T>;
+};
+
 } // namespace detail
 
 // A safe, reference-allowable optional type dispatcher
-template <typename T>
-using Option = std::conditional_t<
-    std::is_reference_v<T>,
-    detail::Ref<std::remove_reference_t<T>>,
-    std::conditional_t<std::is_same_v<T, bool>, detail::Boolean, std::optional<T>>>;
+template <typename T> using Option = typename detail::OptionImpl<T>::type;
 
 template <typename T> struct is_option : std::false_type {};
 template <typename T> struct is_option<std::optional<T>> : std::true_type {};
 template <typename T> struct is_option<detail::Ref<T>> : std::true_type {};
+template <> struct is_option<detail::Boolean> : std::true_type {};
+template <typename T> struct is_option<detail::CompactOpt<T>> : std::true_type {};
 template <typename T> constexpr bool is_option_v = is_option<T>::value;
 
 // Compares two values, forwarding safety concerns to the comparator.
@@ -228,78 +339,6 @@ class Index {
     usize idx_{NO_VALUE};
 };
 
-// Defines a sentinel value for the enum that is the same as its underlying type
-template <typename E> struct SentinelEnum;
+} // namespace opt
 
-template <ScopedEnum E> struct SentinelEnum<E> {
-    static constexpr auto SENTINEL = std::numeric_limits<std::underlying_type_t<E>>::max();
-};
-
-template <typename E>
-concept OptionableEnum = ScopedEnum<E> && requires { static_cast<E>(SentinelEnum<E>::SENTINEL); };
-
-// An efficient optional enum representation for enums with a sentinel value
-template <OptionableEnum E> class Enum {
-  public:
-    // cppcheck-suppress-begin noExplicitConstructor
-    constexpr Enum() noexcept : value_{NO_VALUE} {}
-    constexpr Enum(E value) noexcept : value_{value} {}
-    constexpr Enum(None) noexcept : value_{NO_VALUE} {}
-    constexpr Enum(const std::optional<E>& oe) noexcept : value_{oe.value_or(NO_VALUE)} {}
-    // cppcheck-suppress-end noExplicitConstructor
-
-    [[nodiscard]] constexpr auto has_value() const noexcept -> bool { return value_ != NO_VALUE; }
-    [[nodiscard]] constexpr explicit operator bool() const noexcept { return has_value(); }
-
-    constexpr auto emplace(E value) noexcept -> void { value_ = value; }
-    constexpr auto reset() noexcept -> void { value_ = NO_VALUE; }
-
-    // Resets the optional and returns the stored value
-    [[nodiscard]] constexpr auto take() noexcept -> E {
-        auto value = value_;
-        reset();
-        return value;
-    }
-
-    [[nodiscard]] constexpr auto value() const -> E {
-        if (!has_value()) { throw std::bad_optional_access(); }
-        return value_;
-    }
-
-    [[nodiscard]] constexpr auto get() const noexcept -> E {
-        ASSERT(has_value(), "Attempt to access empty optional enum");
-        return value_;
-    }
-
-    [[nodiscard]] constexpr auto operator*() const noexcept -> E { return get(); }
-    [[nodiscard]] friend auto    operator==(const Enum& lhs, const Enum& rhs) noexcept
-        -> bool = default;
-
-    template <typename Self, class F>
-    [[nodiscard]] constexpr auto transform(this Self&& self, F&& f) {
-        using Res = std::remove_cv_t<std::invoke_result_t<F, E>>;
-
-        // This is straight from clang's stdc++ C++23 optional implementation
-        static_assert(!std::is_array_v<Res>, "Result of f(value()) should not be an Array");
-        static_assert(!std::is_same_v<Res, std::in_place_t>,
-                      "Result of f(value()) should not be std::in_place_t");
-        static_assert(!std::is_same_v<Res, None>, "Result of f(value()) should not be opt::none");
-        static_assert(std::is_object_v<Res>, "Result of f(value()) should be an object type");
-
-        // Also from clang, but generalized to support reference transform chains
-        if (self.has_value()) { return Option<Res>{std::forward<F>(f)(self.value())}; }
-        return Option<Res>{};
-    }
-
-    [[nodiscard]] constexpr operator std::optional<E>() const noexcept {
-        return has_value() ? std::optional<E>{value_} : opt::none;
-    }
-
-  private:
-    static constexpr E NO_VALUE = static_cast<E>(SentinelEnum<E>::SENTINEL);
-
-  private:
-    E value_;
-};
-
-} // namespace porpoise::opt
+} // namespace porpoise

@@ -7,6 +7,8 @@ namespace porpoise {
 struct SomethingLocationed {};
 struct SomethingElseLocationed {};
 
+namespace traits {
+
 template <> struct SourceInfo<SomethingLocationed> {
     static auto get(const SomethingLocationed&) noexcept -> SourceLocation { return {0, 42}; }
 };
@@ -14,6 +16,8 @@ template <> struct SourceInfo<SomethingLocationed> {
 template <> struct SourceInfo<SomethingElseLocationed> {
     static auto get(const SomethingElseLocationed&) noexcept -> SourceLocation { return {42, 0}; }
 };
+
+} // namespace traits
 
 namespace tests {
 

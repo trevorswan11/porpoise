@@ -31,7 +31,7 @@ class TypeModifier {
 
   public:
     constexpr TypeModifier() noexcept = default;
-    constexpr explicit TypeModifier(opt::Enum<Modifier> underlying) noexcept
+    constexpr explicit TypeModifier(opt::Option<Modifier> underlying) noexcept
         : underlying_{std::move(underlying)} {}
     explicit TypeModifier(const syntax::Token& tok) noexcept;
 
@@ -58,7 +58,7 @@ class TypeModifier {
     }
 
   private:
-    opt::Enum<Modifier> underlying_;
+    opt::Option<Modifier> underlying_;
 
     friend struct fmt::formatter<porpoise::ast::TypeModifier>;
 };
