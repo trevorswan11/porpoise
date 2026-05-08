@@ -37,10 +37,12 @@ constexpr auto assert_impl(std::source_location loc,
 #ifndef NDEBUG
 #    define ASSERT_1(expression)         \
         ::porpoise::detail::assert_impl( \
-            std::source_location::current(), !!(expression), "", #expression)
-#    define ASSERT_2(expression, message) \
-        ::porpoise::detail::assert_impl(  \
-            std::source_location::current(), !!(expression), (message), #expression)
+            std::source_location::current(), static_cast<bool>(expression), "", #expression)
+#    define ASSERT_2(expression, message)                                \
+        ::porpoise::detail::assert_impl(std::source_location::current(), \
+                                        static_cast<bool>(expression),   \
+                                        (message),                       \
+                                        #expression)
 #else
 #    define ASSERT_1(expression)                         \
         do {                                             \

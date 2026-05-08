@@ -152,13 +152,11 @@ class Boolean {
 
     [[nodiscard]] constexpr auto operator*() const noexcept -> bool { return get(); }
 
-    template <class Or> [[nodiscard]] constexpr auto value_or(Or&& or_value) -> bool {
+    template <typename Or> [[nodiscard]] constexpr auto value_or(Or&& or_value) -> bool {
         // This is straight from clang's stdc++ C++23 optional implementation
-        static_assert(std::is_copy_constructible_v<Or>,
-                      "Boolean::value_or: T must be copy constructible");
-        static_assert(std::is_convertible_v<Or, bool>,
-                      "Boolean::value_or: Or must be convertible to T");
-        return has_value() ? this->get() : static_cast<bool>(std::forward<Or>(or_value));
+        static_assert(std::is_copy_constructible_v<Or>, "value_or: Or must be copy constructible");
+        static_assert(std::is_convertible_v<Or, bool>, "value_or: Or must be convertible to T");
+        return has_value() ? get() : static_cast<bool>(std::forward<Or>(or_value));
     }
 
     [[nodiscard]] constexpr operator std::optional<bool>() const noexcept {
@@ -212,7 +210,7 @@ template <traits::Compactable T> class CompactOpt {
     [[nodiscard]] friend auto    operator==(const CompactOpt& lhs, const CompactOpt& rhs) noexcept
         -> bool = default;
 
-    template <typename Self, class F>
+    template <typename Self, typename F>
     [[nodiscard]] constexpr auto transform(this Self&& self, F&& f) {
         using Res = std::remove_cv_t<std::invoke_result_t<F, T>>;
 
@@ -226,6 +224,15 @@ template <traits::Compactable T> class CompactOpt {
         // Also from clang, but generalized to support reference transform chains
         using Ret = TryDispatchRef<Res>;
         return self.has_value() ? Ret{std::forward<F>(f)(self.value())} : Ret{};
+    }
+
+    template <typename Self, typename Or>
+    [[nodiscard]] constexpr auto value_or(this Self&& self, Or&& or_value) -> T {
+        // This is straight from clang's stdc++ C++23 optional implementation
+        static_assert(std::is_copy_constructible_v<Or>, "value_or: Or must be copy constructible");
+        static_assert(
+            requires(T t) { static_cast<Or>(t); }, "value_or: Or must be convertible to T");
+        return self.has_value() ? self.get() : static_cast<T>(std::forward<Or>(or_value));
     }
 
     [[nodiscard]] constexpr operator std::optional<T>() const noexcept {
