@@ -157,12 +157,11 @@ auto Parser::parse_expression(Precedence precedence) -> Result<ast::ExpressionHa
     auto clause = TRY(parse_statement(require_semicolon));
 
     // The clause can only be a jump, block, or expression statement
-    if (!(*clause)
-             .any<ast::ExpressionStatement,
-                  ast::BreakStatement,
-                  ast::ContinueStatement,
-                  ast::ReturnStatement,
-                  ast::BlockStatement>()) {
+    if (!clause->any<ast::ExpressionStatement,
+                     ast::BreakStatement,
+                     ast::ContinueStatement,
+                     ast::ReturnStatement,
+                     ast::BlockStatement>()) {
         return make_syntax_err(error, ctx_->tree.location_of(*clause));
     }
     return clause;
@@ -284,6 +283,14 @@ auto Parser::try_get_prefix_fn(TokenType tt) noexcept -> opt::Option<PrefixFn> {
 
 auto Parser::try_get_poll_infix_fn(TokenType tt) noexcept -> opt::Option<InfixFn> {
     return INFIX_FNS.get_opt(tt);
+}
+
+auto Parser::get_location_of(ast::NodeID id) -> SourceLocation {
+    return ctx_->tree.location_of(id);
+}
+
+auto Parser::get_location_of(ast::ExplicitTypeID id) -> SourceLocation {
+    return ctx_->tree.location_of(id);
 }
 
 } // namespace porpoise::syntax

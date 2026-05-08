@@ -103,6 +103,8 @@ class Parser {
     static auto try_get_poll_infix_fn(TokenType tt) noexcept -> opt::Option<InfixFn>;
 
     [[nodiscard]] auto get_ast() noexcept -> ast::AST& { return ctx_->tree; }
+    [[nodiscard]] auto get_location_of(ast::NodeID id) -> SourceLocation;
+    [[nodiscard]] auto get_location_of(ast::ExplicitTypeID id) -> SourceLocation;
 
   private:
     // Reverts the parser to the state from the checkpoint.

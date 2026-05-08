@@ -206,6 +206,11 @@ template <traits::Compactable T> class CompactOpt {
         return value_;
     }
 
+    [[nodiscard]] constexpr auto operator->() const noexcept -> const T* {
+        ASSERT(has_value(), "Attempt to access empty compact optional");
+        return &value_;
+    }
+
     [[nodiscard]] constexpr auto operator*() const noexcept -> T { return get(); }
     [[nodiscard]] friend auto    operator==(const CompactOpt& lhs, const CompactOpt& rhs) noexcept
         -> bool = default;
