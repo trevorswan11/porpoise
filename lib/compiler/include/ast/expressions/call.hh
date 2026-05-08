@@ -4,7 +4,7 @@
 #include <vector>
 
 #include "ast/expressions/type.hh"
-#include "ast/node.hh"
+#include "ast/oop_node.hh"
 
 #include "syntax/parser.hh"
 

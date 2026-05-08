@@ -1,6 +1,6 @@
 #pragma once
 
-#include "ast/node.hh"
+#include "ast/oop_node.hh"
 #include "ast/statements/declaration.hh"
 #include "ast/statements/import.hh"
 #include "ast/statements/using.hh"

@@ -6,7 +6,7 @@
 
 #include <fmt/format.h>
 
-#include "ast/node.hh"
+#include "ast/oop_node.hh"
 
 #include "syntax/parser.hh"
 

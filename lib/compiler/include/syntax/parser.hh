@@ -3,7 +3,7 @@
 #include <string_view>
 #include <utility>
 
-#include "ast/node.hh"
+#include "ast/id.hh"
 
 #include "syntax/error.hh"
 #include "syntax/lexer.hh"
@@ -13,13 +13,14 @@
 #include "result.hh"
 #include "variant.hh"
 
+namespace porpoise::ast { class AST; } // namespace porpoise::ast
+
 namespace porpoise::syntax {
 
 class Parser {
   public:
-    using PrefixFn = Result<mem::Box<ast::Expression>, Diagnostic> (*)(Parser&);
-    using InfixFn  = Result<mem::Box<ast::Expression>, Diagnostic> (*)(Parser&,
-                                                                      mem::Box<ast::Expression>);
+    using PrefixFn = Result<ast::ExpressionHandle, Diagnostic> (*)(Parser&);
+    using InfixFn  = Result<ast::ExpressionHandle, Diagnostic> (*)(Parser&, ast::ExpressionHandle);
 
     class Checkpoint {
       public:
@@ -52,16 +53,22 @@ class Parser {
         bool               committed_{false};
     };
 
+    struct ASTContext {
+        ast::AST& tree;
+    };
+
   public:
     Parser() noexcept = default;
-    explicit Parser(std::string_view input) noexcept : input_{input}, lexer_{input} { advance(2); }
+    explicit Parser(std::string_view input) noexcept { reset(input); }
 
     auto reset(std::string_view input = {}) noexcept -> void;
 
     // Advances the parser, returning the resulting current token.
     // This is a no-op at end of stream.
     auto advance(u8 times = 1) noexcept -> const Token&;
-    auto consume() -> std::pair<ast::AST, Diagnostics>;
+
+    // Fills the AST with the parser's output, clearing it before use
+    auto consume(ast::AST& tree) -> Diagnostics;
 
     auto get_current_token() const noexcept -> const Token& { return current_token_; }
     auto get_peek_token() const noexcept -> const Token& { return peek_token_; }
@@ -79,21 +86,23 @@ class Parser {
     auto get_peek_precedence() const noexcept -> std::pair<Precedence, opt::Option<Binding>>;
 
     [[nodiscard]] auto parse_statement(bool require_semicolon)
-        -> Result<mem::Box<ast::Statement>, Diagnostic>;
+        -> Result<ast::StatementHandle, Diagnostic>;
     [[nodiscard]] auto parse_expression(Precedence precedence = Precedence::LOWEST)
-        -> Result<mem::Box<ast::Expression>, Diagnostic>;
+        -> Result<ast::ExpressionHandle, Diagnostic>;
 
     // Assumes that the current token is looking at the start of the expression.
     // The resulting statement can only be a jump, block, or expression statement.
     [[nodiscard]] auto parse_restricted_statement(Error error, bool require_semicolon = true)
-        -> Result<mem::Box<ast::Statement>, Diagnostic>;
+        -> Result<ast::StatementHandle, Diagnostic>;
 
     // Parses a restricted statement only if an else token is currently looked at.
     [[nodiscard]] auto try_parse_restricted_alternate(Error error, bool require_semicolon = true)
-        -> Result<mem::NullableBox<ast::Statement>, Diagnostic>;
+        -> Result<opt::Option<ast::StatementHandle>, Diagnostic>;
 
     static auto try_get_prefix_fn(TokenType tt) noexcept -> opt::Option<PrefixFn>;
     static auto try_get_poll_infix_fn(TokenType tt) noexcept -> opt::Option<InfixFn>;
+
+    [[nodiscard]] auto get_ast() noexcept -> ast::AST& { return ctx_->tree; }
 
   private:
     // Reverts the parser to the state from the checkpoint.
@@ -104,10 +113,11 @@ class Parser {
     }
 
   private:
-    std::string_view input_;
-    Lexer            lexer_{};
-    Token            current_token_{};
-    Token            peek_token_{};
+    std::string_view        input_;
+    Lexer                   lexer_{};
+    Token                   current_token_{};
+    Token                   peek_token_{};
+    opt::Option<ASTContext> ctx_;
 };
 
 } // namespace porpoise::syntax

@@ -1,7 +1,7 @@
 #include "sema/type_resolver.hh"
 #include "sema/type.hh"
 
-#include "ast/ast.hh"
+#include "ast/oop_ast.hh"
 
 namespace porpoise::sema {
 

@@ -2,7 +2,7 @@
 
 #include <vector>
 
-#include "ast/node.hh"
+#include "ast/oop_node.hh"
 
 #include "syntax/parser.hh"
 

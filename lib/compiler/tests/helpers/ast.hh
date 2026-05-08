@@ -9,7 +9,7 @@
 
 #include "helpers/common.hh"
 
-#include "ast/ast.hh"
+#include "ast/oop_ast.hh"
 
 // IWYU pragma: begin_exports
 

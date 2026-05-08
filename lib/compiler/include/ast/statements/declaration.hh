@@ -2,7 +2,7 @@
 
 #include <magic_enum/magic_enum_flags.hpp>
 
-#include "ast/node.hh"
+#include "ast/oop_node.hh"
 
 #include "syntax/parser.hh"
 

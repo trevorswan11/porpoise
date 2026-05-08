@@ -2,8 +2,8 @@
 #include <fmt/ostream.h>
 #include <magic_enum/magic_enum.hpp>
 
-#include "ast/ast.hh"
 #include "ast/dumper.hh"
+#include "ast/oop_ast.hh"
 
 namespace porpoise::ast {
 

@@ -5,8 +5,8 @@
 
 #include "helpers/common.hh"
 
-#include "ast/ast.hh"
 #include "ast/dumper.hh"
+#include "ast/oop_ast.hh"
 
 namespace porpoise::tests {
 

@@ -8,12 +8,18 @@
 #include "syntax/token.hh"
 
 #include "ast/ast.hh"
+#include "ast/nodes.hh"
 
 #include "enum.hh"
 
 namespace porpoise::syntax {
 
-auto Parser::reset(std::string_view input) noexcept -> void { *this = Parser{input}; }
+auto Parser::reset(std::string_view input) noexcept -> void {
+    ctx_.reset();
+    input_ = input;
+    lexer_.reset(input);
+    advance(2);
+}
 
 auto Parser::advance(u8 times) noexcept -> const Token& {
     for (u8 i = 0; i < times; ++i) {
@@ -23,9 +29,11 @@ auto Parser::advance(u8 times) noexcept -> const Token& {
     return current_token_;
 }
 
-auto Parser::consume() -> std::pair<ast::AST, Diagnostics> {
+auto Parser::consume(ast::AST& ast) -> Diagnostics {
     reset(input_);
-    ast::AST    ast;
+    ast.clear();
+    ctx_.emplace(ast);
+
     Diagnostics diagnostics;
 
     while (!current_token_is(TokenType::END)) {
@@ -38,7 +46,7 @@ auto Parser::consume() -> std::pair<ast::AST, Diagnostics> {
         if (!current_token_is(TokenType::COMMENT)) {
             auto stmt = parse_statement(true);
             if (stmt) {
-                ast.emplace_back(std::move(*stmt));
+                ast.add_root(**stmt);
             } else {
                 diagnostics.emplace_back(std::move(stmt.error()));
 
@@ -57,7 +65,7 @@ auto Parser::consume() -> std::pair<ast::AST, Diagnostics> {
         advance();
     }
 
-    return {std::move(ast), std::move(diagnostics)};
+    return diagnostics;
 }
 
 auto Parser::expect_peek(TokenType expected) -> Result<Unit, Diagnostic> {
@@ -93,8 +101,7 @@ auto Parser::get_peek_precedence() const noexcept -> std::pair<Precedence, opt::
         .value_or(std::pair{Precedence::LOWEST, opt::none});
 }
 
-auto Parser::parse_statement(bool require_semicolon)
-    -> Result<mem::Box<ast::Statement>, Diagnostic> {
+auto Parser::parse_statement(bool require_semicolon) -> Result<ast::StatementHandle, Diagnostic> {
     // Not all decls are public so the condition needs to be rechecked
     if (current_token_.type == TokenType::PUBLIC) {
         switch (peek_token_.type) {
@@ -120,8 +127,7 @@ auto Parser::parse_statement(bool require_semicolon)
     }
 }
 
-auto Parser::parse_expression(Precedence precedence)
-    -> Result<mem::Box<ast::Expression>, Diagnostic> {
+auto Parser::parse_expression(Precedence precedence) -> Result<ast::ExpressionHandle, Diagnostic> {
     if (current_token_is(TokenType::END)) {
         return make_syntax_err(Error::END_OF_TOKEN_STREAM, current_token_);
     }
@@ -147,28 +153,29 @@ auto Parser::parse_expression(Precedence precedence)
 }
 
 [[nodiscard]] auto Parser::parse_restricted_statement(Error error, bool require_semicolon)
-    -> Result<mem::Box<ast::Statement>, Diagnostic> {
+    -> Result<ast::StatementHandle, Diagnostic> {
     auto clause = TRY(parse_statement(require_semicolon));
 
     // The clause can only be a jump, block, or expression statement
-    if (!clause->any<ast::ExpressionStatement,
-                     ast::BreakStatement,
-                     ast::ContinueStatement,
-                     ast::ReturnStatement,
-                     ast::BlockStatement>()) {
-        return make_syntax_err(error, clause->get_token());
+    if (!(*clause)
+             .any<ast::ExpressionStatement,
+                  ast::BreakStatement,
+                  ast::ContinueStatement,
+                  ast::ReturnStatement,
+                  ast::BlockStatement>()) {
+        return make_syntax_err(error, ctx_->tree.location_of(*clause));
     }
     return clause;
 }
 
 [[nodiscard]] auto Parser::try_parse_restricted_alternate(Error error, bool require_semicolon)
-    -> Result<mem::NullableBox<ast::Statement>, Diagnostic> {
+    -> Result<opt::Option<ast::StatementHandle>, Diagnostic> {
     if (peek_token_is(TokenType::ELSE)) {
         // Advance twice to actually look at the statement's first token
         advance(2);
-        return mem::nullable_box_from(TRY(parse_restricted_statement(error, require_semicolon)));
+        return TRY(parse_restricted_statement(error, require_semicolon));
     }
-    return nullptr;
+    return opt::none;
 }
 
 namespace {

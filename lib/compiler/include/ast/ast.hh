@@ -1,44 +1,47 @@
 #pragma once
 
-// IWYU pragma: begin_exports
+#include <vector>
 
-#include "ast/node.hh"
+#include "ast/id.hh"
+#include "ast/nodes.hh"
 
-#include "ast/expressions/array.hh"
-#include "ast/expressions/call.hh"
-#include "ast/expressions/do_while.hh"
-#include "ast/expressions/enum.hh"
-#include "ast/expressions/for.hh"
-#include "ast/expressions/function.hh"
-#include "ast/expressions/group.hh"
-#include "ast/expressions/identifier.hh"
-#include "ast/expressions/if.hh"
-#include "ast/expressions/index.hh"
-#include "ast/expressions/infinite_loop.hh"
-#include "ast/expressions/infix.hh"
-#include "ast/expressions/initializer.hh"
-#include "ast/expressions/label.hh"
-#include "ast/expressions/match.hh"
-#include "ast/expressions/prefix.hh"
-#include "ast/expressions/primitive.hh"
-#include "ast/expressions/scope_resolve.hh"
-#include "ast/expressions/struct.hh"
-#include "ast/expressions/type.hh"
-#include "ast/expressions/type_modifiers.hh"
-#include "ast/expressions/union.hh"
-#include "ast/expressions/while.hh"
+#include "diagnostic.hh"
+#include "iterator.hh"
 
-#include "ast/statements/block.hh"
-#include "ast/statements/break.hh"
-#include "ast/statements/continue.hh"
-#include "ast/statements/declaration.hh"
-#include "ast/statements/defer.hh"
-#include "ast/statements/discard.hh"
-#include "ast/statements/expression.hh"
-#include "ast/statements/import.hh"
-#include "ast/statements/members.hh"
-#include "ast/statements/return.hh"
-#include "ast/statements/test.hh"
-#include "ast/statements/using.hh"
+namespace porpoise::ast {
 
-// IWYU pragma: end_exports
+class AST {
+  public:
+    MAKE_ITERATOR(RootIDs, std::vector<NodeID>, roots_)
+
+  public:
+    template <traits::ASTNode Data>
+    constexpr auto add_node(syntax::TokenType start_token_type, Data&& data) -> NodeID {
+        constexpr auto kind  = traits::NodeKindOf<Data>::value();
+        const auto     index = static_cast<u64>(pool_.size());
+
+        pool_.emplace_back(std::forward<Data>(data));
+        return NodeID{kind, start_token_type, index};
+    }
+
+    constexpr auto               add_root(NodeID id) -> void { roots_.push_back(id); }
+    [[nodiscard]] constexpr auto location_of(NodeID id) const noexcept -> const SourceLocation& {
+        return locations_[id.get_index()];
+    }
+
+    [[nodiscard]] constexpr auto operator[](NodeID id) const -> std::pair<NodeID, const NodeData&> {
+        return {id, pool_[id.get_index()]};
+    }
+
+    constexpr auto clear() noexcept -> void {
+        roots_.clear();
+        pool_.clear();
+    }
+
+  private:
+    RootIDs                     roots_;
+    std::vector<NodeData>       pool_;
+    std::vector<SourceLocation> locations_;
+};
+
+} // namespace porpoise::ast

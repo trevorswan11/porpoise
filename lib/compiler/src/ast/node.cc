@@ -1,4 +1,4 @@
-#include "ast/node.hh"
+#include "ast/oop_node.hh"
 
 #include "enum.hh"
 

@@ -1,6 +1,6 @@
 #pragma once
 
-#include "ast/node.hh"
+#include "ast/oop_node.hh"
 #include "ast/visitor.hh"
 
 #include "module/module.hh"

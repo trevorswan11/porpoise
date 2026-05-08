@@ -6,7 +6,7 @@
 #include "arguments/ast_dump.hh"
 
 #include "ast/dumper.hh"
-#include "ast/node.hh"
+#include "ast/oop_node.hh"
 
 #include "sema/analyzer.hh"
 

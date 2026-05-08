@@ -1,6 +1,6 @@
 #pragma once
 
-#include "ast/node.hh"
+#include "ast/oop_node.hh"
 #include "ast/statements/members.hh"
 
 #include "syntax/parser.hh"
