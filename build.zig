@@ -85,9 +85,9 @@ const ProjectPaths = struct {
 
         pub fn files(self: *const Project, b: *std.Build) ![][]const u8 {
             return std.mem.concat(b.allocator, []const u8, &.{
-                try collectFiles(b, self.inc, .{ .allowed_extensions = &.{".hpp"} }),
-                try collectFiles(b, self.src, .{ .allowed_extensions = &.{".cpp"} }),
-                try collectFiles(b, self.tests, .{ .allowed_extensions = &.{ ".hpp", ".cpp" } }),
+                try collectFiles(b, self.inc, .{ .allowed_extensions = &.{".hh"} }),
+                try collectFiles(b, self.src, .{ .allowed_extensions = &.{".cc"} }),
+                try collectFiles(b, self.tests, .{ .allowed_extensions = &.{ ".hh", ".cc" } }),
             });
         }
     };
@@ -103,7 +103,7 @@ const ProjectPaths = struct {
         .src = "lib/driver/src/",
         .tests = "lib/driver/tests/",
     };
-    const porpoise = "porpoise/main.cpp";
+    const porpoise = "porpoise/main.cc";
 
     const support: Project = .{
         .inc = "lib/support/include/",
@@ -120,7 +120,7 @@ const ProjectPaths = struct {
             try compiler.files(b),
             try driver.files(b),
             try support.files(b),
-            try collectFiles(b, harness, .{ .allowed_extensions = &.{".cpp"} }),
+            try collectFiles(b, harness, .{ .allowed_extensions = &.{".cc"} }),
         });
     }
 
@@ -296,9 +296,7 @@ fn addArtifacts(b: *std.Build, config: struct {
             .config_headers = &.{config_h},
             .link_libraries = &.{ libcompiler, fmt_dep.artifact },
             .cxx = .{
-                .files = try collectFiles(b, ProjectPaths.driver.src, .{
-                    .dropped_files = &.{"main.cpp"},
-                }),
+                .files = try collectFiles(b, ProjectPaths.driver.src, .{}),
                 .flags = config.cxx_flags,
             },
         }),
@@ -378,7 +376,7 @@ fn addArtifacts(b: *std.Build, config: struct {
             .system_include_paths = &system_includes,
             .cxx = .{
                 .files = try collectFiles(b, ProjectPaths.support.tests, .{
-                    .extra_files = &.{ProjectPaths.harness ++ "runner.cpp"},
+                    .extra_files = &.{ProjectPaths.harness ++ "runner.cc"},
                 }),
                 .flags = config.cxx_flags,
             },
@@ -407,7 +405,7 @@ fn addArtifacts(b: *std.Build, config: struct {
             .system_include_paths = &system_includes,
             .cxx = .{
                 .files = try collectFiles(b, ProjectPaths.compiler.tests, .{
-                    .extra_files = &.{ProjectPaths.harness ++ "runner.cpp"},
+                    .extra_files = &.{ProjectPaths.harness ++ "runner.cc"},
                 }),
                 .flags = config.cxx_flags,
             },
@@ -437,7 +435,7 @@ fn addArtifacts(b: *std.Build, config: struct {
             .system_include_paths = &system_includes,
             .cxx = .{
                 .files = try collectFiles(b, ProjectPaths.driver.tests, .{
-                    .extra_files = &.{ProjectPaths.harness ++ "runner.cpp"},
+                    .extra_files = &.{ProjectPaths.harness ++ "runner.cc"},
                 }),
                 .flags = config.cxx_flags,
             },
@@ -887,7 +885,7 @@ const LOCCounter = struct {
         }
     };
 
-    const counted_extensions = [_][]const u8{ ".cpp", ".hpp", ".zig", ".p" };
+    const counted_extensions = [_][]const u8{ ".cc", ".hh", ".zig", ".p" };
     const dropped_file_config: CollectFilesConfig = .{
         .allowed_extensions = &.{ ".zig", ".h", ".in" },
         .return_basenames_only = true,
@@ -1272,7 +1270,7 @@ const CoverageParser = struct {
 };
 
 const CollectFilesConfig = struct {
-    allowed_extensions: []const []const u8 = &.{".cpp"},
+    allowed_extensions: []const []const u8 = &.{".cc"},
     dropped_files: ?[]const []const u8 = null,
     extra_files: ?[]const []const u8 = null,
     return_basenames_only: bool = false,

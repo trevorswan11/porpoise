@@ -8,7 +8,7 @@ Porpoise adheres to a somewhat strict style guide to enhance readability.
 Upon PR creation and workflow approval, GitHub actions will run `zig build fmt-check`, an equally-intensive step that performs a dry run of `clang-format` on the codebase. This can also be invoked on your machine if you are interested in confirming the state of your local version of the codebase.
 
 ## General Naming Conventions
-- **Files**: `snake_case.cpp`, `snake_case.hpp`, `snake_case.zig`
+- **Files**: `snake_case.cc`, `snake_case.hh`, `snake_case.zig`
 - **Functions & Variables**: snake_case
 - **Types (Classes, Structs, Enums)**: PascalCase
 - **Type Traits**: snake_case (e.g. mem::is_box)
@@ -19,7 +19,7 @@ Upon PR creation and workflow approval, GitHub actions will run `zig build fmt-c
 ## Language-Specific Conventions
 
 ### C++
-- Use `.hpp` for headers and `.cpp` for source files
+- Use `.hh` for headers and `.cc` for source files
 - Avoid `using namespace ...;` in headers
 - Prefer enum class over standard enum
 - Use the `#pragma once` directive over `#ifdef` include guards

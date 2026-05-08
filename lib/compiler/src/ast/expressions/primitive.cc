@@ -1,0 +1,87 @@
+#include <cmath>
+#include <limits>
+
+#include "ast/expressions/primitive.hh"
+#include "ast/visitor.hh"
+
+namespace porpoise::ast {
+
+// cppcheck-suppress-begin [constParameterReference, duplInheritedMember]
+
+auto StringExpression::accept(Visitor& v) const -> void { v.visit(*this); }
+
+auto StringExpression::parse(syntax::Parser& parser)
+    -> Result<mem::Box<Expression>, syntax::Diagnostic> {
+    const auto start_token = parser.get_current_token();
+    return mem::make_box<StringExpression>(start_token, start_token.materialize_string());
+}
+
+auto I32Expression::accept(Visitor& v) const -> void { v.visit(*this); }
+auto I64Expression::accept(Visitor& v) const -> void { v.visit(*this); }
+auto ISizeExpression::accept(Visitor& v) const -> void { v.visit(*this); }
+auto U32Expression::accept(Visitor& v) const -> void { v.visit(*this); }
+auto U64Expression::accept(Visitor& v) const -> void { v.visit(*this); }
+auto USizeExpression::accept(Visitor& v) const -> void { v.visit(*this); }
+auto U8Expression::accept(Visitor& v) const -> void { v.visit(*this); }
+
+auto U8Expression::parse(syntax::Parser& parser)
+    -> Result<mem::Box<Expression>, syntax::Diagnostic> {
+    const auto start_token = parser.get_current_token();
+    const auto slice       = start_token.slice;
+    if (slice[1] != '\\') { return mem::make_box<U8Expression>(start_token, slice[1]); }
+
+    const auto escaped = slice[2];
+    byte       value;
+    switch (escaped) {
+    case 'n':  value = '\n'; break;
+    case 'r':  value = '\r'; break;
+    case 't':  value = '\t'; break;
+    case '\\': value = '\\'; break;
+    case '\'': value = '\''; break;
+    case '"':  value = '"'; break;
+    case '0':  value = '\0'; break;
+    default:   return make_syntax_err(syntax::Error::UNKNOWN_CHARACTER_ESCAPE, start_token);
+    }
+
+    return mem::make_box<U8Expression>(start_token, value);
+}
+
+template <typename Float> auto approx_eq(Float a, Float b) -> bool {
+    const auto largest = std::max(std::abs(b), std::abs(a));
+    const auto diff    = std::abs(a - b);
+    return diff <= largest * std::numeric_limits<Float>::epsilon();
+}
+
+auto F32Expression::accept(Visitor& v) const -> void { v.visit(*this); }
+
+auto F32Expression::is_equal(const Node& other) const noexcept -> bool {
+    const auto& casted = as<F32Expression>(other);
+    return approx_eq(value_, casted.value_);
+}
+
+auto F64Expression::accept(Visitor& v) const -> void { v.visit(*this); }
+
+auto F64Expression::is_equal(const Node& other) const noexcept -> bool {
+    const auto& casted = as<F64Expression>(other);
+    return approx_eq(value_, casted.value_);
+}
+
+auto BoolExpression::accept(Visitor& v) const -> void { v.visit(*this); }
+
+auto BoolExpression::parse(syntax::Parser& parser)
+    -> Result<mem::Box<Expression>, syntax::Diagnostic> {
+    return mem::make_box<BoolExpression>(parser.get_current_token());
+}
+
+auto VoidExpression::accept(Visitor& v) const -> void { v.visit(*this); }
+
+auto VoidExpression::parse(syntax::Parser& parser)
+    -> Result<mem::Box<Expression>, syntax::Diagnostic> {
+    const auto start_token = parser.get_current_token();
+    TRY(parser.expect_peek(syntax::TokenType::RBRACE));
+    return mem::make_box<VoidExpression>(start_token);
+}
+
+// cppcheck-suppress-end [constParameterReference, duplInheritedMember]
+
+} // namespace porpoise::ast

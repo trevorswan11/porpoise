@@ -1,0 +1,216 @@
+#include "ast/expressions/type.hh"
+
+#include "ast/expressions/call.hh"
+#include "ast/expressions/enum.hh"
+#include "ast/expressions/function.hh"
+#include "ast/expressions/identifier.hh"
+#include "ast/expressions/scope_resolve.hh"
+#include "ast/expressions/struct.hh"
+#include "ast/expressions/union.hh"
+#include "ast/visitor.hh"
+
+namespace porpoise::ast {
+
+ExplicitArrayType::ExplicitArrayType(mem::NullableBox<Expression> dimension,
+                                     bool                         null_terminated,
+                                     mem::Box<ExplicitType>       inner_type) noexcept
+    : dimension_{std::move(dimension)}, null_terminated_{null_terminated},
+      inner_type_{std::move(inner_type)} {}
+ExplicitArrayType::~ExplicitArrayType() = default;
+
+auto ExplicitArrayType::get_token() const noexcept -> const syntax::Token& {
+    return inner_type_->get_token();
+}
+
+auto ExplicitArrayType::is_equal(const ExplicitArrayType& other) const noexcept -> bool {
+    return mem::nullable_boxes_eq(dimension_, other.dimension_) &&
+           *inner_type_ == *other.inner_type_;
+}
+
+ExplicitType::ExplicitType(TypeModifier modifier, ExplicitTypeVariant type) noexcept
+    : modifier_{std::move(modifier)}, type_{std::move(type)} {}
+ExplicitType::~ExplicitType() = default;
+
+auto ExplicitType::accept(Visitor& v) const -> void { v.visit(*this); }
+
+[[nodiscard]] auto ExplicitType::parse(syntax::Parser& parser)
+    -> Result<ExplicitType, syntax::Diagnostic> {
+    // Always check for a modifier and advance past it if present
+    const auto         modifier_token = parser.get_peek_token();
+    const TypeModifier modifier{modifier_token};
+    if (!modifier.is_value()) { parser.advance(); }
+
+    // The array dimension of a type are only present conditionally
+    if (parser.peek_token_is(syntax::TokenType::LBRACKET)) {
+        parser.advance();
+
+        auto                         null_terminated = false;
+        mem::NullableBox<Expression> dimension;
+        if (parser.peek_token_is(syntax::TokenType::NULL_TERMINATED)) {
+            parser.advance();
+            null_terminated = true;
+        } else if (!parser.peek_token_is(syntax::TokenType::RBRACKET)) {
+            parser.advance();
+            dimension = mem::nullable_box_from(TRY(parser.parse_expression()));
+
+            // The null terminated marker comes after the size for explicitly sized types
+            if (parser.peek_token_is(syntax::TokenType::NULL_TERMINATED)) {
+                parser.advance();
+                null_terminated = true;
+            }
+        }
+        TRY(parser.expect_peek(syntax::TokenType::RBRACKET));
+
+        // Arrays are recursively defined
+        auto inner = TRY(ExplicitType::parse(parser));
+        return ExplicitType{std::move(modifier),
+                            ExplicitArrayType{std::move(dimension),
+                                              null_terminated,
+                                              mem::make_box<ExplicitType>(std::move(inner))}};
+    } else if (!TypeModifier{parser.get_peek_token()}.is_value()) {
+        // Don't advance since the parser does it implicitly here (costs two modifier queries)
+        auto inner = TRY(ExplicitType::parse(parser));
+        return ExplicitType{std::move(modifier), mem::make_box<ExplicitType>(std::move(inner))};
+    }
+
+    // Otherwise the type has to be a 'simple' function or ident
+    const auto& peek_token = parser.get_peek_token();
+    if (peek_token.is_valid_ident()) {
+        // It's trivial to catch these syntactic errors here
+        if (!modifier.is_value()) {
+            switch (peek_token.type) {
+            case syntax::TokenType::TYPE_TYPE:
+                return make_syntax_err(syntax::Error::ILLEGAL_TYPE_TYPE_MODIFIER, modifier_token);
+            case syntax::TokenType::VOID_TYPE:
+                return make_syntax_err(syntax::Error::ILLEGAL_VOID_TYPE_MODIFIER, modifier_token);
+            case syntax::TokenType::NORETURN:
+                return make_syntax_err(syntax::Error::ILLEGAL_NORETURN_TYPE_MODIFIER,
+                                       modifier_token);
+            default: break;
+            }
+        }
+
+        parser.advance();
+        // Manually dispatch to prevent weird consumption
+        if (parser.peek_token_is(syntax::TokenType::COLON_COLON) ||
+            parser.peek_token_is(syntax::TokenType::LPAREN)) {
+            auto parsed = TRY(parser.parse_expression(syntax::Precedence::TYPE));
+            if (parsed->is<ScopeResolutionExpression>()) {
+                return ExplicitType{modifier,
+                                    Node::downcast<ScopeResolutionExpression>(std::move(parsed))};
+            } else if (parsed->is<CallExpression>()) {
+                return ExplicitType{modifier, Node::downcast<CallExpression>(std::move(parsed))};
+            }
+
+            return make_syntax_err(syntax::Error::ILLEGAL_EXPLICIT_TYPE, parsed->get_token());
+        }
+
+        return ExplicitType{
+            modifier,
+            Node::downcast<IdentifierExpression>(TRY(IdentifierExpression::parse(parser)))};
+    }
+
+    // The inner type is limited to functions and user-defined types
+    const auto type_start = parser.get_current_token();
+    if (parser.peek_token_is(syntax::TokenType::FUNCTION)) {
+        parser.advance();
+        auto type_expr = TRY(FunctionExpression::parse_type(parser));
+
+        auto function = Node::downcast<FunctionExpression>(std::move(type_expr));
+        if (!(modifier.is_value() || modifier.is_ptr())) {
+            return make_syntax_err(syntax::Error::ILLEGAL_FUNCTION_TYPE_MODIFIER, type_start);
+        }
+
+        // Function types cannot have bodies
+        ASSERT(!function->has_body(), "Function type has body");
+        return ExplicitType{modifier, std::move(function)};
+    }
+
+    // The user-defined types can be handled by parsing any expression and verifying it
+    parser.advance();
+    if (parser.current_token_is(syntax::TokenType::END)) {
+        return make_syntax_err(syntax::Error::MISSING_EXPLICIT_TYPE, type_start);
+    }
+
+    switch (auto user = TRY(parser.parse_expression()); user->get_kind()) {
+    case NodeKind::STRUCT_EXPRESSION:
+        return ExplicitType{modifier, Node::downcast<StructExpression>(std::move(user))};
+    case NodeKind::ENUM_EXPRESSION:
+        return ExplicitType{modifier, Node::downcast<EnumExpression>(std::move(user))};
+    case NodeKind::UNION_EXPRESSION:
+        return ExplicitType{modifier, Node::downcast<UnionExpression>(std::move(user))};
+    default: break;
+    }
+    return make_syntax_err(syntax::Error::ILLEGAL_EXPLICIT_TYPE, type_start);
+}
+
+auto ExplicitType::get_token() const noexcept -> const syntax::Token& {
+    return match(Overloaded{[](const auto& t) -> auto& { return t->get_token(); },
+                            [](const ExplicitArrayType& a) -> auto& { return a.get_token(); }});
+}
+
+auto ExplicitType::is_equal(const ExplicitType& other) const noexcept -> bool {
+    const auto& other_type = other.type_;
+    if (type_.index() != other_type.index()) { return false; }
+    return modifier_ == other.modifier_ &&
+           std::visit(Overloaded{
+                          [&other_type](const auto& v) {
+                              return *v == *std::get<std::remove_cvref_t<decltype(v)>>(other_type);
+                          },
+                          [&other_type](const ExplicitArrayType& v) {
+                              return v == std::get<ExplicitArrayType>(other_type);
+                          },
+                      },
+                      type_);
+}
+
+TypeExpression::TypeExpression(const syntax::Token&      start_token,
+                               opt::Option<ExplicitType> exp) noexcept
+    : ExprBase{start_token}, explicit_{std::move(exp)} {}
+TypeExpression::~TypeExpression() = default;
+
+auto TypeExpression::accept(Visitor& v) const -> void { v.visit(*this); }
+
+namespace {
+
+// Parses the explicit type if present and checks for an upcoming assignment for init
+[[nodiscard]] auto parse_type_and_initializer(syntax::Parser& parser)
+    -> Result<std::pair<mem::Box<Expression>, bool>, syntax::Diagnostic> {
+    // The start start token is always offset as this is called irregularly
+    const auto start_token = parser.get_peek_token();
+
+    if (parser.peek_token_is(syntax::TokenType::WALRUS)) {
+        auto type_expr = mem::make_box<TypeExpression>(start_token, opt::none);
+        parser.advance();
+        return std::pair{std::move(type_expr), true};
+    } else if (parser.peek_token_is(syntax::TokenType::COLON)) {
+        parser.advance();
+        auto explicit_type = TRY(ExplicitType::parse(parser));
+        auto type_expr     = mem::make_box<TypeExpression>(start_token, std::move(explicit_type));
+        if (parser.peek_token_is(syntax::TokenType::ASSIGN)) {
+            parser.advance();
+            return std::pair{std::move(type_expr), true};
+        }
+        return std::pair{std::move(type_expr), false};
+    } else {
+        return Err{parser.peek_error(syntax::TokenType::COLON)};
+    }
+}
+
+} // namespace
+
+auto TypeExpression::parse(syntax::Parser& parser)
+    -> Result<std::pair<mem::Box<Expression>, bool>, syntax::Diagnostic> {
+    auto [type, initialized] = TRY(parse_type_and_initializer(parser));
+
+    // Advance again to prepare for rhs
+    if (initialized) { parser.advance(); }
+    return std::pair{mem::box_into<Expression>(std::move(type)), initialized};
+}
+
+auto TypeExpression::is_equal(const Node& other) const noexcept -> bool {
+    const auto& casted = as<TypeExpression>(other);
+    return opt::safe_eq<ExplicitType>(explicit_, casted.explicit_);
+}
+
+} // namespace porpoise::ast

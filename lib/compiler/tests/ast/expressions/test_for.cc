@@ -1,0 +1,124 @@
+#include <catch2/catch_test_macros.hpp>
+
+#include "helpers/ast.hh"
+
+namespace porpoise::tests {
+
+namespace keywords = syntax::keywords;
+
+TEST_CASE("For loop with base captures") {
+    helpers::test_expr_stmt(
+        "for (arr) |i| { a; };",
+        ast::ForLoopExpression{
+            syntax::Token{keywords::FOR},
+            helpers::make_vector<mem::Box<ast::Expression>>(helpers::make_ident("arr")),
+            helpers::make_vector<ast::ForLoopCapture>(
+                ast::ForLoopCapture::Valued{{}, helpers::make_ident("i")}),
+            helpers::make_expr_block_stmt(helpers::ident_from("a")),
+            {}});
+}
+
+TEST_CASE("For loop with modified captures") {
+    helpers::test_expr_stmt(
+        "for (arr, l, p) |i, &mut j, _| { a; };",
+        ast::ForLoopExpression{
+            syntax::Token{keywords::FOR},
+            helpers::make_vector<mem::Box<ast::Expression>>(
+                helpers::make_ident("arr"), helpers::make_ident("l"), helpers::make_ident("p")),
+            helpers::make_vector<ast::ForLoopCapture>(
+                ast::ForLoopCapture::Valued{{}, helpers::make_ident("i")},
+                ast::ForLoopCapture::Valued{ast::TypeModifier{ast::TypeModifier::Modifier::MUT_REF},
+                                            helpers::make_ident("j")},
+                ast::ForLoopCapture{syntax::Token{syntax::TokenType::UNDERSCORE, "_"}}),
+            helpers::make_expr_block_stmt(helpers::ident_from("a")),
+            {}});
+}
+
+TEST_CASE("Full for loop with else") {
+    helpers::test_expr_stmt(
+        "for (0..4) |i| { a; } else return b;",
+        ast::ForLoopExpression{
+            syntax::Token{keywords::FOR},
+            helpers::make_vector<mem::Box<ast::Expression>>(mem::make_box<ast::RangeExpression>(
+                syntax::Token{syntax::TokenType::INT_10, "0"},
+                helpers::make_primitive<ast::I32Expression>("0"),
+                syntax::TokenType::DOT_DOT,
+                helpers::make_primitive<ast::I32Expression>("4"))),
+            helpers::make_vector<ast::ForLoopCapture>(
+                ast::ForLoopCapture::Valued{{}, helpers::make_ident("i")}),
+            helpers::make_expr_block_stmt(helpers::ident_from("a")),
+            mem::make_nullable_box<ast::ReturnStatement>(syntax::Token{keywords::RETURN},
+                                                         helpers::make_ident<true>("b"))});
+}
+
+TEST_CASE("Non-terminated iterables") {
+    helpers::test_parser_fail("for (0..4 |i| { a; } else return b;",
+                              syntax::Diagnostic{"Expected token RBRACE, found IDENT",
+                                                 syntax::Error::UNEXPECTED_TOKEN,
+                                                 std::pair{0uz, 16uz}},
+                              syntax::Diagnostic{"No prefix parse function for RBRACE(}) found",
+                                                 syntax::Error::MISSING_PREFIX_PARSER,
+                                                 std::pair{0uz, 19uz}});
+}
+
+TEST_CASE("Missing iterables") {
+    helpers::test_parser_fail("for () |i| { a; } else return b;",
+                              syntax::Diagnostic{syntax::Error::FOR_MISSING_ITERABLES, 0, 0},
+                              syntax::Diagnostic{"No prefix parse function for RBRACE(}) found",
+                                                 syntax::Error::MISSING_PREFIX_PARSER,
+                                                 std::pair{0uz, 16uz}});
+
+    helpers::test_parser_fail(
+        "for |i| { a; } else return b;",
+        syntax::Diagnostic{
+            "Expected token LPAREN, found BW_OR", syntax::Error::UNEXPECTED_TOKEN, 0, 4},
+        syntax::Diagnostic{"No prefix parse function for RBRACE(}) found",
+                           syntax::Error::MISSING_PREFIX_PARSER,
+                           std::pair{0uz, 13uz}});
+}
+
+TEST_CASE("Non-terminated captures") {
+    helpers::test_parser_fail(
+        "for (0..4) |i { a; } else return b;",
+        syntax::Diagnostic{
+            "Expected token COMMA, found LBRACE", syntax::Error::UNEXPECTED_TOKEN, 0, 14},
+        syntax::Diagnostic{"No prefix parse function for RBRACE(}) found",
+                           syntax::Error::MISSING_PREFIX_PARSER,
+                           std::pair{0uz, 19uz}});
+}
+
+TEST_CASE("Missing captures") {
+    helpers::test_parser_fail(
+        "for (0..4) { a; } else return b;",
+        syntax::Diagnostic{
+            "Expected token BW_OR, found LBRACE", syntax::Error::UNEXPECTED_TOKEN, 0, 11},
+        syntax::Diagnostic{"No prefix parse function for RBRACE(}) found",
+                           syntax::Error::MISSING_PREFIX_PARSER,
+                           std::pair{0uz, 16uz}});
+}
+
+TEST_CASE("Illegal capture") {
+    helpers::test_parser_fail("for (0..4) |2| { a; } else return b;",
+                              syntax::Diagnostic{syntax::Error::ILLEGAL_IDENTIFIER, 0, 12},
+                              syntax::Diagnostic{"No prefix parse function for RBRACE(}) found",
+                                                 syntax::Error::MISSING_PREFIX_PARSER,
+                                                 std::pair{0uz, 20uz}});
+}
+
+TEST_CASE("Iterable-capture mismatch") {
+    helpers::test_parser_fail(
+        "for (0..4) |i, j| { a; } else return b;",
+        syntax::Diagnostic{syntax::Error::FOR_ITERABLE_CAPTURE_MISMATCH, 0, 0});
+}
+
+TEST_CASE("Empty for block") {
+    helpers::test_parser_fail("for (0..4) |i| {} else return b;",
+                              syntax::Diagnostic{syntax::Error::EMPTY_LOOP, 0, 15});
+}
+
+TEST_CASE("Illegal for-else clause") {
+    helpers::test_parser_fail("for (0..4) |i| { a; } else import std;",
+                              syntax::Diagnostic{syntax::Error::ILLEGAL_LOOP_NON_BREAK, 0, 27});
+}
+
+} // namespace porpoise::tests
