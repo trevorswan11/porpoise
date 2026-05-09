@@ -1,61 +1,61 @@
 #include <ranges>
-#include <type_traits>
 
 #include <fmt/format.h>
 
 #include "sema/symbol.hh"
 
-#include "ast/oop_ast.hh"
-
 namespace porpoise::sema {
 
-auto VirtualSymbol::is_equal(const VirtualSymbol& other) const noexcept -> bool {
-    return token_.type == other.token_.type && token_.slice == other.token_.slice;
+namespace {
+
+[[nodiscard]] auto symbol_location_of(mod::Module&               module,
+                                      const SymbolicNodeVariant& payload) noexcept
+    -> SourceLocation {
+    return std::visit(
+        Overloaded{
+            [&](const SymbolicNode& node) { return module.tree.location_of(*node); },
+            [&](const VirtualSymbol&) { return SourceLocation{0, 0}; },
+            [&](const SymbolicUnionField& inner) { return module.tree.location_of(*inner->ident); },
+            [&](const SymbolicEnumeration& inner) {
+                return module.tree.location_of(*inner->first);
+            },
+            [&](const SymbolicSelfParam& inner) { return module.tree.location_of(*inner->ident); },
+            [&](const SymbolicParam& inner) {
+                if (inner->ident) { return module.tree.location_of(**inner->ident); }
+                return module.tree.location_of(inner->explicit_type);
+            },
+            [&](const SymbolicCapture& inner) { return module.tree.location_of(*inner->payload); },
+            [&](const SymbolicArm& inner) { return module.tree.location_of(*inner->pattern); },
+            [&](const SymbolicImport& inner) { return module.tree.location_of(*inner.node); }},
+        payload);
 }
 
-auto SymbolicImport::is_equal(const SymbolicImport& other) const noexcept -> bool {
-    return node == other.node;
+} // namespace
+
+auto Symbol::get_symbol_location(mod::Module& module) const noexcept -> SourceLocation {
+    return symbol_location_of(module, node_);
 }
 
-auto Symbol::is_equal(const Symbol& other) const noexcept -> bool {
-    const auto names_eq = name_ == other.name_;
-    const auto nodes_eq =
-        node_.index() == other.node_.index() &&
-        std::visit(
-            Overloaded{[&other](const auto& v) {
-                           return *v == *std::get<std::remove_cvref_t<decltype(v)>>(other.node_);
-                       },
-                       [&other](const SymbolicImport& v) {
-                           return v == std::get<std::remove_cvref_t<decltype(v)>>(other.node_);
-                       },
-                       [&other](const VirtualSymbol& v) {
-                           return v == std::get<std::remove_cvref_t<decltype(v)>>(other.node_);
-                       }},
-            node_);
-    const auto types_eq = opt::safe_eq<Type&>(
-        type_, other.type_, [](const Type& a, const Type& b) { return &a == &b; });
-
-    const auto status_eq = status_ == other.status_;
-    const auto kind_eq   = kind_ == other.kind_;
-    return status_eq && names_eq && nodes_eq && types_eq && kind_eq;
+auto Symbol::is_public(mod::Module& module) const noexcept -> bool {
+    return match(Overloaded{[&](const SymbolicNode& node) {
+                                switch (node->get_kind()) {
+                                case ast::NodeKind::DECL_STATEMENT:
+                                    return std::get<ast::DeclStatement>(module.tree[*node])
+                                        .has_modifier(ast::DeclModifiers::PUBLIC);
+                                case ast::NodeKind::USING_STATEMENT:
+                                    return node->get_token_type() == syntax::TokenType::PUBLIC;
+                                default: return false;
+                                }
+                            },
+                            [](const SymbolicImport& import_stmt) {
+                                return import_stmt.node->get_token_type() ==
+                                       syntax::TokenType::PUBLIC;
+                            },
+                            [](const auto&) { return false; }});
 }
 
-auto Symbol::get_node_token() const noexcept -> const syntax::Token& {
-    return match(
-        Overloaded{[](const auto& node) -> auto& { return node->get_token(); },
-                   [](const SymbolicImport& inner) -> auto& { return inner.node.get_token(); },
-                   [](const VirtualSymbol& inner) -> auto& { return inner.get_token(); }});
-}
-
-auto Symbol::is_public() const noexcept -> bool {
-    return match(Overloaded{
-        [](const SymbolicDecl& decl) { return decl->has_modifier(ast::DeclModifiers::PUBLIC); },
-        [](const SymbolicImport& import_stmt) { return import_stmt.node.is_public(); },
-        [](const SymbolicUsing& using_stmt) { return using_stmt->is_public(); },
-        [](const auto&) { return false; }});
-}
-
-auto SymbolTable::insert(std::string_view name, SymbolicNode node) -> Result<Unit, Diagnostic> {
+auto SymbolTable::insert(std::string_view name, mod::Module& module, SymbolicNodeVariant node)
+    -> Result<Unit, Diagnostic> {
     // Reserved identifier use is impossible due to a parser invariant
     auto [it, inserted] = symbols_.try_emplace(name, name, node);
 
@@ -64,51 +64,40 @@ auto SymbolTable::insert(std::string_view name, SymbolicNode node) -> Result<Uni
         return make_sema_err(
             fmt::format("Redeclaration of symbol '{}'. Previous declaration here: {}",
                         name,
-                        traits::SourceInfo<syntax::Token>::get(it->second.get_node_token())),
+                        it->second.get_symbol_location(module)),
             Error::IDENTIFIER_REDECLARATION,
-            std::visit(
-                Overloaded{
-                    [](const auto& inner) -> auto& { return inner->get_token(); },
-                    [](const SymbolicImport& inner) -> auto& { return inner.node.get_token(); },
-                    [](const VirtualSymbol& inner) -> auto& { return inner.get_token(); }},
-                node));
+            symbol_location_of(module, node));
     }
     return Unit{};
 }
 
-auto SymbolTableRegistry::insert_into(usize table_idx, std::string_view name, SymbolicNode node)
-    -> Result<Unit, Diagnostic> {
-    if (auto table = get_opt(table_idx)) { return table->insert(name, node); }
+auto SymbolTable::insert_unchecked(std::string_view name, SymbolicNodeVariant node) -> void {
+    // Reserved identifier use is impossible due to a parser invariant
+    auto [_, inserted] = symbols_.try_emplace(name, name, node);
+    ASSERT(!inserted, "Duplicate symbol injected");
+}
+
+auto SymbolTableRegistry::insert_into(usize               table_idx,
+                                      mod::Module&        module,
+                                      std::string_view    name,
+                                      SymbolicNodeVariant node) -> Result<Unit, Diagnostic> {
+    if (auto table = get_opt(table_idx)) { return table->insert(name, module, node); }
     return make_sema_err(Error::INVALID_TABLE_IDX);
 }
 
 [[nodiscard]] auto SymbolTableRegistry::is_shadowing(const SymbolTableStack& stack,
+                                                     mod::Module&            module,
                                                      std::string_view        name,
-                                                     SymbolicNode            node) noexcept
+                                                     SymbolicNodeVariant     node) noexcept
     -> Result<Unit, Diagnostic> {
     for (const auto idx : stack | std::views::take(stack.size() - 1)) {
         if (const auto symbol = get(idx).get_opt(name)) {
             return make_sema_err(
-                fmt::format(
-                    "Attempt to shadow identifier '{}'. Previous declaration here: {}",
-                    name,
-                    symbol->match(Overloaded{
-                        [](const auto& inner) {
-                            return traits::SourceInfo<syntax::Token>::get(inner->get_token());
-                        },
-                        [](const SymbolicImport& inner) {
-                            return traits::SourceInfo<syntax::Token>::get(inner.node.get_token());
-                        },
-                        [](const VirtualSymbol& inner) {
-                            return traits::SourceInfo<syntax::Token>::get(inner.get_token());
-                        }})),
+                fmt::format("Attempt to shadow identifier '{}'. Previous declaration here: {}",
+                            name,
+                            symbol_location_of(module, symbol->get_node())),
                 Error::SHADOWING_DECLARATION,
-                std::visit(
-                    Overloaded{
-                        [](const auto& inner) -> auto& { return inner->get_token(); },
-                        [](const SymbolicImport& inner) -> auto& { return inner.node.get_token(); },
-                        [](const VirtualSymbol& inner) -> auto& { return inner.get_token(); }},
-                    node));
+                symbol_location_of(module, node));
         }
     }
     return Unit{};

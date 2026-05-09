@@ -77,6 +77,22 @@ auto misc_from_char(byte c) noexcept -> opt::Option<TokenType> {
     }
 }
 
+auto is_primitive(TokenType type) noexcept -> bool {
+    return std::ranges::contains(ALL_PRIMITIVES, type);
+}
+
+namespace {
+
+constexpr auto ALL_BUILTINS_BY_TT = [] {
+    EnumMap<TokenType, bool> builtins{false};
+    for (const auto& builtin : ALL_BUILTINS) { builtins[builtin.second] = true; }
+    return builtins;
+}();
+
+} // namespace
+
+auto is_builtin(TokenType type) noexcept -> bool { return ALL_BUILTINS_BY_TT[type]; }
+
 namespace {
 
 using SuffixMapping                = std::pair<bool (*)(TokenType), usize>;
@@ -134,18 +150,6 @@ auto Token::materialize_string() const -> std::string {
     return builder;
 }
 
-auto Token::is_primitive() const noexcept -> bool {
-    return std::ranges::contains(ALL_PRIMITIVES, type);
-}
-
-constexpr auto ALL_BUILTINS_BY_TT = [] {
-    EnumMap<TokenType, bool> builtins{false};
-    for (const auto& builtin : ALL_BUILTINS) { builtins[builtin.second] = true; }
-    return builtins;
-}();
-
-auto Token::is_builtin() const noexcept -> bool { return ALL_BUILTINS_BY_TT[type]; }
-
 auto Token::is_decl_token() const noexcept -> bool {
     switch (type) {
     case TokenType::VAR:
@@ -164,17 +168,6 @@ auto Token::is_member_token() const noexcept -> bool {
     case TokenType::IMPORT:
     case TokenType::USING:  return true;
     default:                return is_decl_token();
-    }
-}
-
-auto Token::is_valid_ident() const noexcept -> bool {
-    switch (type) {
-    case TokenType::IDENT:
-    case TokenType::NORETURN:
-    case TokenType::TYPE_TYPE:
-    case TokenType::AUTO_TYPE:
-    case TokenType::OPAQUE_TYPE: return true;
-    default:                     return is_primitive() || is_builtin();
     }
 }
 

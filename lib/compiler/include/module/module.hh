@@ -6,7 +6,7 @@
 
 #include <ankerl/unordered_dense.h>
 
-#include "ast/oop_node.hh"
+#include "ast/ast.hh"
 
 #include "sema/error.hh"
 

@@ -229,8 +229,7 @@ auto ForLoopExpression::parse(syntax::Parser& parser)
            !parser.peek_token_is(syntax::TokenType::END)) {
         parser.advance();
         if (parser.current_token_is(syntax::TokenType::UNDERSCORE)) {
-            const auto discarded =
-                parser.get_ast().add_node(parser.get_current_token(), Discarded{});
+            const auto discarded = parser.get_ast().add_node(parser.get_current_token(), Unit{});
             captures.emplace_back(type_modifiers::VALUE, Capture::PayloadHandle{discarded});
         } else {
             // Always check for a modifier and advance past it if present
@@ -632,7 +631,7 @@ auto MatchExpression::parse(syntax::Parser& parser)
             if (parser.peek_token_is(syntax::TokenType::UNDERSCORE)) {
                 parser.advance();
                 capture.emplace(Arm::CaptureHandle{
-                    parser.get_ast().add_node(parser.get_current_token(), Discarded{})});
+                    parser.get_ast().add_node(parser.get_current_token(), Unit{})});
             } else {
                 TRY(parser.expect_peek(syntax::TokenType::IDENT));
                 capture.emplace(TRY(IdentifierExpression::parse(parser)));

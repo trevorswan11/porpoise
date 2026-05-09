@@ -1,7 +1,6 @@
 #pragma once
 
-#include "ast/oop_node.hh"
-#include "ast/visitor.hh"
+#include "ast/nodes.hh"
 
 #include "sema/context.hh"
 #include "sema/symbol.hh"
@@ -9,11 +8,11 @@
 namespace porpoise::sema {
 
 // Resolves all types and symbol uses without type checking
-class TypeResolver : public ast::Visitor {
+class TypeResolver {
   public:
     static auto resolve_types(mod::Module& module, Context& ctx) -> mod::ModuleState;
 
-    MAKE_AST_VISITOR_OVERRIDES()
+    AST_VISITOR_DEF_GEN()
 
   private:
     using Scope = SymbolTableStack::Stack;

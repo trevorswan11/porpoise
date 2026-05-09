@@ -9,6 +9,9 @@
 
 #include "sema/error.hh"
 
+#include "ast/id.hh"
+#include "ast/nodes.hh"
+
 #include "module/module.hh"
 
 #include "syntax/token.hh"
@@ -20,29 +23,7 @@
 #include "utility.hh"
 #include "variant.hh"
 
-namespace porpoise {
-
-namespace ast {
-
-class Node;
-class UsingStatement;
-class DeclStatement;
-class ImportStatement;
-
-class UnionField;
-class Enumeration;
-
-class SelfParameter;
-class FunctionParameter;
-
-class ForLoopCapture;
-class MatchArm;
-
-class LabelExpression;
-
-} // namespace ast
-
-namespace sema {
+namespace porpoise::sema {
 
 // A non-AST-based symbol for primitives and builtins
 class VirtualSymbol {
@@ -52,40 +33,34 @@ class VirtualSymbol {
 
     [[nodiscard]] auto get_token() const noexcept -> const syntax::Token& { return token_; }
 
-    MAKE_EQ_DELEGATION(VirtualSymbol)
-
   private:
     syntax::Token token_;
 };
 
-using SymbolicDecl        = mem::NonNull<const ast::DeclStatement>;
-using SymbolicUsing       = mem::NonNull<const ast::UsingStatement>;
-using SymbolicUnionField  = mem::NonNull<const ast::UnionField>;
-using SymbolicEnumeration = mem::NonNull<const ast::Enumeration>;
+using SymbolicNode        = ast::Handle<ast::NodeKind::DECL_STATEMENT,
+                                        ast::NodeKind::USING_STATEMENT,
+                                        ast::NodeKind::LABEL_EXPRESSION>;
+using SymbolicUnionField  = mem::NonNull<const ast::UnionExpression::Field>;
+using SymbolicEnumeration = mem::NonNull<const ast::EnumExpression::Enumeration>;
 using SymbolicSelfParam   = mem::NonNull<const ast::SelfParameter>;
-using SymbolicParam       = mem::NonNull<const ast::FunctionParameter>;
-using SymbolicCapture     = mem::NonNull<const ast::ForLoopCapture>;
-using SymbolicArm         = mem::NonNull<const ast::MatchArm>;
-using SymbolicLabel       = mem::NonNull<const ast::LabelExpression>;
+using SymbolicParam       = mem::NonNull<const ast::FunctionExpression::Parameter>;
+using SymbolicCapture     = mem::NonNull<const ast::ForLoopExpression::Capture>;
+using SymbolicArm         = mem::NonNull<const ast::MatchExpression::Arm>;
 
 struct SymbolicImport {
-    const ast::ImportStatement& node;
-    opt::Option<mod::Module&>   imported_mod;
-
-    MAKE_EQ_DELEGATION(SymbolicImport)
+    const ast::Handle<ast::NodeKind::IMPORT_STATEMENT>& node;
+    opt::Option<mod::Module&>                           imported_mod;
 };
 
-using SymbolicNode = std::variant<VirtualSymbol,
-                                  SymbolicDecl,
-                                  SymbolicImport,
-                                  SymbolicUsing,
-                                  SymbolicUnionField,
-                                  SymbolicEnumeration,
-                                  SymbolicSelfParam,
-                                  SymbolicParam,
-                                  SymbolicCapture,
-                                  SymbolicArm,
-                                  SymbolicLabel>;
+using SymbolicNodeVariant = std::variant<VirtualSymbol,
+                                         SymbolicNode,
+                                         SymbolicImport,
+                                         SymbolicUnionField,
+                                         SymbolicEnumeration,
+                                         SymbolicSelfParam,
+                                         SymbolicParam,
+                                         SymbolicCapture,
+                                         SymbolicArm>;
 
 class Type;
 
@@ -104,31 +79,34 @@ enum class ResolveStatus : u8 {
 
 class Symbol {
   public:
-    Symbol(std::string_view name, const SymbolicNode& node) noexcept : name_{name}, node_{node} {}
+    Symbol(std::string_view name, const SymbolicNodeVariant& node) noexcept
+        : name_{name}, node_{node} {}
     ~Symbol() = default;
 
     MAKE_MOVE_CONSTRUCTABLE_ONLY(Symbol)
 
     MAKE_GETTER(name, std::string_view)
-    MAKE_GETTER(node, const SymbolicNode&)
+    MAKE_GETTER(node, const SymbolicNodeVariant&)
 
     MAKE_VARIANT_UNPACKER(builtin, VirtualSymbol, VirtualSymbol, node_, std::get)
-    MAKE_VARIANT_UNPACKER(decl_stmt, ast::DeclStatement, SymbolicDecl, node_, *std::get)
+    MAKE_VARIANT_UNPACKER(symbolic_node, SymbolicNode, SymbolicNode, node_, std::get)
     MAKE_VARIANT_UNPACKER(import_stmt, SymbolicImport, SymbolicImport, node_, std::get)
-    MAKE_VARIANT_UNPACKER(using_stmt, ast::UsingStatement, SymbolicUsing, node_, *std::get)
-    MAKE_VARIANT_UNPACKER(union_field, ast::UnionField, SymbolicUnionField, node_, *std::get)
-    MAKE_VARIANT_UNPACKER(enumeration, ast::Enumeration, SymbolicEnumeration, node_, *std::get)
+    MAKE_VARIANT_UNPACKER(
+        union_field, ast::UnionExpression::Field, SymbolicUnionField, node_, *std::get)
+    MAKE_VARIANT_UNPACKER(
+        enumeration, ast::EnumExpression::Enumeration, SymbolicEnumeration, node_, *std::get)
     MAKE_VARIANT_UNPACKER(self_param, ast::SelfParameter, SymbolicSelfParam, node_, *std::get)
-    MAKE_VARIANT_UNPACKER(basic_param, ast::FunctionParameter, SymbolicParam, node_, *std::get)
-    MAKE_VARIANT_UNPACKER(for_loop_capture, ast::ForLoopCapture, SymbolicCapture, node_, *std::get)
-    MAKE_VARIANT_UNPACKER(match_arm, ast::MatchArm, SymbolicArm, node_, *std::get)
-    MAKE_VARIANT_UNPACKER(label, ast::LabelExpression, SymbolicLabel, node_, *std::get)
+    MAKE_VARIANT_UNPACKER(
+        basic_param, ast::FunctionExpression::Parameter, SymbolicParam, node_, *std::get)
+    MAKE_VARIANT_UNPACKER(
+        for_loop_capture, ast::ForLoopExpression::Capture, SymbolicCapture, node_, *std::get)
+    MAKE_VARIANT_UNPACKER(match_arm, ast::MatchExpression::Arm, SymbolicArm, node_, *std::get)
 
     MAKE_VARIANT_MATCHER(node_)
-    [[nodiscard]] auto get_node_token() const noexcept -> const syntax::Token&;
+    [[nodiscard]] auto get_symbol_location(mod::Module& module) const noexcept -> SourceLocation;
 
     // Can only be true for decls, imports, and type aliases
-    [[nodiscard]] auto is_public() const noexcept -> bool;
+    [[nodiscard]] auto is_public(mod::Module& module) const noexcept -> bool;
 
     [[nodiscard]] auto has_type() const noexcept -> bool { return type_.has_value(); }
     [[nodiscard]] auto get_type() const noexcept -> Type& { return *type_; }
@@ -141,11 +119,9 @@ class Symbol {
     [[nodiscard]] auto get_kind() const noexcept -> SymbolKind { return *kind_; }
     auto               set_kind(SymbolKind kind) noexcept -> void { kind_ = kind; }
 
-    MAKE_EQ_DELEGATION(Symbol)
-
   private:
     std::string_view         name_;
-    SymbolicNode             node_;
+    SymbolicNodeVariant      node_;
     opt::Option<sema::Type&> type_;
     ResolveStatus            status_{ResolveStatus::UNRESOLVED};
     opt::Option<SymbolKind>  kind_;
@@ -165,11 +141,18 @@ class SymbolTable {
 
     // Constructs the symbolic node in place with the provided args
     template <typename T, typename... Args>
-    auto insert(std::string_view name, Args&&... args) -> Result<Unit, Diagnostic> {
-        return insert(name, SymbolicNode{T{std::forward<Args>(args)...}});
+    auto insert(std::string_view name, mod::Module& module, Args&&... args)
+        -> Result<Unit, Diagnostic> {
+        return insert(name, module, SymbolicNodeVariant{T{std::forward<Args>(args)...}});
     }
 
-    auto insert(std::string_view name, SymbolicNode node) -> Result<Unit, Diagnostic>;
+    // Checks that the module was inserted without collision
+    auto insert(std::string_view name, mod::Module& module, SymbolicNodeVariant node)
+        -> Result<Unit, Diagnostic>;
+
+    // For use of prelude injection only
+    auto insert_unchecked(std::string_view name, SymbolicNodeVariant node) -> void;
+
     auto reserve(usize cap) -> void { symbols_.reserve(cap); }
 
     [[nodiscard]] auto has(std::string_view name) const noexcept -> bool {
@@ -265,13 +248,17 @@ class SymbolTableRegistry {
 
     // Constructs the symbolic node in place with the provided args
     template <typename T, typename... Args>
-    [[nodiscard]] auto insert_into(usize table_idx, std::string_view name, Args&&... args)
+    [[nodiscard]] auto
+    insert_into(usize table_idx, mod::Module& module, std::string_view name, Args&&... args)
         -> Result<Unit, Diagnostic> {
-        return insert_into(table_idx, name, SymbolicNode{T{std::forward<Args>(args)...}});
+        return insert_into(
+            table_idx, module, name, SymbolicNodeVariant{T{std::forward<Args>(args)...}});
     }
 
-    [[nodiscard]] auto insert_into(usize table_idx, std::string_view name, SymbolicNode node)
-        -> Result<Unit, Diagnostic>;
+    [[nodiscard]] auto insert_into(usize               table_idx,
+                                   mod::Module&        module,
+                                   std::string_view    name,
+                                   SymbolicNodeVariant node) -> Result<Unit, Diagnostic>;
 
     template <typename Self> [[nodiscard]] auto get(this Self&& self, usize idx) -> auto& {
         return self.tables_.at(idx);
@@ -297,8 +284,9 @@ class SymbolTableRegistry {
 
     // Looks up all levels of the stack for possible illegal shadowing of the name
     [[nodiscard]] auto is_shadowing(const SymbolTableStack& stack,
+                                    mod::Module&            module,
                                     std::string_view        name,
-                                    SymbolicNode node) noexcept -> Result<Unit, Diagnostic>;
+                                    SymbolicNodeVariant node) noexcept -> Result<Unit, Diagnostic>;
 
     // Looks up all levels of the stack for the queried name
     template <typename Self>
@@ -317,6 +305,4 @@ class SymbolTableRegistry {
 
 #undef OPTIONAL_RETURN_TYPE
 
-} // namespace sema
-
-} // namespace porpoise
+} // namespace porpoise::sema

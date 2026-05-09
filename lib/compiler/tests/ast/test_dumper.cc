@@ -6,7 +6,6 @@
 #include "helpers/common.hh"
 
 #include "ast/dumper.hh"
-#include "ast/oop_ast.hh"
 
 namespace porpoise::tests {
 
@@ -67,12 +66,13 @@ constexpr std::string_view expected{
 
 TEST_CASE("Comprehensive dump") {
     syntax::Parser p{input};
-    auto [ast, errors] = p.consume();
+    ast::AST       ast;
+    auto           errors = p.consume(ast);
     helpers::check_errors<syntax::Diagnostic>(errors);
 
     std::ostringstream oss;
-    ast::ASTDumper     dumper{oss};
-    for (const auto& node : ast) { node->accept(dumper); }
+    ast::ASTDumper     dumper{oss, ast};
+    for (const auto& node : ast) { dumper.dump(node); }
     CHECK(expected == oss.view());
 }
 

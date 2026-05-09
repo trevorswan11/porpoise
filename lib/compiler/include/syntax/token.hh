@@ -210,8 +210,8 @@ enum class Base : u8 {
     HEXADECIMAL = 16,
 };
 
-auto base_idx(Base base) noexcept -> int;
-auto digit_in_base(byte c, Base base) noexcept -> bool;
+[[nodiscard]] auto base_idx(Base base) noexcept -> int;
+[[nodiscard]] auto digit_in_base(byte c, Base base) noexcept -> bool;
 
 namespace token_type {
 
@@ -224,7 +224,7 @@ enum class IntegerCategory : u8 {
     UNSIGNED_SIZE,
 };
 
-consteval auto to_int_category(TokenType tt) noexcept -> IntegerCategory {
+[[nodiscard]] consteval auto to_int_category(TokenType tt) noexcept -> IntegerCategory {
     switch (tt) {
     case TokenType::INT_2:
     case TokenType::INT_8:
@@ -254,39 +254,54 @@ consteval auto to_int_category(TokenType tt) noexcept -> IntegerCategory {
     }
 }
 
-auto to_base(TokenType tt) noexcept -> opt::Option<Base>;
-auto misc_from_char(byte b) noexcept -> opt::Option<TokenType>;
+[[nodiscard]] auto to_base(TokenType tt) noexcept -> opt::Option<Base>;
+[[nodiscard]] auto misc_from_char(byte b) noexcept -> opt::Option<TokenType>;
 
-constexpr auto is_i32(TokenType tt) noexcept -> bool {
+[[nodiscard]] constexpr auto is_i32(TokenType tt) noexcept -> bool {
     return TokenType::INT_2 <= tt && tt <= TokenType::INT_16;
 }
 
-constexpr auto is_i64(TokenType tt) noexcept -> bool {
+[[nodiscard]] constexpr auto is_i64(TokenType tt) noexcept -> bool {
     return TokenType::LINT_2 <= tt && tt <= TokenType::LINT_16;
 }
 
-constexpr auto is_isize_int(TokenType tt) noexcept -> bool {
+[[nodiscard]] constexpr auto is_isize_int(TokenType tt) noexcept -> bool {
     return TokenType::ZINT_2 <= tt && tt <= TokenType::ZINT_16;
 }
 
-constexpr auto is_u32(TokenType tt) noexcept -> bool {
+[[nodiscard]] constexpr auto is_u32(TokenType tt) noexcept -> bool {
     return TokenType::UINT_2 <= tt && tt <= TokenType::UINT_16;
 }
 
-constexpr auto is_u64(TokenType tt) noexcept -> bool {
+[[nodiscard]] constexpr auto is_u64(TokenType tt) noexcept -> bool {
     return TokenType::ULINT_2 <= tt && tt <= TokenType::ULINT_16;
 }
 
-constexpr auto is_usize_int(TokenType tt) noexcept -> bool {
+[[nodiscard]] constexpr auto is_usize_int(TokenType tt) noexcept -> bool {
     return TokenType::UZINT_2 <= tt && tt <= TokenType::UZINT_16;
 }
 
-constexpr auto is_int(TokenType tt) noexcept -> bool {
+[[nodiscard]] constexpr auto is_int(TokenType tt) noexcept -> bool {
     return TokenType::INT_2 <= tt && tt <= TokenType::UZINT_16;
 }
 
-constexpr auto is_number(TokenType tt) noexcept -> bool {
+[[nodiscard]] constexpr auto is_number(TokenType tt) noexcept -> bool {
     return is_int(tt) || tt == TokenType::F32 || tt == TokenType::F64;
+}
+
+[[nodiscard]] auto is_primitive(TokenType type) noexcept -> bool;
+[[nodiscard]] auto is_builtin(TokenType type) noexcept -> bool;
+
+// Check whether the token is an ident, primitive type, or builtin function.
+[[nodiscard]] constexpr auto is_valid_ident(TokenType type) noexcept -> bool {
+    switch (type) {
+    case TokenType::IDENT:
+    case TokenType::NORETURN:
+    case TokenType::TYPE_TYPE:
+    case TokenType::AUTO_TYPE:
+    case TokenType::OPAQUE_TYPE: return true;
+    default:                     return is_primitive(type) || is_builtin(type);
+    }
 }
 
 auto suffix_length(TokenType tt) noexcept -> usize;
@@ -309,15 +324,13 @@ struct Token {
 
     // Materializes the token, asserting that it was a string token
     [[nodiscard]] auto materialize_string() const -> std::string;
-    [[nodiscard]] auto is_primitive() const noexcept -> bool;
-    [[nodiscard]] auto is_builtin() const noexcept -> bool;
     [[nodiscard]] auto is_decl_token() const noexcept -> bool;
 
     // Checks if the token can be used to kick off member parsing
     [[nodiscard]] auto is_member_token() const noexcept -> bool;
 
     // Check whether the token is an ident, primitive type, or builtin function.
-    auto is_valid_ident() const noexcept -> bool;
+    auto is_valid_ident() const noexcept -> bool { return token_type::is_valid_ident(type); }
 
     auto operator==(const Token& other) const noexcept -> bool {
         return type == other.type && slice == other.slice && line == other.line &&

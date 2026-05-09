@@ -1,7 +1,10 @@
 #pragma once
 
 #include <charconv>
+#include <type_traits>
 #include <vector>
+
+#include <fmt/format.h>
 
 #include "ast/id.hh"
 
@@ -15,14 +18,12 @@ namespace porpoise {
 
 namespace ast {
 
-struct Discarded {};
-
 struct DeclStatement;
-using DeclHandle = NodeHandle<NodeKind::DECL_STATEMENT>;
+using DeclHandle = Handle<NodeKind::DECL_STATEMENT>;
 
 struct Members {
     using Member =
-        NodeHandle<NodeKind::DECL_STATEMENT, NodeKind::IMPORT_STATEMENT, NodeKind::USING_STATEMENT>;
+        Handle<NodeKind::DECL_STATEMENT, NodeKind::IMPORT_STATEMENT, NodeKind::USING_STATEMENT>;
     MAKE_ITERATOR(MemberList, std::vector<Member>, list)
 
     MemberList list;
@@ -74,18 +75,7 @@ struct ArrayExpression {
 };
 
 struct CallExpression {
-    class Argument {
-      public:
-        explicit Argument(ExpressionHandle id) noexcept : argument_{id} {}
-        explicit Argument(ExplicitTypeID id) noexcept : argument_{id} {}
-
-        MAKE_VARIANT_UNPACKER(expression, ExpressionHandle, ExpressionHandle, argument_, std::get)
-        MAKE_VARIANT_UNPACKER(type, ExplicitTypeID, ExplicitTypeID, argument_, std::get)
-        MAKE_VARIANT_MATCHER(argument_)
-
-      private:
-        std::variant<ExpressionHandle, ExplicitTypeID> argument_;
-    };
+    using Argument = std::variant<ExpressionHandle, ExplicitTypeID>;
 
     ExpressionHandle      function;
     std::vector<Argument> arguments;
@@ -94,7 +84,7 @@ struct CallExpression {
         -> Result<ExpressionHandle, syntax::Diagnostic>;
 };
 
-using BlockHandle = NodeHandle<NodeKind::BLOCK_STATEMENT>;
+using BlockHandle = Handle<NodeKind::BLOCK_STATEMENT>;
 
 struct DoWhileLoopExpression {
     BlockHandle      block;
@@ -104,13 +94,13 @@ struct DoWhileLoopExpression {
         -> Result<ExpressionHandle, syntax::Diagnostic>;
 };
 
-using IdentifierHandle = NodeHandle<NodeKind::IDENTIFIER_EXPRESSION>;
+using IdentifierHandle = Handle<NodeKind::IDENTIFIER_EXPRESSION>;
 
 struct EnumExpression {
     using Enumeration = std::pair<IdentifierHandle, opt::Option<ExpressionHandle>>;
 
     opt::Option<IdentifierHandle> underlying;
-    std::vector<Enumeration>      enumeration;
+    std::vector<Enumeration>      enumerations;
     Members                       members;
 
     [[nodiscard]] static auto parse(syntax::Parser& parser)
@@ -119,7 +109,7 @@ struct EnumExpression {
 
 struct ForLoopExpression {
     struct Capture {
-        using PayloadHandle = NodeHandle<NodeKind::IDENTIFIER_EXPRESSION, NodeKind::DISCARDED>;
+        using PayloadHandle = Handle<NodeKind::IDENTIFIER_EXPRESSION, NodeKind::DISCARDED>;
 
         TypeModifier  modifier;
         PayloadHandle payload;
@@ -239,7 +229,7 @@ DECLARE_INFIX_EXPRESSION(RangeExpression)
 
 #undef DECLARE_INFIX_EXPRESSION
 
-using ImplicitAccessHandle = NodeHandle<NodeKind::IMPLICIT_ACCESS_EXPRESSION>;
+using ImplicitAccessHandle = Handle<NodeKind::IMPLICIT_ACCESS_EXPRESSION>;
 
 struct InitializerExpression {
     struct Initializer {
@@ -261,13 +251,13 @@ struct InitializerExpression {
         -> Result<ExpressionHandle, syntax::Diagnostic>;
 };
 
-using LabeledNodeHandle = NodeHandle<NodeKind::DO_WHILE_LOOP_EXPRESSION,
-                                     NodeKind::FOR_LOOP_EXPRESSION,
-                                     NodeKind::IF_EXPRESSION,
-                                     NodeKind::INFINITE_LOOP_EXPRESSION,
-                                     NodeKind::MATCH_EXPRESSION,
-                                     NodeKind::WHILE_LOOP_EXPRESSION,
-                                     NodeKind::BLOCK_STATEMENT>;
+using LabeledNodeHandle = Handle<NodeKind::DO_WHILE_LOOP_EXPRESSION,
+                                 NodeKind::FOR_LOOP_EXPRESSION,
+                                 NodeKind::IF_EXPRESSION,
+                                 NodeKind::INFINITE_LOOP_EXPRESSION,
+                                 NodeKind::MATCH_EXPRESSION,
+                                 NodeKind::WHILE_LOOP_EXPRESSION,
+                                 NodeKind::BLOCK_STATEMENT>;
 
 struct LabelExpression {
     IdentifierHandle  name;
@@ -283,7 +273,7 @@ struct LabelExpression {
 
 struct MatchExpression {
     struct Arm {
-        using CaptureHandle = NodeHandle<NodeKind::IDENTIFIER_EXPRESSION, NodeKind::DISCARDED>;
+        using CaptureHandle = Handle<NodeKind::IDENTIFIER_EXPRESSION, NodeKind::DISCARDED>;
 
         ExpressionHandle           pattern;
         opt::Option<CaptureHandle> capture;
@@ -365,6 +355,27 @@ DECLARE_PRIMITIVE_EXPRESSION(F64Expression, f64)
 
 #undef DECLARE_PRIMITIVE_EXPRESSION
 
+namespace traits {
+
+template <typename T> struct is_valued_primitive : std::false_type {};
+template <> struct is_valued_primitive<StringExpression> : std::true_type {};
+template <> struct is_valued_primitive<I32Expression> : std::true_type {};
+template <> struct is_valued_primitive<I64Expression> : std::true_type {};
+template <> struct is_valued_primitive<ISizeExpression> : std::true_type {};
+template <> struct is_valued_primitive<U32Expression> : std::true_type {};
+template <> struct is_valued_primitive<U64Expression> : std::true_type {};
+template <> struct is_valued_primitive<USizeExpression> : std::true_type {};
+template <> struct is_valued_primitive<U8Expression> : std::true_type {};
+template <> struct is_valued_primitive<F32Expression> : std::true_type {};
+template <> struct is_valued_primitive<F64Expression> : std::true_type {};
+template <typename T> constexpr auto is_primitive_v = is_valued_primitive<T>::value;
+
+// A primitive node with its value embedded in the data
+template <typename T>
+concept ValuedPrimitiveNode = is_primitive_v<T>;
+
+} // namespace traits
+
 struct BoolExpression {
     [[nodiscard]] static auto parse(syntax::Parser& parser)
         -> Result<ExpressionHandle, syntax::Diagnostic>;
@@ -374,6 +385,19 @@ struct VoidExpression {
     [[nodiscard]] static auto parse(syntax::Parser& parser)
         -> Result<ExpressionHandle, syntax::Diagnostic>;
 };
+
+namespace traits {
+
+template <typename T> struct is_light_primitive : std::false_type {};
+template <> struct is_light_primitive<BoolExpression> : std::true_type {};
+template <> struct is_light_primitive<VoidExpression> : std::true_type {};
+template <typename T> constexpr auto is_light_primitive_v = is_light_primitive<T>::value;
+
+// A primitive node with its value embedded in its id
+template <typename T>
+concept LightPrimitiveNode = is_light_primitive_v<T>;
+
+} // namespace traits
 
 struct ScopeResolutionExpression {
     ExpressionHandle outer;
@@ -419,6 +443,25 @@ using TypeData = std::variant<IdentifierExpression,
                               UnionExpression,
                               ExplicitArrayType>;
 
+#define FOREACH_AST_TYPE(X)      \
+    X(IdentifierExpression)      \
+    X(ScopeResolutionExpression) \
+    X(CallExpression)            \
+    X(FunctionExpression)        \
+    X(ExplicitTypeID)            \
+    X(StructExpression)          \
+    X(EnumExpression)            \
+    X(UnionExpression)           \
+    X(ExplicitArrayType)
+
+#define AST_TYPE_VISITOR_DEF_GEN_X(NodeType) \
+    auto visit(const porpoise::ast::ExplicitTypeID&, const porpoise::ast::NodeType&) -> void;
+#define AST_TYPE_VISITOR_DEF_GEN() FOREACH_AST_TYPE(AST_TYPE_VISITOR_DEF_GEN_X)
+
+#define AST_TYPE_VISITOR_NOOP(Class, NodeType)                                              \
+    auto Class::visit(const porpoise::ast::ExplicitTypeID&, const porpoise::ast::NodeType&) \
+        -> void {}
+
 struct ExplicitType {
     [[nodiscard]] static auto parse(syntax::Parser& parser)
         -> Result<ExplicitTypeID, syntax::Diagnostic>;
@@ -447,7 +490,7 @@ ET_KIND_OF_TRAIT(ExplicitArrayType, ARRAY)
 
 } // namespace traits
 
-using TypeHandle = NodeHandle<NodeKind::TYPE_EXPRESSION>;
+using TypeHandle = Handle<NodeKind::TYPE_EXPRESSION>;
 
 struct TypeExpression {
     opt::Option<ExplicitTypeID> explicit_type;
@@ -558,10 +601,14 @@ struct ExpressionStatement {
 };
 
 struct ImportStatement {
-    using Payload = NodeHandle<NodeKind::STRING_EXPRESSION, NodeKind::IDENTIFIER_EXPRESSION>;
+    using Payload = Handle<NodeKind::STRING_EXPRESSION, NodeKind::IDENTIFIER_EXPRESSION>;
 
-    Payload                       name;
+    Payload                       payload;
     opt::Option<IdentifierHandle> alias;
+
+    [[nodiscard]] static constexpr auto is_public(const NodeID& id) noexcept -> bool {
+        return id.get_token_type() == syntax::TokenType::BOOLEAN_TRUE;
+    }
 
     [[nodiscard]] static auto parse(syntax::Parser& parser)
         -> Result<StatementHandle, syntax::Diagnostic>;
@@ -574,7 +621,7 @@ struct ReturnStatement {
         -> Result<StatementHandle, syntax::Diagnostic>;
 };
 
-using StringHandle = NodeHandle<NodeKind::STRING_EXPRESSION>;
+using StringHandle = Handle<NodeKind::STRING_EXPRESSION>;
 
 struct TestStatement {
     opt::Option<StringHandle> description;
@@ -588,60 +635,87 @@ struct UsingStatement {
     IdentifierHandle alias;
     ExplicitTypeID   explicit_type;
 
+    [[nodiscard]] static constexpr auto is_public(const NodeID& id) noexcept -> bool {
+        return id.get_token_type() == syntax::TokenType::BOOLEAN_TRUE;
+    }
+
     [[nodiscard]] static auto parse(syntax::Parser& parser)
         -> Result<StatementHandle, syntax::Diagnostic>;
 };
 
-using NodeData = std::variant<Discarded,
-                              ArrayExpression,
-                              CallExpression,
-                              DoWhileLoopExpression,
-                              EnumExpression,
-                              ForLoopExpression,
-                              FunctionExpression,
-                              IdentifierExpression,
-                              IfExpression,
-                              IndexExpression,
-                              InfiniteLoopExpression,
-                              AssignmentExpression,
-                              BinaryExpression,
-                              DotExpression,
-                              RangeExpression,
-                              InitializerExpression,
-                              LabelExpression,
-                              MatchExpression,
-                              UnaryExpression,
-                              ReferenceExpression,
-                              DereferenceExpression,
-                              ImplicitAccessExpression,
-                              StringExpression,
-                              I32Expression,
-                              I64Expression,
-                              ISizeExpression,
-                              U32Expression,
-                              U64Expression,
-                              USizeExpression,
-                              U8Expression,
-                              F32Expression,
-                              F64Expression,
-                              BoolExpression,
-                              VoidExpression,
-                              ScopeResolutionExpression,
-                              StructExpression,
-                              TypeExpression,
-                              UnionExpression,
-                              WhileLoopExpression,
-                              BlockStatement,
-                              BreakStatement,
-                              ContinueStatement,
-                              DeclStatement,
-                              DeferStatement,
-                              DiscardStatement,
-                              ExpressionStatement,
-                              ImportStatement,
-                              ReturnStatement,
-                              TestStatement,
-                              UsingStatement>;
+#define FOREACH_AST_EXPR(X)      \
+    X(ArrayExpression)           \
+    X(CallExpression)            \
+    X(DoWhileLoopExpression)     \
+    X(EnumExpression)            \
+    X(ForLoopExpression)         \
+    X(FunctionExpression)        \
+    X(IdentifierExpression)      \
+    X(IfExpression)              \
+    X(IndexExpression)           \
+    X(InfiniteLoopExpression)    \
+    X(AssignmentExpression)      \
+    X(BinaryExpression)          \
+    X(DotExpression)             \
+    X(RangeExpression)           \
+    X(InitializerExpression)     \
+    X(LabelExpression)           \
+    X(MatchExpression)           \
+    X(ReferenceExpression)       \
+    X(DereferenceExpression)     \
+    X(UnaryExpression)           \
+    X(ImplicitAccessExpression)  \
+    X(StringExpression)          \
+    X(I32Expression)             \
+    X(I64Expression)             \
+    X(ISizeExpression)           \
+    X(U32Expression)             \
+    X(U64Expression)             \
+    X(USizeExpression)           \
+    X(U8Expression)              \
+    X(F32Expression)             \
+    X(F64Expression)             \
+    X(BoolExpression)            \
+    X(VoidExpression)            \
+    X(ScopeResolutionExpression) \
+    X(StructExpression)          \
+    X(TypeExpression)            \
+    X(UnionExpression)           \
+    X(WhileLoopExpression)
+
+#define FOREACH_AST_STMT(X) \
+    X(BlockStatement)       \
+    X(BreakStatement)       \
+    X(ContinueStatement)    \
+    X(DeclStatement)        \
+    X(DeferStatement)       \
+    X(DiscardStatement)     \
+    X(ExpressionStatement)  \
+    X(ImportStatement)      \
+    X(ReturnStatement)      \
+    X(TestStatement)        \
+    X(UsingStatement)
+
+#define FOREACH_AST_NODE(X) \
+    FOREACH_AST_EXPR(X)     \
+    FOREACH_AST_STMT(X)
+
+#define X(Type) Type,
+using NodeData = std::variant<FOREACH_AST_NODE(X) Unit>;
+#undef X
+
+#define AST_NODE_VISITOR_DEF_GEN_X(NodeType) \
+    auto visit(const porpoise::ast::NodeID&, const porpoise::ast::NodeType&) -> void;
+#define AST_NODE_VISITOR_DEF_GEN()               \
+    FOREACH_AST_NODE(AST_NODE_VISITOR_DEF_GEN_X) \
+    auto visit(const porpoise::ast::NodeID&, const porpoise::Unit&) -> void;
+
+#define AST_NODE_VISITOR_NOOP(Class, NodeType) \
+    auto Class::visit(const porpoise::ast::NodeID&, const porpoise::ast::NodeType&) -> void {}
+
+#define AST_VISITOR_DEF_GEN()  \
+    AST_NODE_VISITOR_DEF_GEN() \
+    AST_TYPE_VISITOR_DEF_GEN()
 
 namespace traits {
 
@@ -651,8 +725,6 @@ namespace traits {
             return NodeKind::Kind;                                         \
         }                                                                  \
     };
-
-NODE_KIND_OF_TRAIT(Discarded, DISCARDED)
 
 NODE_KIND_OF_TRAIT(ArrayExpression, ARRAY_EXPRESSION)
 NODE_KIND_OF_TRAIT(CallExpression, CALL_EXPRESSION)
@@ -705,6 +777,8 @@ NODE_KIND_OF_TRAIT(ReturnStatement, RETURN_STATEMENT)
 NODE_KIND_OF_TRAIT(TestStatement, TEST_STATEMENT)
 NODE_KIND_OF_TRAIT(UsingStatement, USING_STATEMENT)
 
+NODE_KIND_OF_TRAIT(Unit, DISCARDED)
+
 #undef KIND_OF_TRAIT
 
 } // namespace traits
@@ -715,4 +789,20 @@ NODE_KIND_OF_TRAIT(UsingStatement, USING_STATEMENT)
 
 template <> struct magic_enum::customize::enum_range<porpoise::ast::DeclModifiers> {
     static constexpr bool is_flags = true;
+};
+
+template <> struct fmt::formatter<porpoise::ast::IdentifierExpression> {
+    static constexpr auto parse(format_parse_context& ctx) noexcept { return ctx.begin(); }
+
+    template <typename F> static auto format(const porpoise::ast::IdentifierExpression& n, F& ctx) {
+        return fmt::format_to(ctx.out(), "{}", n.ident);
+    }
+};
+
+template <porpoise::ast::traits::ValuedPrimitiveNode P> struct fmt::formatter<P> {
+    static constexpr auto parse(format_parse_context& ctx) noexcept { return ctx.begin(); }
+
+    template <typename F> static auto format(const P& p, F& ctx) {
+        return fmt::format_to(ctx.out(), "{}", p.value);
+    }
 };

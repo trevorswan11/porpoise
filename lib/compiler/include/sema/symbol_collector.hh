@@ -1,7 +1,6 @@
 #pragma once
 
-#include "ast/oop_node.hh"
-#include "ast/visitor.hh"
+#include "ast/nodes.hh"
 
 #include "module/module.hh"
 
@@ -14,11 +13,11 @@
 namespace porpoise::sema {
 
 // An AST walker that performs 0 type checking
-class SymbolCollector : public ast::Visitor {
+class SymbolCollector {
   public:
     static auto collect_symbols(mod::Module& module, Context& ctx) -> mod::ModuleState;
 
-    MAKE_AST_VISITOR_OVERRIDES()
+    AST_VISITOR_DEF_GEN()
 
   private:
     template <typename... IterPairs>

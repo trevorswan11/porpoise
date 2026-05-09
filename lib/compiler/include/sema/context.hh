@@ -66,12 +66,12 @@ struct Context {
     }
 
     // Poisons the node and constructs an associated diagnostic to insert into the list
-    template <ast::LeafNode N, typename... Args>
-    auto poison_node(const N& node, Args&&... args) -> void {
+    template <typename... Args>
+    auto poison_node(mod::Module& module, const ast::NodeID& id, Args&&... args) -> void {
         if constexpr (sizeof...(args) != 0) {
             diagnostics.emplace_back(std::forward<Args>(args)...);
         }
-        node.set_sema_type(get_poison());
+        module.tree.set_sema_type(id, get_poison());
     }
 
     // Creates and injects the builtin/primitive prelude and sets the internal prelude index

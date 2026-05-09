@@ -18,9 +18,8 @@ auto inject_types(SymbolTable& prelude, TypePool& pool) -> void {
         auto& type = pool[{kind, types::Key::Mutability::IMMUTABLE}];
         if (!type.has_resolved()) { type.resolve<types::BuiltinType>(); }
 
-        const auto name          = keyword.first;
-        auto       insert_result = prelude.insert<VirtualSymbol>(name, keyword);
-        ASSERT(insert_result, "Failed to insert symbol into prelude");
+        const auto name = keyword.first;
+        prelude.insert_unchecked(name, VirtualSymbol{keyword});
 
         auto& symbol = prelude.get(name);
         symbol.set_type(type);
@@ -65,9 +64,8 @@ auto inject_functions(SymbolTable& prelude, TypePool& pool) -> void {
                 type.resolve<types::BuiltinFunction>(std::move(param_types), return_type);
             }
 
-            const auto name          = builtin.first;
-            auto       insert_result = prelude.insert<VirtualSymbol>(name, builtin);
-            ASSERT(insert_result, "Failed to insert symbol into prelude");
+            const auto name = builtin.first;
+            prelude.insert_unchecked(name, VirtualSymbol{builtin});
 
             auto& symbol = prelude.get(name);
             symbol.set_type(type);

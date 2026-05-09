@@ -1,8 +1,6 @@
 #include "sema/type_resolver.hh"
 #include "sema/type.hh"
 
-#include "ast/oop_ast.hh"
-
 namespace porpoise::sema {
 
 namespace { constexpr auto IMMUTABLE = types::Key::Mutability::IMMUTABLE; } // namespace
