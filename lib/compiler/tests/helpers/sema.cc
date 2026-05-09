@@ -1,4 +1,5 @@
-#include "helpers/sema.hh"
+#if 0
+#    include "helpers/sema.hh"
 
 namespace porpoise::tests::helpers {
 
@@ -55,3 +56,4 @@ auto common_decl(std::string_view name, std::string_view assign, bool constant)
 }
 
 } // namespace porpoise::tests::helpers
+#endif

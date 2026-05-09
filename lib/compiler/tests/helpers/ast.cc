@@ -1,4 +1,5 @@
-#include "helpers/ast.hh"
+#if 0
+#    include "helpers/ast.hh"
 
 namespace porpoise::tests::helpers {
 
@@ -14,3 +15,4 @@ auto ident_from(const syntax::Token& tok) -> ast::IdentifierExpression {
 }
 
 } // namespace porpoise::tests::helpers
+#endif

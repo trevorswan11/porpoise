@@ -17,9 +17,23 @@ class SymbolCollector {
   public:
     static auto collect_symbols(mod::Module& module, Context& ctx) -> mod::ModuleState;
 
-    AST_VISITOR_DEF_GEN()
+    auto collect(const ast::NodeID& id) -> void {
+        ASSERT(id.is_valid(), "Attempt to collect invalid handle");
+        std::visit([&](const auto& data) { visit(id, data); }, collecting_.tree[id]);
+    }
+
+    template <ast::NodeKind... Kinds> auto collect(const ast::Handle<Kinds...>& id) -> void {
+        collect(*id);
+    }
+
+    auto collect(const ast::ExplicitTypeID& id) -> void {
+        ASSERT(id.is_valid(), "Attempt to collect invalid handle");
+        std::visit([&](const auto& data) { visit(id, data); }, collecting_.tree[id]);
+    }
 
   private:
+    AST_VISITOR_DEF_GEN()
+
     template <typename... IterPairs>
     [[nodiscard]] auto visit_scopes(TypeKind kind, IterPairs&&... pairs) -> usize {
         const auto  new_idx = ctx_.registry.create();
@@ -33,8 +47,8 @@ class SymbolCollector {
 
     template <typename SymbolicVariant>
     auto try_declare(std::string_view name, SymbolicVariant node) -> bool {
-        return ctx_.try_result(ctx_.registry.is_shadowing(table_stack_, name, node)) &&
-               ctx_.try_result(ctx_.registry.insert_into(table_idx_, name, node));
+        return ctx_.try_result(ctx_.registry.is_shadowing(table_stack_, collecting_, name, node)) &&
+               ctx_.try_result(ctx_.registry.insert_into(table_idx_, collecting_, name, node));
     }
 
     auto fn_guard() noexcept -> std::pair<DefaultCounter::Guard, DefaultCounter::Guard> {

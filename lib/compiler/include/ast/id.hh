@@ -121,6 +121,8 @@ class NodeID {
         return ((kind == traits::NodeKindOf<Ns>::value()) || ...);
     }
 
+    [[nodiscard]] auto display_name() const noexcept -> std::string_view;
+
   private:
     constexpr explicit NodeID(u64 raw) noexcept : raw_{raw} {}
 
@@ -275,7 +277,9 @@ class TypeModifier {
         return lhs.underlying_ == rhs.underlying_;
     }
 
-    [[nodiscard]] constexpr operator u64() const noexcept { return static_cast<u64>(underlying_); }
+    [[nodiscard]] constexpr explicit operator u64() const noexcept {
+        return static_cast<u64>(underlying_);
+    }
 
   private:
     Modifier underlying_{Modifier::VALUE};
@@ -333,7 +337,7 @@ class ExplicitTypeID {
         ASSERT(index <= INDEX_MASK, "Requested type index is too large");
         raw_ |= static_cast<u64>(kind) << KIND_OFFSET;
         raw_ |= static_cast<u64>(mod) << MODIFIER_OFFSET;
-        raw_ |= static_cast<u64>(token_type) << MODIFIER_OFFSET;
+        raw_ |= static_cast<u64>(token_type) << TOKEN_TYPE_OFFSET;
         raw_ |= index;
     }
 
@@ -341,7 +345,7 @@ class ExplicitTypeID {
         return static_cast<ExplicitTypeKind>((raw_ & KIND_MASK) >> KIND_OFFSET);
     }
 
-    [[nodiscard]] constexpr auto get_modifier() const noexcept -> u64 {
+    [[nodiscard]] constexpr auto get_modifier() const noexcept -> TypeModifier {
         return TypeModifier{(raw_ & MODIFIER_MASK) >> MODIFIER_OFFSET};
     }
 

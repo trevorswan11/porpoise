@@ -15,17 +15,15 @@ namespace {
         Overloaded{
             [&](const SymbolicNode& node) { return module.tree.location_of(*node); },
             [&](const VirtualSymbol&) { return SourceLocation{0, 0}; },
-            [&](const SymbolicUnionField& inner) { return module.tree.location_of(*inner->ident); },
-            [&](const SymbolicEnumeration& inner) {
-                return module.tree.location_of(*inner->first);
-            },
-            [&](const SymbolicSelfParam& inner) { return module.tree.location_of(*inner->ident); },
+            [&](const SymbolicUnionField& inner) { return module.tree.location_of(*inner.ident); },
+            [&](const SymbolicEnumeration& inner) { return module.tree.location_of(*inner.first); },
+            [&](const SymbolicSelfParam& inner) { return module.tree.location_of(*inner.ident); },
             [&](const SymbolicParam& inner) {
-                if (inner->ident) { return module.tree.location_of(**inner->ident); }
-                return module.tree.location_of(inner->explicit_type);
+                if (inner.ident) { return module.tree.location_of(**inner.ident); }
+                return module.tree.location_of(inner.explicit_type);
             },
-            [&](const SymbolicCapture& inner) { return module.tree.location_of(*inner->payload); },
-            [&](const SymbolicArm& inner) { return module.tree.location_of(*inner->pattern); },
+            [&](const SymbolicCapture& inner) { return module.tree.location_of(*inner.payload); },
+            [&](const SymbolicArm& inner) { return module.tree.location_of(*inner.pattern); },
             [&](const SymbolicImport& inner) { return module.tree.location_of(*inner.node); }},
         payload);
 }
@@ -74,7 +72,7 @@ auto SymbolTable::insert(std::string_view name, mod::Module& module, SymbolicNod
 auto SymbolTable::insert_unchecked(std::string_view name, SymbolicNodeVariant node) -> void {
     // Reserved identifier use is impossible due to a parser invariant
     auto [_, inserted] = symbols_.try_emplace(name, name, node);
-    ASSERT(!inserted, "Duplicate symbol injected");
+    ASSERT(inserted, "Duplicate symbol injected");
 }
 
 auto SymbolTableRegistry::insert_into(usize               table_idx,

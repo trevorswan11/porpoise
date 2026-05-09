@@ -87,7 +87,7 @@ DeclStatement (f_ptr)
             └─ ArrayType
                 ├─ Dimensions: USizeExpression: 2
                 ├─ Null terminated: false
-                └─ ExplicitType (modifier: BASE)
+                └─ ExplicitType (modifier: VALUE)
                     └─ ArrayType
                         ├─ Dimensions: IdentifierExpression: N
                         ├─ Null terminated: false
@@ -103,7 +103,7 @@ ExpressionStatement
 └─ Expr: StructExpression
     ├─ DeclStatement (a)
     │   ├─ Modifiers: VARIABLE
-    │   ├─ Type: ExplicitType (modifier: BASE)
+    │   ├─ Type: ExplicitType (modifier: VALUE)
     │   │   └─ IdentifierExpression: Foo
     │   └─ Value: IdentifierExpression: bar
     └─ DeclStatement (b)
@@ -114,14 +114,14 @@ ExpressionStatement
             ├─ Parameters:
             │   ├─ Param:
             │   │   ├─ Name: IdentifierExpression: a
-            │   │   └─ Type: ExplicitType (modifier: BASE)
+            │   │   └─ Type: ExplicitType (modifier: VALUE)
             │   │       └─ IdentifierExpression: A
             │   └─ Param:
             │       ├─ Name: IdentifierExpression: b
             │       └─ Type: ExplicitType (modifier: PTR)
             │           └─ IdentifierExpression: B
             ├─ Variadic: false
-            ├─ Returns: ExplicitType (modifier: BASE)
+            ├─ Returns: ExplicitType (modifier: VALUE)
             │   └─ IdentifierExpression: C
             └─ Body: BlockStatement
                 └─ ExpressionStatement
@@ -191,14 +191,14 @@ ExpressionStatement
     ├─ Parameters:
     │   ├─ Param:
     │   │   ├─ Name: IdentifierExpression: a
-    │   │   └─ Type: ExplicitType (modifier: BASE)
+    │   │   └─ Type: ExplicitType (modifier: VALUE)
     │   │       └─ IdentifierExpression: A
     │   └─ Param:
     │       ├─ Name: IdentifierExpression: b
     │       └─ Type: ExplicitType (modifier: PTR)
     │           └─ IdentifierExpression: B
     ├─ Variadic: false
-    ├─ Returns: ExplicitType (modifier: BASE)
+    ├─ Returns: ExplicitType (modifier: VALUE)
     │   └─ IdentifierExpression: i32 (primitive)
     └─ Body: BlockStatement
         └─ ExpressionStatement
@@ -210,7 +210,7 @@ ExpressionStatement
     │   ├─ IdentifierExpression: l
     │   └─ IdentifierExpression: p
     ├─ Captures:
-    │   ├─ i (modifier: BASE)
+    │   ├─ i (modifier: VALUE)
     │   ├─ j (modifier: MUT_REF)
     │   └─ <discarded>
     ├─ Body: BlockStatement
@@ -236,7 +236,7 @@ ExpressionStatement
 UsingStatement
 ├─ Public: false
 ├─ Alias: IdentifierExpression: T
-└─ Type: ExplicitType (modifier: BASE)
+└─ Type: ExplicitType (modifier: VALUE)
     └─ IdentifierExpression: i32 (primitive)
 ExpressionStatement
 └─ Expr: CallExpression
@@ -249,7 +249,7 @@ ExpressionStatement
             └─ ArrayType
                 ├─ Dimensions: IdentifierExpression: N
                 ├─ Null terminated: true
-                └─ ExplicitType (modifier: BASE)
+                └─ ExplicitType (modifier: VALUE)
                     └─ IdentifierExpression: u8 (primitive)
 ExpressionStatement
 └─ Expr: ImplicitAccessExpression (DOT)
@@ -259,7 +259,7 @@ ExpressionStatement
     └─ Fields:
         ├─ Field:
         │   ├─ Tag: IdentifierExpression: a
-        │   └─ Type: ExplicitType (modifier: BASE)
+        │   └─ Type: ExplicitType (modifier: VALUE)
         │       └─ IdentifierExpression: i32 (primitive)
         └─ Field:
             ├─ Tag: IdentifierExpression: b
@@ -287,7 +287,7 @@ ExpressionStatement
 └─ Expr: ArrayExpression
     ├─ Size: USizeExpression: 1
     ├─ Null terminated: false
-    ├─ Type: ExplicitType (modifier: BASE)
+    ├─ Type: ExplicitType (modifier: VALUE)
     │   └─ IdentifierExpression: A
     └─ Items:
         └─ IdentifierExpression: a
@@ -305,11 +305,11 @@ ExpressionStatement
     └─ Upper: IdentifierExpression: b
 DeclStatement (a)
 ├─ Modifiers: VARIABLE
-└─ Type: ExplicitType (modifier: BASE)
+└─ Type: ExplicitType (modifier: VALUE)
     └─ ArrayType
         ├─ Dimensions: (slice)
         ├─ Null terminated: false
-        └─ ExplicitType (modifier: BASE)
+        └─ ExplicitType (modifier: VALUE)
             └─ IdentifierExpression: i32 (primitive)
 BlockStatement
 └─ <empty>
@@ -344,7 +344,7 @@ ExpressionStatement
     │           └─ StructExpression
     │               └─ DeclStatement (b)
     │                   ├─ Modifiers: VARIABLE
-    │                   ├─ Type: ExplicitType (modifier: BASE)
+    │                   ├─ Type: ExplicitType (modifier: VALUE)
     │                   │   └─ IdentifierExpression: Foo
     │                   └─ Value: IdentifierExpression: bar
     └─ Members:
@@ -356,10 +356,10 @@ ExpressionStatement
                 ├─ Parameters:
                 │   └─ Param:
                 │       ├─ Name: IdentifierExpression: a
-                │       └─ Type: ExplicitType (modifier: BASE)
+                │       └─ Type: ExplicitType (modifier: VALUE)
                 │           └─ IdentifierExpression: A
                 ├─ Variadic: false
-                ├─ Returns: ExplicitType (modifier: BASE)
+                ├─ Returns: ExplicitType (modifier: VALUE)
                 │   └─ IdentifierExpression: C
                 └─ Body: BlockStatement
                     └─ ExpressionStatement
@@ -379,10 +379,10 @@ ExpressionStatement
                 ├─ Parameters:
                 │   └─ Param:
                 │       ├─ Name: IdentifierExpression: a
-                │       └─ Type: ExplicitType (modifier: BASE)
+                │       └─ Type: ExplicitType (modifier: VALUE)
                 │           └─ IdentifierExpression: A
                 ├─ Variadic: false
-                ├─ Returns: ExplicitType (modifier: BASE)
+                ├─ Returns: ExplicitType (modifier: VALUE)
                 │   └─ IdentifierExpression: C
                 └─ Body: BlockStatement
                     └─ ExpressionStatement
@@ -410,7 +410,7 @@ TestStatement
                     └─ RHS: BoolExpression: true
 DeclStatement (a)
 ├─ Modifiers: VARIABLE
-└─ Type: ExplicitType (modifier: BASE)
+└─ Type: ExplicitType (modifier: VALUE)
     └─ CallExpression
         ├─ Callee: ScopeResolutionExpression
         │   ├─ Outer: IdentifierExpression: std
@@ -419,13 +419,13 @@ DeclStatement (a)
             └─ IdentifierExpression: u8 (primitive)
 DeclStatement (a)
 ├─ Modifiers: VARIABLE
-└─ Type: ExplicitType (modifier: BASE)
+└─ Type: ExplicitType (modifier: VALUE)
     └─ ScopeResolutionExpression
         ├─ Outer: IdentifierExpression: std
         └─ Inner: IdentifierExpression: Io
 DeclStatement (a)
 ├─ Modifiers: VARIABLE
-└─ Type: ExplicitType (modifier: BASE)
+└─ Type: ExplicitType (modifier: VALUE)
     └─ CallExpression
         ├─ Callee: IdentifierExpression: List
         └─ Arguments:

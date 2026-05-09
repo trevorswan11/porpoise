@@ -71,7 +71,7 @@ TEST_CASE("Comprehensive dump") {
     helpers::check_errors<syntax::Diagnostic>(errors);
 
     std::ostringstream oss;
-    ast::ASTDumper     dumper{oss, ast};
+    ast::ASTDumper     dumper{ast, oss};
     for (const auto& node : ast) { dumper.dump(node); }
     CHECK(expected == oss.view());
 }

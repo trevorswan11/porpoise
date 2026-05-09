@@ -15,18 +15,20 @@ namespace porpoise::ast {
 
 class ASTDumper {
   public:
-    explicit ASTDumper(std::ostream& out, const AST& tree) : out_{out}, tree_{tree} {}
+    explicit ASTDumper(const AST& tree, std::ostream& out) : out_{out}, tree_{tree} {}
 
     auto dump(const NodeID& id) -> void {
+        ASSERT(id.is_valid(), "Attempt to dump invalid handle");
         std::visit([&](const auto& data) { visit(id, data); }, tree_[id]);
     }
 
     template <NodeKind... Kinds> auto dump(const Handle<Kinds...>& id) -> void {
         ASSERT(id.is_valid(), "Attempt to dump invalid handle");
-        std::visit([&](const auto& data) { visit(*id, data); }, tree_[*id]);
+        dump(*id);
     }
 
     auto dump(const ExplicitTypeID& id) -> void {
+        ASSERT(id.is_valid(), "Attempt to dump invalid handle");
         fmt::println(out_, "ExplicitType (modifier: {})", id.get_modifier());
         const Indent::Guard g{indent_, true};
         std::visit([&](const auto& data) { visit(id, data); }, tree_[id]);

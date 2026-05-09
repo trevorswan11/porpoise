@@ -40,16 +40,16 @@ class VirtualSymbol {
 using SymbolicNode        = ast::Handle<ast::NodeKind::DECL_STATEMENT,
                                         ast::NodeKind::USING_STATEMENT,
                                         ast::NodeKind::LABEL_EXPRESSION>;
-using SymbolicUnionField  = mem::NonNull<const ast::UnionExpression::Field>;
-using SymbolicEnumeration = mem::NonNull<const ast::EnumExpression::Enumeration>;
-using SymbolicSelfParam   = mem::NonNull<const ast::SelfParameter>;
-using SymbolicParam       = mem::NonNull<const ast::FunctionExpression::Parameter>;
-using SymbolicCapture     = mem::NonNull<const ast::ForLoopExpression::Capture>;
-using SymbolicArm         = mem::NonNull<const ast::MatchExpression::Arm>;
+using SymbolicUnionField  = ast::UnionExpression::Field;
+using SymbolicEnumeration = ast::EnumExpression::Enumeration;
+using SymbolicSelfParam   = ast::SelfParameter;
+using SymbolicParam       = ast::FunctionExpression::Parameter;
+using SymbolicCapture     = ast::ForLoopExpression::Capture;
+using SymbolicArm         = ast::MatchExpression::Arm;
 
 struct SymbolicImport {
-    const ast::Handle<ast::NodeKind::IMPORT_STATEMENT>& node;
-    opt::Option<mod::Module&>                           imported_mod;
+    ast::ImportHandle         node;
+    opt::Option<mod::Module&> imported_mod;
 };
 
 using SymbolicNodeVariant = std::variant<VirtualSymbol,
@@ -92,15 +92,15 @@ class Symbol {
     MAKE_VARIANT_UNPACKER(symbolic_node, SymbolicNode, SymbolicNode, node_, std::get)
     MAKE_VARIANT_UNPACKER(import_stmt, SymbolicImport, SymbolicImport, node_, std::get)
     MAKE_VARIANT_UNPACKER(
-        union_field, ast::UnionExpression::Field, SymbolicUnionField, node_, *std::get)
+        union_field, ast::UnionExpression::Field, SymbolicUnionField, node_, std::get)
     MAKE_VARIANT_UNPACKER(
-        enumeration, ast::EnumExpression::Enumeration, SymbolicEnumeration, node_, *std::get)
-    MAKE_VARIANT_UNPACKER(self_param, ast::SelfParameter, SymbolicSelfParam, node_, *std::get)
+        enumeration, ast::EnumExpression::Enumeration, SymbolicEnumeration, node_, std::get)
+    MAKE_VARIANT_UNPACKER(self_param, ast::SelfParameter, SymbolicSelfParam, node_, std::get)
     MAKE_VARIANT_UNPACKER(
-        basic_param, ast::FunctionExpression::Parameter, SymbolicParam, node_, *std::get)
+        basic_param, ast::FunctionExpression::Parameter, SymbolicParam, node_, std::get)
     MAKE_VARIANT_UNPACKER(
-        for_loop_capture, ast::ForLoopExpression::Capture, SymbolicCapture, node_, *std::get)
-    MAKE_VARIANT_UNPACKER(match_arm, ast::MatchExpression::Arm, SymbolicArm, node_, *std::get)
+        for_loop_capture, ast::ForLoopExpression::Capture, SymbolicCapture, node_, std::get)
+    MAKE_VARIANT_UNPACKER(match_arm, ast::MatchExpression::Arm, SymbolicArm, node_, std::get)
 
     MAKE_VARIANT_MATCHER(node_)
     [[nodiscard]] auto get_symbol_location(mod::Module& module) const noexcept -> SourceLocation;

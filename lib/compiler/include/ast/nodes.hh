@@ -179,7 +179,7 @@ struct IdentifierExpression {
     [[nodiscard]] static auto parse(syntax::Parser& parser)
         -> Result<ExpressionHandle, syntax::Diagnostic>;
 
-    std::string_view ident;
+    std::string_view name;
 };
 
 struct IfExpression {
@@ -600,6 +600,8 @@ struct ExpressionStatement {
         -> Result<StatementHandle, syntax::Diagnostic>;
 };
 
+using ImportHandle = ast::Handle<ast::NodeKind::IMPORT_STATEMENT>;
+
 struct ImportStatement {
     using Payload = Handle<NodeKind::STRING_EXPRESSION, NodeKind::IDENTIFIER_EXPRESSION>;
 
@@ -607,7 +609,7 @@ struct ImportStatement {
     opt::Option<IdentifierHandle> alias;
 
     [[nodiscard]] static constexpr auto is_public(const NodeID& id) noexcept -> bool {
-        return id.get_token_type() == syntax::TokenType::BOOLEAN_TRUE;
+        return id.get_token_type() == syntax::TokenType::PUBLIC;
     }
 
     [[nodiscard]] static auto parse(syntax::Parser& parser)
@@ -636,7 +638,7 @@ struct UsingStatement {
     ExplicitTypeID   explicit_type;
 
     [[nodiscard]] static constexpr auto is_public(const NodeID& id) noexcept -> bool {
-        return id.get_token_type() == syntax::TokenType::BOOLEAN_TRUE;
+        return id.get_token_type() == syntax::TokenType::PUBLIC;
     }
 
     [[nodiscard]] static auto parse(syntax::Parser& parser)
@@ -795,7 +797,7 @@ template <> struct fmt::formatter<porpoise::ast::IdentifierExpression> {
     static constexpr auto parse(format_parse_context& ctx) noexcept { return ctx.begin(); }
 
     template <typename F> static auto format(const porpoise::ast::IdentifierExpression& n, F& ctx) {
-        return fmt::format_to(ctx.out(), "{}", n.ident);
+        return fmt::format_to(ctx.out(), "{}", n.name);
     }
 };
 

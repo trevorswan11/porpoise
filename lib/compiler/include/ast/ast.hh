@@ -73,6 +73,11 @@ class AST {
         nodes_.sema_types[id.get_index()].emplace(type);
     }
 
+    template <NodeKind... Kinds>
+    constexpr auto set_sema_type(const Handle<Kinds...> id, sema::Type& type) noexcept -> void {
+        set_sema_type(*id, type);
+    }
+
     template <traits::ASTExplicitType Data>
     [[nodiscard]] constexpr auto
     add_type(const syntax::Token& start_token, TypeModifier mod, Data&& data) -> ExplicitTypeID {
@@ -96,6 +101,22 @@ class AST {
     [[nodiscard]] constexpr auto operator[](ExplicitTypeID id) const noexcept -> const TypeData& {
         ASSERT(id.is_valid(), "Attempt to access invalid id");
         return explicit_types_.pool[id.get_index()];
+    }
+
+    [[nodiscard]] constexpr auto has_sema_type(ExplicitTypeID id) const noexcept -> bool {
+        ASSERT(id.is_valid(), "Attempt to access invalid id");
+        return explicit_types_.sema_types[id.get_index()].has_value();
+    }
+
+    [[nodiscard]] constexpr auto get_sema_type(ExplicitTypeID id) const noexcept
+        -> const sema::Type& {
+        ASSERT(id.is_valid(), "Attempt to access invalid id");
+        return *explicit_types_.sema_types[id.get_index()];
+    }
+
+    constexpr auto set_sema_type(ExplicitTypeID id, sema::Type& type) noexcept -> void {
+        ASSERT(id.is_valid(), "Attempt to access invalid id");
+        explicit_types_.sema_types[id.get_index()].emplace(type);
     }
 
     constexpr auto clear() noexcept -> void {
