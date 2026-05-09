@@ -1,5 +1,6 @@
 #pragma once
 
+#include <charconv>
 #include <vector>
 
 #include "ast/id.hh"
@@ -194,7 +195,7 @@ struct IdentifierExpression {
 struct IfExpression {
     bool                         constexpr_condition;
     ExpressionHandle             condition;
-    ExpressionHandle             consequence;
+    StatementHandle              consequence;
     opt::Option<StatementHandle> alternate;
 
     [[nodiscard]] static auto parse(syntax::Parser& parser)
@@ -219,15 +220,21 @@ struct InfiniteLoopExpression {
 #define DECLARE_INFIX_EXPRESSION(Type)                                                \
     struct Type {                                                                     \
         ExpressionHandle          lhs;                                                \
-        syntax::TokenType         op;                                                 \
         ExpressionHandle          rhs;                                                \
         [[nodiscard]] static auto parse(syntax::Parser& parser, ExpressionHandle lhs) \
             -> Result<ExpressionHandle, syntax::Diagnostic>;                          \
     };
 
+// The operator is stored in the nodes id
 DECLARE_INFIX_EXPRESSION(AssignmentExpression)
+
+// The operator is stored in the nodes id
 DECLARE_INFIX_EXPRESSION(BinaryExpression)
+
+// The operator is stored in the nodes id
 DECLARE_INFIX_EXPRESSION(DotExpression)
+
+// The operator is stored in the nodes id
 DECLARE_INFIX_EXPRESSION(RangeExpression)
 
 #undef DECLARE_INFIX_EXPRESSION
@@ -270,7 +277,7 @@ struct LabelExpression {
         -> Result<ExpressionHandle, syntax::Diagnostic>;
 
   private:
-    [[nodiscard]] static auto deconstruct_body(StatementHandle raw_stmt)
+    [[nodiscard]] static auto deconstruct_body(syntax::Parser& parser, StatementHandle raw_stmt)
         -> Result<LabeledNodeHandle, syntax::Diagnostic>;
 };
 
@@ -293,7 +300,7 @@ struct MatchExpression {
 
 #define DECLARE_PREFIX_EXPRESSION(Type)                         \
     struct Type {                                               \
-        NodeID                    rhs;                          \
+        ExpressionHandle          rhs;                          \
         [[nodiscard]] static auto parse(syntax::Parser& parser) \
             -> Result<ExpressionHandle, syntax::Diagnostic>;    \
     };
@@ -305,9 +312,42 @@ DECLARE_PREFIX_EXPRESSION(ImplicitAccessExpression)
 
 #undef DECLARE_PREFIX_EXPRESSION
 
+namespace detail {
+
+// Parses the requested value from the string, asserting the from_chars result if requested
+template <typename ValueType, bool AssertLast = true>
+[[nodiscard]] static auto parse_primitive_value(std::string_view  slice,
+                                                syntax::TokenType type) noexcept
+    -> opt::Option<ValueType> {
+    const auto  base  = syntax::token_type::to_base(type);
+    const auto* first = slice.cbegin() + (!base || *base == syntax::Base::DECIMAL ? 0 : 2);
+    const auto* last  = slice.cend() - syntax::token_type::suffix_length(type);
+
+    ValueType              v;
+    std::from_chars_result result;
+    if constexpr (std::is_same_v<ValueType, f64> || std::is_same_v<ValueType, f32>) {
+        result = std::from_chars(first, last, v);
+    } else {
+        result = std::from_chars(first, last, v, std::to_underlying(*base));
+    }
+
+    if constexpr (AssertLast) {
+        ASSERT(result.ptr == last);
+        if (result.ec == std::errc{}) { return v; }
+    } else {
+        if (result.ec == std::errc{} && result.ptr == last) { return v; }
+    }
+
+    ASSERT(result.ec == std::errc::result_out_of_range);
+    return opt::none;
+}
+
+} // namespace detail
+
 #define DECLARE_PRIMITIVE_EXPRESSION(NodeType, ValueType)       \
     struct NodeType {                                           \
-        ValueType                 value;                        \
+        using value_type = ValueType;                           \
+        value_type                value;                        \
         [[nodiscard]] static auto parse(syntax::Parser& parser) \
             -> Result<ExpressionHandle, syntax::Diagnostic>;    \
     };
@@ -336,8 +376,8 @@ struct VoidExpression {
 };
 
 struct ScopeResolutionExpression {
-    ExpressionHandle     outer;
-    IdentifierExpression inner;
+    ExpressionHandle outer;
+    IdentifierHandle inner;
 
     [[nodiscard]] static auto parse(syntax::Parser& parser, ExpressionHandle outer)
         -> Result<ExpressionHandle, syntax::Diagnostic>;
@@ -518,11 +558,10 @@ struct ExpressionStatement {
 };
 
 struct ImportStatement {
-    using ImportedExpressionHandle =
-        NodeHandle<NodeKind::STRING_EXPRESSION, NodeKind::IDENTIFIER_EXPRESSION>;
+    using Payload = NodeHandle<NodeKind::STRING_EXPRESSION, NodeKind::IDENTIFIER_EXPRESSION>;
 
-    ImportedExpressionHandle      name;
-    opt::Option<ExpressionHandle> alias;
+    Payload                       name;
+    opt::Option<IdentifierHandle> alias;
 
     [[nodiscard]] static auto parse(syntax::Parser& parser)
         -> Result<StatementHandle, syntax::Diagnostic>;
@@ -546,8 +585,8 @@ struct TestStatement {
 };
 
 struct UsingStatement {
-    IdentifierExpression alias;
-    ExplicitTypeID       explicit_type;
+    IdentifierHandle alias;
+    ExplicitTypeID   explicit_type;
 
     [[nodiscard]] static auto parse(syntax::Parser& parser)
         -> Result<StatementHandle, syntax::Diagnostic>;

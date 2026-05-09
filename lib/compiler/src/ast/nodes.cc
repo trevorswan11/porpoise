@@ -3,6 +3,8 @@
 #include "ast/ast.hh"
 #include "ast/id.hh"
 
+#include "enum.hh"
+
 namespace porpoise::ast {
 
 namespace {
@@ -438,204 +440,919 @@ auto IdentifierExpression::parse(syntax::Parser& parser)
 }
 
 auto IfExpression::parse(syntax::Parser& parser) -> Result<ExpressionHandle, syntax::Diagnostic> {
-    TODO(parser);
+    const auto start_token = parser.get_current_token();
+
+    bool constexpr_condition = false;
+    if (parser.peek_token_is(syntax::TokenType::CONSTEXPR)) {
+        constexpr_condition = true;
+        parser.advance();
+    }
+
+    // Conditions have to be surrounded by parentheses
+    TRY(parser.expect_peek(syntax::TokenType::LPAREN));
+    parser.advance();
+    if (parser.current_token_is(syntax::TokenType::RPAREN)) {
+        return make_syntax_err(syntax::Error::IF_MISSING_CONDITION, start_token);
+    }
+
+    auto condition = TRY(parser.parse_expression());
+    TRY(parser.expect_peek(syntax::TokenType::RPAREN));
+
+    // The consequence and alternate are trivially handled by restricted statement parsers
+    parser.advance();
+    auto consequence =
+        TRY(parser.parse_restricted_statement(syntax::Error::ILLEGAL_IF_BRANCH, false));
+    auto alternate =
+        TRY(parser.try_parse_restricted_alternate(syntax::Error::ILLEGAL_IF_BRANCH, false));
+
+    return ExpressionHandle{parser.get_ast().add_node(
+        start_token, IfExpression{constexpr_condition, condition, consequence, alternate})};
 }
 
 auto IndexExpression::parse(syntax::Parser& parser, ExpressionHandle array)
     -> Result<ExpressionHandle, syntax::Diagnostic> {
-    TODO(parser, array);
+    const auto start_token = parser.get_current_token();
+    if (parser.peek_token_is(syntax::TokenType::RBRACKET)) {
+        return make_syntax_err(syntax::Error::INDEX_MISSING_EXPRESSION, start_token);
+    }
+    parser.advance();
+
+    auto idx_expr = TRY(parser.parse_expression());
+    TRY(parser.expect_peek(syntax::TokenType::RBRACKET));
+    return ExpressionHandle{
+        parser.get_ast().add_node(start_token, IndexExpression{array, idx_expr})};
 }
 
 auto InfiniteLoopExpression::parse(syntax::Parser& parser)
     -> Result<ExpressionHandle, syntax::Diagnostic> {
-    TODO(parser);
+    const auto start_token = parser.get_current_token();
+    TRY(parser.expect_peek(syntax::TokenType::LBRACE));
+
+    const BlockHandle block = TRY(BlockStatement::parse(parser));
+    if (block_is_empty(parser, block)) {
+        return make_syntax_err(syntax::Error::EMPTY_LOOP, parser.get_location_of(*block));
+    }
+    return ExpressionHandle{parser.get_ast().add_node(start_token, InfiniteLoopExpression{block})};
 }
 
-auto AssignmentExpression::parse(syntax::Parser& parser, ExpressionHandle lhs)
+namespace {
+
+template <traits::ASTNode Node>
+[[nodiscard]] auto parse_infix(syntax::Parser& parser, ExpressionHandle lhs)
     -> Result<ExpressionHandle, syntax::Diagnostic> {
-    TODO(parser, lhs);
+    const auto op_token = parser.get_current_token();
+    if (parser.peek_token_is(syntax::TokenType::END)) {
+        return make_syntax_err(syntax::Error::INFIX_MISSING_RHS, op_token);
+    }
+
+    auto [current_precedence, current_binding] = parser.get_current_precedence();
+    if (current_binding && current_binding->right_assoc) {
+        current_precedence =
+            static_cast<syntax::Precedence>(std::to_underlying(current_precedence) - 1);
+    }
+
+    parser.advance();
+    auto rhs = TRY(parser.parse_expression(current_precedence));
+    return ExpressionHandle{parser.get_ast().add_node(op_token, Node{lhs, rhs})};
 }
 
-auto BinaryExpression::parse(syntax::Parser& parser, ExpressionHandle lhs)
-    -> Result<ExpressionHandle, syntax::Diagnostic> {
-    TODO(parser, lhs);
-}
+} // namespace
 
-auto DotExpression::parse(syntax::Parser& parser, ExpressionHandle lhs)
-    -> Result<ExpressionHandle, syntax::Diagnostic> {
-    TODO(parser, lhs);
-}
+#define MAKE_INFIX_PARSER(Type)                                    \
+    auto Type::parse(syntax::Parser& parser, ExpressionHandle lhs) \
+        -> Result<ExpressionHandle, syntax::Diagnostic> {          \
+        return parse_infix<Type>(parser, lhs);                     \
+    }
 
-auto RangeExpression::parse(syntax::Parser& parser, ExpressionHandle lhs)
-    -> Result<ExpressionHandle, syntax::Diagnostic> {
-    TODO(parser, lhs);
-}
+MAKE_INFIX_PARSER(AssignmentExpression)
+MAKE_INFIX_PARSER(BinaryExpression)
+MAKE_INFIX_PARSER(DotExpression)
+MAKE_INFIX_PARSER(RangeExpression)
 
 auto InitializerExpression::parse(syntax::Parser& parser, opt::Option<ExpressionHandle> object)
     -> Result<ExpressionHandle, syntax::Diagnostic> {
-    TODO(parser, object);
+    const auto start_token = parser.get_current_token();
+
+    std::vector<Initializer> initializers;
+    while (!parser.peek_token_is(syntax::TokenType::RBRACE) &&
+           !parser.peek_token_is(syntax::TokenType::END)) {
+        TRY(parser.expect_peek(syntax::TokenType::DOT));
+        ImplicitAccessHandle member = TRY(ImplicitAccessExpression::parse(parser));
+
+        TRY(parser.expect_peek(syntax::TokenType::ASSIGN));
+        parser.advance();
+        auto value = TRY(parser.parse_expression());
+        initializers.emplace_back(member, value);
+
+        if (!parser.peek_token_is(syntax::TokenType::RBRACE)) {
+            TRY(parser.expect_peek(syntax::TokenType::COMMA));
+        }
+    }
+    TRY(parser.expect_peek(syntax::TokenType::RBRACE));
+
+    return ExpressionHandle{parser.get_ast().add_node(
+        start_token, InitializerExpression{object, std::move(initializers)})};
 }
 
 auto LabelExpression::parse(syntax::Parser& parser, ExpressionHandle name)
     -> Result<ExpressionHandle, syntax::Diagnostic> {
-    TODO(parser, name);
+    const auto& start_token = parser.get_current_token();
+    if (!name->is<IdentifierExpression>()) {
+        return make_syntax_err(syntax::Error::ILLEGAL_LABEL, start_token);
+    }
+    parser.advance();
+
+    // The body has to be constructed in place from a lambda as it cannot be default initialized
+    const auto raw_stmt = TRY(parser.parse_statement(true));
+    const auto body     = TRY(deconstruct_body(parser, raw_stmt));
+
+    IdentifierHandle name_handle = name;
+    return ExpressionHandle{parser.get_ast().add_node(start_token, LabelExpression{name, body})};
 }
 
-auto LabelExpression::deconstruct_body(StatementHandle raw_stmt)
+auto LabelExpression::deconstruct_body(syntax::Parser& parser, StatementHandle raw_stmt)
     -> Result<LabeledNodeHandle, syntax::Diagnostic> {
-    TODO(raw_stmt);
+    switch (raw_stmt->get_kind()) {
+    case NodeKind::EXPRESSION_STATEMENT: {
+        const auto& expr_stmt = std::get<ExpressionStatement>(parser.get_ast()[*raw_stmt]);
+        switch (expr_stmt.expression->get_kind()) {
+        case NodeKind::DO_WHILE_LOOP_EXPRESSION:
+        case NodeKind::FOR_LOOP_EXPRESSION:
+        case NodeKind::IF_EXPRESSION:
+        case NodeKind::INFINITE_LOOP_EXPRESSION:
+        case NodeKind::MATCH_EXPRESSION:
+        case NodeKind::WHILE_LOOP_EXPRESSION:    return expr_stmt.expression;
+        default:
+            return make_syntax_err(syntax::Error::ILLEGAL_LABEL_EXPRESSION,
+                                   parser.get_location_of(*raw_stmt));
+        }
+    }
+    case NodeKind::BLOCK_STATEMENT: return raw_stmt;
+    default:
+        return make_syntax_err(syntax::Error::ILLEGAL_LABEL_STATEMENT,
+                               parser.get_location_of(*raw_stmt));
+    }
 }
 
 auto MatchExpression::parse(syntax::Parser& parser)
     -> Result<ExpressionHandle, syntax::Diagnostic> {
-    TODO(parser);
+    const auto start_token = parser.get_current_token();
+
+    // Conditions have to be surrounded by parentheses
+    TRY(parser.expect_peek(syntax::TokenType::LPAREN));
+    parser.advance();
+    if (parser.current_token_is(syntax::TokenType::RPAREN)) {
+        return make_syntax_err(syntax::Error::MATCH_EXPR_MISSING_CONDITION, start_token);
+    }
+
+    auto matcher = TRY(parser.parse_expression());
+    TRY(parser.expect_peek(syntax::TokenType::RPAREN));
+
+    TRY(parser.expect_peek(syntax::TokenType::LBRACE));
+    if (parser.peek_token_is(syntax::TokenType::RBRACE)) {
+        parser.advance();
+        return make_syntax_err(syntax::Error::ARMLESS_MATCH_EXPR, start_token);
+    }
+
+    std::vector<Arm> arms;
+    // Current token is either the LBRACE at the start or a comma before parsing
+    while (!parser.peek_token_is(syntax::TokenType::RBRACE) &&
+           !parser.peek_token_is(syntax::TokenType::END)) {
+        parser.advance();
+
+        auto pattern = TRY(parser.parse_expression());
+        TRY(parser.expect_peek(syntax::TokenType::FAT_ARROW));
+
+        // There is an optional capture for every arm
+        opt::Option<Arm::CaptureHandle> capture;
+        if (parser.peek_token_is(syntax::TokenType::BW_OR)) {
+            parser.advance();
+
+            // An underscore is equivalent to a lack of capture
+            if (parser.peek_token_is(syntax::TokenType::UNDERSCORE)) {
+                parser.advance();
+                capture.emplace(Arm::CaptureHandle{
+                    parser.get_ast().add_node(parser.get_current_token(), Discarded{})});
+            } else {
+                TRY(parser.expect_peek(syntax::TokenType::IDENT));
+                capture.emplace(TRY(IdentifierExpression::parse(parser)));
+            }
+            TRY(parser.expect_peek(syntax::TokenType::BW_OR));
+        }
+
+        // The resulting statement must be restricted like an if branch
+        parser.advance();
+        auto consequence =
+            TRY(parser.parse_restricted_statement(syntax::Error::ILLEGAL_MATCH_ARM, false));
+        arms.emplace_back(pattern, capture, consequence);
+    }
+    TRY(parser.expect_peek(syntax::TokenType::RBRACE));
+    auto catch_all =
+        TRY(parser.try_parse_restricted_alternate(syntax::Error::ILLEGAL_MATCH_CATCH_ALL));
+
+    return ExpressionHandle{parser.get_ast().add_node(
+        start_token, MatchExpression{matcher, std::move(arms), catch_all})};
 }
 
-auto UnaryExpression::parse(syntax::Parser& parser)
+namespace {
+
+template <traits::ASTNode Node>
+[[nodiscard]] auto parse_prefix(syntax::Parser& parser)
     -> Result<ExpressionHandle, syntax::Diagnostic> {
-    TODO(parser);
+    const auto prefix_token = parser.get_current_token();
+    if (parser.peek_token_is(syntax::TokenType::END)) {
+        return make_syntax_err(syntax::Error::PREFIX_MISSING_OPERAND, prefix_token);
+    }
+    parser.advance();
+
+    auto operand = TRY(parser.parse_expression(syntax::Precedence::PREFIX));
+    return ExpressionHandle{parser.get_ast().add_node(prefix_token, Node{operand})};
 }
 
-auto ReferenceExpression::parse(syntax::Parser& parser)
-    -> Result<ExpressionHandle, syntax::Diagnostic> {
-    TODO(parser);
-}
+} // namespace
 
-auto DereferenceExpression::parse(syntax::Parser& parser)
-    -> Result<ExpressionHandle, syntax::Diagnostic> {
-    TODO(parser);
-}
+#define MAKE_PREFIX_PARSER(Type)                                                               \
+    auto Type::parse(syntax::Parser& parser) -> Result<ExpressionHandle, syntax::Diagnostic> { \
+        return parse_prefix<Type>(parser);                                                     \
+    }
+
+MAKE_PREFIX_PARSER(UnaryExpression)
+MAKE_PREFIX_PARSER(ReferenceExpression)
+MAKE_PREFIX_PARSER(DereferenceExpression)
 
 auto ImplicitAccessExpression::parse(syntax::Parser& parser)
     -> Result<ExpressionHandle, syntax::Diagnostic> {
-    TODO(parser);
+    // We need to explicitly jump into the initializer expression here
+    if (parser.peek_token_is(syntax::TokenType::LBRACE)) {
+        parser.advance();
+        return InitializerExpression::parse(parser, opt::none);
+    }
+
+    // Otherwise it suffices to fall back to standard prefix parsing
+    const auto prefix_token = parser.get_current_token();
+    if (parser.peek_token_is(syntax::TokenType::END)) {
+        return make_syntax_err(syntax::Error::PREFIX_MISSING_OPERAND, prefix_token);
+    }
+
+    parser.advance();
+    auto operand = TRY(parser.parse_expression(syntax::Precedence::PREFIX));
+    if (!operand->is<IdentifierExpression>()) {
+        return make_syntax_err(syntax::Error::ILLEGAL_IMPLICIT_ACCESS_OPERAND,
+                               parser.get_location_of(*operand));
+    }
+
+    return ExpressionHandle{
+        parser.get_ast().add_node(prefix_token, ImplicitAccessExpression{operand})};
 }
 
 auto StringExpression::parse(syntax::Parser& parser)
     -> Result<ExpressionHandle, syntax::Diagnostic> {
-    TODO(parser);
+    const auto start_token = parser.get_current_token();
+    return ExpressionHandle{
+        parser.get_ast().add_node(start_token, StringExpression{start_token.materialize_string()})};
 }
 
-auto I32Expression::parse(syntax::Parser& parser) -> Result<ExpressionHandle, syntax::Diagnostic> {
-    TODO(parser);
-}
+namespace {
 
-auto I64Expression::parse(syntax::Parser& parser) -> Result<ExpressionHandle, syntax::Diagnostic> {
-    TODO(parser);
-}
-
-auto ISizeExpression::parse(syntax::Parser& parser)
+template <traits::ASTNode Node>
+static auto parse_primitive(syntax::Parser& parser)
     -> Result<ExpressionHandle, syntax::Diagnostic> {
-    TODO(parser);
+    using value_type       = typename Node::value_type;
+    const auto start_token = parser.get_current_token();
+    auto value = detail::parse_primitive_value<value_type>(start_token.slice, start_token.type);
+    if (value) { return ExpressionHandle{parser.get_ast().add_node(start_token, Node{*value})}; }
+
+    return make_syntax_err(std::is_same_v<value_type, f64>
+                               ? syntax::Error::DOUBLE_OVERFLOW
+                               : (std::is_same_v<value_type, f32>
+                                      ? syntax::Error::FLOAT_OVERFLOW
+                                      : syntax::Error::INTEGER_OVERFLOW),
+                           start_token);
 }
 
-auto U32Expression::parse(syntax::Parser& parser) -> Result<ExpressionHandle, syntax::Diagnostic> {
-    TODO(parser);
-}
+} // namespace
 
-auto U64Expression::parse(syntax::Parser& parser) -> Result<ExpressionHandle, syntax::Diagnostic> {
-    TODO(parser);
-}
+#define MAKE_PRIMITIVE_PARSER(Type)                                                            \
+    auto Type::parse(syntax::Parser& parser) -> Result<ExpressionHandle, syntax::Diagnostic> { \
+        return parse_primitive<Type>(parser);                                                  \
+    }
 
-auto USizeExpression::parse(syntax::Parser& parser)
-    -> Result<ExpressionHandle, syntax::Diagnostic> {
-    TODO(parser);
-}
+MAKE_PRIMITIVE_PARSER(I32Expression)
+MAKE_PRIMITIVE_PARSER(I64Expression)
+MAKE_PRIMITIVE_PARSER(ISizeExpression)
+MAKE_PRIMITIVE_PARSER(U32Expression)
+MAKE_PRIMITIVE_PARSER(U64Expression)
+MAKE_PRIMITIVE_PARSER(USizeExpression)
 
 auto U8Expression::parse(syntax::Parser& parser) -> Result<ExpressionHandle, syntax::Diagnostic> {
-    TODO(parser);
+    const auto start_token = parser.get_current_token();
+    const auto slice       = start_token.slice;
+    if (slice[1] != '\\') {
+        return ExpressionHandle{
+            parser.get_ast().add_node(start_token, U8Expression{static_cast<u8>(slice[1])})};
+    }
+
+    const auto escaped = slice[2];
+    u8         value;
+    switch (escaped) {
+    case 'n':  value = '\n'; break;
+    case 'r':  value = '\r'; break;
+    case 't':  value = '\t'; break;
+    case '\\': value = '\\'; break;
+    case '\'': value = '\''; break;
+    case '"':  value = '"'; break;
+    case '0':  value = '\0'; break;
+    default:   return make_syntax_err(syntax::Error::UNKNOWN_CHARACTER_ESCAPE, start_token);
+    }
+
+    return ExpressionHandle{parser.get_ast().add_node(start_token, U8Expression{value})};
 }
 
-auto F32Expression::parse(syntax::Parser& parser) -> Result<ExpressionHandle, syntax::Diagnostic> {
-    TODO(parser);
-}
-
-auto F64Expression::parse(syntax::Parser& parser) -> Result<ExpressionHandle, syntax::Diagnostic> {
-    TODO(parser);
-}
+MAKE_PRIMITIVE_PARSER(F32Expression)
+MAKE_PRIMITIVE_PARSER(F64Expression)
 
 auto BoolExpression::parse(syntax::Parser& parser) -> Result<ExpressionHandle, syntax::Diagnostic> {
-    TODO(parser);
+    return ExpressionHandle{
+        parser.get_ast().add_node(parser.get_current_token(), BoolExpression{})};
 }
 
 auto VoidExpression::parse(syntax::Parser& parser) -> Result<ExpressionHandle, syntax::Diagnostic> {
-    TODO(parser);
+    const auto start_token = parser.get_current_token();
+    TRY(parser.expect_peek(syntax::TokenType::RBRACE));
+    return ExpressionHandle{parser.get_ast().add_node(start_token, VoidExpression{})};
 }
 
 auto ScopeResolutionExpression::parse(syntax::Parser& parser, ExpressionHandle outer)
     -> Result<ExpressionHandle, syntax::Diagnostic> {
-    TODO(parser, outer);
+    if (!outer->any<IdentifierExpression, ScopeResolutionExpression>()) {
+        return make_syntax_err(syntax::Error::ILLEGAL_OUTER_SCOPE_TYPE,
+                               parser.get_location_of(*outer));
+    }
+
+    const auto start_token = parser.get_current_token();
+    TRY(parser.expect_peek(syntax::TokenType::IDENT));
+    const IdentifierHandle inner = TRY(IdentifierExpression::parse(parser));
+    return ExpressionHandle{
+        parser.get_ast().add_node(start_token, ScopeResolutionExpression{outer, inner})};
 }
 
 auto StructExpression::parse(syntax::Parser& parser)
     -> Result<ExpressionHandle, syntax::Diagnostic> {
-    TODO(parser);
+    const auto start_token = parser.get_current_token();
+    TRY(parser.expect_peek(syntax::TokenType::LBRACE));
+    auto members = TRY(Members::parse(parser, [&](const Members::Member& member) {
+        return std::visit(Overloaded{[](const DeclStatement& decl) {
+                                         return Members::validate_struct_decl(decl);
+                                     },
+                                     [](const auto&) { return true; }},
+                          parser.get_ast()[*member]);
+    }));
+
+    TRY(parser.expect_peek(syntax::TokenType::RBRACE));
+    return ExpressionHandle{
+        parser.get_ast().add_node(start_token, StructExpression{std::move(members)})};
 }
 
 auto ExplicitType::parse(syntax::Parser& parser) -> Result<ExplicitTypeID, syntax::Diagnostic> {
-    TODO(parser);
+    // Always check for a modifier and advance past it if present
+    const auto         modifier_token = parser.get_peek_token();
+    const TypeModifier modifier{modifier_token};
+    if (!modifier.is_value()) { parser.advance(); }
+
+    // The array dimension of a type are only present conditionally
+    if (parser.peek_token_is(syntax::TokenType::LBRACKET)) {
+        parser.advance();
+
+        auto                          null_terminated = false;
+        opt::Option<ExpressionHandle> dimension;
+        if (parser.peek_token_is(syntax::TokenType::NULL_TERMINATED)) {
+            parser.advance();
+            null_terminated = true;
+        } else if (!parser.peek_token_is(syntax::TokenType::RBRACKET)) {
+            parser.advance();
+            dimension.emplace(TRY(parser.parse_expression()));
+
+            // The null terminated marker comes after the size for explicitly sized types
+            if (parser.peek_token_is(syntax::TokenType::NULL_TERMINATED)) {
+                parser.advance();
+                null_terminated = true;
+            }
+        }
+        TRY(parser.expect_peek(syntax::TokenType::RBRACKET));
+
+        // Arrays are recursively defined
+        auto inner = TRY(ExplicitType::parse(parser));
+        return parser.get_ast().add_type(
+            modifier_token, modifier, ExplicitArrayType{dimension, null_terminated, inner});
+    } else if (!TypeModifier{parser.get_peek_token()}.is_value()) {
+        // Don't advance since the parser does it implicitly here (costs two modifier queries)
+        auto inner = TRY(ExplicitType::parse(parser));
+        return parser.get_ast().add_type(modifier_token, modifier, ExplicitTypeID{inner});
+    }
+
+    // Otherwise the type has to be a 'simple' function or ident
+    const auto& peek_token = parser.get_peek_token();
+    if (peek_token.is_valid_ident()) {
+        // It's trivial to catch these syntactic errors here
+        if (!modifier.is_value()) {
+            switch (peek_token.type) {
+            case syntax::TokenType::TYPE_TYPE:
+                return make_syntax_err(syntax::Error::ILLEGAL_TYPE_TYPE_MODIFIER, modifier_token);
+            case syntax::TokenType::VOID_TYPE:
+                return make_syntax_err(syntax::Error::ILLEGAL_VOID_TYPE_MODIFIER, modifier_token);
+            case syntax::TokenType::NORETURN:
+                return make_syntax_err(syntax::Error::ILLEGAL_NORETURN_TYPE_MODIFIER,
+                                       modifier_token);
+            default: break;
+            }
+        }
+
+        parser.advance();
+        // Manually dispatch to prevent weird consumption
+        if (parser.peek_token_is(syntax::TokenType::COLON_COLON) ||
+            parser.peek_token_is(syntax::TokenType::LPAREN)) {
+            auto parsed = TRY(parser.parse_expression(syntax::Precedence::TYPE));
+            if (parsed->is<ScopeResolutionExpression>()) {
+                return parser.get_ast().add_type(
+                    modifier_token,
+                    modifier,
+                    ScopeResolutionExpression{
+                        std::get<ScopeResolutionExpression>(parser.get_ast()[*parsed])});
+            } else if (parsed->is<CallExpression>()) {
+                return parser.get_ast().add_type(
+                    modifier_token,
+                    modifier,
+                    CallExpression{std::get<CallExpression>(parser.get_ast()[*parsed])});
+            }
+
+            return make_syntax_err(syntax::Error::ILLEGAL_EXPLICIT_TYPE,
+                                   parser.get_location_of(*parsed));
+        }
+
+        const auto ident = TRY(IdentifierExpression::parse(parser));
+        return parser.get_ast().add_type(
+            modifier_token,
+            modifier,
+            IdentifierExpression{std::get<IdentifierExpression>(parser.get_ast()[*ident])});
+    }
+
+    // The inner type is limited to functions and user-defined types
+    const auto type_start = parser.get_current_token();
+    if (parser.peek_token_is(syntax::TokenType::FUNCTION)) {
+        parser.advance();
+        auto type_expr = TRY(FunctionExpression::parse_type(parser));
+        if (!(modifier.is_value() || modifier.is_ptr())) {
+            return make_syntax_err(syntax::Error::ILLEGAL_FUNCTION_TYPE_MODIFIER, type_start);
+        }
+
+        // Function types cannot have bodies
+        const auto& function = std::get<FunctionExpression>(parser.get_ast()[*type_expr]);
+        ASSERT(!function.body, "Function type has body");
+        return parser.get_ast().add_type(modifier_token, modifier, FunctionExpression{function});
+    }
+
+    // The user-defined types can be handled by parsing any expression and verifying it
+    parser.advance();
+    if (parser.current_token_is(syntax::TokenType::END)) {
+        return make_syntax_err(syntax::Error::MISSING_EXPLICIT_TYPE, type_start);
+    }
+
+    switch (auto user = TRY(parser.parse_expression()); user->get_kind()) {
+    case NodeKind::STRUCT_EXPRESSION:
+        return parser.get_ast().add_type(
+            modifier_token,
+            modifier,
+            StructExpression{std::get<StructExpression>(parser.get_ast()[*user])});
+    case NodeKind::ENUM_EXPRESSION:
+        return parser.get_ast().add_type(
+            modifier_token,
+            modifier,
+            EnumExpression{std::get<EnumExpression>(parser.get_ast()[*user])});
+    case NodeKind::UNION_EXPRESSION:
+        return parser.get_ast().add_type(
+            modifier_token,
+            modifier,
+            UnionExpression{std::get<UnionExpression>(parser.get_ast()[*user])});
+    default: break;
+    }
+    return make_syntax_err(syntax::Error::ILLEGAL_EXPLICIT_TYPE, type_start);
 }
+
+namespace {
+
+// Parses the explicit type if present and checks for an upcoming assignment for init
+[[nodiscard]] auto parse_type_and_initializer(syntax::Parser& parser)
+    -> Result<std::pair<TypeHandle, bool>, syntax::Diagnostic> {
+    // The start start token is always offset as this is called irregularly
+    const auto start_token = parser.get_peek_token();
+
+    if (parser.peek_token_is(syntax::TokenType::WALRUS)) {
+        auto type_expr =
+            TypeHandle{parser.get_ast().add_node(start_token, TypeExpression{opt::none})};
+        parser.advance();
+        return std::pair{type_expr, true};
+    } else if (parser.peek_token_is(syntax::TokenType::COLON)) {
+        parser.advance();
+        auto explicit_type = TRY(ExplicitType::parse(parser));
+        auto type_expr =
+            TypeHandle{parser.get_ast().add_node(start_token, TypeExpression{explicit_type})};
+        if (parser.peek_token_is(syntax::TokenType::ASSIGN)) {
+            parser.advance();
+            return std::pair{std::move(type_expr), true};
+        }
+        return std::pair{std::move(type_expr), false};
+    }
+
+    return Err{parser.peek_error(syntax::TokenType::COLON)};
+}
+
+} // namespace
 
 auto TypeExpression::parse(syntax::Parser& parser)
     -> Result<std::pair<TypeHandle, bool>, syntax::Diagnostic> {
-    TODO(parser);
+    auto [type, initialized] = TRY(parse_type_and_initializer(parser));
+
+    // Advance again to prepare for rhs
+    if (initialized) { parser.advance(); }
+    return std::pair{type, initialized};
 }
 
 auto UnionExpression::parse(syntax::Parser& parser)
     -> Result<ExpressionHandle, syntax::Diagnostic> {
-    TODO(parser);
+    const auto start_token = parser.get_current_token();
+    TRY(parser.expect_peek(syntax::TokenType::LBRACE));
+
+    std::vector<Field> fields;
+    while (!parser.peek_token_is(syntax::TokenType::RBRACE) &&
+           !parser.peek_token_is(syntax::TokenType::END)) {
+        if (parser.get_peek_token().is_member_token()) { break; }
+
+        TRY(parser.expect_peek(syntax::TokenType::IDENT));
+        IdentifierHandle ident = TRY(IdentifierExpression::parse(parser));
+
+        TRY(parser.expect_peek(syntax::TokenType::COLON));
+        auto type = TRY(ExplicitType::parse(parser));
+
+        fields.emplace_back(std::move(ident), std::move(type));
+
+        // No comma means that its the end or that there is a decl list starting
+        if (!parser.peek_token_is(syntax::TokenType::COMMA)) { break; }
+        parser.advance();
+    }
+
+    auto members = TRY(Members::parse(parser, [&](const Members::Member& member) {
+        return std::visit(Overloaded{[](const DeclStatement& decl) {
+                                         return Members::validate_non_struct_decl(decl);
+                                     },
+                                     [](const auto&) { return true; }},
+                          parser.get_ast()[*member]);
+    }));
+    TRY(parser.expect_peek(syntax::TokenType::RBRACE));
+
+    // Validate here so that there aren't 3 errors spawning from an empty union with decls
+    if (fields.empty()) { return make_syntax_err(syntax::Error::EMPTY_UNION, start_token); }
+    return ExpressionHandle{parser.get_ast().add_node(
+        start_token, UnionExpression{std::move(fields), std::move(members)})};
 }
 
 auto WhileLoopExpression::parse(syntax::Parser& parser)
     -> Result<ExpressionHandle, syntax::Diagnostic> {
-    TODO(parser);
+    const auto start_token = parser.get_current_token();
+
+    // Conditions have to be surrounded by parentheses
+    TRY(parser.expect_peek(syntax::TokenType::LPAREN));
+    parser.advance();
+    if (parser.current_token_is(syntax::TokenType::RPAREN)) {
+        return make_syntax_err(syntax::Error::WHILE_MISSING_CONDITION, start_token);
+    }
+
+    auto condition = TRY(parser.parse_expression());
+    TRY(parser.expect_peek(syntax::TokenType::RPAREN));
+
+    // Continuation expression is optional and is handled as in zig
+    opt::Option<ExpressionHandle> continuation;
+    if (parser.peek_token_is(syntax::TokenType::COLON)) {
+        const auto continuation_start = parser.get_current_token();
+        parser.advance();
+        TRY(parser.expect_peek(syntax::TokenType::LPAREN));
+
+        // Consume again to look at the actual expr start
+        parser.advance();
+        if (parser.current_token_is(syntax::TokenType::RPAREN)) {
+            return make_syntax_err(syntax::Error::EMPTY_WHILE_CONTINUATION, continuation_start);
+        }
+
+        continuation.emplace(TRY(parser.parse_expression()));
+        TRY(parser.expect_peek(syntax::TokenType::RPAREN));
+    }
+
+    // Loops must have a well formed block and may have an alternate in non-break cases
+    TRY(parser.expect_peek(syntax::TokenType::LBRACE));
+    const BlockHandle block = TRY(BlockStatement::parse(parser));
+    auto              non_break =
+        TRY(parser.try_parse_restricted_alternate(syntax::Error::ILLEGAL_LOOP_NON_BREAK));
+
+    // There needs to be at least a continuation or block
+    if (!continuation && block_is_empty(parser, block)) {
+        return make_syntax_err(syntax::Error::EMPTY_LOOP, parser.get_location_of(*block));
+    }
+
+    return ExpressionHandle{parser.get_ast().add_node(
+        start_token, WhileLoopExpression{condition, continuation, block, non_break})};
 }
 
 auto BlockStatement::parse(syntax::Parser& parser) -> Result<StatementHandle, syntax::Diagnostic> {
-    TODO(parser);
+    const auto start_token = parser.get_current_token();
+
+    Statements statements;
+    while (!parser.peek_token_is(syntax::TokenType::RBRACE) &&
+           !parser.peek_token_is(syntax::TokenType::END)) {
+        parser.advance();
+        statements.emplace_back(TRY(parser.parse_statement(true)));
+    }
+    TRY(parser.expect_peek(syntax::TokenType::RBRACE));
+
+    return StatementHandle{
+        parser.get_ast().add_node(start_token, BlockStatement{std::move(statements)})};
 }
 
 auto BreakStatement::parse(syntax::Parser& parser) -> Result<StatementHandle, syntax::Diagnostic> {
-    TODO(parser);
+    const auto start_token = parser.get_current_token();
+
+    // Labels are optional
+    opt::Option<IdentifierHandle> label;
+    if (parser.peek_token_is(syntax::TokenType::COLON)) {
+        parser.advance();
+        TRY(parser.expect_peek(syntax::TokenType::IDENT));
+        label.emplace(TRY(IdentifierExpression::parse(parser)));
+    }
+
+    // Values can be present but must be associated with a label
+    opt::Option<ExpressionHandle> value;
+    if (!parser.peek_token_is(syntax::TokenType::END) &&
+        !parser.peek_token_is(syntax::TokenType::SEMICOLON)) {
+        parser.advance();
+        value.emplace(TRY(parser.parse_expression()));
+    }
+
+    if (value && !label) {
+        return make_syntax_err(syntax::Error::VALUED_BREAK_MISSING_LABEL, start_token);
+    }
+    TRY(parser.expect_peek(syntax::TokenType::SEMICOLON));
+    return StatementHandle{parser.get_ast().add_node(start_token, BreakStatement{label, value})};
 }
 
 auto ContinueStatement::parse(syntax::Parser& parser)
     -> Result<StatementHandle, syntax::Diagnostic> {
-    TODO(parser);
+    const auto start_token = parser.get_current_token();
+
+    // Labels are optional
+    opt::Option<IdentifierHandle> label;
+    if (parser.peek_token_is(syntax::TokenType::COLON)) {
+        parser.advance();
+        TRY(parser.expect_peek(syntax::TokenType::IDENT));
+        label.emplace(TRY(IdentifierExpression::parse(parser)));
+    }
+
+    // Values can never be present in a continue
+    if (!parser.peek_token_is(syntax::TokenType::END) &&
+        !parser.peek_token_is(syntax::TokenType::SEMICOLON)) {
+        return make_syntax_err(syntax::Error::VALUED_CONTINUE, start_token);
+    }
+
+    TRY(parser.expect_peek(syntax::TokenType::SEMICOLON));
+    return StatementHandle{parser.get_ast().add_node(start_token, ContinueStatement{label})};
 }
 
+namespace {
+
+using ModifierMapping          = std::pair<syntax::TokenType, DeclModifiers>;
+constexpr auto LEGAL_MODIFIERS = [] {
+    using TokenType = syntax::TokenType;
+    EnumMap<TokenType, opt::Option<DeclModifiers>> modifiers{opt::none};
+    modifiers[TokenType::VAR]       = DeclModifiers::VARIABLE;
+    modifiers[TokenType::CONSTANT]  = DeclModifiers::CONSTANT;
+    modifiers[TokenType::CONSTEXPR] = DeclModifiers::CONSTEXPR;
+    modifiers[TokenType::PUBLIC]    = DeclModifiers::PUBLIC;
+    modifiers[TokenType::EXTERN]    = DeclModifiers::EXTERN;
+    modifiers[TokenType::EXPORT]    = DeclModifiers::EXPORT;
+    modifiers[TokenType::STATIC]    = DeclModifiers::STATIC;
+    return modifiers;
+}();
+
+[[nodiscard]] constexpr auto validate_modifiers(DeclModifiers modifiers) noexcept -> bool {
+    // Exactly one mutability flag must be set
+    const auto valid_mut = std::popcount(std::to_underlying(
+                               modifiers & (DeclModifiers::VARIABLE | DeclModifiers::CONSTANT |
+                                            DeclModifiers::CONSTEXPR))) == 1;
+
+    // Comptime values cannot be known at link time, obviously
+    const auto valid_constexpr =
+        std::popcount(std::to_underlying(modifiers &
+                                         (DeclModifiers::EXTERN | DeclModifiers::CONSTEXPR))) <= 1;
+
+    // At most one ABI flag can be set
+    const auto valid_abi = std::popcount(std::to_underlying(
+                               modifiers & (DeclModifiers::EXTERN | DeclModifiers::EXPORT))) <= 1;
+    return valid_mut && valid_constexpr && valid_abi;
+}
+
+} // namespace
+
 auto DeclStatement::parse(syntax::Parser& parser) -> Result<StatementHandle, syntax::Diagnostic> {
-    TODO(parser);
+    const auto start_token = parser.get_current_token();
+    auto       modifiers   = LEGAL_MODIFIERS[start_token.type].value();
+
+    opt::Option<DeclModifiers> current_modifier;
+    while ((current_modifier = LEGAL_MODIFIERS[parser.get_peek_token().type])) {
+        parser.advance();
+        if (modifiers_has(modifiers, *current_modifier)) {
+            return make_syntax_err(syntax::Error::DUPLICATE_DECL_MODIFIER, start_token);
+        }
+        modifiers |= *current_modifier;
+    }
+
+    if (!validate_modifiers(modifiers)) {
+        return make_syntax_err(syntax::Error::ILLEGAL_DECL_MODIFIERS, start_token);
+    }
+
+    TRY(parser.expect_peek(syntax::TokenType::IDENT));
+    IdentifierHandle decl_name          = TRY(IdentifierExpression::parse(parser));
+    auto [decl_type, value_initialized] = TRY(TypeExpression::parse(parser));
+
+    opt::Option<ExpressionHandle> decl_value;
+    if (value_initialized) {
+        decl_value.emplace(TRY(parser.parse_expression()));
+
+        // If there is a value, then there cannot be an extern keyword
+        if (modifiers_has(modifiers, DeclModifiers::EXTERN)) {
+            return make_syntax_err(syntax::Error::EXTERN_VALUE_INITIALIZED, start_token);
+        }
+    } else if ((modifiers_has(modifiers, DeclModifiers::CONSTANT) &&
+                !modifiers_has(modifiers, DeclModifiers::EXTERN)) ||
+               modifiers_has(modifiers, DeclModifiers::CONSTEXPR)) {
+        // Constant decls must be declared with a value unless they are extern
+        return make_syntax_err(syntax::Error::CONST_DECL_MISSING_VALUE, start_token);
+    }
+
+    if (!parser.current_token_is(syntax::TokenType::SEMICOLON)) {
+        TRY(parser.expect_peek(syntax::TokenType::SEMICOLON));
+    }
+    return StatementHandle{parser.get_ast().add_node(
+        start_token, DeclStatement{decl_name, decl_type, decl_value, modifiers})};
 }
 
 auto DeferStatement::parse(syntax::Parser& parser) -> Result<StatementHandle, syntax::Diagnostic> {
-    TODO(parser);
+    const auto start_token = parser.get_current_token();
+    if (parser.peek_token_is(syntax::TokenType::END) ||
+        parser.peek_token_is(syntax::TokenType::SEMICOLON)) {
+        return make_syntax_err(syntax::Error::DEFER_MISSING_DEFERREE, start_token);
+    }
+    parser.advance();
+    auto stmt = TRY(parser.parse_statement(true));
+
+    // The statement has different restrictions from expression alternates
+    if (!stmt->any<ExpressionStatement, DiscardStatement, BlockStatement>()) {
+        return make_syntax_err(syntax::Error::ILLEGAL_DEFERRED_STATEMENT,
+                               parser.get_location_of(*stmt));
+    }
+    return StatementHandle{parser.get_ast().add_node(start_token, DeferStatement{stmt})};
 }
 
 auto DiscardStatement::parse(syntax::Parser& parser)
     -> Result<StatementHandle, syntax::Diagnostic> {
-    TODO(parser);
+    const auto start_token = parser.get_current_token();
+
+    TRY(parser.expect_peek(syntax::TokenType::ASSIGN));
+    if (parser.peek_token_is(syntax::TokenType::END) ||
+        parser.peek_token_is(syntax::TokenType::SEMICOLON)) {
+        return make_syntax_err(syntax::Error::DISCARD_MISSING_DISCARDEE,
+                               parser.get_current_token());
+    }
+
+    parser.advance();
+    auto expr = TRY(parser.parse_expression());
+
+    if (!parser.current_token_is(syntax::TokenType::SEMICOLON)) {
+        TRY(parser.expect_peek(syntax::TokenType::SEMICOLON));
+    }
+    return StatementHandle{parser.get_ast().add_node(start_token, DiscardStatement{expr})};
 }
 
 auto ExpressionStatement::parse(syntax::Parser& parser, bool require_semicolon)
     -> Result<StatementHandle, syntax::Diagnostic> {
-    TODO(parser, require_semicolon);
+    const auto start_token = parser.get_current_token();
+    auto       expr        = TRY(parser.parse_expression());
+
+    if (!parser.current_token_is(syntax::TokenType::SEMICOLON)) {
+        if (parser.peek_token_is(syntax::TokenType::SEMICOLON)) {
+            parser.advance();
+        } else if (require_semicolon) {
+            TRY(parser.expect_peek(syntax::TokenType::SEMICOLON));
+        }
+    }
+    return StatementHandle{parser.get_ast().add_node(start_token, ExpressionStatement{expr})};
 }
 
+namespace {
+
+[[nodiscard]] constexpr auto string_is_empty(syntax::Parser& parser, StringHandle string) -> bool {
+    return std::get<StringExpression>(parser.get_ast()[*string]).value.empty();
+}
+
+[[nodiscard]] auto parse_import_core(syntax::Parser& parser)
+    -> Result<ImportStatement::Payload, syntax::Diagnostic> {
+    if (parser.peek_token_is(syntax::TokenType::IDENT)) {
+        TRY(parser.expect_peek(syntax::TokenType::IDENT));
+        return TRY(IdentifierExpression::parse(parser));
+    } else if (parser.peek_token_is(syntax::TokenType::STRING)) {
+        TRY(parser.expect_peek(syntax::TokenType::STRING));
+        const StringHandle string = TRY(StringExpression::parse(parser));
+
+        if (string_is_empty(parser, string)) {
+            return make_syntax_err(syntax::Error::EMPTY_USER_IMPORT,
+                                   parser.get_location_of(*string));
+        }
+        return string;
+    }
+
+    return make_syntax_err(syntax::Error::ILLEGAL_IMPORT_TYPE, parser.get_peek_token());
+}
+
+} // namespace
+
 auto ImportStatement::parse(syntax::Parser& parser) -> Result<StatementHandle, syntax::Diagnostic> {
-    TODO(parser);
+    // A start token of public is guaranteed to be followed by an import
+    const auto start_token = parser.get_current_token();
+    if (parser.current_token_is(syntax::TokenType::PUBLIC)) { parser.advance(); }
+    auto imported_core = TRY(parse_import_core(parser));
+
+    opt::Option<IdentifierHandle> imported_alias;
+    if (parser.peek_token_is(syntax::TokenType::AS)) {
+        parser.advance();
+        TRY(parser.expect_peek(syntax::TokenType::IDENT));
+
+        imported_alias.emplace(TRY(IdentifierExpression::parse(parser)));
+    } else if (imported_core->get_kind() == NodeKind::STRING_EXPRESSION) {
+        return make_syntax_err(syntax::Error::USER_IMPORT_MISSING_ALIAS, start_token);
+    }
+
+    if (!parser.current_token_is(syntax::TokenType::SEMICOLON)) {
+        TRY(parser.expect_peek(syntax::TokenType::SEMICOLON));
+    }
+
+    return StatementHandle{
+        parser.get_ast().add_node(start_token, ImportStatement{imported_core, imported_alias})};
 }
 
 auto ReturnStatement::parse(syntax::Parser& parser) -> Result<StatementHandle, syntax::Diagnostic> {
-    TODO(parser);
+    const auto start_token = parser.get_current_token();
+
+    opt::Option<ExpressionHandle> value;
+    if (!parser.peek_token_is(syntax::TokenType::END) &&
+        !parser.peek_token_is(syntax::TokenType::SEMICOLON)) {
+        parser.advance();
+        value.emplace(TRY(parser.parse_expression()));
+    }
+
+    TRY(parser.expect_peek(syntax::TokenType::SEMICOLON));
+    return StatementHandle{parser.get_ast().add_node(start_token, ReturnStatement{value})};
 }
 
 auto TestStatement::parse(syntax::Parser& parser) -> Result<StatementHandle, syntax::Diagnostic> {
-    TODO(parser);
+    const auto start_token = parser.get_current_token();
+
+    opt::Option<StringHandle> description;
+    if (parser.peek_token_is(syntax::TokenType::STRING)) {
+        parser.advance();
+        description.emplace(TRY(StringExpression::parse(parser)));
+
+        // Empty strings aren't supported since one should just use no description
+        if (string_is_empty(parser, *description)) {
+            return make_syntax_err(syntax::Error::EMPTY_TEST_DESCRIPTION,
+                                   parser.get_location_of(**description));
+        }
+    }
+
+    TRY(parser.expect_peek(syntax::TokenType::LBRACE));
+    BlockHandle block = TRY(BlockStatement::parse(parser));
+    return StatementHandle{
+        parser.get_ast().add_node(start_token, TestStatement{description, block})};
 }
 
 auto UsingStatement::parse(syntax::Parser& parser) -> Result<StatementHandle, syntax::Diagnostic> {
-    TODO(parser);
+    // A start token of public is guaranteed to be followed by an import
+    const auto start_token = parser.get_current_token();
+    if (parser.current_token_is(syntax::TokenType::PUBLIC)) { parser.advance(); }
+
+    TRY(parser.expect_peek(syntax::TokenType::IDENT));
+    IdentifierHandle alias = TRY(IdentifierExpression::parse(parser));
+
+    TRY(parser.expect_peek(syntax::TokenType::ASSIGN));
+    auto type = TRY(ExplicitType::parse(parser));
+
+    TRY(parser.expect_peek(syntax::TokenType::SEMICOLON));
+    return StatementHandle{parser.get_ast().add_node(start_token, UsingStatement{alias, type})};
 }
 
 } // namespace porpoise::ast

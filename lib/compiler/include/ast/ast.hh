@@ -18,11 +18,11 @@ class AST {
     constexpr auto add_root(NodeID id) -> void { node_roots_.push_back(id); }
 
     template <traits::ASTNode Data>
-    constexpr auto add_node(const syntax::Token& start_token, Data&& data) -> NodeID {
+    [[nodiscard]] constexpr auto add_node(const syntax::Token& start_token, Data&& data) -> NodeID {
         constexpr auto kind  = traits::NodeKindOf<Data>::value();
         const auto     index = static_cast<u64>(node_pool_.size());
 
-        node_pool_.emplace_back(Data{std::forward<Data>(data)});
+        node_pool_.emplace_back(std::forward<Data>(data));
         node_locations_.emplace_back(
             ::porpoise::traits::SourceInfo<syntax::Token>::get(start_token));
         return NodeID{kind, start_token.type, index};
@@ -37,15 +37,15 @@ class AST {
     }
 
     template <traits::ASTExplicitType Data>
-    constexpr auto add_type(const syntax::Token& start_token, TypeModifier mod, Data&& data)
-        -> ExplicitTypeID {
+    [[nodiscard]] constexpr auto
+    add_type(const syntax::Token& start_token, TypeModifier mod, Data&& data) -> ExplicitTypeID {
         constexpr auto kind  = traits::ExplicitTypeKindOf<Data>::value();
         const auto     index = static_cast<u64>(type_pool_.size());
 
-        type_pool_.emplace_back(Data{std::forward<Data>(data)});
+        type_pool_.emplace_back(std::forward<Data>(data));
         type_locations_.emplace_back(
             ::porpoise::traits::SourceInfo<syntax::Token>::get(start_token));
-        return ExplicitTypeID{kind, mod, index};
+        return ExplicitTypeID{kind, mod, start_token.type, index};
     }
 
     [[nodiscard]] constexpr auto location_of(ExplicitTypeID id) const noexcept
