@@ -61,6 +61,7 @@ constexpr std::string_view input{R"(
     break :blk a;
     a: { continue :a; };
     pub using a = **i32;
+    fn(self): i32 {};
 )"};
 
 constexpr std::string_view expected{

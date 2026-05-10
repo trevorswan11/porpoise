@@ -1,183 +1,25 @@
 #pragma once
 
-#include <algorithm>
-#include <vector>
-
 #include <catch2/catch_test_macros.hpp>
-#include <fmt/format.h>
-#include <fmt/ranges.h>
 
 #include "helpers/common.hh"
 
-#include "ast/oop_ast.hh"
+#include "ast/ast.hh"
 
-// IWYU pragma: begin_exports
-
-#include "syntax/builtins.hh"
-#include "syntax/keywords.hh"
-#include "syntax/operators.hh"
-
-// IWYU pragma: end_exports
-
-#include "string.hh"
+#include "syntax/parser.hh"
 
 namespace porpoise::tests::helpers {
-
-template <ast::LeafNode Node, bool Nullable, typename... Args> auto make_leaf_node(Args&&... args) {
-    if constexpr (Nullable) {
-        return mem::make_nullable_box<Node>(std::forward<Args>(args)...);
-    } else {
-        return mem::make_box<Node>(std::forward<Args>(args)...);
-    }
-}
-
-// Thin wrapper around Node is/as pattern with test assertion.
-template <ast::LeafNode To, typename From> auto try_into(const From& node) -> const To& {
-    REQUIRE(node.template is<To>());
-    return ast::Node::as<To>(node);
-}
-
-template <typename N>
-auto into_expression_statement(const N& node) -> const ast::ExpressionStatement& {
-    return try_into<ast::ExpressionStatement>(node);
-}
 
 // Tests a syntactically failing input against the expected generated errors
 template <typename... Ds>
     requires(std::same_as<Ds, syntax::Diagnostic> && ...)
 auto test_parser_fail(std::string_view failing, Ds&&... expected_diagnostics) -> void {
     syntax::Parser p{failing};
-    auto [ast, errors] = p.consume();
+    ast::AST       ast;
+    auto           errors = p.consume(ast);
     REQUIRE(ast.empty());
     helpers::check_errors_against<syntax::Diagnostic>(errors,
                                                       std::forward<Ds>(expected_diagnostics)...);
 }
-
-template <ast::LeafNode N> auto test_stmt(std::string_view input, const N& expected) -> void {
-    syntax::Parser p{input};
-    auto [ast, errors] = p.consume();
-
-    check_errors<syntax::Diagnostic>(errors);
-    REQUIRE(ast.size() == 1);
-
-    const auto  actual{std::move(ast[0])};
-    const auto& actual_stmt = helpers::try_into<N>(*actual);
-    CHECK(expected == actual_stmt);
-}
-
-template <ast::LeafNode N>
-auto expr_stmt_from(const syntax::Token& start_token, N&& expected) -> ast::ExpressionStatement {
-    return ast::ExpressionStatement{start_token, mem::make_box<N>(std::move(expected))};
-}
-
-template <bool Nullable = false, ast::LeafNode N> auto make_expr_stmt(N&& expected) {
-    return make_leaf_node<ast::ExpressionStatement, Nullable>(
-        expr_stmt_from(expected.get_token(), std::move(expected)));
-}
-
-template <ast::LeafNode N>
-auto test_expr_stmt(std::string_view input, const syntax::Token& start_token, N&& expected)
-    -> void {
-    test_stmt(input, expr_stmt_from(start_token, std::move(expected)));
-}
-
-template <ast::LeafNode N> auto test_expr_stmt(std::string_view input, N&& expected) -> void {
-    test_expr_stmt(input, expected.get_token(), std::move(expected));
-}
-
-auto ident_from(std::string_view name) -> ast::IdentifierExpression;
-auto ident_from(const syntax::Token& tok) -> ast::IdentifierExpression;
-
-template <bool Nullable = false> auto make_ident(std::string_view name) {
-    return make_leaf_node<ast::IdentifierExpression, Nullable>(ident_from(name));
-}
-
-template <bool Nullable = false> auto make_ident(const syntax::Token& tok) {
-    return make_leaf_node<ast::IdentifierExpression, Nullable>(ident_from(tok));
-}
-
-// Creates a block statement by boxing all passed statements
-template <ast::LeafNode... Ns> auto block_stmt_from(Ns&&... nodes) -> ast::BlockStatement {
-    return ast::BlockStatement{
-        syntax::Token{syntax::TokenType::LBRACE, "{"},
-        make_vector<mem::Box<ast::Statement>>(mem::make_box<Ns>(std::forward<Ns>(nodes))...)};
-}
-
-// Creates a boxed block statement by boxing all passed statements
-template <bool Nullable = false, ast::LeafNode... Ns> auto make_block_stmt(Ns&&... nodes) {
-    return make_leaf_node<ast::BlockStatement, Nullable>(
-        block_stmt_from(std::forward<Ns>(nodes)...));
-}
-
-// Creates a block statement by packing all passed expressions into expression statements
-template <ast::LeafNode... Ns> auto expr_block_stmt_from(Ns&&... nodes) -> ast::BlockStatement {
-    return block_stmt_from(
-        ast::ExpressionStatement{nodes.get_token(), mem::make_box<Ns>(std::forward<Ns>(nodes))}...);
-}
-
-// Creates a boxed block statement by packing all passed expressions into expression statements
-template <bool Nullable = false, ast::LeafNode... Ns> auto make_expr_block_stmt(Ns&&... nodes) {
-    return make_leaf_node<ast::BlockStatement, Nullable>(
-        expr_block_stmt_from(std::forward<Ns>(nodes)...));
-}
-
-template <typename... Ps>
-    requires(std::same_as<Ps, ast::FunctionParameter> && ...)
-auto make_parameters(Ps&&... params) -> std::vector<ast::FunctionParameter> {
-    return make_vector<ast::FunctionParameter>(std::forward<Ps>(params)...);
-}
-
-template <typename... Ms> auto make_members(Ms&&... members) -> ast::Members {
-    return ast::Members{
-        make_vector<ast::Members::Member>(mem::make_box<Ms>(std::forward<Ms>(members))...)};
-}
-
-template <ast::PrimitiveNode N> auto primitive_from(std::string_view str) noexcept -> N {
-    syntax::Lexer l{str};
-    const auto    tok = l.advance();
-
-    REQUIRE(syntax::token_type::is_number(tok.type));
-    auto value = ast::parse_primitive_value<typename N::value_type, false>(str, tok.type);
-    REQUIRE(value);
-    return N{syntax::Token{tok.type, str}, *value};
-}
-
-// For strings, include  surrounding quotes in the input if needed, multiline strings not supported
-template <ast::PrimitiveNode Primitive, bool Nullable = false>
-auto make_primitive(std::string_view str) noexcept {
-    if constexpr (std::is_same_v<Primitive, ast::StringExpression>) {
-        const auto trimmed = string::trim(str, [](byte b) { return b == '"'; });
-        return make_leaf_node<ast::StringExpression, Nullable>(
-            syntax::Token{syntax::TokenType::STRING, str}, std::string{trimmed});
-    } else {
-        return make_leaf_node<Primitive, Nullable>(primitive_from<Primitive>(str));
-    }
-}
-
-template <ast::PrimitiveNode N, bool Nullable = false>
-    requires(std::same_as<N, ast::VoidExpression>)
-auto make_primitive() noexcept {
-    return make_leaf_node<ast::VoidExpression, Nullable>(
-        syntax::Token{syntax::TokenType::LBRACE, "{"});
-}
-
-template <ast::PrimitiveNode N, bool Nullable = false>
-    requires(std::same_as<N, ast::BoolExpression>)
-auto make_primitive(bool value) noexcept {
-    const syntax::Token tok{value ? syntax::keywords::BOOLEAN_TRUE
-                                  : syntax::keywords::BOOLEAN_FALSE};
-    return make_leaf_node<ast::BoolExpression, Nullable>(tok);
-}
-
-namespace type_modifiers {
-
-constexpr ast::TypeModifier BASE{};
-constexpr ast::TypeModifier REF{ast::TypeModifier::Modifier::REF};
-constexpr ast::TypeModifier MUT_REF{ast::TypeModifier::Modifier::MUT_REF};
-constexpr ast::TypeModifier PTR{ast::TypeModifier::Modifier::PTR};
-constexpr ast::TypeModifier MUT_PTR{ast::TypeModifier::Modifier::MUT_PTR};
-constexpr ast::TypeModifier VOLATILE{ast::TypeModifier::Modifier::VOLATILE};
-
-} // namespace type_modifiers
 
 } // namespace porpoise::tests::helpers

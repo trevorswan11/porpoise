@@ -445,4 +445,12 @@ UsingStatement
 └─ Type: ExplicitType (modifier: PTR)
     └─ ExplicitType (modifier: PTR)
         └─ IdentifierExpression: i32
+ExpressionStatement
+└─ Expr: FunctionExpression
+    ├─ Self: self (modifier: VALUE)
+    ├─ Variadic: false
+    ├─ Returns: ExplicitType (modifier: VALUE)
+    │   └─ IdentifierExpression: i32 (primitive)
+    └─ Body: BlockStatement
+        └─ <empty>
 )"

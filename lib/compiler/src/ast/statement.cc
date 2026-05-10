@@ -111,7 +111,8 @@ auto DeclStatement::parse(syntax::Parser& parser) -> Result<StatementHandle, syn
     while ((current_modifier = LEGAL_MODIFIERS[parser.get_peek_token().type])) {
         parser.advance();
         if (modifiers_has(modifiers, *current_modifier)) {
-            return make_syntax_err(syntax::Error::DUPLICATE_DECL_MODIFIER, start_token);
+            return make_syntax_err(syntax::Error::DUPLICATE_DECL_MODIFIER,
+                                   parser.get_current_token());
         }
         modifiers |= *current_modifier;
     }

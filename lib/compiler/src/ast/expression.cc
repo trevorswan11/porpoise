@@ -10,14 +10,9 @@ auto ArrayExpression::parse(syntax::Parser& parser)
 
     auto                          null_terminated = false;
     opt::Option<ExpressionHandle> size;
-    if (parser.peek_token_is(syntax::TokenType::NULL_TERMINATED)) {
+    if (!parser.peek_token_is(syntax::TokenType::RBRACKET)) {
         parser.advance();
-        null_terminated = true;
-    } else if (!parser.peek_token_is(syntax::TokenType::RBRACKET)) {
-        parser.advance();
-        if (parser.current_token_is(syntax::TokenType::RBRACKET)) {
-            return make_syntax_err(syntax::Error::MISSING_ARRAY_SIZE_TOKEN, start_token);
-        } else if (!parser.current_token_is(syntax::TokenType::UNDERSCORE)) {
+        if (!parser.current_token_is(syntax::TokenType::UNDERSCORE)) {
             size.emplace(TRY(parser.parse_expression()));
         }
 

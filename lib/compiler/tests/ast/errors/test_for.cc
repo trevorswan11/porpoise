@@ -4,53 +4,6 @@
 
 namespace porpoise::tests {
 
-namespace keywords = syntax::keywords;
-
-TEST_CASE("For loop with base captures") {
-    helpers::test_expr_stmt(
-        "for (arr) |i| { a; };",
-        ast::ForLoopExpression{
-            syntax::Token{keywords::FOR},
-            helpers::make_vector<mem::Box<ast::Expression>>(helpers::make_ident("arr")),
-            helpers::make_vector<ast::ForLoopCapture>(
-                ast::ForLoopCapture::Valued{{}, helpers::make_ident("i")}),
-            helpers::make_expr_block_stmt(helpers::ident_from("a")),
-            {}});
-}
-
-TEST_CASE("For loop with modified captures") {
-    helpers::test_expr_stmt(
-        "for (arr, l, p) |i, &mut j, _| { a; };",
-        ast::ForLoopExpression{
-            syntax::Token{keywords::FOR},
-            helpers::make_vector<mem::Box<ast::Expression>>(
-                helpers::make_ident("arr"), helpers::make_ident("l"), helpers::make_ident("p")),
-            helpers::make_vector<ast::ForLoopCapture>(
-                ast::ForLoopCapture::Valued{{}, helpers::make_ident("i")},
-                ast::ForLoopCapture::Valued{ast::TypeModifier{ast::TypeModifier::Modifier::MUT_REF},
-                                            helpers::make_ident("j")},
-                ast::ForLoopCapture{syntax::Token{syntax::TokenType::UNDERSCORE, "_"}}),
-            helpers::make_expr_block_stmt(helpers::ident_from("a")),
-            {}});
-}
-
-TEST_CASE("Full for loop with else") {
-    helpers::test_expr_stmt(
-        "for (0..4) |i| { a; } else return b;",
-        ast::ForLoopExpression{
-            syntax::Token{keywords::FOR},
-            helpers::make_vector<mem::Box<ast::Expression>>(mem::make_box<ast::RangeExpression>(
-                syntax::Token{syntax::TokenType::INT_10, "0"},
-                helpers::make_primitive<ast::I32Expression>("0"),
-                syntax::TokenType::DOT_DOT,
-                helpers::make_primitive<ast::I32Expression>("4"))),
-            helpers::make_vector<ast::ForLoopCapture>(
-                ast::ForLoopCapture::Valued{{}, helpers::make_ident("i")}),
-            helpers::make_expr_block_stmt(helpers::ident_from("a")),
-            mem::make_nullable_box<ast::ReturnStatement>(syntax::Token{keywords::RETURN},
-                                                         helpers::make_ident<true>("b"))});
-}
-
 TEST_CASE("Non-terminated iterables") {
     helpers::test_parser_fail("for (0..4 |i| { a; } else return b;",
                               syntax::Diagnostic{"Expected token RBRACE, found IDENT",
