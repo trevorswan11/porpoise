@@ -5,19 +5,20 @@
 #include <fmt/ostream.h>
 
 #include "ast/ast.hh"
+#include "ast/format.hh" // IWYU pragma: keep
 
 #include "assert.hh"
 #include "indent.hh"
 
 namespace porpoise::ast {
 
-class ForestDumper {
+class ASTDumper {
   public:
-    explicit ForestDumper(const Forest& forest, std::ostream& out) : out_{out}, forest{forest} {}
+    explicit ASTDumper(const AST& ast, std::ostream& out) : out_{out}, ast_{ast} {}
 
     auto dump(const NodeID& id) -> void {
         ASSERT(id.is_valid(), "Attempt to dump invalid handle");
-        std::visit([&](const auto& data) { visit(id, data); }, forest[id]);
+        std::visit([&](const auto& data) { visit(id, data); }, ast_[id]);
     }
 
     template <NodeKind... Kinds> auto dump(const Handle<Kinds...>& id) -> void {
@@ -29,7 +30,7 @@ class ForestDumper {
         ASSERT(id.is_valid(), "Attempt to dump invalid handle");
         fmt::println(out_, "ExplicitType (modifier: {})", id.get_modifier());
         const Indent::Guard g{indent_, true};
-        std::visit([&](const auto& data) { visit(id, data); }, forest[id]);
+        std::visit([&](const auto& data) { visit(id, data); }, ast_[id]);
     }
 
   private:
@@ -58,7 +59,7 @@ class ForestDumper {
 
   private:
     std::ostream& out_;
-    const Forest& forest;
+    const AST&    ast_;
     Indent        indent_;
 };
 

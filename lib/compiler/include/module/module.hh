@@ -8,6 +8,8 @@
 
 #include "ast/ast.hh"
 
+#include "ast/id.hh"
+#include "sema/attachments.hh"
 #include "sema/error.hh"
 
 #include "syntax/error.hh"
@@ -53,7 +55,8 @@ struct Module {
     std::filesystem::path path;
     std::filesystem::path parent_path;
     SourceFile            source;
-    ast::Forest           forest;
+    ast::AST              ast;
+    sema::SideTables      sema_side_tables;
     opt::Index            root_table_idx;
     ModuleState           state;
 
@@ -94,6 +97,37 @@ struct Module {
     auto is_resolvable() const noexcept -> bool {
         return root_table_idx && (state == mod::ModuleState::SYMBOLS_COLLECTED ||
                                   state == mod::ModuleState::POISONED_SYMBOL_COLLECTION);
+    }
+
+    [[nodiscard]] constexpr auto has_sema_type(ast::NodeID id) const noexcept -> bool {
+        return sema_side_tables.node_types[id].has_value();
+    }
+
+    [[nodiscard]] constexpr auto get_sema_type(ast::NodeID id) const noexcept -> const sema::Type& {
+        return *sema_side_tables.node_types[id];
+    }
+
+    constexpr auto set_sema_type(ast::NodeID id, sema::Type& type) noexcept -> void {
+        sema_side_tables.node_types[id].emplace(type);
+    }
+
+    template <ast::NodeKind... Kinds>
+    constexpr auto set_sema_type(const ast::Handle<Kinds...> id, sema::Type& type) noexcept
+        -> void {
+        set_sema_type(*id, type);
+    }
+
+    [[nodiscard]] constexpr auto has_sema_type(ast::ExplicitTypeID id) const noexcept -> bool {
+        return sema_side_tables.explicit_types[id].has_value();
+    }
+
+    [[nodiscard]] constexpr auto get_sema_type(ast::ExplicitTypeID id) const noexcept
+        -> const sema::Type& {
+        return *sema_side_tables.explicit_types[id];
+    }
+
+    constexpr auto set_sema_type(ast::ExplicitTypeID id, sema::Type& type) noexcept -> void {
+        sema_side_tables.explicit_types[id].emplace(type);
     }
 };
 

@@ -219,6 +219,17 @@ class ExplicitTypeID {
 
 #undef MAKE_MUTUALLY_EXCLUSIVE_TYPE_QUERY
 
+// An ID-indexable side table containing attached data
+template <typename ID, DefaultConstructible T> struct SideTable {
+    std::vector<T> values;
+
+    template <typename Self>
+    [[nodiscard]] constexpr auto operator[](this Self&& self, ID id) noexcept -> auto& {
+        ASSERT(id.is_valid(), "Attempt to access invalid id");
+        return self.values[id.get_index()];
+    }
+};
+
 } // namespace ast
 
 namespace traits {

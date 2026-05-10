@@ -71,7 +71,7 @@ struct Context {
         if constexpr (sizeof...(args) != 0) {
             diagnostics.emplace_back(std::forward<Args>(args)...);
         }
-        module.forest.set_sema_type(id, get_poison());
+        module.set_sema_type(id, get_poison());
     }
 
     // Creates and injects the builtin/primitive prelude and sets the internal prelude index

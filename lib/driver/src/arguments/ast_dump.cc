@@ -41,8 +41,8 @@ auto AstDump::run() -> void {
         const auto stdin_mod = *manager.try_get_file_module(stdin_path);
         if (stdin_mod->is_errored()) { continue; }
 
-        ast::ForestDumper dumper{stdin_mod->forest, std::cout};
-        for (const auto& node : stdin_mod->forest) { dumper.dump(node); }
+        ast::ASTDumper dumper{stdin_mod->ast, std::cout};
+        for (const auto& node : stdin_mod->ast) { dumper.dump(node); }
 
         if (stdin_mod->is_poisoned()) { continue; }
         fmt::println("{} total tables, {} top-level symbols collected",

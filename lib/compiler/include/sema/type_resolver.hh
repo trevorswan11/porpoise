@@ -14,7 +14,7 @@ class TypeResolver {
 
     auto resolve(const ast::NodeID& id) -> void {
         ASSERT(id.is_valid(), "Attempt to resolve invalid handle");
-        std::visit([&](const auto& data) { visit(id, data); }, collecting_.forest[id]);
+        std::visit([&](const auto& data) { visit(id, data); }, collecting_.ast[id]);
     }
 
     template <ast::NodeKind... Kinds> auto resolve(const ast::Handle<Kinds...>& id) -> void {
@@ -23,7 +23,7 @@ class TypeResolver {
 
     auto resolve(const ast::ExplicitTypeID& id) -> void {
         ASSERT(id.is_valid(), "Attempt to resolve invalid handle");
-        std::visit([&](const auto& data) { visit(id, data); }, collecting_.forest[id]);
+        std::visit([&](const auto& data) { visit(id, data); }, collecting_.ast[id]);
     }
 
   private:

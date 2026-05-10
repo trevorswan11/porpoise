@@ -13,22 +13,18 @@ namespace {
     -> SourceLocation {
     return std::visit(
         Overloaded{
-            [&](const SymbolicNode& node) { return module.forest.location_of(*node); },
+            [&](const SymbolicNode& node) { return module.ast.location_of(*node); },
             [&](const VirtualSymbol&) { return SourceLocation{0, 0}; },
-            [&](const SymbolicUnionField& inner) {
-                return module.forest.location_of(*inner.ident);
-            },
-            [&](const SymbolicEnumeration& inner) {
-                return module.forest.location_of(*inner.first);
-            },
-            [&](const SymbolicSelfParam& inner) { return module.forest.location_of(*inner.ident); },
+            [&](const SymbolicUnionField& inner) { return module.ast.location_of(*inner.ident); },
+            [&](const SymbolicEnumeration& inner) { return module.ast.location_of(*inner.first); },
+            [&](const SymbolicSelfParam& inner) { return module.ast.location_of(*inner.ident); },
             [&](const SymbolicParam& inner) {
-                if (inner.ident) { return module.forest.location_of(**inner.ident); }
-                return module.forest.location_of(inner.explicit_type);
+                if (inner.ident) { return module.ast.location_of(**inner.ident); }
+                return module.ast.location_of(inner.explicit_type);
             },
-            [&](const SymbolicCapture& inner) { return module.forest.location_of(*inner.payload); },
-            [&](const SymbolicArm& inner) { return module.forest.location_of(*inner.pattern); },
-            [&](const SymbolicImport& inner) { return module.forest.location_of(*inner.node); }},
+            [&](const SymbolicCapture& inner) { return module.ast.location_of(*inner.payload); },
+            [&](const SymbolicArm& inner) { return module.ast.location_of(*inner.pattern); },
+            [&](const SymbolicImport& inner) { return module.ast.location_of(*inner.node); }},
         payload);
 }
 
@@ -42,7 +38,7 @@ auto Symbol::is_public(mod::Module& module) const noexcept -> bool {
     return match(Overloaded{[&](const SymbolicNode& node) {
                                 switch (node->get_kind()) {
                                 case ast::NodeKind::DECL_STATEMENT:
-                                    return std::get<ast::DeclStatement>(module.forest[*node])
+                                    return std::get<ast::DeclStatement>(module.ast[*node])
                                         .has_modifier(ast::DeclModifiers::PUBLIC);
                                 case ast::NodeKind::USING_STATEMENT:
                                     return node->get_token_type() == syntax::TokenType::PUBLIC;

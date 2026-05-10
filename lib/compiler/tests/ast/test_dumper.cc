@@ -69,13 +69,13 @@ constexpr std::string_view expected{
 
 TEST_CASE("Comprehensive dump") {
     syntax::Parser p{input};
-    ast::Forest    forest;
-    auto           errors = p.consume(forest);
+    ast::AST       ast;
+    auto           errors = p.consume(ast);
     helpers::check_errors<syntax::Diagnostic>(errors);
 
     std::ostringstream oss;
-    ast::ForestDumper  dumper{forest, oss};
-    for (const auto& node : forest) { dumper.dump(node); }
+    ast::ASTDumper     dumper{ast, oss};
+    for (const auto& node : ast) { dumper.dump(node); }
     CHECK(expected == oss.view());
 }
 

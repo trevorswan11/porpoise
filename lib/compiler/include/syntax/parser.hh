@@ -3,11 +3,8 @@
 #include <string_view>
 #include <utility>
 
-#include "ast/forest.hh"
-#include "ast/handle.hh"
-#include "ast/meta.hh"
+#include "ast/ast.hh"
 
-#include "option.hh"
 #include "syntax/error.hh"
 #include "syntax/lexer.hh"
 #include "syntax/precedence.hh"
@@ -16,7 +13,7 @@
 #include "result.hh"
 #include "variant.hh"
 
-namespace porpoise::ast { class Forest; } // namespace porpoise::ast
+namespace porpoise::ast { class AST; } // namespace porpoise::ast
 
 namespace porpoise::syntax {
 
@@ -67,7 +64,7 @@ class Parser {
     auto advance(u8 times = 1) noexcept -> const Token&;
 
     // Fills the AST with the parser's output, clearing it before use
-    auto consume(ast::Forest& forest) -> Diagnostics;
+    auto consume(ast::AST& ast) -> Diagnostics;
 
     auto get_current_token() const noexcept -> const Token& { return current_token_; }
     auto get_peek_token() const noexcept -> const Token& { return peek_token_; }
@@ -101,40 +98,40 @@ class Parser {
     static auto try_get_prefix_fn(TokenType tt) noexcept -> opt::Option<PrefixFn>;
     static auto try_get_poll_infix_fn(TokenType tt) noexcept -> opt::Option<InfixFn>;
 
-    MAKE_NON_CONST_OPTIONAL_UNPACKER(forest, ast::Forest&, forest_, *)
+    [[nodiscard]] auto get_ast() noexcept -> ast ::AST& { return *ast_; }
 
     template <ast::traits::ASTNode N>
     [[nodiscard]] constexpr auto get_node(ast::NodeID id) -> const N& {
-        return std::get<N>((*forest_)[id]);
+        return std::get<N>((*ast_)[id]);
     }
 
     [[nodiscard]] auto get_location_of(ast::NodeID id) -> SourceLocation;
     [[nodiscard]] auto get_location_of(ast::ExplicitTypeID id) -> SourceLocation;
 
-    // Adds an expression to the forest and returns its handle
+    // Adds an expression to the ast and returns its handle
     template <ast::traits::ASTNode Data>
     [[nodiscard]] constexpr auto add_expr(const syntax::Token& start_token, Data&& data) {
         return add_node<ast::ExpressionHandle>(start_token, std::forward<Data>(data));
     }
 
-    // Adds a statement to the forest and returns its handle
+    // Adds a statement to the ast and returns its handle
     template <ast::traits::ASTNode Data>
     [[nodiscard]] constexpr auto add_stmt(const syntax::Token& start_token, Data&& data) {
         return add_node<ast::StatementHandle>(start_token, std::forward<Data>(data));
     }
 
-    // Adds a node to the forest and casts the result to the requested handle
+    // Adds a node to the ast and casts the result to the requested handle
     template <typename Handle, ast::traits::ASTNode Data>
     [[nodiscard]] constexpr auto add_node(const syntax::Token& start_token, Data&& data) -> Handle {
-        return Handle{forest_->add_node(start_token, std::forward<Data>(data))};
+        return Handle{ast_->add_node(start_token, std::forward<Data>(data))};
     }
 
-    // Helper for type-forest insertion, reducing a layer of call-site indirection
+    // Helper for type-ast insertion, reducing a layer of call-site indirection
     template <ast::traits::ASTExplicitType Data>
     [[nodiscard]] constexpr auto add_type(const syntax::Token& start_token,
                                           ast::TypeModifier    mod,
                                           Data&&               data) -> ast::ExplicitTypeID {
-        return forest_->add_type(start_token, mod, std::forward<Data>(data));
+        return ast_->add_type(start_token, mod, std::forward<Data>(data));
     }
 
   private:
@@ -146,11 +143,11 @@ class Parser {
     }
 
   private:
-    std::string_view          input_;
-    Lexer                     lexer_{};
-    Token                     current_token_{};
-    Token                     peek_token_{};
-    opt::Option<ast::Forest&> forest_;
+    std::string_view       input_;
+    Lexer                  lexer_{};
+    Token                  current_token_{};
+    Token                  peek_token_{};
+    opt::Option<ast::AST&> ast_;
 };
 
 } // namespace porpoise::syntax

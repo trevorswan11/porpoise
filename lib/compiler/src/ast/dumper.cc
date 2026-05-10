@@ -8,7 +8,7 @@
 
 namespace porpoise::ast {
 
-auto ForestDumper::visit(const NodeID&, const ArrayExpression& array) -> void {
+auto ASTDumper::visit(const NodeID&, const ArrayExpression& array) -> void {
     fmt::println(out_, "ArrayExpression");
     {
         const Indent::Guard g{indent_, false};
@@ -40,7 +40,7 @@ auto ForestDumper::visit(const NodeID&, const ArrayExpression& array) -> void {
 }
 
 // Safe to call with invalid ID in type dispatch
-auto ForestDumper::visit(const NodeID&, const CallExpression& call) -> void {
+auto ASTDumper::visit(const NodeID&, const CallExpression& call) -> void {
     fmt::println(out_, "CallExpression");
     {
         const Indent::Guard g{indent_, false};
@@ -58,7 +58,7 @@ auto ForestDumper::visit(const NodeID&, const CallExpression& call) -> void {
     }
 }
 
-auto ForestDumper::visit(const NodeID&, const DoWhileLoopExpression& do_while) -> void {
+auto ASTDumper::visit(const NodeID&, const DoWhileLoopExpression& do_while) -> void {
     fmt::println(out_, "DoWhileLoopExpression");
     {
         const Indent::Guard g{indent_, false};
@@ -74,7 +74,7 @@ auto ForestDumper::visit(const NodeID&, const DoWhileLoopExpression& do_while) -
 }
 
 // Safe to call with invalid ID in type dispatch
-auto ForestDumper::visit(const NodeID&, const EnumExpression& enum_expr) -> void {
+auto ASTDumper::visit(const NodeID&, const EnumExpression& enum_expr) -> void {
     fmt::println(out_, "EnumExpression");
 
     if (enum_expr.underlying) {
@@ -110,7 +110,7 @@ auto ForestDumper::visit(const NodeID&, const EnumExpression& enum_expr) -> void
     }
 }
 
-auto ForestDumper::visit(const NodeID&, const ForLoopExpression& for_loop) -> void {
+auto ASTDumper::visit(const NodeID&, const ForLoopExpression& for_loop) -> void {
     fmt::println(out_, "ForLoopExpression");
     {
         const Indent::Guard g{indent_, false};
@@ -126,7 +126,7 @@ auto ForestDumper::visit(const NodeID&, const ForLoopExpression& for_loop) -> vo
             if (capture.payload->is<Unit>()) {
                 fmt::println(out_, "<discarded>");
             } else {
-                const auto& ident = std::get<IdentifierExpression>(forest[*capture.payload]);
+                const auto& ident = std::get<IdentifierExpression>(ast_[*capture.payload]);
                 fmt::println(out_, "{} (modifier: {})", ident, capture.modifier);
             }
         });
@@ -147,12 +147,12 @@ auto ForestDumper::visit(const NodeID&, const ForLoopExpression& for_loop) -> vo
 }
 
 // Safe to call with invalid ID in type dispatch
-auto ForestDumper::visit(const NodeID&, const FunctionExpression& function) -> void {
+auto ASTDumper::visit(const NodeID&, const FunctionExpression& function) -> void {
     fmt::println(out_, "FunctionExpression");
     if (function.self) {
         const Indent::Guard g{indent_, false};
         fmt::print(out_, "{}", indent_.current_branch());
-        const auto& ident = std::get<IdentifierExpression>(forest[*function.self->ident]);
+        const auto& ident = std::get<IdentifierExpression>(ast_[*function.self->ident]);
         fmt::println(out_, "Self: {} (modifier: {})", ident, function.self->modifier);
     }
 
@@ -194,7 +194,7 @@ auto ForestDumper::visit(const NodeID&, const FunctionExpression& function) -> v
     }
 }
 
-auto ForestDumper::visit(const NodeID& id, const IdentifierExpression& ident) -> void {
+auto ASTDumper::visit(const NodeID& id, const IdentifierExpression& ident) -> void {
     fmt::print(out_, "IdentifierExpression: {}", ident);
     if (syntax::token_type::is_builtin(id.get_token_type())) {
         fmt::print(out_, " (builtin)");
@@ -204,7 +204,7 @@ auto ForestDumper::visit(const NodeID& id, const IdentifierExpression& ident) ->
     fmt::println(out_, "");
 }
 
-auto ForestDumper::visit(const NodeID&, const IfExpression& if_expr) -> void {
+auto ASTDumper::visit(const NodeID&, const IfExpression& if_expr) -> void {
     fmt::println(out_, "IfExpression");
     {
         const Indent::Guard g{indent_, false};
@@ -232,7 +232,7 @@ auto ForestDumper::visit(const NodeID&, const IfExpression& if_expr) -> void {
     }
 }
 
-auto ForestDumper::visit(const NodeID&, const IndexExpression& index) -> void {
+auto ASTDumper::visit(const NodeID&, const IndexExpression& index) -> void {
     fmt::println(out_, "IndexExpression");
     {
         const Indent::Guard g{indent_, false};
@@ -246,14 +246,14 @@ auto ForestDumper::visit(const NodeID&, const IndexExpression& index) -> void {
     }
 }
 
-auto ForestDumper::visit(const NodeID&, const InfiniteLoopExpression& loop) -> void {
+auto ASTDumper::visit(const NodeID&, const InfiniteLoopExpression& loop) -> void {
     fmt::println(out_, "InfiniteLoopExpression");
-    const auto& block = std::get<BlockStatement>(forest[*loop.block]);
+    const auto& block = std::get<BlockStatement>(ast_[*loop.block]);
     dump_node_list(block);
 }
 
 #define MAKE_INFIX_DUMP(NodeType, LeftLabel, RightLabel)                                   \
-    auto ForestDumper::visit(const NodeID& id, const NodeType& node) -> void {             \
+    auto ASTDumper::visit(const NodeID& id, const NodeType& node) -> void {                \
         fmt::println(out_, #NodeType " ({})", magic_enum::enum_name(id.get_token_type())); \
         {                                                                                  \
             const Indent::Guard g{indent_, false};                                         \
@@ -272,7 +272,7 @@ MAKE_INFIX_DUMP(BinaryExpression, LHS, RHS)
 MAKE_INFIX_DUMP(DotExpression, Object, Member)
 MAKE_INFIX_DUMP(RangeExpression, Lower, Upper)
 
-auto ForestDumper::visit(const NodeID&, const InitializerExpression& init) -> void {
+auto ASTDumper::visit(const NodeID&, const InitializerExpression& init) -> void {
     fmt::println(out_, "Initializer Expression:");
     const auto has_initializers = !init.initializers.empty();
     {
@@ -306,7 +306,7 @@ auto ForestDumper::visit(const NodeID&, const InitializerExpression& init) -> vo
     }
 }
 
-auto ForestDumper::visit(const NodeID&, const ast::LabelExpression& label) -> void {
+auto ASTDumper::visit(const NodeID&, const ast::LabelExpression& label) -> void {
     fmt::println(out_, "Label Expression:");
     {
         const Indent::Guard g{indent_, false};
@@ -321,7 +321,7 @@ auto ForestDumper::visit(const NodeID&, const ast::LabelExpression& label) -> vo
     }
 }
 
-auto ForestDumper::visit(const NodeID&, const MatchExpression& match) -> void {
+auto ASTDumper::visit(const NodeID&, const MatchExpression& match) -> void {
     fmt::println(out_, "MatchExpression");
     {
         const Indent::Guard g{indent_, false};
@@ -363,7 +363,7 @@ auto ForestDumper::visit(const NodeID&, const MatchExpression& match) -> void {
 }
 
 #define MAKE_PREFIX_DUMP(NodeType)                                                         \
-    auto ForestDumper::visit(const NodeID& id, const NodeType& node) -> void {             \
+    auto ASTDumper::visit(const NodeID& id, const NodeType& node) -> void {                \
         fmt::println(out_, #NodeType " ({})", magic_enum::enum_name(id.get_token_type())); \
         const Indent::Guard g{indent_, true};                                              \
         fmt::print(out_, "{}Operand: ", indent_.current_branch());                         \
@@ -375,9 +375,9 @@ MAKE_PREFIX_DUMP(DereferenceExpression)
 MAKE_PREFIX_DUMP(UnaryExpression)
 MAKE_PREFIX_DUMP(ImplicitAccessExpression)
 
-#define MAKE_LEAF_DUMP(NodeType)                                            \
-    auto ForestDumper::visit(const NodeID&, const NodeType& node) -> void { \
-        fmt::println(out_, #NodeType ": {}", node);                         \
+#define MAKE_LEAF_DUMP(NodeType)                                         \
+    auto ASTDumper::visit(const NodeID&, const NodeType& node) -> void { \
+        fmt::println(out_, #NodeType ": {}", node);                      \
     }
 
 MAKE_LEAF_DUMP(StringExpression)
@@ -391,17 +391,17 @@ MAKE_LEAF_DUMP(U8Expression)
 MAKE_LEAF_DUMP(F32Expression)
 MAKE_LEAF_DUMP(F64Expression)
 
-auto ForestDumper::visit(const NodeID& id, const BoolExpression&) -> void {
+auto ASTDumper::visit(const NodeID& id, const BoolExpression&) -> void {
     fmt::println(
         out_, "BoolExpression: {}", id.get_token_type() == syntax::TokenType::BOOLEAN_TRUE);
 }
 
-auto ForestDumper::visit(const NodeID&, const VoidExpression&) -> void {
+auto ASTDumper::visit(const NodeID&, const VoidExpression&) -> void {
     fmt::println(out_, "VoidExpression");
 }
 
 // Safe to call with invalid ID in type dispatch
-auto ForestDumper::visit(const NodeID&, const ScopeResolutionExpression& scope_resolve) -> void {
+auto ASTDumper::visit(const NodeID&, const ScopeResolutionExpression& scope_resolve) -> void {
     fmt::println(out_, "ScopeResolutionExpression");
     {
         const Indent::Guard g{indent_, false};
@@ -416,18 +416,18 @@ auto ForestDumper::visit(const NodeID&, const ScopeResolutionExpression& scope_r
 }
 
 // Safe to call with invalid ID in type dispatch
-auto ForestDumper::visit(const NodeID&, const StructExpression& struct_expr) -> void {
+auto ASTDumper::visit(const NodeID&, const StructExpression& struct_expr) -> void {
     fmt::println(out_, "StructExpression");
     dump_node_list(struct_expr.members);
 }
 
-#define MAKE_EXPLICIT_TYPE_DUMP(TypeData)                                           \
-    auto ForestDumper::visit(const ExplicitTypeID&, const TypeData& type) -> void { \
-        fmt::print(out_, "{}", indent_.current_branch());                           \
-        visit(NodeID::make_invalid(), type);                                        \
+#define MAKE_EXPLICIT_TYPE_DUMP(TypeData)                                        \
+    auto ASTDumper::visit(const ExplicitTypeID&, const TypeData& type) -> void { \
+        fmt::print(out_, "{}", indent_.current_branch());                        \
+        visit(NodeID::make_invalid(), type);                                     \
     }
 
-auto ForestDumper::visit(const ExplicitTypeID& id, const IdentifierExpression& ident) -> void {
+auto ASTDumper::visit(const ExplicitTypeID& id, const IdentifierExpression& ident) -> void {
     fmt::print(out_, "{}", indent_.current_branch());
     fmt::print(out_, "IdentifierExpression: {}", ident);
     if (syntax::token_type::is_builtin(id.get_token_type())) {
@@ -442,7 +442,7 @@ MAKE_EXPLICIT_TYPE_DUMP(ScopeResolutionExpression)
 MAKE_EXPLICIT_TYPE_DUMP(CallExpression)
 MAKE_EXPLICIT_TYPE_DUMP(FunctionExpression)
 
-auto ForestDumper::visit(const ExplicitTypeID&, const ExplicitTypeID& recursive) -> void {
+auto ASTDumper::visit(const ExplicitTypeID&, const ExplicitTypeID& recursive) -> void {
     fmt::print(out_, "{}", indent_.current_branch());
     dump(recursive);
 }
@@ -451,7 +451,7 @@ MAKE_EXPLICIT_TYPE_DUMP(StructExpression)
 MAKE_EXPLICIT_TYPE_DUMP(EnumExpression)
 MAKE_EXPLICIT_TYPE_DUMP(UnionExpression)
 
-auto ForestDumper::visit(const ExplicitTypeID&, const ExplicitArrayType& array) -> void {
+auto ASTDumper::visit(const ExplicitTypeID&, const ExplicitArrayType& array) -> void {
     fmt::println(out_, "{}ArrayType", indent_.current_branch());
     {
         const Indent::Guard g{indent_, false};
@@ -476,7 +476,7 @@ auto ForestDumper::visit(const ExplicitTypeID&, const ExplicitArrayType& array) 
     }
 }
 
-auto ForestDumper::visit(const NodeID&, const TypeExpression& node) -> void {
+auto ASTDumper::visit(const NodeID&, const TypeExpression& node) -> void {
     if (node.explicit_type) {
         dump(*node.explicit_type);
     } else {
@@ -485,7 +485,7 @@ auto ForestDumper::visit(const NodeID&, const TypeExpression& node) -> void {
 }
 
 // Safe to call with invalid ID in type dispatch
-auto ForestDumper::visit(const NodeID&, const UnionExpression& union_expr) -> void {
+auto ASTDumper::visit(const NodeID&, const UnionExpression& union_expr) -> void {
     fmt::println(out_, "UnionExpression");
 
     const auto has_members = !union_expr.members.empty();
@@ -515,7 +515,7 @@ auto ForestDumper::visit(const NodeID&, const UnionExpression& union_expr) -> vo
     }
 }
 
-auto ForestDumper::visit(const NodeID&, const WhileLoopExpression& while_expr) -> void {
+auto ASTDumper::visit(const NodeID&, const WhileLoopExpression& while_expr) -> void {
     fmt::println(out_, "WhileLoopExpression");
     {
         const Indent::Guard g{indent_, false};
@@ -543,7 +543,7 @@ auto ForestDumper::visit(const NodeID&, const WhileLoopExpression& while_expr) -
     }
 }
 
-auto ForestDumper::visit(const NodeID&, const BlockStatement& block) -> void {
+auto ASTDumper::visit(const NodeID&, const BlockStatement& block) -> void {
     fmt::println(out_, "BlockStatement");
     if (block.empty()) {
         const Indent::Guard g{indent_, true};
@@ -553,7 +553,7 @@ auto ForestDumper::visit(const NodeID&, const BlockStatement& block) -> void {
     }
 }
 
-auto ForestDumper::visit(const NodeID&, const BreakStatement& break_stmt) -> void {
+auto ASTDumper::visit(const NodeID&, const BreakStatement& break_stmt) -> void {
     fmt::println(out_, "BreakStatement");
     const auto has_expression = break_stmt.expression.has_value();
     if (break_stmt.label) {
@@ -569,7 +569,7 @@ auto ForestDumper::visit(const NodeID&, const BreakStatement& break_stmt) -> voi
     }
 }
 
-auto ForestDumper::visit(const NodeID&, const ContinueStatement& continue_stmt) -> void {
+auto ASTDumper::visit(const NodeID&, const ContinueStatement& continue_stmt) -> void {
     fmt::println(out_, "ContinueStatement");
     if (continue_stmt.label) {
         const Indent ::Guard g{indent_, true};
@@ -578,8 +578,8 @@ auto ForestDumper::visit(const NodeID&, const ContinueStatement& continue_stmt) 
     }
 }
 
-auto ForestDumper::visit(const NodeID&, const DeclStatement& decl) -> void {
-    const auto& ident = std::get<IdentifierExpression>(forest[*decl.ident]);
+auto ASTDumper::visit(const NodeID&, const DeclStatement& decl) -> void {
+    const auto& ident = std::get<IdentifierExpression>(ast_[*decl.ident]);
     fmt::println(out_, "DeclStatement ({})", ident);
     {
         const Indent::Guard g{indent_, false};
@@ -602,7 +602,7 @@ auto ForestDumper::visit(const NodeID&, const DeclStatement& decl) -> void {
 }
 
 #define MAKE_BASIC_STMT_DUMP(NodeType, FieldName, field)                      \
-    auto ForestDumper::visit(const NodeID&, const NodeType& node) -> void {   \
+    auto ASTDumper::visit(const NodeID&, const NodeType& node) -> void {      \
         fmt::println(out_, #NodeType);                                        \
         {                                                                     \
             const Indent::Guard g{indent_, true};                             \
@@ -615,7 +615,7 @@ MAKE_BASIC_STMT_DUMP(DeferStatement, Deferred, deferred)
 MAKE_BASIC_STMT_DUMP(DiscardStatement, Discarded, discarded)
 MAKE_BASIC_STMT_DUMP(ExpressionStatement, Expr, expression)
 
-auto ForestDumper::visit(const NodeID& id, const ImportStatement& import_stmt) -> void {
+auto ASTDumper::visit(const NodeID& id, const ImportStatement& import_stmt) -> void {
     fmt::println(out_, "ImportStatement");
     {
         const Indent::Guard g{indent_, false};
@@ -641,7 +641,7 @@ auto ForestDumper::visit(const NodeID& id, const ImportStatement& import_stmt) -
     }
 }
 
-auto ForestDumper::visit(const NodeID&, const ReturnStatement& return_stmt) -> void {
+auto ASTDumper::visit(const NodeID&, const ReturnStatement& return_stmt) -> void {
     fmt::println(out_, "ReturnStatement");
     if (return_stmt.expression) {
         const Indent::Guard g{indent_, true};
@@ -650,11 +650,11 @@ auto ForestDumper::visit(const NodeID&, const ReturnStatement& return_stmt) -> v
     }
 }
 
-auto ForestDumper::visit(const NodeID&, const TestStatement& test) -> void {
+auto ASTDumper::visit(const NodeID&, const TestStatement& test) -> void {
     fmt::println(out_, "TestStatement");
     if (test.description) {
         const Indent::Guard g{indent_, false};
-        const auto&         string = std::get<StringExpression>(forest[**test.description]);
+        const auto&         string = std::get<StringExpression>(ast_[**test.description]);
         fmt::println(out_, "{}Description: {}", indent_.current_branch(), string);
     }
 
@@ -665,7 +665,7 @@ auto ForestDumper::visit(const NodeID&, const TestStatement& test) -> void {
     }
 }
 
-auto ForestDumper::visit(const NodeID& id, const UsingStatement& using_stmt) -> void {
+auto ASTDumper::visit(const NodeID& id, const UsingStatement& using_stmt) -> void {
     fmt::println(out_, "UsingStatement");
     {
         const Indent::Guard g{indent_, false};
@@ -681,6 +681,6 @@ auto ForestDumper::visit(const NodeID& id, const UsingStatement& using_stmt) -> 
     }
 }
 
-auto ForestDumper::visit(const NodeID&, const Unit&) -> void { fmt::println(out_, "<discarded>"); }
+auto ASTDumper::visit(const NodeID&, const Unit&) -> void { fmt::println(out_, "<discarded>"); }
 
 } // namespace porpoise::ast

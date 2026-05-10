@@ -204,7 +204,7 @@ auto EnumExpression::parse(syntax::Parser& parser) -> Result<ExpressionHandle, s
                                          return validate_non_struct_member_decl(decl);
                                      },
                                      [](const auto&) { return true; }},
-                          parser.get_forest()[*member]);
+                          parser.get_ast()[*member]);
     }));
     TRY(parser.expect_peek(syntax::TokenType::RBRACE));
 
@@ -693,7 +693,7 @@ auto StructExpression::parse(syntax::Parser& parser)
         return std::visit(
             Overloaded{[](const DeclStatement& decl) { return validate_struct_member_decl(decl); },
                        [](const auto&) { return true; }},
-            parser.get_forest()[*member]);
+            parser.get_ast()[*member]);
     }));
 
     TRY(parser.expect_peek(syntax::TokenType::RBRACE));
@@ -728,7 +728,7 @@ auto UnionExpression::parse(syntax::Parser& parser)
                                          return validate_non_struct_member_decl(decl);
                                      },
                                      [](const auto&) { return true; }},
-                          parser.get_forest()[*member]);
+                          parser.get_ast()[*member]);
     }));
     TRY(parser.expect_peek(syntax::TokenType::RBRACE));
 
