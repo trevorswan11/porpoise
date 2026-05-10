@@ -1,6 +1,6 @@
 #pragma once
 
-#include "ast/nodes.hh"
+#include "ast/ast.hh"
 
 #include "module/module.hh"
 
@@ -19,7 +19,7 @@ class SymbolCollector {
 
     auto collect(const ast::NodeID& id) -> void {
         ASSERT(id.is_valid(), "Attempt to collect invalid handle");
-        std::visit([&](const auto& data) { visit(id, data); }, collecting_.tree[id]);
+        std::visit([&](const auto& data) { visit(id, data); }, collecting_.forest[id]);
     }
 
     template <ast::NodeKind... Kinds> auto collect(const ast::Handle<Kinds...>& id) -> void {
@@ -28,7 +28,7 @@ class SymbolCollector {
 
     auto collect(const ast::ExplicitTypeID& id) -> void {
         ASSERT(id.is_valid(), "Attempt to collect invalid handle");
-        std::visit([&](const auto& data) { visit(id, data); }, collecting_.tree[id]);
+        std::visit([&](const auto& data) { visit(id, data); }, collecting_.forest[id]);
     }
 
   private:

@@ -299,6 +299,10 @@ constexpr auto safe_eq(const Option<T>& a, const Option<T>& b) noexcept -> bool 
     [[nodiscard]] auto get_##name() const noexcept -> ConstReturnType { return deref member; } \
     [[nodiscard]] auto has_##name() const noexcept -> bool { return member.has_value(); }
 
+#define MAKE_NON_CONST_OPTIONAL_UNPACKER(name, ReturnType, member, deref)           \
+    [[nodiscard]] auto get_##name() noexcept -> ReturnType { return deref member; } \
+    [[nodiscard]] auto has_##name() const noexcept -> bool { return member.has_value(); }
+
 // A minimal, zero-cost optional usize wrapper
 class Index {
   public:

@@ -9,8 +9,8 @@
 
 #include "sema/error.hh"
 
+#include "ast/ast.hh"
 #include "ast/id.hh"
-#include "ast/nodes.hh"
 
 #include "module/module.hh"
 

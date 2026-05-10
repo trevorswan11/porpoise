@@ -39,11 +39,4 @@ TEST_CASE("Promotion of multiline literals") {
     helpers::test_ml_string(R"(\\)", "");
 }
 
-TEST_CASE("Token formatting") {
-    const auto expected{R"(STRING("Hello, World!") [1, 24])"};
-    const auto actual =
-        fmt::format("{}", syntax::Token{TokenType::STRING, R"("Hello, World!")", 0, 23});
-    CHECK(expected == actual);
-}
-
 } // namespace porpoise::tests

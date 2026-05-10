@@ -1,5 +1,4 @@
 #include "sema/type_resolver.hh"
-#include "ast/nodes.hh"
 
 namespace porpoise::sema {
 
@@ -15,7 +14,7 @@ auto TypeResolver::resolve_types(mod::Module& module, Context& ctx) -> mod::Modu
         ctx.inject_prelude();
 
         TypeResolver resolver{module, ctx};
-        for (const auto& node : module.tree) { resolver.resolve(node); }
+        for (const auto& node : module.forest) { resolver.resolve(node); }
 
         if (!ctx.diagnostics.empty() || module.is_poisoned()) {
             return module.error_out(std::move(ctx.diagnostics),
@@ -30,7 +29,7 @@ auto TypeResolver::visit(const ast::NodeID& id, const ast::ArrayExpression& arra
     for (const auto& item : array.items) { resolve(item); }
     resolve(array.item_explicit_type);
     mem::NonNull<Type> item_type = last_type_.take();
-    collecting_.tree.set_sema_type(array.item_explicit_type, *item_type);
+    collecting_.forest.set_sema_type(array.item_explicit_type, *item_type);
 
     const auto items_size      = array.items.size();
     const auto null_terminated = array.null_terminated;
@@ -39,7 +38,7 @@ auto TypeResolver::visit(const ast::NodeID& id, const ast::ArrayExpression& arra
     if (!last_type_->has_resolved()) {
         last_type_->resolve<types::Array>(*item_type, items_size, null_terminated);
     }
-    collecting_.tree.set_sema_type(id, *last_type_);
+    collecting_.forest.set_sema_type(id, *last_type_);
 }
 
 auto TypeResolver::visit(const ast::NodeID& id, const ast::CallExpression& call) -> void {
@@ -48,7 +47,7 @@ auto TypeResolver::visit(const ast::NodeID& id, const ast::CallExpression& call)
             std::visit(
                 [&](const auto& handle) {
                     resolve(handle);
-                    collecting_.tree.set_sema_type(handle, *last_type_.take());
+                    collecting_.forest.set_sema_type(handle, *last_type_.take());
                 },
                 arg);
         }
@@ -58,7 +57,7 @@ auto TypeResolver::visit(const ast::NodeID& id, const ast::CallExpression& call)
     resolve(call.function);
     mem::NonNull<Type> callee_type = last_type_.take();
     if (!callee_type->has_resolved() || callee_type->is_poison()) {
-        collecting_.tree.set_sema_type(id, ctx_.get_poison());
+        collecting_.forest.set_sema_type(id, ctx_.get_poison());
         resolve_call_arguments();
         return last_type_.emplace(ctx_.get_poison());
     }
@@ -68,12 +67,12 @@ auto TypeResolver::visit(const ast::NodeID& id, const ast::CallExpression& call)
     if (!function_type) {
         ctx_.diagnostics.emplace_back("Expression is not callable",
                                       Error::NON_CALLABLE_EXPRESSION,
-                                      collecting_.tree.location_of(id));
-        collecting_.tree.set_sema_type(id, ctx_.get_poison());
+                                      collecting_.forest.location_of(id));
+        collecting_.forest.set_sema_type(id, ctx_.get_poison());
         resolve_call_arguments();
         return last_type_.emplace(ctx_.get_poison());
     }
-    collecting_.tree.set_sema_type(call.function, *callee_type);
+    collecting_.forest.set_sema_type(call.function, *callee_type);
 
     // Check the arity of the function against params before resetting last type
     resolve_call_arguments();
@@ -82,10 +81,10 @@ auto TypeResolver::visit(const ast::NodeID& id, const ast::CallExpression& call)
         ctx_.diagnostics.emplace_back(
             fmt::format("Expected {} arguments but found {}", params.size(), call.arguments.size()),
             Error::ARITY_MISMATCH,
-            collecting_.tree.location_of(id));
+            collecting_.forest.location_of(id));
     }
 
-    collecting_.tree.set_sema_type(id, function_type->return_type);
+    collecting_.forest.set_sema_type(id, function_type->return_type);
     last_type_.emplace(function_type->return_type);
 }
 
@@ -107,12 +106,12 @@ auto TypeResolver::visit(const ast::NodeID& id, const ast::IdentifierExpression&
                          id,
                          fmt::format("Use of undeclared identifier '{}'", name),
                          Error::UNDECLARED_IDENTIFIER,
-                         collecting_.tree.location_of(id));
+                         collecting_.forest.location_of(id));
         return last_type_.emplace(ctx_.get_poison());
     }
 
     // Identifiers can be anything that they're symbol is allowed to be
-    collecting_.tree.set_sema_type(id, symbol->get_type());
+    collecting_.forest.set_sema_type(id, symbol->get_type());
     last_type_.emplace(symbol->get_type());
 }
 
@@ -150,7 +149,7 @@ auto TypeResolver::visit(const ast::NodeID&, const ast::StringExpression&) -> vo
     auto TypeResolver::visit(const ast::NodeID& id, const ast::NodeType&) -> void {     \
         last_type_.emplace(ctx_.pool[{TypeKind::kind, IMMUTABLE}]);                     \
         if (!last_type_->has_resolved()) { last_type_->resolve<types::BuiltinType>(); } \
-        collecting_.tree.set_sema_type(id, *last_type_);                                \
+        collecting_.forest.set_sema_type(id, *last_type_);                              \
     }
 
 MAKE_PRIMITIVE_RESOLVER(I32Expression, I64)

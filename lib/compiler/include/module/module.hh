@@ -53,7 +53,7 @@ struct Module {
     std::filesystem::path path;
     std::filesystem::path parent_path;
     SourceFile            source;
-    ast::AST              tree;
+    ast::Forest           forest;
     opt::Index            root_table_idx;
     ModuleState           state;
 

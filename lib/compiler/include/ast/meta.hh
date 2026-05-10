@@ -1,0 +1,287 @@
+#pragma once
+
+#include <magic_enum/magic_enum_flags.hpp>
+
+#include "types.hh"
+#include "variant.hh"
+
+namespace porpoise {
+
+namespace ast {
+
+enum class NodeKind : u8 {
+    ARRAY_EXPRESSION,
+    CALL_EXPRESSION,
+    DO_WHILE_LOOP_EXPRESSION,
+    ENUM_EXPRESSION,
+    FOR_LOOP_EXPRESSION,
+    FUNCTION_EXPRESSION,
+    IDENTIFIER_EXPRESSION,
+    IF_EXPRESSION,
+    INDEX_EXPRESSION,
+    INFINITE_LOOP_EXPRESSION,
+    ASSIGNMENT_EXPRESSION,
+    BINARY_EXPRESSION,
+    DOT_EXPRESSION,
+    RANGE_EXPRESSION,
+    INITIALIZER_EXPRESSION,
+    LABEL_EXPRESSION,
+    MATCH_EXPRESSION,
+    UNARY_EXPRESSION,
+    REFERENCE_EXPRESSION,
+    DEREFERENCE_EXPRESSION,
+    IMPLICIT_ACCESS_EXPRESSION,
+    STRING_EXPRESSION,
+    I32_EXPRESSION,
+    I64_EXPRESSION,
+    ISIZE_EXPRESSION,
+    U32_EXPRESSION,
+    U64_EXPRESSION,
+    USIZE_EXPRESSION,
+    U8_EXPRESSION,
+    F32_EXPRESSION,
+    F64_EXPRESSION,
+    BOOL_EXPRESSION,
+    VOID_EXPRESSION,
+    SCOPE_RESOLUTION_EXPRESSION,
+    STRUCT_EXPRESSION,
+    TYPE_EXPRESSION,
+    UNION_EXPRESSION,
+    WHILE_LOOP_EXPRESSION,
+
+    BLOCK_STATEMENT,
+    BREAK_STATEMENT,
+    CONTINUE_STATEMENT,
+    DECL_STATEMENT,
+    DEFER_STATEMENT,
+    DISCARD_STATEMENT,
+    EXPRESSION_STATEMENT,
+    IMPORT_STATEMENT,
+    RETURN_STATEMENT,
+    TEST_STATEMENT,
+    USING_STATEMENT,
+
+    DISCARDED, // Represented by Unit
+};
+
+#define FOREACH_AST_EXPR(X)      \
+    X(ArrayExpression)           \
+    X(CallExpression)            \
+    X(DoWhileLoopExpression)     \
+    X(EnumExpression)            \
+    X(ForLoopExpression)         \
+    X(FunctionExpression)        \
+    X(IdentifierExpression)      \
+    X(IfExpression)              \
+    X(IndexExpression)           \
+    X(InfiniteLoopExpression)    \
+    X(AssignmentExpression)      \
+    X(BinaryExpression)          \
+    X(DotExpression)             \
+    X(RangeExpression)           \
+    X(InitializerExpression)     \
+    X(LabelExpression)           \
+    X(MatchExpression)           \
+    X(ReferenceExpression)       \
+    X(DereferenceExpression)     \
+    X(UnaryExpression)           \
+    X(ImplicitAccessExpression)  \
+    X(StringExpression)          \
+    X(I32Expression)             \
+    X(I64Expression)             \
+    X(ISizeExpression)           \
+    X(U32Expression)             \
+    X(U64Expression)             \
+    X(USizeExpression)           \
+    X(U8Expression)              \
+    X(F32Expression)             \
+    X(F64Expression)             \
+    X(BoolExpression)            \
+    X(VoidExpression)            \
+    X(ScopeResolutionExpression) \
+    X(StructExpression)          \
+    X(TypeExpression)            \
+    X(UnionExpression)           \
+    X(WhileLoopExpression)
+
+#define FOREACH_AST_STMT(X) \
+    X(BlockStatement)       \
+    X(BreakStatement)       \
+    X(ContinueStatement)    \
+    X(DeclStatement)        \
+    X(DeferStatement)       \
+    X(DiscardStatement)     \
+    X(ExpressionStatement)  \
+    X(ImportStatement)      \
+    X(ReturnStatement)      \
+    X(TestStatement)        \
+    X(UsingStatement)
+
+// DOES NOT INCLUDE DISCARDED
+#define FOREACH_AST_NODE(X) \
+    FOREACH_AST_EXPR(X)     \
+    FOREACH_AST_STMT(X)
+
+#define FWD_DECLARE_NODE_X(NodeType) struct NodeType;
+FOREACH_AST_NODE(FWD_DECLARE_NODE_X)
+#undef FWD_DECLARE_NODE_X
+
+enum class ExplicitTypeKind : u8 {
+    IDENT,
+    SCOPE,
+    CALL,
+    FUNCTION,
+    RECURSIVE,
+    STRUCT,
+    ENUM,
+    UNION,
+    ARRAY,
+};
+
+#define FOREACH_AST_TYPE(X)      \
+    X(IdentifierExpression)      \
+    X(ScopeResolutionExpression) \
+    X(CallExpression)            \
+    X(FunctionExpression)        \
+    X(ExplicitTypeID)            \
+    X(StructExpression)          \
+    X(EnumExpression)            \
+    X(UnionExpression)           \
+    X(ExplicitArrayType)
+
+class ExplicitTypeID;
+struct ExplicitArrayType;
+
+enum class DeclModifiers : u8 {
+    VARIABLE  = 1 << 0,
+    CONSTANT  = 1 << 1,
+    CONSTEXPR = 1 << 2,
+    PUBLIC    = 1 << 3,
+    EXTERN    = 1 << 4,
+    EXPORT    = 1 << 5,
+    STATIC    = 1 << 6,
+};
+
+constexpr auto operator|(DeclModifiers lhs, DeclModifiers rhs) -> DeclModifiers {
+    return static_cast<DeclModifiers>(std::to_underlying(lhs) | std::to_underlying(rhs));
+}
+
+constexpr auto operator&(DeclModifiers lhs, DeclModifiers rhs) -> DeclModifiers {
+    return static_cast<DeclModifiers>(std::to_underlying(lhs) & std::to_underlying(rhs));
+}
+
+constexpr auto operator^(DeclModifiers lhs, DeclModifiers rhs) -> DeclModifiers {
+    return static_cast<DeclModifiers>(std::to_underlying(lhs) ^ std::to_underlying(rhs));
+}
+
+constexpr auto operator|=(DeclModifiers& lhs, DeclModifiers rhs) -> DeclModifiers& {
+    lhs = lhs | rhs;
+    return lhs;
+}
+
+namespace traits {
+
+template <typename T> struct NodeKindOf;
+
+template <typename T>
+concept ASTNode = requires {
+    { NodeKindOf<T>::value() } -> std::same_as<NodeKind>;
+};
+
+#define NODE_KIND_OF_TRAIT(Type, Kind)                                     \
+    template <> struct NodeKindOf<Type> {                                  \
+        [[nodiscard]] static constexpr auto value() noexcept -> NodeKind { \
+            return NodeKind::Kind;                                         \
+        }                                                                  \
+    };
+
+NODE_KIND_OF_TRAIT(ArrayExpression, ARRAY_EXPRESSION)
+NODE_KIND_OF_TRAIT(CallExpression, CALL_EXPRESSION)
+NODE_KIND_OF_TRAIT(DoWhileLoopExpression, DO_WHILE_LOOP_EXPRESSION)
+NODE_KIND_OF_TRAIT(EnumExpression, ENUM_EXPRESSION)
+NODE_KIND_OF_TRAIT(ForLoopExpression, FOR_LOOP_EXPRESSION)
+NODE_KIND_OF_TRAIT(FunctionExpression, FUNCTION_EXPRESSION)
+NODE_KIND_OF_TRAIT(IdentifierExpression, IDENTIFIER_EXPRESSION)
+NODE_KIND_OF_TRAIT(IfExpression, IF_EXPRESSION)
+NODE_KIND_OF_TRAIT(IndexExpression, INDEX_EXPRESSION)
+NODE_KIND_OF_TRAIT(InfiniteLoopExpression, INFINITE_LOOP_EXPRESSION)
+NODE_KIND_OF_TRAIT(AssignmentExpression, ASSIGNMENT_EXPRESSION)
+NODE_KIND_OF_TRAIT(BinaryExpression, BINARY_EXPRESSION)
+NODE_KIND_OF_TRAIT(DotExpression, DOT_EXPRESSION)
+NODE_KIND_OF_TRAIT(RangeExpression, RANGE_EXPRESSION)
+NODE_KIND_OF_TRAIT(InitializerExpression, INITIALIZER_EXPRESSION)
+NODE_KIND_OF_TRAIT(LabelExpression, LABEL_EXPRESSION)
+NODE_KIND_OF_TRAIT(MatchExpression, MATCH_EXPRESSION)
+NODE_KIND_OF_TRAIT(UnaryExpression, UNARY_EXPRESSION)
+NODE_KIND_OF_TRAIT(ReferenceExpression, REFERENCE_EXPRESSION)
+NODE_KIND_OF_TRAIT(DereferenceExpression, DEREFERENCE_EXPRESSION)
+NODE_KIND_OF_TRAIT(ImplicitAccessExpression, IMPLICIT_ACCESS_EXPRESSION)
+NODE_KIND_OF_TRAIT(StringExpression, STRING_EXPRESSION)
+NODE_KIND_OF_TRAIT(I32Expression, I32_EXPRESSION)
+NODE_KIND_OF_TRAIT(I64Expression, I64_EXPRESSION)
+NODE_KIND_OF_TRAIT(ISizeExpression, ISIZE_EXPRESSION)
+NODE_KIND_OF_TRAIT(U32Expression, U32_EXPRESSION)
+NODE_KIND_OF_TRAIT(U64Expression, U64_EXPRESSION)
+NODE_KIND_OF_TRAIT(USizeExpression, USIZE_EXPRESSION)
+NODE_KIND_OF_TRAIT(U8Expression, U8_EXPRESSION)
+NODE_KIND_OF_TRAIT(F32Expression, F32_EXPRESSION)
+NODE_KIND_OF_TRAIT(F64Expression, F64_EXPRESSION)
+NODE_KIND_OF_TRAIT(BoolExpression, BOOL_EXPRESSION)
+NODE_KIND_OF_TRAIT(VoidExpression, VOID_EXPRESSION)
+NODE_KIND_OF_TRAIT(ScopeResolutionExpression, SCOPE_RESOLUTION_EXPRESSION)
+NODE_KIND_OF_TRAIT(StructExpression, STRUCT_EXPRESSION)
+NODE_KIND_OF_TRAIT(TypeExpression, TYPE_EXPRESSION)
+NODE_KIND_OF_TRAIT(UnionExpression, UNION_EXPRESSION)
+NODE_KIND_OF_TRAIT(WhileLoopExpression, WHILE_LOOP_EXPRESSION)
+
+NODE_KIND_OF_TRAIT(BlockStatement, BLOCK_STATEMENT)
+NODE_KIND_OF_TRAIT(BreakStatement, BREAK_STATEMENT)
+NODE_KIND_OF_TRAIT(ContinueStatement, CONTINUE_STATEMENT)
+NODE_KIND_OF_TRAIT(DeclStatement, DECL_STATEMENT)
+NODE_KIND_OF_TRAIT(DeferStatement, DEFER_STATEMENT)
+NODE_KIND_OF_TRAIT(DiscardStatement, DISCARD_STATEMENT)
+NODE_KIND_OF_TRAIT(ExpressionStatement, EXPRESSION_STATEMENT)
+NODE_KIND_OF_TRAIT(ImportStatement, IMPORT_STATEMENT)
+NODE_KIND_OF_TRAIT(ReturnStatement, RETURN_STATEMENT)
+NODE_KIND_OF_TRAIT(TestStatement, TEST_STATEMENT)
+NODE_KIND_OF_TRAIT(UsingStatement, USING_STATEMENT)
+
+NODE_KIND_OF_TRAIT(Unit, DISCARDED)
+
+#undef KIND_OF_TRAIT
+
+template <typename T> struct ExplicitTypeKindOf;
+
+template <typename T>
+concept ASTExplicitType = requires {
+    { ExplicitTypeKindOf<T>::value() } -> std::same_as<ExplicitTypeKind>;
+};
+
+#define KIND_OF_TRAIT(Type, Kind)                                                  \
+    template <> struct ExplicitTypeKindOf<Type> {                                  \
+        [[nodiscard]] static constexpr auto value() noexcept -> ExplicitTypeKind { \
+            return ExplicitTypeKind::Kind;                                         \
+        }                                                                          \
+    };
+
+KIND_OF_TRAIT(IdentifierExpression, IDENT)
+KIND_OF_TRAIT(ScopeResolutionExpression, SCOPE)
+KIND_OF_TRAIT(CallExpression, CALL)
+KIND_OF_TRAIT(FunctionExpression, FUNCTION)
+KIND_OF_TRAIT(ExplicitTypeID, RECURSIVE)
+KIND_OF_TRAIT(StructExpression, STRUCT)
+KIND_OF_TRAIT(EnumExpression, ENUM)
+KIND_OF_TRAIT(UnionExpression, UNION)
+KIND_OF_TRAIT(ExplicitArrayType, ARRAY)
+
+#undef KIND_OF_TRAIT
+
+} // namespace traits
+
+} // namespace ast
+
+} // namespace porpoise
+
+template <> struct magic_enum::customize::enum_range<porpoise::ast::DeclModifiers> {
+    static constexpr bool is_flags = true;
+};

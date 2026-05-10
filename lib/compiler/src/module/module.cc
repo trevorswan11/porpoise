@@ -90,10 +90,10 @@ auto ModuleManager::try_get(const std::filesystem::path& path)
     auto       source       = TRY(loader_.load(path));
     const auto abs_path_str = path.string();
 
-    auto mod =
-        mem::make_box<Module>(path, path.parent_path(), SourceFile{std::move(source)}, ast::AST{});
+    auto mod = mem::make_box<Module>(
+        path, path.parent_path(), SourceFile{std::move(source)}, ast::Forest{});
     syntax::Parser p{mod->source};
-    auto           diagnostics = p.consume(mod->tree);
+    auto           diagnostics = p.consume(mod->forest);
 
     mod->state       = diagnostics.empty() ? ModuleState::PARSED : ModuleState::ERRORED;
     mod->diagnostics = std::move(diagnostics);

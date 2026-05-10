@@ -5,21 +5,19 @@
 #include <fmt/ostream.h>
 
 #include "ast/ast.hh"
-#include "ast/id.hh"
-#include "ast/nodes.hh"
 
 #include "assert.hh"
 #include "indent.hh"
 
 namespace porpoise::ast {
 
-class ASTDumper {
+class ForestDumper {
   public:
-    explicit ASTDumper(const AST& tree, std::ostream& out) : out_{out}, tree_{tree} {}
+    explicit ForestDumper(const Forest& forest, std::ostream& out) : out_{out}, forest{forest} {}
 
     auto dump(const NodeID& id) -> void {
         ASSERT(id.is_valid(), "Attempt to dump invalid handle");
-        std::visit([&](const auto& data) { visit(id, data); }, tree_[id]);
+        std::visit([&](const auto& data) { visit(id, data); }, forest[id]);
     }
 
     template <NodeKind... Kinds> auto dump(const Handle<Kinds...>& id) -> void {
@@ -31,7 +29,7 @@ class ASTDumper {
         ASSERT(id.is_valid(), "Attempt to dump invalid handle");
         fmt::println(out_, "ExplicitType (modifier: {})", id.get_modifier());
         const Indent::Guard g{indent_, true};
-        std::visit([&](const auto& data) { visit(id, data); }, tree_[id]);
+        std::visit([&](const auto& data) { visit(id, data); }, forest[id]);
     }
 
   private:
@@ -52,7 +50,7 @@ class ASTDumper {
     }
 
     template <> void dump_node_list<Members>(const Members& list) {
-        dump_container(list, [this](const Members::Member& member_handle) {
+        dump_container(list, [this](const MemberHandle& member_handle) {
             fmt::print(out_, "{}", indent_.current_branch());
             dump(*member_handle);
         });
@@ -60,7 +58,7 @@ class ASTDumper {
 
   private:
     std::ostream& out_;
-    const AST&    tree_;
+    const Forest& forest;
     Indent        indent_;
 };
 

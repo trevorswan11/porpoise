@@ -8,14 +8,13 @@
 #include "syntax/token.hh"
 
 #include "ast/ast.hh"
-#include "ast/nodes.hh"
 
 #include "enum.hh"
 
 namespace porpoise::syntax {
 
 auto Parser::reset(std::string_view input) noexcept -> void {
-    ctx_.reset();
+    forest_.reset();
     input_ = input;
     lexer_.reset(input);
     advance(2);
@@ -29,10 +28,10 @@ auto Parser::advance(u8 times) noexcept -> const Token& {
     return current_token_;
 }
 
-auto Parser::consume(ast::AST& ast) -> Diagnostics {
+auto Parser::consume(ast::Forest& forest) -> Diagnostics {
     reset(input_);
-    ast.clear();
-    ctx_.emplace(ast);
+    forest.clear();
+    forest_.emplace(forest);
 
     Diagnostics diagnostics;
 
@@ -46,7 +45,7 @@ auto Parser::consume(ast::AST& ast) -> Diagnostics {
         if (!current_token_is(TokenType::COMMENT)) {
             auto stmt = parse_statement(true);
             if (stmt) {
-                ast.add_root(**stmt);
+                forest.add_root(**stmt);
             } else {
                 diagnostics.emplace_back(std::move(stmt.error()));
 
@@ -65,6 +64,8 @@ auto Parser::consume(ast::AST& ast) -> Diagnostics {
         advance();
     }
 
+    // This is called here to reduce allocation count and eliminate chance of forgetting to do so
+    forest_->prepare_sema_types();
     return diagnostics;
 }
 
@@ -162,7 +163,7 @@ auto Parser::parse_expression(Precedence precedence) -> Result<ast::ExpressionHa
                      ast::ContinueStatement,
                      ast::ReturnStatement,
                      ast::BlockStatement>()) {
-        return make_syntax_err(error, ctx_->tree.location_of(*clause));
+        return make_syntax_err(error, forest_->location_of(*clause));
     }
     return clause;
 }
@@ -285,12 +286,10 @@ auto Parser::try_get_poll_infix_fn(TokenType tt) noexcept -> opt::Option<InfixFn
     return INFIX_FNS.get_opt(tt);
 }
 
-auto Parser::get_location_of(ast::NodeID id) -> SourceLocation {
-    return ctx_->tree.location_of(id);
-}
+auto Parser::get_location_of(ast::NodeID id) -> SourceLocation { return forest_->location_of(id); }
 
 auto Parser::get_location_of(ast::ExplicitTypeID id) -> SourceLocation {
-    return ctx_->tree.location_of(id);
+    return forest_->location_of(id);
 }
 
 } // namespace porpoise::syntax

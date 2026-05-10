@@ -4,9 +4,6 @@
 #include <string_view>
 #include <utility>
 
-#include <fmt/format.h>
-#include <magic_enum/magic_enum.hpp>
-
 #include "diagnostic.hh"
 #include "option.hh"
 #include "types.hh"
@@ -349,16 +346,3 @@ template <> struct SourceInfo<syntax::Token> {
 } // namespace traits
 
 } // namespace porpoise
-
-template <> struct fmt::formatter<porpoise::syntax::Token> {
-    static constexpr auto parse(format_parse_context& ctx) noexcept { return ctx.begin(); }
-
-    template <typename F> static auto format(const porpoise::syntax::Token& t, F& ctx) {
-        return fmt::format_to(ctx.out(),
-                              "{}({}) [{}, {}]",
-                              magic_enum::enum_name(t.type),
-                              t.slice,
-                              t.line + 1,
-                              t.column + 1);
-    }
-};

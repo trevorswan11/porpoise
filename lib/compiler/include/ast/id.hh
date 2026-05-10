@@ -1,10 +1,11 @@
 #pragma once
 
 #include <bit>
-#include <concepts>
 #include <limits>
 
 #include <fmt/format.h>
+
+#include "ast/meta.hh"
 
 #include "syntax/token.hh"
 
@@ -17,72 +18,6 @@ namespace porpoise {
 namespace ast {
 
 namespace detail { constexpr u64 INVALID_ID = std::numeric_limits<u64>::max(); } // namespace detail
-
-enum class NodeKind : u8 {
-    ARRAY_EXPRESSION,
-    CALL_EXPRESSION,
-    DO_WHILE_LOOP_EXPRESSION,
-    ENUM_EXPRESSION,
-    FOR_LOOP_EXPRESSION,
-    FUNCTION_EXPRESSION,
-    IDENTIFIER_EXPRESSION,
-    IF_EXPRESSION,
-    INDEX_EXPRESSION,
-    INFINITE_LOOP_EXPRESSION,
-    ASSIGNMENT_EXPRESSION,
-    BINARY_EXPRESSION,
-    DOT_EXPRESSION,
-    RANGE_EXPRESSION,
-    INITIALIZER_EXPRESSION,
-    LABEL_EXPRESSION,
-    MATCH_EXPRESSION,
-    UNARY_EXPRESSION,
-    REFERENCE_EXPRESSION,
-    DEREFERENCE_EXPRESSION,
-    IMPLICIT_ACCESS_EXPRESSION,
-    STRING_EXPRESSION,
-    I32_EXPRESSION,
-    I64_EXPRESSION,
-    ISIZE_EXPRESSION,
-    U32_EXPRESSION,
-    U64_EXPRESSION,
-    USIZE_EXPRESSION,
-    U8_EXPRESSION,
-    F32_EXPRESSION,
-    F64_EXPRESSION,
-    BOOL_EXPRESSION,
-    VOID_EXPRESSION,
-    SCOPE_RESOLUTION_EXPRESSION,
-    STRUCT_EXPRESSION,
-    TYPE_EXPRESSION,
-    UNION_EXPRESSION,
-    WHILE_LOOP_EXPRESSION,
-
-    BLOCK_STATEMENT,
-    BREAK_STATEMENT,
-    CONTINUE_STATEMENT,
-    DECL_STATEMENT,
-    DEFER_STATEMENT,
-    DISCARD_STATEMENT,
-    EXPRESSION_STATEMENT,
-    IMPORT_STATEMENT,
-    RETURN_STATEMENT,
-    TEST_STATEMENT,
-    USING_STATEMENT,
-
-    DISCARDED, // Represented by Unit
-};
-
-namespace traits {
-
-template <typename T> struct NodeKindOf;
-
-template <typename T>
-concept ASTNode = requires {
-    { NodeKindOf<T>::value() } -> std::same_as<NodeKind>;
-};
-
-} // namespace traits
 
 // A compact id for all AST nodes
 class NodeID {
@@ -139,96 +74,23 @@ class NodeID {
     template <NodeKind... AllowedKinds> friend class Handle;
 };
 
-// A pseudo-type-safe wrapper around nodes, defaulting to an invalid state
-template <NodeKind... AllowedKinds> class Handle {
-  public:
-    constexpr explicit Handle(NodeID id) noexcept : id_{id} {
-        ASSERT(id.is_valid(), "Attempt to create Handle from invalid NodeID");
-#ifndef NDEBUG
-        const auto actual_kind = id.get_kind();
-        const auto is_allowed  = ((actual_kind == AllowedKinds) || ...);
-        ASSERT(is_allowed, "Assigned invalid NodeKind to Handle");
-#endif
+} // namespace ast
+
+namespace traits {
+
+template <> struct Nullable<ast::NodeID> {
+    [[nodiscard]] static constexpr auto invalid() noexcept -> ast::NodeID {
+        return ast::NodeID::make_invalid();
     }
 
-    template <NodeKind... OtherKinds>
-    constexpr Handle(const Handle<OtherKinds...>& other) noexcept : id_{*other} {
-        // Shallow verify at compile time to enforce possible construction
-        constexpr auto check_compat   = []<NodeKind K> { return ((K == AllowedKinds) || ...); };
-        constexpr auto any_compatible = (check_compat.template operator()<OtherKinds>() || ...);
-        static_assert(any_compatible, "No requested kinds are compatible with provided ones");
-
-        // Runtime checks can be more specific to the actual state
-        ASSERT(other.is_valid(), "Attempt to create Handle from invalid Handle");
-        ASSERT(((other.operator->()->get_kind() == AllowedKinds) || ...),
-               "Provided kind does not match");
+    [[nodiscard]] static constexpr auto is_valid(const ast::NodeID& id) noexcept -> bool {
+        return id.is_valid();
     }
-
-    [[nodiscard]] constexpr auto operator*() const noexcept -> NodeID { return id_; }
-    [[nodiscard]] constexpr auto operator->() const noexcept -> const NodeID* { return &id_; }
-
-    [[nodiscard]] constexpr auto        is_valid() const noexcept -> bool { return id_.is_valid(); }
-    [[nodiscard]] static constexpr auto make_invalid() noexcept -> Handle {
-        return Handle{detail::INVALID_ID};
-    }
-
-  private:
-    constexpr explicit Handle(u64 raw) noexcept : id_{raw} {}
-
-  private:
-    NodeID id_{NodeID::make_invalid()};
 };
 
-using ExpressionHandle = Handle<NodeKind::ARRAY_EXPRESSION,
-                                NodeKind::ASSIGNMENT_EXPRESSION,
-                                NodeKind::BINARY_EXPRESSION,
-                                NodeKind::CALL_EXPRESSION,
-                                NodeKind::DO_WHILE_LOOP_EXPRESSION,
-                                NodeKind::DOT_EXPRESSION,
-                                NodeKind::ENUM_EXPRESSION,
-                                NodeKind::FOR_LOOP_EXPRESSION,
-                                NodeKind::FUNCTION_EXPRESSION,
-                                NodeKind::IDENTIFIER_EXPRESSION,
-                                NodeKind::IF_EXPRESSION,
-                                NodeKind::INDEX_EXPRESSION,
-                                NodeKind::INFINITE_LOOP_EXPRESSION,
-                                NodeKind::INITIALIZER_EXPRESSION,
-                                NodeKind::LABEL_EXPRESSION,
-                                NodeKind::MATCH_EXPRESSION,
-                                NodeKind::UNARY_EXPRESSION,
-                                NodeKind::REFERENCE_EXPRESSION,
-                                NodeKind::DEREFERENCE_EXPRESSION,
-                                NodeKind::IMPLICIT_ACCESS_EXPRESSION,
-                                NodeKind::STRING_EXPRESSION,
-                                NodeKind::I32_EXPRESSION,
-                                NodeKind::I64_EXPRESSION,
-                                NodeKind::ISIZE_EXPRESSION,
-                                NodeKind::U32_EXPRESSION,
-                                NodeKind::U64_EXPRESSION,
-                                NodeKind::USIZE_EXPRESSION,
-                                NodeKind::U8_EXPRESSION,
-                                NodeKind::F32_EXPRESSION,
-                                NodeKind::F64_EXPRESSION,
-                                NodeKind::BOOL_EXPRESSION,
-                                NodeKind::VOID_EXPRESSION,
-                                NodeKind::RANGE_EXPRESSION,
-                                NodeKind::SCOPE_RESOLUTION_EXPRESSION,
-                                NodeKind::STRUCT_EXPRESSION,
-                                NodeKind::TYPE_EXPRESSION,
-                                NodeKind::UNION_EXPRESSION,
-                                NodeKind::WHILE_LOOP_EXPRESSION>;
+} // namespace traits
 
-using StatementHandle = Handle<NodeKind::BLOCK_STATEMENT,
-                               NodeKind::DECL_STATEMENT,
-                               NodeKind::DEFER_STATEMENT,
-                               NodeKind::DISCARD_STATEMENT,
-                               NodeKind::EXPRESSION_STATEMENT,
-                               NodeKind::IMPORT_STATEMENT,
-                               NodeKind::RETURN_STATEMENT,
-                               NodeKind::BREAK_STATEMENT,
-                               NodeKind::CONTINUE_STATEMENT,
-                               NodeKind::TEST_STATEMENT,
-                               NodeKind::USING_STATEMENT>;
+namespace ast {
 
 #define MAKE_MUTUALLY_EXCLUSIVE_TYPE_QUERY(name, modifier)            \
     [[nodiscard]] constexpr auto is_##name() const noexcept -> bool { \
@@ -286,40 +148,6 @@ class TypeModifier {
 
     friend struct fmt::formatter<porpoise::ast::TypeModifier>;
 };
-
-namespace type_modifiers {
-
-constexpr ast::TypeModifier VALUE{};
-constexpr ast::TypeModifier REF{ast::TypeModifier::Modifier::REF};
-constexpr ast::TypeModifier MUT_REF{ast::TypeModifier::Modifier::MUT_REF};
-constexpr ast::TypeModifier PTR{ast::TypeModifier::Modifier::PTR};
-constexpr ast::TypeModifier MUT_PTR{ast::TypeModifier::Modifier::MUT_PTR};
-constexpr ast::TypeModifier VOLATILE{ast::TypeModifier::Modifier::VOLATILE};
-
-} // namespace type_modifiers
-
-enum class ExplicitTypeKind : u8 {
-    IDENT,
-    SCOPE,
-    CALL,
-    FUNCTION,
-    RECURSIVE,
-    STRUCT,
-    ENUM,
-    UNION,
-    ARRAY,
-};
-
-namespace traits {
-
-template <typename T> struct ExplicitTypeKindOf;
-
-template <typename T>
-concept ASTExplicitType = requires {
-    { ExplicitTypeKindOf<T>::value() } -> std::same_as<ExplicitTypeKind>;
-};
-
-} // namespace traits
 
 // A compact id for all AST explicit types
 class ExplicitTypeID {
@@ -395,27 +223,6 @@ class ExplicitTypeID {
 
 namespace traits {
 
-template <> struct Nullable<ast::NodeID> {
-    [[nodiscard]] static constexpr auto invalid() noexcept -> ast::NodeID {
-        return ast::NodeID::make_invalid();
-    }
-
-    [[nodiscard]] static constexpr auto is_valid(const ast::NodeID& id) noexcept -> bool {
-        return id.is_valid();
-    }
-};
-
-template <ast::NodeKind... Kinds> struct Nullable<ast::Handle<Kinds...>> {
-    [[nodiscard]] static constexpr auto invalid() noexcept -> ast::Handle<Kinds...> {
-        return ast::Handle<Kinds...>::make_invalid();
-    }
-
-    [[nodiscard]] static constexpr auto is_valid(const ast::Handle<Kinds...>& handle) noexcept
-        -> bool {
-        return handle.is_valid();
-    }
-};
-
 template <> struct Nullable<ast::ExplicitTypeID> {
     [[nodiscard]] static constexpr auto invalid() noexcept -> ast::ExplicitTypeID {
         return ast::ExplicitTypeID::make_invalid();
@@ -429,11 +236,3 @@ template <> struct Nullable<ast::ExplicitTypeID> {
 } // namespace traits
 
 } // namespace porpoise
-
-template <> struct fmt::formatter<porpoise::ast::TypeModifier> {
-    static constexpr auto parse(format_parse_context& ctx) noexcept { return ctx.begin(); }
-
-    template <typename F> static auto format(const porpoise::ast::TypeModifier& t, F& ctx) {
-        return fmt::format_to(ctx.out(), "{}", magic_enum::enum_name(t.underlying_));
-    }
-};

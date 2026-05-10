@@ -439,4 +439,10 @@ ExpressionStatement
     └─ Body: BlockStatement
         └─ ContinueStatement
             └─ Label: IdentifierExpression: a
+UsingStatement
+├─ Public: true
+├─ Alias: IdentifierExpression: a
+└─ Type: ExplicitType (modifier: PTR)
+    └─ ExplicitType (modifier: PTR)
+        └─ IdentifierExpression: i32
 )"

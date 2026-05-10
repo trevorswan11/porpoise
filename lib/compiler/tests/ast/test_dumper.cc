@@ -7,6 +7,8 @@
 
 #include "ast/dumper.hh"
 
+#include "syntax/parser.hh"
+
 namespace porpoise::tests {
 
 constexpr std::string_view input{R"(
@@ -58,6 +60,7 @@ constexpr std::string_view input{R"(
     var a: List(i32);
     break :blk a;
     a: { continue :a; };
+    pub using a = **i32;
 )"};
 
 constexpr std::string_view expected{
@@ -66,13 +69,13 @@ constexpr std::string_view expected{
 
 TEST_CASE("Comprehensive dump") {
     syntax::Parser p{input};
-    ast::AST       ast;
-    auto           errors = p.consume(ast);
+    ast::Forest    forest;
+    auto           errors = p.consume(forest);
     helpers::check_errors<syntax::Diagnostic>(errors);
 
     std::ostringstream oss;
-    ast::ASTDumper     dumper{ast, oss};
-    for (const auto& node : ast) { dumper.dump(node); }
+    ast::ForestDumper  dumper{forest, oss};
+    for (const auto& node : forest) { dumper.dump(node); }
     CHECK(expected == oss.view());
 }
 
