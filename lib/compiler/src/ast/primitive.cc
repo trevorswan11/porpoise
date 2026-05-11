@@ -81,7 +81,6 @@ auto U8Expression::parse(syntax::Parser& parser) -> Result<ExpressionHandle, syn
     case 't':  value = '\t'; break;
     case '\\': value = '\\'; break;
     case '\'': value = '\''; break;
-    case '"':  value = '"'; break;
     case '0':  value = '\0'; break;
     default:   return make_syntax_err(syntax::Error::UNKNOWN_CHARACTER_ESCAPE, start_token);
     }

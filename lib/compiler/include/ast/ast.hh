@@ -57,7 +57,12 @@ class AST {
     MAKE_UNALIASED_ITERATOR(std::vector<NodeID>, nodes_.roots)
 
   public:
-    constexpr auto               add_root(NodeID id) -> void { nodes_.roots.push_back(id); }
+    constexpr auto add_root(NodeID id) -> void { nodes_.roots.push_back(id); }
+    // Returns the node root ID at the requested index
+    [[nodiscard]] constexpr auto operator[](u64 idx) const noexcept -> NodeID {
+        return nodes_.roots[idx];
+    }
+
     [[nodiscard]] constexpr auto total_nodes() const noexcept -> usize {
         return nodes_.pool.size();
     }
@@ -73,6 +78,7 @@ class AST {
         return nodes_.location_of(id);
     }
 
+    // Returns the node data at the provided node id
     [[nodiscard]] constexpr auto operator[](NodeID id) const noexcept -> auto& {
         return nodes_[id];
     }
@@ -90,6 +96,7 @@ class AST {
         return explicit_types_.location_of(id);
     }
 
+    // Returns the type data at the provided type id
     [[nodiscard]] constexpr auto operator[](ExplicitTypeID id) const noexcept -> auto& {
         return explicit_types_[id];
     }

@@ -1,10 +1,6 @@
-#if 0
-#    include "helpers/sema.hh"
+#include "helpers/sema.hh"
 
 namespace porpoise::tests::helpers {
-
-namespace keywords  = syntax::keywords;
-namespace operators = syntax::operators;
 
 SemaTestContext::SemaTestContext(const std::vector<MockFile>& imports,
                                  const std::filesystem::path& root_path,
@@ -44,16 +40,4 @@ auto collect_and_check(std::string_view input, const std::vector<MockFile>& impo
     return {std::move(ctx), idx};
 }
 
-auto common_decl(std::string_view name, std::string_view assign, bool constant)
-    -> ast::DeclStatement {
-    return ast::DeclStatement{
-        syntax::Token{constant ? keywords::CONSTANT : keywords::VAR},
-        make_ident(name),
-        mem::make_box<ast::TypeExpression>(syntax::Token{operators::WALRUS}, opt::none),
-        make_ident<true>(assign),
-        constant ? ast::DeclModifiers::CONSTANT : ast::DeclModifiers::VARIABLE,
-    };
-}
-
 } // namespace porpoise::tests::helpers
-#endif

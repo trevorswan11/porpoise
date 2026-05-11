@@ -2,6 +2,8 @@
 
 #include "helpers/sema.hh"
 
+#include "syntax/builtins.hh"
+
 namespace porpoise::tests {
 
 TEST_CASE("Array/Index collection") {

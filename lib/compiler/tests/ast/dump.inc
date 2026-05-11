@@ -453,4 +453,16 @@ ExpressionStatement
     │   └─ IdentifierExpression: i32 (primitive)
     └─ Body: BlockStatement
         └─ <empty>
+ExpressionStatement
+└─ Expr: U8Expression: 10
+ExpressionStatement
+└─ Expr: U8Expression: 13
+ExpressionStatement
+└─ Expr: U8Expression: 9
+ExpressionStatement
+└─ Expr: U8Expression: 92
+ExpressionStatement
+└─ Expr: U8Expression: 39
+ExpressionStatement
+└─ Expr: U8Expression: 0
 )"
