@@ -35,21 +35,21 @@ auto Symbol::get_symbol_location(mod::Module& module) const noexcept -> SourceLo
 }
 
 auto Symbol::is_public(mod::Module& module) const noexcept -> bool {
-    return match(Overloaded{[&](const SymbolicNode& node) {
-                                switch (node->get_kind()) {
-                                case ast::NodeKind::DECL_STATEMENT:
-                                    return std::get<ast::DeclStatement>(module.ast[*node])
-                                        .has_modifier(ast::DeclModifiers::PUBLIC);
-                                case ast::NodeKind::USING_STATEMENT:
-                                    return node->get_token_type() == syntax::TokenType::PUBLIC;
-                                default: return false;
-                                }
-                            },
-                            [](const SymbolicImport& import_stmt) {
-                                return import_stmt.node->get_token_type() ==
-                                       syntax::TokenType::PUBLIC;
-                            },
-                            [](const auto&) { return false; }});
+    return match(
+        Overloaded{[&](const SymbolicNode& node) {
+                       switch (node->get_kind()) {
+                       case ast::NodeKind::DECL_STATEMENT:
+                           return module.ast.get_as<ast::DeclStatement>(*node).has_modifier(
+                               ast::DeclModifiers::PUBLIC);
+                       case ast::NodeKind::USING_STATEMENT:
+                           return node->get_token_type() == syntax::TokenType::PUBLIC;
+                       default: return false;
+                       }
+                   },
+                   [](const SymbolicImport& import_stmt) {
+                       return import_stmt.node->get_token_type() == syntax::TokenType::PUBLIC;
+                   },
+                   [](const auto&) { return false; }});
 }
 
 auto SymbolTable::insert(std::string_view name, mod::Module& module, SymbolicNodeVariant node)

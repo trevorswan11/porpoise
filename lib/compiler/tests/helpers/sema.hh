@@ -94,6 +94,9 @@ auto test_collector_fail(std::string_view failing, Ds&&... expected_diagnostics)
     test_collector_fail(failing, {}, std::forward<Ds>(expected_diagnostics)...);
 }
 
+auto test_common_decl_collection(SemaTestContext& ctx, usize idx, std::string_view name = "foo")
+    -> void;
+
 namespace mut {
 
 constexpr auto MUTABLE   = sema::types::Key::Mutability::MUTABLE;

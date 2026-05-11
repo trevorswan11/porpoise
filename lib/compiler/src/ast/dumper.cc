@@ -126,7 +126,7 @@ auto ASTDumper::visit(const NodeID&, const ForLoopExpression& for_loop) -> void 
             if (capture.payload->is<Unit>()) {
                 fmt::println(out_, "<discarded>");
             } else {
-                const auto& ident = std::get<IdentifierExpression>(ast_[*capture.payload]);
+                const auto& ident = ast_.get_as<IdentifierExpression>(*capture.payload);
                 fmt::println(out_, "{} (modifier: {})", ident, capture.modifier);
             }
         });
@@ -152,7 +152,7 @@ auto ASTDumper::visit(const NodeID&, const FunctionExpression& function) -> void
     if (function.self) {
         const Indent::Guard g{indent_, false};
         fmt::print(out_, "{}", indent_.current_branch());
-        const auto& ident = std::get<IdentifierExpression>(ast_[*function.self->ident]);
+        const auto& ident = ast_.get_as<IdentifierExpression>(*function.self->ident);
         fmt::println(out_, "Self: {} (modifier: {})", ident, function.self->modifier);
     }
 
@@ -248,7 +248,7 @@ auto ASTDumper::visit(const NodeID&, const IndexExpression& index) -> void {
 
 auto ASTDumper::visit(const NodeID&, const InfiniteLoopExpression& loop) -> void {
     fmt::println(out_, "InfiniteLoopExpression");
-    const auto& block = std::get<BlockStatement>(ast_[*loop.block]);
+    const auto& block = ast_.get_as<BlockStatement>(*loop.block);
     dump_node_list(block);
 }
 
@@ -579,7 +579,7 @@ auto ASTDumper::visit(const NodeID&, const ContinueStatement& continue_stmt) -> 
 }
 
 auto ASTDumper::visit(const NodeID&, const DeclStatement& decl) -> void {
-    const auto& ident = std::get<IdentifierExpression>(ast_[*decl.ident]);
+    const auto& ident = ast_.get_as<IdentifierExpression>(*decl.ident);
     fmt::println(out_, "DeclStatement ({})", ident);
     {
         const Indent::Guard g{indent_, false};
@@ -654,7 +654,7 @@ auto ASTDumper::visit(const NodeID&, const TestStatement& test) -> void {
     fmt::println(out_, "TestStatement");
     if (test.description) {
         const Indent::Guard g{indent_, false};
-        const auto&         string = std::get<StringExpression>(ast_[**test.description]);
+        const auto&         string = ast_.get_as<StringExpression>(**test.description);
         fmt::println(out_, "{}Description: {}", indent_.current_branch(), string);
     }
 

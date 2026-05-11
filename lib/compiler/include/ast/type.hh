@@ -10,17 +10,6 @@ namespace syntax { class Parser; } // namespace syntax
 
 namespace ast {
 
-namespace type_modifiers {
-
-constexpr ast::TypeModifier VALUE{};
-constexpr ast::TypeModifier REF{ast::TypeModifier::Modifier::REF};
-constexpr ast::TypeModifier MUT_REF{ast::TypeModifier::Modifier::MUT_REF};
-constexpr ast::TypeModifier PTR{ast::TypeModifier::Modifier::PTR};
-constexpr ast::TypeModifier MUT_PTR{ast::TypeModifier::Modifier::MUT_PTR};
-constexpr ast::TypeModifier VOLATILE{ast::TypeModifier::Modifier::VOLATILE};
-
-} // namespace type_modifiers
-
 struct ExplicitArrayType {
     opt::Option<ExpressionHandle> dimension;
     bool                          null_terminated;

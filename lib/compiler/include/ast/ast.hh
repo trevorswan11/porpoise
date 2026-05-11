@@ -2,6 +2,7 @@
 
 #include <vector>
 
+#include "ast/meta.hh"
 #include "ast/visitor.hh"
 
 #include "assert.hh"
@@ -81,6 +82,20 @@ class AST {
     // Returns the node data at the provided node id
     [[nodiscard]] constexpr auto operator[](NodeID id) const noexcept -> auto& {
         return nodes_[id];
+    }
+
+    // Returns the casted node data at the requested index
+    template <traits::ASTNode N>
+    [[nodiscard]] constexpr auto get_as(NodeID id) const noexcept -> const N& {
+        ASSERT(id.is<N>(), "Illegal node data retrieval");
+        return std::get<N>(nodes_[id]);
+    }
+
+    // Returns the casted node data at the requested index if present
+    template <traits::ASTNode N>
+    [[nodiscard]] constexpr auto get_as_opt(NodeID id) const noexcept -> opt::Option<const N&> {
+        if (!id.is<N>()) { return opt::none; }
+        return opt::Option<const N&>{std::get<N>(nodes_[id])};
     }
 
     template <traits::ASTExplicitType Data>

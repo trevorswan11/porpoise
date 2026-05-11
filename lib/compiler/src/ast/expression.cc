@@ -243,7 +243,7 @@ auto ForLoopExpression::parse(syntax::Parser& parser)
         if (parser.current_token_is(syntax::TokenType::UNDERSCORE)) {
             const auto discarded =
                 parser.add_node<DiscardableIdentHandle>(parser.get_current_token(), Unit{});
-            captures.emplace_back(type_modifiers::VALUE, discarded);
+            captures.emplace_back(TypeModifier{}, discarded);
         } else {
             // Always check for a modifier and advance past it if present
             const TypeModifier modifier{parser.get_current_token()};
@@ -515,7 +515,7 @@ auto InitializerExpression::parse(syntax::Parser& parser, opt::Option<Expression
 
 auto LabelExpression::parse(syntax::Parser& parser, ExpressionHandle name)
     -> Result<ExpressionHandle, syntax::Diagnostic> {
-    const auto& start_token = parser.get_current_token();
+    const auto start_token = parser.get_current_token();
     if (!name->is<IdentifierExpression>()) {
         return make_syntax_err(syntax::Error::ILLEGAL_LABEL, start_token);
     }

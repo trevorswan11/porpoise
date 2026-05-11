@@ -40,4 +40,14 @@ auto collect_and_check(std::string_view input, const std::vector<MockFile>& impo
     return {std::move(ctx), idx};
 }
 
+auto test_common_decl_collection(SemaTestContext& ctx, usize idx, std::string_view name) -> void {
+    const auto& registry = ctx.analyzer.get_registry();
+    const auto& symbol   = registry.get_from(idx, name);
+    REQUIRE(symbol.is_symbolic_node());
+    CHECK_FALSE(symbol.is_public(*ctx.root_mod));
+
+    const auto& node = symbol.get_symbolic_node();
+    CHECK(node->is<ast::DeclStatement>());
+}
+
 } // namespace porpoise::tests::helpers

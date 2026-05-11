@@ -102,7 +102,7 @@ class Parser {
 
     template <ast::traits::ASTNode N>
     [[nodiscard]] constexpr auto get_node(ast::NodeID id) -> const N& {
-        return std::get<N>((*ast_)[id]);
+        return ast_->get_as<N>(id);
     }
 
     [[nodiscard]] auto get_location_of(ast::NodeID id) -> SourceLocation;
