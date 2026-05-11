@@ -14,7 +14,7 @@ namespace porpoise::tests {
 using syntax::TokenType;
 using ExpectedLexeme = std::pair<TokenType, std::string_view>;
 
-namespace helpers {
+namespace {
 
 auto test_lexer(std::string_view input, std::initializer_list<ExpectedLexeme> expecteds) -> void {
     syntax::Lexer l{input};
@@ -30,7 +30,7 @@ auto test_lexer(std::string_view input, std::initializer_list<ExpectedLexeme> ex
     CHECK(end_tok.slice == "");
 }
 
-} // namespace helpers
+} // namespace
 
 TEST_CASE("Lexing illegal characters") {
     syntax::Lexer l{"月😭🎶"};
@@ -53,220 +53,219 @@ TEST_CASE("Lexer over-consumption") {
 }
 
 TEST_CASE("Lexing symbols") {
-    helpers::test_lexer("=+(){}[],;: !-/*<>_",
-                        {
-                            {TokenType::ASSIGN, "="},
-                            {TokenType::PLUS, "+"},
-                            {TokenType::LPAREN, "("},
-                            {TokenType::RPAREN, ")"},
-                            {TokenType::LBRACE, "{"},
-                            {TokenType::RBRACE, "}"},
-                            {TokenType::LBRACKET, "["},
-                            {TokenType::RBRACKET, "]"},
-                            {TokenType::COMMA, ","},
-                            {TokenType::SEMICOLON, ";"},
-                            {TokenType::COLON, ":"},
-                            {TokenType::BANG, "!"},
-                            {TokenType::MINUS, "-"},
-                            {TokenType::SLASH, "/"},
-                            {TokenType::STAR, "*"},
-                            {TokenType::LT, "<"},
-                            {TokenType::GT, ">"},
-                            {TokenType::UNDERSCORE, "_"},
-                        });
+    test_lexer("=+(){}[],;: !-/*<>_",
+               {
+                   {TokenType::ASSIGN, "="},
+                   {TokenType::PLUS, "+"},
+                   {TokenType::LPAREN, "("},
+                   {TokenType::RPAREN, ")"},
+                   {TokenType::LBRACE, "{"},
+                   {TokenType::RBRACE, "}"},
+                   {TokenType::LBRACKET, "["},
+                   {TokenType::RBRACKET, "]"},
+                   {TokenType::COMMA, ","},
+                   {TokenType::SEMICOLON, ";"},
+                   {TokenType::COLON, ":"},
+                   {TokenType::BANG, "!"},
+                   {TokenType::MINUS, "-"},
+                   {TokenType::SLASH, "/"},
+                   {TokenType::STAR, "*"},
+                   {TokenType::LT, "<"},
+                   {TokenType::GT, ">"},
+                   {TokenType::UNDERSCORE, "_"},
+               });
 }
 
 TEST_CASE("Lexing basic language snippet") {
-    helpers::test_lexer("const five := 5;\n"
-                        "var ten := 10;\n\n"
-                        "var add := fn(x: i32, y: i32): i32 {\n"
-                        "   return x + y;\n"
-                        "};\n\n"
-                        "var result := add(five, ten);\n"
-                        "var fs: f64 = 4.2;",
-                        {
-                            {TokenType::CONSTANT, "const"}, {TokenType::IDENT, "five"},
-                            {TokenType::WALRUS, ":="},      {TokenType::INT_10, "5"},
-                            {TokenType::SEMICOLON, ";"},    {TokenType::VAR, "var"},
-                            {TokenType::IDENT, "ten"},      {TokenType::WALRUS, ":="},
-                            {TokenType::INT_10, "10"},      {TokenType::SEMICOLON, ";"},
-                            {TokenType::VAR, "var"},        {TokenType::IDENT, "add"},
-                            {TokenType::WALRUS, ":="},      {TokenType::FUNCTION, "fn"},
-                            {TokenType::LPAREN, "("},       {TokenType::IDENT, "x"},
-                            {TokenType::COLON, ":"},        {TokenType::I32_TYPE, "i32"},
-                            {TokenType::COMMA, ","},        {TokenType::IDENT, "y"},
-                            {TokenType::COLON, ":"},        {TokenType::I32_TYPE, "i32"},
-                            {TokenType::RPAREN, ")"},       {TokenType::COLON, ":"},
-                            {TokenType::I32_TYPE, "i32"},   {TokenType::LBRACE, "{"},
-                            {TokenType::RETURN, "return"},  {TokenType::IDENT, "x"},
-                            {TokenType::PLUS, "+"},         {TokenType::IDENT, "y"},
-                            {TokenType::SEMICOLON, ";"},    {TokenType::RBRACE, "}"},
-                            {TokenType::SEMICOLON, ";"},    {TokenType::VAR, "var"},
-                            {TokenType::IDENT, "result"},   {TokenType::WALRUS, ":="},
-                            {TokenType::IDENT, "add"},      {TokenType::LPAREN, "("},
-                            {TokenType::IDENT, "five"},     {TokenType::COMMA, ","},
-                            {TokenType::IDENT, "ten"},      {TokenType::RPAREN, ")"},
-                            {TokenType::SEMICOLON, ";"},    {TokenType::VAR, "var"},
-                            {TokenType::IDENT, "fs"},       {TokenType::COLON, ":"},
-                            {TokenType::F64_TYPE, "f64"},   {TokenType::ASSIGN, "="},
-                            {TokenType::F64, "4.2"},        {TokenType::SEMICOLON, ";"},
-                        });
+    test_lexer("const five := 5;\n"
+               "var ten := 10;\n\n"
+               "var add := fn(x: i32, y: i32): i32 {\n"
+               "   return x + y;\n"
+               "};\n\n"
+               "var result := add(five, ten);\n"
+               "var fs: f64 = 4.2;",
+               {
+                   {TokenType::CONSTANT, "const"}, {TokenType::IDENT, "five"},
+                   {TokenType::WALRUS, ":="},      {TokenType::INT_10, "5"},
+                   {TokenType::SEMICOLON, ";"},    {TokenType::VAR, "var"},
+                   {TokenType::IDENT, "ten"},      {TokenType::WALRUS, ":="},
+                   {TokenType::INT_10, "10"},      {TokenType::SEMICOLON, ";"},
+                   {TokenType::VAR, "var"},        {TokenType::IDENT, "add"},
+                   {TokenType::WALRUS, ":="},      {TokenType::FUNCTION, "fn"},
+                   {TokenType::LPAREN, "("},       {TokenType::IDENT, "x"},
+                   {TokenType::COLON, ":"},        {TokenType::I32_TYPE, "i32"},
+                   {TokenType::COMMA, ","},        {TokenType::IDENT, "y"},
+                   {TokenType::COLON, ":"},        {TokenType::I32_TYPE, "i32"},
+                   {TokenType::RPAREN, ")"},       {TokenType::COLON, ":"},
+                   {TokenType::I32_TYPE, "i32"},   {TokenType::LBRACE, "{"},
+                   {TokenType::RETURN, "return"},  {TokenType::IDENT, "x"},
+                   {TokenType::PLUS, "+"},         {TokenType::IDENT, "y"},
+                   {TokenType::SEMICOLON, ";"},    {TokenType::RBRACE, "}"},
+                   {TokenType::SEMICOLON, ";"},    {TokenType::VAR, "var"},
+                   {TokenType::IDENT, "result"},   {TokenType::WALRUS, ":="},
+                   {TokenType::IDENT, "add"},      {TokenType::LPAREN, "("},
+                   {TokenType::IDENT, "five"},     {TokenType::COMMA, ","},
+                   {TokenType::IDENT, "ten"},      {TokenType::RPAREN, ")"},
+                   {TokenType::SEMICOLON, ";"},    {TokenType::VAR, "var"},
+                   {TokenType::IDENT, "fs"},       {TokenType::COLON, ":"},
+                   {TokenType::F64_TYPE, "f64"},   {TokenType::ASSIGN, "="},
+                   {TokenType::F64, "4.2"},        {TokenType::SEMICOLON, ";"},
+               });
 }
 
 TEST_CASE("Lexing numbers") {
-    helpers::test_lexer("0 123 3.14 42.0 1e20 1.e-3 2.3901E4f 1e.",
-                        {
-                            {TokenType::INT_10, "0"},
-                            {TokenType::INT_10, "123"},
-                            {TokenType::F64, "3.14"},
-                            {TokenType::F64, "42.0"},
-                            {TokenType::F64, "1e20"},
-                            {TokenType::F64, "1.e-3"},
-                            {TokenType::F32, "2.3901E4f"},
-                            {TokenType::INT_10, "1"},
-                            {TokenType::IDENT, "e"},
-                            {TokenType::DOT, "."},
-                        });
+    test_lexer("0 123 3.14 42.0 1e20 1.e-3 2.3901E4f 1e.",
+               {
+                   {TokenType::INT_10, "0"},
+                   {TokenType::INT_10, "123"},
+                   {TokenType::F64, "3.14"},
+                   {TokenType::F64, "42.0"},
+                   {TokenType::F64, "1e20"},
+                   {TokenType::F64, "1.e-3"},
+                   {TokenType::F32, "2.3901E4f"},
+                   {TokenType::INT_10, "1"},
+                   {TokenType::IDENT, "e"},
+                   {TokenType::DOT, "."},
+               });
 }
 
 TEST_CASE("Lexing illegal floats") {
-    helpers::test_lexer(".0 1..2 3.4.5 3.4u 5f",
-                        {
-                            {TokenType::DOT, "."},
-                            {TokenType::INT_10, "0"},
-                            {TokenType::INT_10, "1"},
-                            {TokenType::DOT_DOT, ".."},
-                            {TokenType::INT_10, "2"},
-                            {TokenType::F64, "3.4"},
-                            {TokenType::DOT, "."},
-                            {TokenType::INT_10, "5"},
-                            {TokenType::F64, "3.4"},
-                            {TokenType::IDENT, "u"},
-                            {TokenType::F32, "5f"},
-                        });
+    test_lexer(".0 1..2 3.4.5 3.4u 5f",
+               {
+                   {TokenType::DOT, "."},
+                   {TokenType::INT_10, "0"},
+                   {TokenType::INT_10, "1"},
+                   {TokenType::DOT_DOT, ".."},
+                   {TokenType::INT_10, "2"},
+                   {TokenType::F64, "3.4"},
+                   {TokenType::DOT, "."},
+                   {TokenType::INT_10, "5"},
+                   {TokenType::F64, "3.4"},
+                   {TokenType::IDENT, "u"},
+                   {TokenType::F32, "5f"},
+               });
 }
 
 TEST_CASE("Lexing signed int variants") {
-    helpers::test_lexer("0b1010 0o17 0O17 42 0x2A 0X2A 0b 0x 0o",
-                        {
-                            {TokenType::INT_2, "0b1010"},
-                            {TokenType::INT_8, "0o17"},
-                            {TokenType::INT_8, "0O17"},
-                            {TokenType::INT_10, "42"},
-                            {TokenType::INT_16, "0x2A"},
-                            {TokenType::INT_16, "0X2A"},
-                            {TokenType::ILLEGAL, "0b"},
-                            {TokenType::ILLEGAL, "0x"},
-                            {TokenType::ILLEGAL, "0o"},
-                        });
+    test_lexer("0b1010 0o17 0O17 42 0x2A 0X2A 0b 0x 0o",
+               {
+                   {TokenType::INT_2, "0b1010"},
+                   {TokenType::INT_8, "0o17"},
+                   {TokenType::INT_8, "0O17"},
+                   {TokenType::INT_10, "42"},
+                   {TokenType::INT_16, "0x2A"},
+                   {TokenType::INT_16, "0X2A"},
+                   {TokenType::ILLEGAL, "0b"},
+                   {TokenType::ILLEGAL, "0x"},
+                   {TokenType::ILLEGAL, "0o"},
+               });
 }
 
 TEST_CASE("Lexing unsigned int variants") {
-    helpers::test_lexer(
-        "0b1010u 0b1010uz 0o17u 0o17uz 0O17u 42u 42UZ 0x2AU 0X2Au 123ufoo 0bu 0xu 0ou",
-        {
-            {TokenType::UINT_2, "0b1010u"},
-            {TokenType::UZINT_2, "0b1010uz"},
-            {TokenType::UINT_8, "0o17u"},
-            {TokenType::UZINT_8, "0o17uz"},
-            {TokenType::UINT_8, "0O17u"},
-            {TokenType::UINT_10, "42u"},
-            {TokenType::UZINT_10, "42UZ"},
-            {TokenType::UINT_16, "0x2AU"},
-            {TokenType::UINT_16, "0X2Au"},
-            {TokenType::UINT_10, "123u"},
-            {TokenType::IDENT, "foo"},
-            {TokenType::ILLEGAL, "0b"},
-            {TokenType::IDENT, "u"},
-            {TokenType::ILLEGAL, "0x"},
-            {TokenType::IDENT, "u"},
-            {TokenType::ILLEGAL, "0o"},
-            {TokenType::IDENT, "u"},
-        });
+    test_lexer("0b1010u 0b1010uz 0o17u 0o17uz 0O17u 42u 42UZ 0x2AU 0X2Au 123ufoo 0bu 0xu 0ou",
+               {
+                   {TokenType::UINT_2, "0b1010u"},
+                   {TokenType::UZINT_2, "0b1010uz"},
+                   {TokenType::UINT_8, "0o17u"},
+                   {TokenType::UZINT_8, "0o17uz"},
+                   {TokenType::UINT_8, "0O17u"},
+                   {TokenType::UINT_10, "42u"},
+                   {TokenType::UZINT_10, "42UZ"},
+                   {TokenType::UINT_16, "0x2AU"},
+                   {TokenType::UINT_16, "0X2Au"},
+                   {TokenType::UINT_10, "123u"},
+                   {TokenType::IDENT, "foo"},
+                   {TokenType::ILLEGAL, "0b"},
+                   {TokenType::IDENT, "u"},
+                   {TokenType::ILLEGAL, "0x"},
+                   {TokenType::IDENT, "u"},
+                   {TokenType::ILLEGAL, "0o"},
+                   {TokenType::IDENT, "u"},
+               });
 }
 
 TEST_CASE("Lexing int bit-width variants") {
-    helpers::test_lexer("2 2l 2z 2u 2ul 2uz",
-                        {
-                            {TokenType::INT_10, "2"},
-                            {TokenType::LINT_10, "2l"},
-                            {TokenType::ZINT_10, "2z"},
-                            {TokenType::UINT_10, "2u"},
-                            {TokenType::ULINT_10, "2ul"},
-                            {TokenType::UZINT_10, "2uz"},
-                        });
+    test_lexer("2 2l 2z 2u 2ul 2uz",
+               {
+                   {TokenType::INT_10, "2"},
+                   {TokenType::LINT_10, "2l"},
+                   {TokenType::ZINT_10, "2z"},
+                   {TokenType::UINT_10, "2u"},
+                   {TokenType::ULINT_10, "2ul"},
+                   {TokenType::UZINT_10, "2uz"},
+               });
 }
 
 TEST_CASE("Lexing keywords") {
-    helpers::test_lexer("and or pub extern export volatile static "
-                        "i32 i64 isize u32 u64 usize f32 f64 u8 bool void type test",
-                        {
-                            {TokenType::BOOLEAN_AND, "and"},  {TokenType::BOOLEAN_OR, "or"},
-                            {TokenType::PUBLIC, "pub"},       {TokenType::EXTERN, "extern"},
-                            {TokenType::EXPORT, "export"},    {TokenType::VOLATILE, "volatile"},
-                            {TokenType::STATIC, "static"},    {TokenType::I32_TYPE, "i32"},
-                            {TokenType::I64_TYPE, "i64"},     {TokenType::ISIZE_TYPE, "isize"},
-                            {TokenType::U32_TYPE, "u32"},     {TokenType::U64_TYPE, "u64"},
-                            {TokenType::USIZE_TYPE, "usize"}, {TokenType::F32_TYPE, "f32"},
-                            {TokenType::F64_TYPE, "f64"},     {TokenType::U8_TYPE, "u8"},
-                            {TokenType::BOOL_TYPE, "bool"},   {TokenType::VOID_TYPE, "void"},
-                            {TokenType::TYPE_TYPE, "type"},   {TokenType::TEST, "test"},
-                        });
+    test_lexer("and or pub extern export volatile static "
+               "i32 i64 isize u32 u64 usize f32 f64 u8 bool void type test",
+               {
+                   {TokenType::BOOLEAN_AND, "and"},  {TokenType::BOOLEAN_OR, "or"},
+                   {TokenType::PUBLIC, "pub"},       {TokenType::EXTERN, "extern"},
+                   {TokenType::EXPORT, "export"},    {TokenType::VOLATILE, "volatile"},
+                   {TokenType::STATIC, "static"},    {TokenType::I32_TYPE, "i32"},
+                   {TokenType::I64_TYPE, "i64"},     {TokenType::ISIZE_TYPE, "isize"},
+                   {TokenType::U32_TYPE, "u32"},     {TokenType::U64_TYPE, "u64"},
+                   {TokenType::USIZE_TYPE, "usize"}, {TokenType::F32_TYPE, "f32"},
+                   {TokenType::F64_TYPE, "f64"},     {TokenType::U8_TYPE, "u8"},
+                   {TokenType::BOOL_TYPE, "bool"},   {TokenType::VOID_TYPE, "void"},
+                   {TokenType::TYPE_TYPE, "type"},   {TokenType::TEST, "test"},
+               });
 }
 
 TEST_CASE("Lexing comments") {
-    helpers::test_lexer("const five := 5;\n"
-                        "var ten_10 := 10;\n\n"
-                        "// BOL\n"
-                        "var result := add(five, ten); // EOL\n"
-                        "var four_and_some := 4.2f;",
-                        {
-                            {TokenType::CONSTANT, "const"}, {TokenType::IDENT, "five"},
-                            {TokenType::WALRUS, ":="},      {TokenType::INT_10, "5"},
-                            {TokenType::SEMICOLON, ";"},    {TokenType::VAR, "var"},
-                            {TokenType::IDENT, "ten_10"},   {TokenType::WALRUS, ":="},
-                            {TokenType::INT_10, "10"},      {TokenType::SEMICOLON, ";"},
-                            {TokenType::COMMENT, " BOL"},   {TokenType::VAR, "var"},
-                            {TokenType::IDENT, "result"},   {TokenType::WALRUS, ":="},
-                            {TokenType::IDENT, "add"},      {TokenType::LPAREN, "("},
-                            {TokenType::IDENT, "five"},     {TokenType::COMMA, ","},
-                            {TokenType::IDENT, "ten"},      {TokenType::RPAREN, ")"},
-                            {TokenType::SEMICOLON, ";"},    {TokenType::COMMENT, " EOL"},
-                            {TokenType::VAR, "var"},        {TokenType::IDENT, "four_and_some"},
-                            {TokenType::WALRUS, ":="},      {TokenType::F32, "4.2f"},
-                            {TokenType::SEMICOLON, ";"},
-                        });
+    test_lexer("const five := 5;\n"
+               "var ten_10 := 10;\n\n"
+               "// BOL\n"
+               "var result := add(five, ten); // EOL\n"
+               "var four_and_some := 4.2f;",
+               {
+                   {TokenType::CONSTANT, "const"}, {TokenType::IDENT, "five"},
+                   {TokenType::WALRUS, ":="},      {TokenType::INT_10, "5"},
+                   {TokenType::SEMICOLON, ";"},    {TokenType::VAR, "var"},
+                   {TokenType::IDENT, "ten_10"},   {TokenType::WALRUS, ":="},
+                   {TokenType::INT_10, "10"},      {TokenType::SEMICOLON, ";"},
+                   {TokenType::COMMENT, " BOL"},   {TokenType::VAR, "var"},
+                   {TokenType::IDENT, "result"},   {TokenType::WALRUS, ":="},
+                   {TokenType::IDENT, "add"},      {TokenType::LPAREN, "("},
+                   {TokenType::IDENT, "five"},     {TokenType::COMMA, ","},
+                   {TokenType::IDENT, "ten"},      {TokenType::RPAREN, ")"},
+                   {TokenType::SEMICOLON, ";"},    {TokenType::COMMENT, " EOL"},
+                   {TokenType::VAR, "var"},        {TokenType::IDENT, "four_and_some"},
+                   {TokenType::WALRUS, ":="},      {TokenType::F32, "4.2f"},
+                   {TokenType::SEMICOLON, ";"},
+               });
 }
 
 TEST_CASE("Lexing character literals") {
-    helpers::test_lexer("if'e' else'\\'\nreturn'\\r' break'\\n'\n"
-                        "continue'\\0' for'\\'' while'\\\\' const''\n"
-                        "var'asd'",
-                        {
-                            {TokenType::IF, "if"},
-                            {TokenType::U8, "'e'"},
-                            {TokenType::ELSE, "else"},
-                            {TokenType::ILLEGAL, "'\\'"},
-                            {TokenType::RETURN, "return"},
-                            {TokenType::U8, "'\\r'"},
-                            {TokenType::BREAK, "break"},
-                            {TokenType::U8, "'\\n'"},
-                            {TokenType::CONTINUE, "continue"},
-                            {TokenType::U8, "'\\0'"},
-                            {TokenType::FOR, "for"},
-                            {TokenType::U8, "'\\''"},
-                            {TokenType::WHILE, "while"},
-                            {TokenType::U8, "'\\\\'"},
-                            {TokenType::CONSTANT, "const"},
-                            {TokenType::ILLEGAL, "'"},
-                            {TokenType::ILLEGAL, "'"},
-                            {TokenType::VAR, "var"},
-                            {TokenType::ILLEGAL, "'asd'"},
-                        });
+    test_lexer("if'e' else'\\'\nreturn'\\r' break'\\n'\n"
+               "continue'\\0' for'\\'' while'\\\\' const''\n"
+               "var'asd'",
+               {
+                   {TokenType::IF, "if"},
+                   {TokenType::U8, "'e'"},
+                   {TokenType::ELSE, "else"},
+                   {TokenType::ILLEGAL, "'\\'"},
+                   {TokenType::RETURN, "return"},
+                   {TokenType::U8, "'\\r'"},
+                   {TokenType::BREAK, "break"},
+                   {TokenType::U8, "'\\n'"},
+                   {TokenType::CONTINUE, "continue"},
+                   {TokenType::U8, "'\\0'"},
+                   {TokenType::FOR, "for"},
+                   {TokenType::U8, "'\\''"},
+                   {TokenType::WHILE, "while"},
+                   {TokenType::U8, "'\\\\'"},
+                   {TokenType::CONSTANT, "const"},
+                   {TokenType::ILLEGAL, "'"},
+                   {TokenType::ILLEGAL, "'"},
+                   {TokenType::VAR, "var"},
+                   {TokenType::ILLEGAL, "'asd'"},
+               });
 }
 
 TEST_CASE("Lexing string literals") {
-    helpers::test_lexer(
+    test_lexer(
         R"("This is a string";const five := "Hello, World!";var ten: [:0]u8 = "Hello\n, World!\0";var one := "Hello, World!;)",
         {
             {TokenType::STRING, R"("This is a string")"},
@@ -294,42 +293,42 @@ TEST_CASE("Lexing string literals") {
 }
 
 TEST_CASE("Lexing multiline string literals") {
-    helpers::test_lexer("const five := \\\\Multiline stringing\n"
-                        ";\n"
-                        "var ten := \\\\Multiline stringing\n"
-                        "\\\\Continuation\n"
-                        ";\n"
-                        "const one := \\\\Nesting \" \' \\ [] const var\n"
-                        "\\\\\n"
-                        ";\n",
-                        {
-                            {TokenType::CONSTANT, "const"},
-                            {TokenType::IDENT, "five"},
-                            {TokenType::WALRUS, ":="},
-                            {TokenType::MULTILINE_STRING, "Multiline stringing"},
-                            {TokenType::SEMICOLON, ";"},
-                            {TokenType::VAR, "var"},
-                            {TokenType::IDENT, "ten"},
-                            {TokenType::WALRUS, ":="},
-                            {TokenType::MULTILINE_STRING, "Multiline stringing\n\\\\Continuation"},
-                            {TokenType::SEMICOLON, ";"},
-                            {TokenType::CONSTANT, "const"},
-                            {TokenType::IDENT, "one"},
-                            {TokenType::WALRUS, ":="},
-                            {TokenType::MULTILINE_STRING, "Nesting \" \' \\ [] const var\n\\\\"},
-                            {TokenType::SEMICOLON, ";"},
-                        });
+    test_lexer("const five := \\\\Multiline stringing\n"
+               ";\n"
+               "var ten := \\\\Multiline stringing\n"
+               "\\\\Continuation\n"
+               ";\n"
+               "const one := \\\\Nesting \" \' \\ [] const var\n"
+               "\\\\\n"
+               ";\n",
+               {
+                   {TokenType::CONSTANT, "const"},
+                   {TokenType::IDENT, "five"},
+                   {TokenType::WALRUS, ":="},
+                   {TokenType::MULTILINE_STRING, "Multiline stringing"},
+                   {TokenType::SEMICOLON, ";"},
+                   {TokenType::VAR, "var"},
+                   {TokenType::IDENT, "ten"},
+                   {TokenType::WALRUS, ":="},
+                   {TokenType::MULTILINE_STRING, "Multiline stringing\n\\\\Continuation"},
+                   {TokenType::SEMICOLON, ";"},
+                   {TokenType::CONSTANT, "const"},
+                   {TokenType::IDENT, "one"},
+                   {TokenType::WALRUS, ":="},
+                   {TokenType::MULTILINE_STRING, "Nesting \" \' \\ [] const var\n\\\\"},
+                   {TokenType::SEMICOLON, ";"},
+               });
 }
 
 TEST_CASE("Lexing pointers and references") {
-    helpers::test_lexer("& &mut * *mut nullptr",
-                        {
-                            {TokenType::BW_AND, "&"},
-                            {TokenType::AND_MUT, "&mut"},
-                            {TokenType::STAR, "*"},
-                            {TokenType::STAR_MUT, "*mut"},
-                            {TokenType::NULLPTR, "nullptr"},
-                        });
+    test_lexer("& &mut * *mut nullptr",
+               {
+                   {TokenType::BW_AND, "&"},
+                   {TokenType::AND_MUT, "&mut"},
+                   {TokenType::STAR, "*"},
+                   {TokenType::STAR_MUT, "*mut"},
+                   {TokenType::NULLPTR, "nullptr"},
+               });
 }
 
 TEST_CASE("Lexing compiler builtins & Lexer resetting") {

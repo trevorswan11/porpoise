@@ -33,6 +33,9 @@ class SymbolCollector {
     }
 
   private:
+    using Scope = SymbolTableStack::Scope;
+
+  private:
     AST_VISITOR_DEF_GEN()
 
     template <typename... IterPairs>
@@ -64,10 +67,6 @@ class SymbolCollector {
         return {in_label_scope_.guard(), in_expr_scope_.guard()};
     }
 
-  private:
-    using Scope = SymbolTableStack::Scope;
-
-  private:
     SymbolCollector(mod::Module& collecting, Context& ctx)
         : collecting_{collecting}, table_idx_{*collecting.root_table_idx}, ctx_{ctx} {
         table_stack_.push(table_idx_);

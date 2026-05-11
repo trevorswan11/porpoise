@@ -4,7 +4,7 @@
 
 namespace porpoise::tests {
 
-namespace mut = helpers::mut;
+namespace mut = sema::types::mut;
 
 TEST_CASE("Function hollow types") {
     auto [ctx, idx] =
@@ -18,6 +18,7 @@ TEST_CASE("Function hollow types") {
     REQUIRE(symbol_a.is_symbolic_node());
     const auto& decl_a =
         ctx.root_mod->ast.get_as<ast::DeclStatement>(*symbol_a.get_symbolic_node());
+    REQUIRE(ctx.root_mod->has_sema_type(**decl_a.value));
     const auto& fn_type = ctx.root_mod->get_sema_type(**decl_a.value);
 
     auto& pool = ctx.analyzer.get_pool();

@@ -66,6 +66,12 @@ auto SymbolCollector::visit(const ast::NodeID& id, const ast::DoWhileLoopExpress
                      IterPair{block, [this](const ast::StatementHandle& stmt) { collect(stmt); }});
     last_type_->set_symbol_table_idx(idx);
     collecting_.set_sema_type(id, *last_type_.take());
+
+    // The condition is just an expression
+    {
+        const auto g_cond = in_expr_scope_.guard();
+        collect(do_while.condition);
+    }
 }
 
 auto SymbolCollector::visit(const ast::NodeID& id, const ast::EnumExpression& enum_expr) -> void {
@@ -85,7 +91,9 @@ auto SymbolCollector::visit(const ast::NodeID& id, const ast::EnumExpression& en
 auto SymbolCollector::visit(const ast::NodeID& id, const ast::ForLoopExpression& for_expr) -> void {
     // The guard shouldn't enclose the else clause
     const auto g_expr = in_expr_scope_.guard();
-    usize      new_idx;
+    for (const auto& iterable : for_expr.iterables) { collect(iterable); }
+
+    usize new_idx;
     {
         new_idx = ctx_.registry.create();
         const Scope s{table_stack_, new_idx, table_idx_};
@@ -175,8 +183,19 @@ auto SymbolCollector::visit(const ast::NodeID&, const ast::InitializerExpression
 auto SymbolCollector::visit(const ast::NodeID& id, const ast::LabelExpression& label) -> void {
     const auto  g     = label_guard();
     const auto& ident = collecting_.ast.get_as<ast::IdentifierExpression>(*label.name);
-    try_declare(ident.name, SymbolicNode{id});
+
+    // Labels and their associated nodes live in their own scope
+    const auto  new_idx = ctx_.registry.create();
+    const Scope s{table_stack_, new_idx, table_idx_};
+    if (try_declare(ident.name, SymbolicNode{id})) {
+        auto& symbol = ctx_.registry.get_from(table_idx_, ident.name);
+        symbol.set_kind(SymbolKind::LABEL);
+    }
     collect(label.body);
+
+    last_type_.emplace(ctx_.pool[{TypeKind::LABEL, types::Key::Mutability::IMMUTABLE, new_idx}]);
+    last_type_->set_symbol_table_idx(new_idx);
+    collecting_.set_sema_type(id, *last_type_.take());
 }
 
 auto SymbolCollector::visit(const ast::NodeID&, const ast::MatchExpression& match) -> void {
@@ -238,9 +257,11 @@ auto SymbolCollector::visit(const ast::NodeID& id, const ast::UnionExpression& u
 
 auto SymbolCollector::visit(const ast::NodeID& id, const ast::WhileLoopExpression& while_expr)
     -> void {
-    // The guard shouldn't enclose the else clause
+    // The guard shouldn't enclose the else clause or condition
     const auto g_expr = in_expr_scope_.guard();
-    usize      new_idx;
+    collect(while_expr.condition);
+
+    usize new_idx;
     {
         new_idx = ctx_.registry.create();
         const Scope s{table_stack_, new_idx, table_idx_};

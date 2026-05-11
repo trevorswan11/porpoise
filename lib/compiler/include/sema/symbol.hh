@@ -1,6 +1,5 @@
 #pragma once
 
-#include <deque>
 #include <ranges>
 #include <string_view>
 #include <vector>
@@ -68,6 +67,7 @@ enum class SymbolKind : u8 {
     VALUE,
     CALLABLE,
     MODULE,
+    LABEL,
 };
 
 enum class ResolveStatus : u8 {
@@ -233,7 +233,7 @@ class SymbolTableStack {
 
 class SymbolTableRegistry {
   public:
-    MAKE_ITERATOR(Tables, std::deque<SymbolTable>, tables_)
+    MAKE_ITERATOR(Tables, std::vector<SymbolTable>, tables_)
 
   public:
     SymbolTableRegistry() noexcept = default;

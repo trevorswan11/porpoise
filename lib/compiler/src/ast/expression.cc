@@ -107,7 +107,7 @@ auto DoWhileLoopExpression::parse(syntax::Parser& parser)
 
 namespace {
 
-[[nodiscard]] static auto deconstruct_member(syntax::Parser& parser, StatementHandle member)
+[[nodiscard]] auto deconstruct_member(syntax::Parser& parser, StatementHandle member)
     -> Result<MemberHandle, syntax::Diagnostic> {
     switch (member->get_kind()) {
     case NodeKind::DECL_STATEMENT:
@@ -118,7 +118,7 @@ namespace {
 }
 
 template <typename MemberValidator>
-[[nodiscard]] static auto parse_members(syntax::Parser& parser, MemberValidator&& validator)
+[[nodiscard]] auto parse_members(syntax::Parser& parser, MemberValidator&& validator)
     -> Result<Members, syntax::Diagnostic> {
     Members members;
     while (!parser.peek_token_is(syntax::TokenType::RBRACE) &&
@@ -133,11 +133,11 @@ template <typename MemberValidator>
         }
         members.emplace_back(member);
     }
-    return Members{members};
+    return members;
 }
 
 // Returns an actual value only if a terminal condition was found
-[[nodiscard]] static auto validate_common_member_decl(const DeclStatement& decl) noexcept
+[[nodiscard]] auto validate_common_member_decl(const DeclStatement& decl) noexcept
     -> opt::Option<bool> {
     // Members that violate this wouldn't be usable with C
     if (decl.has_modifier(DeclModifiers::EXTERN) || decl.has_modifier(DeclModifiers::EXPORT)) {
@@ -369,8 +369,6 @@ auto FunctionExpression::parse(syntax::Parser& parser)
 
     TRY(parser.expect_peek(syntax::TokenType::COLON));
     const auto return_type = TRY(ExplicitType::parse(parser));
-
-    // If there is opening brace then just return without a body
     if (!parser.peek_token_is(syntax::TokenType::LBRACE)) {
         return make_syntax_err(syntax::Error::FN_DECLARATION_WITHOUT_BODY, start_token);
     }

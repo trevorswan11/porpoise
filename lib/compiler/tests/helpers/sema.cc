@@ -6,11 +6,12 @@ auto test_common_decl_collection(const sema::SymbolTableRegistry& registry,
                                  const mod::Module&               module,
                                  usize                            idx,
                                  std::string_view                 name) -> void {
-    const auto& symbol = registry.get_from(idx, name);
-    REQUIRE(symbol.is_symbolic_node());
-    CHECK_FALSE(symbol.is_public(module));
+    const auto& symbol = registry.get_from_opt(idx, name);
+    REQUIRE(symbol);
+    REQUIRE(symbol->is_symbolic_node());
+    CHECK_FALSE(symbol->is_public(module));
 
-    const auto& node = symbol.get_symbolic_node();
+    const auto& node = symbol->get_symbolic_node();
     CHECK(node->is<ast::DeclStatement>());
 }
 

@@ -10,8 +10,7 @@ namespace {
 
 // Parses the requested value from the string, asserting the from_chars result if requested
 template <typename ValueType, bool AssertLast = true>
-[[nodiscard]] static auto parse_primitive_value(std::string_view  slice,
-                                                syntax::TokenType type) noexcept
+[[nodiscard]] auto parse_primitive_value(std::string_view slice, syntax::TokenType type) noexcept
     -> opt::Option<ValueType> {
     const auto  base  = syntax::token_type::to_base(type);
     const auto* first = slice.cbegin() + (!base || *base == syntax::Base::DECIMAL ? 0 : 2);
@@ -37,8 +36,7 @@ template <typename ValueType, bool AssertLast = true>
 }
 
 template <traits::ValuedPrimitiveNode Node>
-static auto parse_primitive(syntax::Parser& parser)
-    -> Result<ExpressionHandle, syntax::Diagnostic> {
+auto parse_primitive(syntax::Parser& parser) -> Result<ExpressionHandle, syntax::Diagnostic> {
     using value_type       = typename Node::value_type;
     const auto start_token = parser.get_current_token();
     const auto value       = parse_primitive_value<value_type>(start_token.slice, start_token.type);

@@ -4,7 +4,7 @@
 
 namespace porpoise::tests {
 
-namespace mut = helpers::mut;
+namespace mut = sema::types::mut;
 
 using MockFile = helpers::MockFile;
 

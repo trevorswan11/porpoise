@@ -4,16 +4,16 @@
 
 namespace porpoise::tests {
 
-namespace helpers {
+namespace {
 
 // Checks that the scope has the foo-bar decl
-auto test_conditional_scope(SemaTestContext& ctx, usize idx) {
+auto test_conditional_scope(helpers::SemaTestContext& ctx, usize idx) {
     auto& registry = ctx.analyzer.get_registry();
     CHECK(registry.get(idx).size() == 1);
     ctx.test_common_decl_collection(idx);
 }
 
-} // namespace helpers
+} // namespace
 
 TEST_CASE("If expression collection") {
     auto [ctx, idx] = helpers::collect_and_check(
@@ -28,8 +28,8 @@ TEST_CASE("If expression collection") {
     const auto             opt  = actual.get_opt(name);
     REQUIRE(opt);
 
-    helpers::test_conditional_scope(ctx, 1);
-    helpers::test_conditional_scope(ctx, 2);
+    test_conditional_scope(ctx, 1);
+    test_conditional_scope(ctx, 2);
 }
 
 TEST_CASE("Flat if collection") { helpers::collect_and_check("const a := if (b > 4) c; else d;"); }
@@ -48,9 +48,9 @@ TEST_CASE("Match expression collection") {
     const auto             opt  = actual.get_opt(name);
     REQUIRE(opt);
 
-    helpers::test_conditional_scope(ctx, 2);
-    helpers::test_conditional_scope(ctx, 4);
-    helpers::test_conditional_scope(ctx, 5);
+    test_conditional_scope(ctx, 2);
+    test_conditional_scope(ctx, 4);
+    test_conditional_scope(ctx, 5);
 }
 
 TEST_CASE("Flat match collection") {

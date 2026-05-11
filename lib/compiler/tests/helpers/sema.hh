@@ -103,11 +103,4 @@ auto test_collector_fail(std::string_view failing, Ds&&... expected_diagnostics)
     test_collector_fail(failing, {}, std::forward<Ds>(expected_diagnostics)...);
 }
 
-namespace mut {
-
-constexpr auto MUTABLE   = sema::types::Key::Mutability::MUTABLE;
-constexpr auto IMMUTABLE = sema::types::Key::Mutability::IMMUTABLE;
-
-} // namespace mut
-
 } // namespace porpoise::tests::helpers

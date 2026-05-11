@@ -2,8 +2,6 @@
 
 namespace porpoise::sema {
 
-namespace { constexpr auto IMMUTABLE = types::Key::Mutability::IMMUTABLE; } // namespace
-
 auto TypeResolver::resolve_types(mod::Module& module, Context& ctx) -> mod::ModuleState {
     // Poisoned collection should flush the diagnostics
     if (module.state == mod::ModuleState::POISONED_SYMBOL_COLLECTION) {
@@ -33,8 +31,8 @@ auto TypeResolver::visit(const ast::NodeID& id, const ast::ArrayExpression& arra
 
     const auto items_size      = array.items.size();
     const auto null_terminated = array.null_terminated;
-    last_type_.emplace(
-        ctx_.pool[{TypeKind::ARRAY, IMMUTABLE, null_terminated, items_size, *item_type}]);
+    last_type_.emplace(ctx_.pool[{
+        TypeKind::ARRAY, types::mut::IMMUTABLE, null_terminated, items_size, *item_type}]);
     if (!last_type_->has_resolved()) {
         last_type_->resolve<types::Array>(*item_type, items_size, null_terminated);
     }
@@ -147,7 +145,7 @@ auto TypeResolver::visit(const ast::NodeID&, const ast::StringExpression&) -> vo
 
 #define MAKE_PRIMITIVE_RESOLVER(NodeType, kind)                                         \
     auto TypeResolver::visit(const ast::NodeID& id, const ast::NodeType&) -> void {     \
-        last_type_.emplace(ctx_.pool[{TypeKind::kind, IMMUTABLE}]);                     \
+        last_type_.emplace(ctx_.pool[{TypeKind::kind, types::mut::IMMUTABLE}]);         \
         if (!last_type_->has_resolved()) { last_type_->resolve<types::BuiltinType>(); } \
         collecting_.set_sema_type(id, *last_type_);                                     \
     }

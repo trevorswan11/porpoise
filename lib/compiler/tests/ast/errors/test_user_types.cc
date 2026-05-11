@@ -39,6 +39,12 @@ TEST_CASE("Illegal struct members") {
 
     helpers::test_parser_fail("struct { extern var foo: bar; };",
                               syntax::Diagnostic{syntax::Error::INVALID_MEMBER, 0, 9});
+
+    helpers::test_parser_fail("struct { defer {}; };",
+                              syntax::Diagnostic{syntax::Error::INVALID_MEMBER, 0, 9},
+                              syntax::Diagnostic{"No prefix parse function for RBRACE(}) found",
+                                                 syntax::Error::MISSING_PREFIX_PARSER,
+                                                 std::pair{0uz, 19uz}});
 }
 
 TEST_CASE("Illegal union field name") {

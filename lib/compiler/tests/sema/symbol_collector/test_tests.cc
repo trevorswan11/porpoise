@@ -4,7 +4,7 @@
 
 namespace porpoise::tests {
 
-namespace mut = helpers::mut;
+namespace mut = sema::types::mut;
 
 TEST_CASE("Test statement symbol collection") {
     auto [ctx, idx]      = helpers::collect_and_check(R"(test "foo" { const foo := bar; })");
@@ -12,7 +12,8 @@ TEST_CASE("Test statement symbol collection") {
     REQUIRE(registry.size() == 2);
     CHECK(registry.get(idx).size() == 0);
 
-    auto&       pool      = ctx.analyzer.get_pool();
+    auto& pool = ctx.analyzer.get_pool();
+    REQUIRE(ctx.root_mod->has_sema_type(ctx.root_mod->ast[0]));
     const auto& test_type = ctx.root_mod->get_sema_type(ctx.root_mod->ast[0]);
     CHECK(&test_type == &pool[{sema::TypeKind::BLOCK, mut::IMMUTABLE, 1}]);
     ctx.test_common_decl_collection(1);

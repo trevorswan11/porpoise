@@ -38,6 +38,7 @@ enum class TypeKind : u8 {
     STRUCT,
     UNION,
     FUNCTION,
+    LABEL,
     BLOCK,
     MATCH_ARM,
     MODULE,
@@ -137,6 +138,13 @@ class Key {
     Mutability   mut_;
     hash::Hasher markers_;
 };
+
+namespace mut {
+
+constexpr auto MUTABLE   = types::Key::Mutability::MUTABLE;
+constexpr auto IMMUTABLE = types::Key::Mutability::IMMUTABLE;
+
+} // namespace mut
 
 } // namespace types
 

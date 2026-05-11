@@ -7,7 +7,7 @@
 
 namespace porpoise::tests {
 
-namespace helpers {
+namespace {
 
 [[nodiscard]] auto setup_basic_import() {
     mod::MemoryLoader loader;
@@ -22,10 +22,10 @@ namespace helpers {
     return std::tuple{module, import_handle, std::pair{std::move(loader), std::move(manager)}};
 }
 
-} // namespace helpers
+} // namespace
 
 TEST_CASE("Basic table operations") {
-    const auto [module, import_handle, memory] = helpers::setup_basic_import();
+    const auto [module, import_handle, memory] = setup_basic_import();
 
     sema::SymbolTable table;
     CHECK(table.empty());
@@ -42,7 +42,7 @@ TEST_CASE("Basic table operations") {
 }
 
 TEST_CASE("Duplicate table inserts") {
-    const auto [module, import_handle, memory] = helpers::setup_basic_import();
+    const auto [module, import_handle, memory] = setup_basic_import();
     sema::SymbolTable table;
     CHECK(table.insert<sema::SymbolicImport>("a", *module, import_handle, opt::none));
     CHECK_FALSE(table.insert<sema::SymbolicImport>("a", *module, import_handle, opt::none));
@@ -50,7 +50,7 @@ TEST_CASE("Duplicate table inserts") {
 }
 
 TEST_CASE("Illegal registry insert") {
-    const auto [module, import_handle, memory] = helpers::setup_basic_import();
+    const auto [module, import_handle, memory] = setup_basic_import();
     sema::SymbolTableRegistry registry;
     const auto                result =
         registry.insert_into<sema::SymbolicImport>(0, *module, "a", import_handle, opt::none);
