@@ -4,7 +4,33 @@
 
 namespace porpoise::tests {
 
-TEST_CASE("Function hollow types") {}
+namespace mut = helpers::mut;
+
+TEST_CASE("Function hollow types") {
+    auto [ctx, idx] =
+        helpers::collect_and_check("const a := fn(&self, c: type): void { const foo := bar; };");
+    const auto& registry = ctx.analyzer.get_registry();
+    REQUIRE(registry.size() == 2);
+    const auto& symbol_a = registry.get_from(idx, "a");
+    REQUIRE(symbol_a.has_kind());
+    CHECK(symbol_a.get_kind() == sema::SymbolKind::CALLABLE);
+
+    REQUIRE(symbol_a.is_symbolic_node());
+    const auto& decl_a =
+        ctx.root_mod->ast.get_as<ast::DeclStatement>(*symbol_a.get_symbolic_node());
+    const auto& fn_type = ctx.root_mod->get_sema_type(**decl_a.value);
+
+    auto& pool = ctx.analyzer.get_pool();
+    REQUIRE(symbol_a.has_type());
+    CHECK(&symbol_a.get_type() == &pool[{sema::TypeKind::FUNCTION, mut::IMMUTABLE, 1}]);
+    CHECK(&symbol_a.get_type() == &fn_type);
+
+    const auto& self_param = registry.get_from(1, "self");
+    REQUIRE(self_param.is_self_param());
+    const auto& c_param = registry.get_from(1, "c");
+    REQUIRE(c_param.is_basic_param());
+    ctx.test_common_decl_collection(1);
+}
 
 TEST_CASE("Well-placed function control-flow statements") {
     helpers::collect_and_check("pub const main := fn(args: [][:0]u8): void { return; };");

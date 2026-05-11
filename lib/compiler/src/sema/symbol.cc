@@ -8,7 +8,7 @@ namespace porpoise::sema {
 
 namespace {
 
-[[nodiscard]] auto symbol_location_of(mod::Module&               module,
+[[nodiscard]] auto symbol_location_of(const mod::Module&         module,
                                       const SymbolicNodeVariant& payload) noexcept
     -> SourceLocation {
     return std::visit(
@@ -30,11 +30,11 @@ namespace {
 
 } // namespace
 
-auto Symbol::get_symbol_location(mod::Module& module) const noexcept -> SourceLocation {
+auto Symbol::get_symbol_location(const mod::Module& module) const noexcept -> SourceLocation {
     return symbol_location_of(module, node_);
 }
 
-auto Symbol::is_public(mod::Module& module) const noexcept -> bool {
+auto Symbol::is_public(const mod::Module& module) const noexcept -> bool {
     return match(
         Overloaded{[&](const SymbolicNode& node) {
                        switch (node->get_kind()) {
@@ -52,7 +52,7 @@ auto Symbol::is_public(mod::Module& module) const noexcept -> bool {
                    [](const auto&) { return false; }});
 }
 
-auto SymbolTable::insert(std::string_view name, mod::Module& module, SymbolicNodeVariant node)
+auto SymbolTable::insert(std::string_view name, const mod::Module& module, SymbolicNodeVariant node)
     -> Result<Unit, Diagnostic> {
     // Reserved identifier use is impossible due to a parser invariant
     auto [it, inserted] = symbols_.try_emplace(name, name, node);
@@ -76,7 +76,7 @@ auto SymbolTable::insert_unchecked(std::string_view name, SymbolicNodeVariant no
 }
 
 auto SymbolTableRegistry::insert_into(usize               table_idx,
-                                      mod::Module&        module,
+                                      const mod::Module&  module,
                                       std::string_view    name,
                                       SymbolicNodeVariant node) -> Result<Unit, Diagnostic> {
     if (auto table = get_opt(table_idx)) { return table->insert(name, module, node); }
@@ -84,7 +84,7 @@ auto SymbolTableRegistry::insert_into(usize               table_idx,
 }
 
 [[nodiscard]] auto SymbolTableRegistry::is_shadowing(const SymbolTableStack& stack,
-                                                     mod::Module&            module,
+                                                     const mod::Module&      module,
                                                      std::string_view        name,
                                                      SymbolicNodeVariant     node) noexcept
     -> Result<Unit, Diagnostic> {

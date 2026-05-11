@@ -2,6 +2,18 @@
 
 namespace porpoise::tests::helpers {
 
+auto test_common_decl_collection(const sema::SymbolTableRegistry& registry,
+                                 const mod::Module&               module,
+                                 usize                            idx,
+                                 std::string_view                 name) -> void {
+    const auto& symbol = registry.get_from(idx, name);
+    REQUIRE(symbol.is_symbolic_node());
+    CHECK_FALSE(symbol.is_public(module));
+
+    const auto& node = symbol.get_symbolic_node();
+    CHECK(node->is<ast::DeclStatement>());
+}
+
 SemaTestContext::SemaTestContext(const std::vector<MockFile>& imports,
                                  const std::filesystem::path& root_path,
                                  std::string_view             input,
@@ -21,6 +33,11 @@ SemaTestContext::SemaTestContext(const std::vector<MockFile>& imports,
           return *test_mod_result;
       }()} {}
 
+auto SemaTestContext::test_common_decl_collection(usize idx, std::string_view name) -> void {
+    const auto& registry = analyzer.get_registry();
+    helpers::test_common_decl_collection(registry, *root_mod, idx, name);
+}
+
 auto collect(std::string_view input, const std::vector<MockFile>& imports)
     -> std::pair<SemaTestContext, usize> {
     SemaTestContext ctx{imports, TEST_FILENAME, input};
@@ -38,16 +55,6 @@ auto collect_and_check(std::string_view input, const std::vector<MockFile>& impo
         check_errors<sema::Diagnostic>(ctx.root_mod->get_sema_diagnostics());
     }
     return {std::move(ctx), idx};
-}
-
-auto test_common_decl_collection(SemaTestContext& ctx, usize idx, std::string_view name) -> void {
-    const auto& registry = ctx.analyzer.get_registry();
-    const auto& symbol   = registry.get_from(idx, name);
-    REQUIRE(symbol.is_symbolic_node());
-    CHECK_FALSE(symbol.is_public(*ctx.root_mod));
-
-    const auto& node = symbol.get_symbolic_node();
-    CHECK(node->is<ast::DeclStatement>());
 }
 
 } // namespace porpoise::tests::helpers

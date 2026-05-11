@@ -9,11 +9,7 @@
 #include "diagnostic.hh"
 #include "iterator.hh"
 
-namespace porpoise {
-
-namespace sema { class Type; } // namespace sema
-
-namespace ast {
+namespace porpoise::ast {
 
 template <typename ID, typename Data> struct DataPoolBase {
     std::vector<Data>           pool;
@@ -126,6 +122,4 @@ class AST {
     DataPool<ExplicitTypeID, TypeData> explicit_types_;
 };
 
-} // namespace ast
-
-} // namespace porpoise
+} // namespace porpoise::ast

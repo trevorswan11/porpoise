@@ -102,10 +102,11 @@ class Symbol {
     MAKE_VARIANT_UNPACKER(match_arm, ast::MatchExpression::Arm, SymbolicArm, node_, std::get)
 
     MAKE_VARIANT_MATCHER(node_)
-    [[nodiscard]] auto get_symbol_location(mod::Module& module) const noexcept -> SourceLocation;
+    [[nodiscard]] auto get_symbol_location(const mod::Module& module) const noexcept
+        -> SourceLocation;
 
     // Can only be true for decls, imports, and type aliases
-    [[nodiscard]] auto is_public(mod::Module& module) const noexcept -> bool;
+    [[nodiscard]] auto is_public(const mod::Module& module) const noexcept -> bool;
 
     [[nodiscard]] auto has_type() const noexcept -> bool { return type_.has_value(); }
     [[nodiscard]] auto get_type() const noexcept -> Type& { return *type_; }
@@ -140,13 +141,13 @@ class SymbolTable {
 
     // Constructs the symbolic node in place with the provided args
     template <typename T, typename... Args>
-    auto insert(std::string_view name, mod::Module& module, Args&&... args)
+    auto insert(std::string_view name, const mod::Module& module, Args&&... args)
         -> Result<Unit, Diagnostic> {
         return insert(name, module, SymbolicNodeVariant{T{std::forward<Args>(args)...}});
     }
 
     // Checks that the module was inserted without collision
-    auto insert(std::string_view name, mod::Module& module, SymbolicNodeVariant node)
+    auto insert(std::string_view name, const mod::Module& module, SymbolicNodeVariant node)
         -> Result<Unit, Diagnostic>;
 
     // For use of prelude injection only
@@ -248,14 +249,14 @@ class SymbolTableRegistry {
     // Constructs the symbolic node in place with the provided args
     template <typename T, typename... Args>
     [[nodiscard]] auto
-    insert_into(usize table_idx, mod::Module& module, std::string_view name, Args&&... args)
+    insert_into(usize table_idx, const mod::Module& module, std::string_view name, Args&&... args)
         -> Result<Unit, Diagnostic> {
         return insert_into(
             table_idx, module, name, SymbolicNodeVariant{T{std::forward<Args>(args)...}});
     }
 
     [[nodiscard]] auto insert_into(usize               table_idx,
-                                   mod::Module&        module,
+                                   const mod::Module&  module,
                                    std::string_view    name,
                                    SymbolicNodeVariant node) -> Result<Unit, Diagnostic>;
 
@@ -283,7 +284,7 @@ class SymbolTableRegistry {
 
     // Looks up all levels of the stack for possible illegal shadowing of the name
     [[nodiscard]] auto is_shadowing(const SymbolTableStack& stack,
-                                    mod::Module&            module,
+                                    const mod::Module&      module,
                                     std::string_view        name,
                                     SymbolicNodeVariant node) noexcept -> Result<Unit, Diagnostic>;
 

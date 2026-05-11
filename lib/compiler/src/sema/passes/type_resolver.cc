@@ -1,4 +1,4 @@
-#include "sema/type_resolver.hh"
+#include "sema/passes/type_resolver.hh"
 
 namespace porpoise::sema {
 

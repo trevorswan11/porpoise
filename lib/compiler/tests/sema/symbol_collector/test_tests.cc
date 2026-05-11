@@ -4,12 +4,18 @@
 
 namespace porpoise::tests {
 
+namespace mut = helpers::mut;
+
 TEST_CASE("Test statement symbol collection") {
     auto [ctx, idx]      = helpers::collect_and_check(R"(test "foo" { const foo := bar; })");
     const auto& registry = ctx.analyzer.get_registry();
     REQUIRE(registry.size() == 2);
     CHECK(registry.get(idx).size() == 0);
-    helpers::test_common_decl_collection(ctx, 1);
+
+    auto&       pool      = ctx.analyzer.get_pool();
+    const auto& test_type = ctx.root_mod->get_sema_type(ctx.root_mod->ast[0]);
+    CHECK(&test_type == &pool[{sema::TypeKind::BLOCK, mut::IMMUTABLE, 1}]);
+    ctx.test_common_decl_collection(1);
 }
 
 TEST_CASE("Test shadowing") {

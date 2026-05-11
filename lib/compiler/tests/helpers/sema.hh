@@ -23,6 +23,12 @@ struct MockFile {
     opt::Option<std::string_view> name{};
 };
 
+// Tests the collected state of a minimal non-public implicit declaration
+auto test_common_decl_collection(const sema::SymbolTableRegistry& registry,
+                                 const mod::Module&               module,
+                                 usize                            idx,
+                                 std::string_view                 name = "foo") -> void;
+
 struct SemaTestContext {
     mem::Box<mod::MemoryLoader> loader;
     mod::ModuleManager          manager;
@@ -34,6 +40,9 @@ struct SemaTestContext {
                              const std::filesystem::path& root_path,
                              std::string_view             input,
                              std::ostream&                error_stream = std::cerr);
+
+    // Tests the collected state of a minimal non-public implicit declaration in the context
+    auto test_common_decl_collection(usize idx, std::string_view name = "foo") -> void;
 };
 
 // Collects the assumed-syntactically-valid input and returns the analyzer and parent table index.
@@ -93,9 +102,6 @@ template <typename... Ds>
 auto test_collector_fail(std::string_view failing, Ds&&... expected_diagnostics) -> void {
     test_collector_fail(failing, {}, std::forward<Ds>(expected_diagnostics)...);
 }
-
-auto test_common_decl_collection(SemaTestContext& ctx, usize idx, std::string_view name = "foo")
-    -> void;
 
 namespace mut {
 

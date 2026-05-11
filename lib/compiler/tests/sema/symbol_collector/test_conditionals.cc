@@ -10,7 +10,7 @@ namespace helpers {
 auto test_conditional_scope(SemaTestContext& ctx, usize idx) {
     auto& registry = ctx.analyzer.get_registry();
     CHECK(registry.get(idx).size() == 1);
-    helpers::test_common_decl_collection(ctx, idx);
+    ctx.test_common_decl_collection(idx);
 }
 
 } // namespace helpers

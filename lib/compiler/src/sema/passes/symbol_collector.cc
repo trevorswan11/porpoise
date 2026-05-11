@@ -1,4 +1,4 @@
-#include "sema/symbol_collector.hh"
+#include "sema/passes/symbol_collector.hh"
 
 namespace porpoise::sema {
 
@@ -358,11 +358,13 @@ auto SymbolCollector::visit(const ast::NodeID& id, const ast::ImportStatement& i
                     ctx_.modules.try_get_file_module(string->value, collecting_.parent_path)};
         }
 
+        const auto& payload =
+            collecting_.ast.get_as<ast::IdentifierExpression>(*import_stmt.payload);
         const auto& ident =
             import_stmt.alias
                 ? collecting_.ast.get_as<ast::IdentifierExpression>(**import_stmt.alias)
-                : collecting_.ast.get_as<ast::IdentifierExpression>(*import_stmt.payload);
-        return {ident.name, ctx_.modules.try_get_library_module(std::string{ident.name})};
+                : payload;
+        return {ident.name, ctx_.modules.try_get_library_module(std::string{payload.name})};
     }();
 
     // Only set the table index if the module exists
