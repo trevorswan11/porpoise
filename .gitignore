@@ -67,7 +67,6 @@ __cmake_systeminformation/
 # Editors
 .vscode
 .vs
-.zed
 
 # Packge locks
 *.lock

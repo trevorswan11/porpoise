@@ -85,9 +85,9 @@ const ProjectPaths = struct {
 
         pub fn files(self: *const Project, b: *std.Build) ![][]const u8 {
             return std.mem.concat(b.allocator, []const u8, &.{
-                try collectFiles(b, self.inc, .{ .allowed_extensions = &.{".hpp"} }),
-                try collectFiles(b, self.src, .{ .allowed_extensions = &.{".cpp"} }),
-                try collectFiles(b, self.tests, .{ .allowed_extensions = &.{ ".hpp", ".cpp" } }),
+                try collectFiles(b, self.inc, .{ .allowed_extensions = &.{".hh"} }),
+                try collectFiles(b, self.src, .{ .allowed_extensions = &.{".cc"} }),
+                try collectFiles(b, self.tests, .{ .allowed_extensions = &.{ ".hh", ".cc" } }),
             });
         }
     };
@@ -103,7 +103,7 @@ const ProjectPaths = struct {
         .src = "lib/driver/src/",
         .tests = "lib/driver/tests/",
     };
-    const porpoise = "porpoise/main.cpp";
+    const porpoise = "porpoise/main.cc";
 
     const support: Project = .{
         .inc = "lib/support/include/",
@@ -120,7 +120,7 @@ const ProjectPaths = struct {
             try compiler.files(b),
             try driver.files(b),
             try support.files(b),
-            try collectFiles(b, harness, .{ .allowed_extensions = &.{".cpp"} }),
+            try collectFiles(b, harness, .{ .allowed_extensions = &.{".cc"} }),
         });
     }
 
@@ -131,6 +131,7 @@ const ExecutableBehavior = union(enum) {
     runnable: struct {
         cmd_name: []const u8,
         cmd_desc: []const u8,
+        install_dir: ?[]const u8 = null,
     },
     standalone: void,
 };
@@ -144,16 +145,8 @@ const TestArtifacts = struct {
     pub fn configure(
         self: *const TestArtifacts,
         b: *std.Build,
-        install: bool,
         cdb_steps: ?*std.ArrayList(*std.Build.Step),
     ) !void {
-        if (install) {
-            b.installArtifact(self.harness_tests);
-            b.installArtifact(self.support_tests);
-            b.installArtifact(self.compiler_tests);
-            b.installArtifact(self.driver_tests);
-        }
-
         if (cdb_steps) |cdb| {
             try cdb.append(b.allocator, &self.support_tests.step);
             try cdb.append(b.allocator, &self.compiler_tests.step);
@@ -303,9 +296,7 @@ fn addArtifacts(b: *std.Build, config: struct {
             .config_headers = &.{config_h},
             .link_libraries = &.{ libcompiler, fmt_dep.artifact },
             .cxx = .{
-                .files = try collectFiles(b, ProjectPaths.driver.src, .{
-                    .dropped_files = &.{"main.cpp"},
-                }),
+                .files = try collectFiles(b, ProjectPaths.driver.src, .{}),
                 .flags = config.cxx_flags,
             },
         }),
@@ -342,6 +333,7 @@ fn addArtifacts(b: *std.Build, config: struct {
 
     var tests: ?TestArtifacts = null;
     if (building_for_host) {
+        const install_behavior: ?[]const u8 = if (config.auto_install) "tests" else null;
         const harness_main = b.path(ProjectPaths.harness ++ "main.zig");
         const catch2_dep = catch2.build(b, .{
             .target = target,
@@ -350,7 +342,7 @@ fn addArtifacts(b: *std.Build, config: struct {
 
         // The test harness has standalone tests of its own
         const harness = b.addTest(.{
-            .name = "harness_tests",
+            .name = "harness",
             .root_module = b.createModule(.{
                 .root_source_file = harness_main,
                 .optimize = config.optimize,
@@ -362,6 +354,15 @@ fn addArtifacts(b: *std.Build, config: struct {
         const harness_cmd = b.addRunArtifact(harness);
         const harness_step = b.step("test-harness", "Run test harness' tests");
         harness_step.dependOn(&harness_cmd.step);
+
+        if (install_behavior) |install_dir| {
+            const install = b.addInstallArtifact(harness, .{
+                .dest_dir = .{
+                    .override = .{ .custom = install_dir },
+                },
+            });
+            harness_step.dependOn(&install.step);
+        }
 
         // Support's tests depend on the test runner but not LLVM
         const support_tests = createExecutable(b, .{
@@ -375,18 +376,19 @@ fn addArtifacts(b: *std.Build, config: struct {
             .system_include_paths = &system_includes,
             .cxx = .{
                 .files = try collectFiles(b, ProjectPaths.support.tests, .{
-                    .extra_files = &.{ProjectPaths.harness ++ "runner.cpp"},
+                    .extra_files = &.{ProjectPaths.harness ++ "runner.cc"},
                 }),
                 .flags = config.cxx_flags,
             },
             .config_headers = &.{config_h},
             .link_libraries = &.{ libsupport, catch2_dep.artifact, fmt_dep.artifact },
         }, .{
-            .name = "support_tests",
+            .name = "support",
             .behavior = config.behavior orelse .{
                 .runnable = .{
                     .cmd_name = "test-support",
                     .cmd_desc = "Run support's unit tests",
+                    .install_dir = install_behavior,
                 },
             },
         });
@@ -403,18 +405,19 @@ fn addArtifacts(b: *std.Build, config: struct {
             .system_include_paths = &system_includes,
             .cxx = .{
                 .files = try collectFiles(b, ProjectPaths.compiler.tests, .{
-                    .extra_files = &.{ProjectPaths.harness ++ "runner.cpp"},
+                    .extra_files = &.{ProjectPaths.harness ++ "runner.cc"},
                 }),
                 .flags = config.cxx_flags,
             },
             .config_headers = &.{config_h},
             .link_libraries = &.{ libcompiler, catch2_dep.artifact, fmt_dep.artifact },
         }, .{
-            .name = "compiler_tests",
+            .name = "compiler",
             .behavior = config.behavior orelse .{
                 .runnable = .{
                     .cmd_name = "test-compiler",
                     .cmd_desc = "Run compiler unit tests",
+                    .install_dir = install_behavior,
                 },
             },
         });
@@ -432,18 +435,19 @@ fn addArtifacts(b: *std.Build, config: struct {
             .system_include_paths = &system_includes,
             .cxx = .{
                 .files = try collectFiles(b, ProjectPaths.driver.tests, .{
-                    .extra_files = &.{ProjectPaths.harness ++ "runner.cpp"},
+                    .extra_files = &.{ProjectPaths.harness ++ "runner.cc"},
                 }),
                 .flags = config.cxx_flags,
             },
             .config_headers = &.{config_h},
             .link_libraries = &.{ libcompiler, libdriver, catch2_dep.artifact, fmt_dep.artifact },
         }, .{
-            .name = "driver_tests",
+            .name = "driver",
             .behavior = config.behavior orelse .{
                 .runnable = .{
                     .cmd_name = "test-driver",
                     .cmd_desc = "Run the driver's unit tests",
+                    .install_dir = install_behavior,
                 },
             },
         });
@@ -454,7 +458,7 @@ fn addArtifacts(b: *std.Build, config: struct {
             .compiler_tests = compiler_tests,
             .driver_tests = driver_tests,
         };
-        try tests.?.configure(b, config.auto_install, config.cdb_steps);
+        try tests.?.configure(b, config.cdb_steps);
     }
 
     const cppcheck_dep: ?Dependency = if (building_for_host) try cppcheck.build(b, .{
@@ -566,6 +570,15 @@ fn createExecutable(
 
             if (b.args) |args| {
                 run_cmd.addArgs(args);
+            }
+
+            if (run.install_dir) |install_dir| {
+                const install = b.addInstallArtifact(exe, .{
+                    .dest_dir = .{
+                        .override = .{ .custom = install_dir },
+                    },
+                });
+                run_cmd.step.dependOn(&install.step);
             }
 
             const run_step = b.step(run.cmd_name, run.cmd_desc);
@@ -872,7 +885,7 @@ const LOCCounter = struct {
         }
     };
 
-    const counted_extensions = [_][]const u8{ ".cpp", ".hpp", ".zig", ".p" };
+    const counted_extensions = [_][]const u8{ ".cc", ".hh", ".zig", ".p" };
     const dropped_file_config: CollectFilesConfig = .{
         .allowed_extensions = &.{ ".zig", ".h", ".in" },
         .return_basenames_only = true,
@@ -1257,7 +1270,7 @@ const CoverageParser = struct {
 };
 
 const CollectFilesConfig = struct {
-    allowed_extensions: []const []const u8 = &.{".cpp"},
+    allowed_extensions: []const []const u8 = &.{".cc"},
     dropped_files: ?[]const []const u8 = null,
     extra_files: ?[]const []const u8 = null,
     return_basenames_only: bool = false,

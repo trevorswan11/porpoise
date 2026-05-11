@@ -1,0 +1,49 @@
+#pragma once
+
+// IWYU pragma: begin_keep
+#include "ast/expression.hh"
+#include "ast/primitive.hh"
+#include "ast/statement.hh"
+#include "ast/type.hh"
+// IWYU pragma: end_keep
+
+#include "variant.hh"
+
+namespace porpoise::ast {
+
+#define X(Type) Type,
+using NodeData = std::variant<FOREACH_AST_NODE(X) Unit>;
+#undef X
+
+#define AST_NODE_VISITOR_DEF_GEN_X(NodeType) \
+    auto visit(const porpoise::ast::NodeID&, const porpoise::ast::NodeType&) -> void;
+#define AST_NODE_VISITOR_DEF_GEN()               \
+    FOREACH_AST_NODE(AST_NODE_VISITOR_DEF_GEN_X) \
+    auto visit(const porpoise::ast::NodeID&, const porpoise::Unit&) -> void;
+
+#define AST_NODE_VISITOR_NOOP(Class, NodeType) \
+    auto Class::visit(const porpoise::ast::NodeID&, const porpoise::ast::NodeType&) -> void {}
+
+#define AST_TYPE_VISITOR_DEF_GEN_X(NodeType) \
+    auto visit(const porpoise::ast::ExplicitTypeID&, const porpoise::ast::NodeType&) -> void;
+#define AST_TYPE_VISITOR_DEF_GEN() FOREACH_AST_TYPE(AST_TYPE_VISITOR_DEF_GEN_X)
+
+#define AST_TYPE_VISITOR_NOOP(Class, NodeType)                                              \
+    auto Class::visit(const porpoise::ast::ExplicitTypeID&, const porpoise::ast::NodeType&) \
+        -> void {}
+
+using TypeData = std::variant<IdentifierExpression,
+                              ScopeResolutionExpression,
+                              CallExpression,
+                              FunctionExpression,
+                              ExplicitTypeID,
+                              StructExpression,
+                              EnumExpression,
+                              UnionExpression,
+                              ExplicitArrayType>;
+
+#define AST_VISITOR_DEF_GEN()  \
+    AST_NODE_VISITOR_DEF_GEN() \
+    AST_TYPE_VISITOR_DEF_GEN()
+
+} // namespace porpoise::ast
