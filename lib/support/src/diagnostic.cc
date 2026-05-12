@@ -16,7 +16,7 @@ auto format_diagnostic(std::ostream&                   os,
 
     // The source and location play nicely with one another
     if (source_path) {
-        const auto& local_style = tty ? style::SOURCE : style::BASE;
+        const auto& local_style = tty ? style::WHITE_BOLD : style::BASE;
         os << fmt::format(local_style, "{}:", *source_path);
         if (diag.location) {
             os << fmt::format(local_style, "{}: ", *diag.location);

@@ -8,7 +8,7 @@
 #    include "platform/win32.hh"
 #    include "types.hh"
 
-namespace porpoise::driver::win32 {
+namespace porpoise::win32 {
 
 namespace {
 
@@ -48,6 +48,6 @@ RichConsole::~RichConsole() {
     }
 }
 
-} // namespace porpoise::driver::win32
+} // namespace porpoise::win32
 
 #endif

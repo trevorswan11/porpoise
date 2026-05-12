@@ -45,4 +45,10 @@ concept ScopedEnum = std::is_scoped_enum_v<T>;
 template <typename T>
 concept Reference = std::is_reference_v<T>;
 
+template <class T>
+concept PairLike = requires {
+    typename std::tuple_size<std::decay_t<T>>::type;
+    requires std::tuple_size_v<std::decay_t<T>> == 2;
+};
+
 } // namespace porpoise

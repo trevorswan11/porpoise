@@ -3,7 +3,6 @@
 #include <array>
 #include <concepts>
 #include <type_traits>
-#include <utility>
 
 #include <magic_enum/magic_enum.hpp>
 
@@ -108,10 +107,10 @@ consteval auto enum_range() noexcept {
     static_assert(high_idx >= low_idx, "Range must be strictly increasing");
 
     // The range is inclusive to circumvent weird indexing
-    constexpr usize count = high_idx - low_idx + 1;
-    return []<usize... Is>(std::index_sequence<Is...>, usize offset) {
-        return std::array<E, sizeof...(Is)>{enum_value<E>(offset + Is)...};
-    }(std::make_index_sequence<count>{}, low_idx); // written with the help of Gemini
+    constexpr usize      count = high_idx - low_idx + 1;
+    std::array<E, count> range;
+    for (usize i = 0; i < range.size(); ++i) { range[i] = enum_value<E>(low_idx + i); }
+    return range;
 }
 
 // Returns an array of all possible enum values

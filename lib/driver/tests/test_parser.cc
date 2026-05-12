@@ -4,7 +4,7 @@
 
 #include <catch2/catch_test_macros.hpp>
 
-#include "arguments/parser.hh"
+#include "clap/parser.hh"
 
 namespace porpoise::tests {
 
@@ -31,9 +31,9 @@ class MockArgv {
 using namespace std::string_literals;
 
 TEST_CASE("Ast dump parser") {
-    auto           args = helpers::MockArgv{{"porpoise"s, "ast"s}};
-    driver::Parser parser{args.argc(), args.argv()};
-    CHECK(std::holds_alternative<driver::AstDump>(parser.get_parsed()));
+    auto         args = helpers::MockArgv{{"porpoise"s, "ast"s}};
+    clap::Parser parser{args.argc(), args.argv()};
+    CHECK(std::holds_alternative<cmd::Debug>(parser.get_parsed()));
 }
 
 } // namespace porpoise::tests

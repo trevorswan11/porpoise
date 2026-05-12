@@ -9,7 +9,25 @@
 
 #include "types.hh"
 
-namespace porpoise::string {
+namespace porpoise {
+
+namespace traits {
+
+template <typename T> struct is_string_like : std::false_type {};
+template <> struct is_string_like<std::string> : std::true_type {};
+template <> struct is_string_like<std::string_view> : std::true_type {};
+template <> struct is_string_like<const byte*> : std::true_type {};
+template <typename T> constexpr auto is_string_like_v = is_string_like<T>::value;
+
+template <typename T>
+concept StringLike = is_string_like_v<std::remove_cvref_t<T>>;
+
+template <typename T>
+concept StdStringLike = !std::same_as<T, const byte*> && is_string_like_v<std::remove_cvref_t<T>>;
+
+} // namespace traits
+
+namespace string {
 
 template <typename Func>
 concept Predicate = std::convertible_to<std::invoke_result_t<Func, byte>, bool>;
@@ -65,4 +83,11 @@ substr(std::string_view str, usize pos, usize len = std::string_view::npos) noex
 auto substr(std::string&& str, usize pos, usize len = std::string_view::npos) noexcept
     -> std::string_view = delete;
 
-} // namespace porpoise::string
+// Checks if the provided string contains entirely whitespace characters
+[[nodiscard]] constexpr auto is_blank(std::string_view text) -> bool {
+    return std::ranges::all_of(text, [](byte b) { return std::isspace(b); });
+}
+
+} // namespace string
+
+} // namespace porpoise

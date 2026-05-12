@@ -24,7 +24,7 @@ auto format_module_diagnostic(std::ostream&                   os,
     // Diagnostic error messages can include the location
     const auto [line, caret] = module->source.get_diagnostic_strings(*diag.location);
     fmt::print(os, "\n    {}", line);
-    if (caret) { os << fmt::format(tty ? style::CARET : style::BASE, "\n    {}", *caret); }
+    if (caret) { os << fmt::format(tty ? style::GREEN : style::BASE, "\n    {}", *caret); }
     return os;
 }
 

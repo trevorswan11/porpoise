@@ -9,11 +9,11 @@
 
 #include <magic_enum/magic_enum.hpp>
 
-#include <fmt/color.h>
 #include <fmt/format.h>
 
 #include "iterator.hh"
 #include "option.hh"
+#include "style.hh"
 #include "types.hh"
 #include "utility.hh"
 
@@ -60,16 +60,6 @@ enum class DiagnosticLevel : u8 {
     WARNING,
 };
 
-namespace style {
-
-constexpr auto BASE    = fmt::text_style{};
-constexpr auto SOURCE  = fmt::fg(fmt::color::white) | fmt::emphasis::bold;
-constexpr auto ERROR   = fmt::fg(fmt::color::red);
-constexpr auto WARNING = fmt::fg(fmt::color::light_yellow);
-constexpr auto CARET   = fmt::fg(fmt::color::green);
-
-} // namespace style
-
 namespace detail {
 
 // Returns the level fit for diagnostic printing
@@ -84,8 +74,8 @@ namespace detail {
 // Returns the level's style for diagnostic printing
 [[nodiscard]] constexpr auto level_style(DiagnosticLevel level) noexcept {
     switch (level) {
-    case DiagnosticLevel::ERROR:   return style::ERROR;
-    case DiagnosticLevel::WARNING: return style::WARNING;
+    case DiagnosticLevel::ERROR:   return style::RED;
+    case DiagnosticLevel::WARNING: return style::LIGHT_YELLOW;
     default:                       return style::BASE;
     }
 }
