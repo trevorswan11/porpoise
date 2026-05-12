@@ -154,11 +154,11 @@ auto Parser::parse_expression(Precedence precedence) -> Result<ast::ExpressionHa
     auto clause = TRY(parse_statement(require_semicolon));
 
     // The clause can only be a jump, block, or expression statement
-    if (!clause->any<ast::ExpressionStatement,
-                     ast::BreakStatement,
-                     ast::ContinueStatement,
-                     ast::ReturnStatement,
-                     ast::BlockStatement>()) {
+    if (!clause.any<ast::ExpressionStatement,
+                    ast::BreakStatement,
+                    ast::ContinueStatement,
+                    ast::ReturnStatement,
+                    ast::BlockStatement>()) {
         return make_syntax_err(error, ast_->location_of(*clause));
     }
     return clause;

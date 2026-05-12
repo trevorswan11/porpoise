@@ -5,7 +5,7 @@
 
 #include <fmt/format.h>
 
-#include "ast/meta.hh"
+#include "ast/kind.hh"
 
 #include "syntax/token.hh"
 
@@ -37,7 +37,9 @@ class NodeID {
         return static_cast<syntax::TokenType>((raw_ & TOKEN_TYPE_MASK) >> TOKEN_TYPE_OFFSET);
     }
 
-    [[nodiscard]] constexpr auto get_index() const noexcept -> u64 { return raw_ & INDEX_MASK; }
+    [[nodiscard]] constexpr auto get_index() const noexcept -> usize {
+        return static_cast<usize>(raw_ & INDEX_MASK);
+    }
 
     [[nodiscard]] static constexpr auto make_invalid() noexcept -> NodeID {
         return NodeID{detail::INVALID_ID};
@@ -83,7 +85,7 @@ template <> struct Nullable<ast::NodeID> {
         return ast::NodeID::make_invalid();
     }
 
-    [[nodiscard]] static constexpr auto is_valid(const ast::NodeID& id) noexcept -> bool {
+    [[nodiscard]] static constexpr auto is_valid(ast::NodeID id) noexcept -> bool {
         return id.is_valid();
     }
 };
@@ -181,7 +183,9 @@ class ExplicitTypeID {
         return static_cast<syntax::TokenType>((raw_ & TOKEN_TYPE_MASK) >> TOKEN_TYPE_OFFSET);
     }
 
-    [[nodiscard]] constexpr auto get_index() const noexcept -> u64 { return raw_ & INDEX_MASK; }
+    [[nodiscard]] constexpr auto get_index() const noexcept -> usize {
+        return static_cast<usize>(raw_ & INDEX_MASK);
+    }
 
     [[nodiscard]] static constexpr auto make_invalid() noexcept -> ExplicitTypeID {
         return ExplicitTypeID{detail::INVALID_ID};
@@ -219,17 +223,6 @@ class ExplicitTypeID {
 
 #undef MAKE_MUTUALLY_EXCLUSIVE_TYPE_QUERY
 
-// An ID-indexable side table containing attached data
-template <typename ID, DefaultConstructible T> struct SideTable {
-    std::vector<T> values;
-
-    template <typename Self>
-    [[nodiscard]] constexpr auto operator[](this Self&& self, ID id) noexcept -> auto& {
-        ASSERT(id.is_valid(), "Attempt to access invalid id");
-        return self.values[id.get_index()];
-    }
-};
-
 } // namespace ast
 
 namespace traits {
@@ -239,7 +232,7 @@ template <> struct Nullable<ast::ExplicitTypeID> {
         return ast::ExplicitTypeID::make_invalid();
     }
 
-    [[nodiscard]] static constexpr auto is_valid(const ast::ExplicitTypeID& id) noexcept -> bool {
+    [[nodiscard]] static constexpr auto is_valid(ast::ExplicitTypeID id) noexcept -> bool {
         return id.is_valid();
     }
 };

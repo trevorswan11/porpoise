@@ -1,5 +1,7 @@
 #pragma once
 
+#include <magic_enum/magic_enum_flags.hpp>
+
 #include "ast/handle.hh"
 
 #include "syntax/error.hh"
@@ -33,6 +35,33 @@ struct ContinueStatement {
     [[nodiscard]] static auto parse(syntax::Parser& parser)
         -> Result<StatementHandle, syntax::Diagnostic>;
 };
+
+enum class DeclModifiers : u8 {
+    VARIABLE  = 1 << 0,
+    CONSTANT  = 1 << 1,
+    CONSTEXPR = 1 << 2,
+    PUBLIC    = 1 << 3,
+    EXTERN    = 1 << 4,
+    EXPORT    = 1 << 5,
+    STATIC    = 1 << 6,
+};
+
+constexpr auto operator|(DeclModifiers lhs, DeclModifiers rhs) -> DeclModifiers {
+    return static_cast<DeclModifiers>(std::to_underlying(lhs) | std::to_underlying(rhs));
+}
+
+constexpr auto operator&(DeclModifiers lhs, DeclModifiers rhs) -> DeclModifiers {
+    return static_cast<DeclModifiers>(std::to_underlying(lhs) & std::to_underlying(rhs));
+}
+
+constexpr auto operator^(DeclModifiers lhs, DeclModifiers rhs) -> DeclModifiers {
+    return static_cast<DeclModifiers>(std::to_underlying(lhs) ^ std::to_underlying(rhs));
+}
+
+constexpr auto operator|=(DeclModifiers& lhs, DeclModifiers rhs) -> DeclModifiers& {
+    lhs = lhs | rhs;
+    return lhs;
+}
 
 struct DeclStatement {
     IdentifierHandle              ident;
@@ -78,7 +107,7 @@ struct ImportStatement {
     ImportPayloadHandle           payload;
     opt::Option<IdentifierHandle> alias;
 
-    [[nodiscard]] static constexpr auto is_public(const NodeID& id) noexcept -> bool {
+    [[nodiscard]] static constexpr auto is_public(ast::NodeID id) noexcept -> bool {
         return id.get_token_type() == syntax::TokenType::PUBLIC;
     }
 
@@ -105,7 +134,7 @@ struct UsingStatement {
     IdentifierHandle alias;
     ExplicitTypeID   explicit_type;
 
-    [[nodiscard]] static constexpr auto is_public(const NodeID& id) noexcept -> bool {
+    [[nodiscard]] static constexpr auto is_public(ast::NodeID id) noexcept -> bool {
         return id.get_token_type() == syntax::TokenType::PUBLIC;
     }
 
@@ -116,3 +145,7 @@ struct UsingStatement {
 } // namespace ast
 
 } // namespace porpoise
+
+template <> struct magic_enum::customize::enum_range<porpoise::ast::DeclModifiers> {
+    static constexpr bool is_flags = true;
+};

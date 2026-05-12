@@ -21,7 +21,7 @@ template <NodeKind... AllowedKinds> class Handle {
     }
 
     template <NodeKind... OtherKinds>
-    constexpr Handle(const Handle<OtherKinds...>& other) noexcept : id_{*other} {
+    constexpr Handle(Handle<OtherKinds...> other) noexcept : id_{*other} {
         // Shallow verify at compile time to enforce possible construction
         constexpr auto check_compat   = []<NodeKind K> { return ((K == AllowedKinds) || ...); };
         constexpr auto any_compatible = (check_compat.template operator()<OtherKinds>() || ...);
@@ -39,6 +39,17 @@ template <NodeKind... AllowedKinds> class Handle {
     [[nodiscard]] constexpr auto        is_valid() const noexcept -> bool { return id_.is_valid(); }
     [[nodiscard]] static constexpr auto make_invalid() noexcept -> Handle {
         return Handle{detail::INVALID_ID};
+    }
+
+    [[nodiscard]] constexpr auto get_index() const noexcept -> usize { return id_.get_index(); }
+    [[nodiscard]] constexpr      operator NodeID() const noexcept { return id_; }
+
+    template <traits::ASTNode N> [[nodiscard]] constexpr auto is() const noexcept -> bool {
+        return id_.is<N>();
+    }
+
+    template <traits::ASTNode... Ns> [[nodiscard]] constexpr auto any() const noexcept -> bool {
+        return id_.any<Ns...>();
     }
 
   private:
@@ -132,11 +143,12 @@ template <ast::NodeKind... Kinds> struct Nullable<ast::Handle<Kinds...>> {
         return ast::Handle<Kinds...>::make_invalid();
     }
 
-    [[nodiscard]] static constexpr auto is_valid(const ast::Handle<Kinds...>& handle) noexcept
-        -> bool {
+    [[nodiscard]] static constexpr auto is_valid(ast::Handle<Kinds...> handle) noexcept -> bool {
         return handle.is_valid();
     }
 };
+
+static_assert(sizeof(opt::Option<ast::Handle<ast::NodeKind::ARRAY_EXPRESSION>>) == 8);
 
 } // namespace traits
 

@@ -55,7 +55,7 @@ auto ModuleManager::try_get_file_module(const std::filesystem::path& path,
     return try_get(*normalized);
 }
 
-auto ModuleManager::try_get_library_module(const std::string& name)
+auto ModuleManager::try_get_library_module(std::string_view name)
     -> Result<mem::NonNull<Module>, Diagnostic> {
     auto it = module_lut_.find(name);
     if (it == module_lut_.end()) {
@@ -64,7 +64,7 @@ auto ModuleManager::try_get_library_module(const std::string& name)
     return try_get(it->second);
 }
 
-auto ModuleManager::add_library_module(const std::string& name, const std::filesystem::path& path)
+auto ModuleManager::add_library_module(std::string_view name, const std::filesystem::path& path)
     -> Result<Unit, Diagnostic> {
     const auto normalized = loader_.normalize(path);
     if (!normalized) { return make_mod_err(normalized.error()); }

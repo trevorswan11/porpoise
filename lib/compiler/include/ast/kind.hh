@@ -1,7 +1,5 @@
 #pragma once
 
-#include <magic_enum/magic_enum_flags.hpp>
-
 #include "types.hh"
 #include "variant.hh"
 
@@ -152,33 +150,6 @@ enum class ExplicitTypeKind : u8 {
 class ExplicitTypeID;
 struct ExplicitArrayType;
 
-enum class DeclModifiers : u8 {
-    VARIABLE  = 1 << 0,
-    CONSTANT  = 1 << 1,
-    CONSTEXPR = 1 << 2,
-    PUBLIC    = 1 << 3,
-    EXTERN    = 1 << 4,
-    EXPORT    = 1 << 5,
-    STATIC    = 1 << 6,
-};
-
-constexpr auto operator|(DeclModifiers lhs, DeclModifiers rhs) -> DeclModifiers {
-    return static_cast<DeclModifiers>(std::to_underlying(lhs) | std::to_underlying(rhs));
-}
-
-constexpr auto operator&(DeclModifiers lhs, DeclModifiers rhs) -> DeclModifiers {
-    return static_cast<DeclModifiers>(std::to_underlying(lhs) & std::to_underlying(rhs));
-}
-
-constexpr auto operator^(DeclModifiers lhs, DeclModifiers rhs) -> DeclModifiers {
-    return static_cast<DeclModifiers>(std::to_underlying(lhs) ^ std::to_underlying(rhs));
-}
-
-constexpr auto operator|=(DeclModifiers& lhs, DeclModifiers rhs) -> DeclModifiers& {
-    lhs = lhs | rhs;
-    return lhs;
-}
-
 namespace traits {
 
 template <typename T> struct NodeKindOf;
@@ -281,7 +252,3 @@ KIND_OF_TRAIT(ExplicitArrayType, ARRAY)
 } // namespace ast
 
 } // namespace porpoise
-
-template <> struct magic_enum::customize::enum_range<porpoise::ast::DeclModifiers> {
-    static constexpr bool is_flags = true;
-};

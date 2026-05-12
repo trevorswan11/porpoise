@@ -3,6 +3,7 @@
 #include <vector>
 
 #include "ast/id.hh"
+#include "ast/side_table.hh"
 
 #include "option.hh"
 

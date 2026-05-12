@@ -12,7 +12,7 @@ auto test_common_decl_collection(const sema::SymbolTableRegistry& registry,
     CHECK_FALSE(symbol->is_public(module));
 
     const auto& node = symbol->get_symbolic_node();
-    CHECK(node->is<ast::DeclStatement>());
+    CHECK(node.is<ast::DeclStatement>());
 }
 
 SemaTestContext::SemaTestContext(const std::vector<MockFile>& imports,
@@ -24,9 +24,7 @@ SemaTestContext::SemaTestContext(const std::vector<MockFile>& imports,
           loader->add(root_path, std::string{input});
           for (const auto& mock : imports) {
               loader->add(mock.path, std::string{mock.source});
-              if (mock.name) {
-                  REQUIRE(manager.add_library_module(std::string{*mock.name}, mock.path));
-              }
+              if (mock.name) { REQUIRE(manager.add_library_module(*mock.name, mock.path)); }
           }
 
           auto test_mod_result = manager.try_get_file_module(root_path);

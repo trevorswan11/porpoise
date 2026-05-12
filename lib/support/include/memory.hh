@@ -158,6 +158,8 @@ class NonNull {
         ASSERT(ptr_, "Attempt to create NonNull from nullptr");
     }
 
+    constexpr NonNull(T& ref) noexcept : ptr_{&ref} {}
+
     constexpr NonNull(opt::detail::Ref<T> opt) : ptr_{&opt.value()} {}
     NonNull(opt::None) = delete;
     NonNull(T&&)       = delete;

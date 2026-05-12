@@ -156,7 +156,7 @@ auto DeferStatement::parse(syntax::Parser& parser) -> Result<StatementHandle, sy
     const auto stmt = TRY(parser.parse_statement(true));
 
     // The statement has different restrictions from expression alternates
-    if (!stmt->any<ExpressionStatement, DiscardStatement, BlockStatement>()) {
+    if (!stmt.any<ExpressionStatement, DiscardStatement, BlockStatement>()) {
         return make_syntax_err(syntax::Error::ILLEGAL_DEFERRED_STATEMENT,
                                parser.get_location_of(*stmt));
     }

@@ -43,4 +43,14 @@ class Hasher {
     u64 hash_;
 };
 
+// https://github.com/martinus/unordered_dense#324-heterogeneous-overloads-using-is_transparent
+struct StringTransparent {
+    using is_transparent = void;
+    using is_avalanching = void;
+
+    [[nodiscard]] static auto operator()(std::string_view str) noexcept -> u64 {
+        return ankerl::unordered_dense::hash<std::string_view>{}(str);
+    }
+};
+
 } // namespace porpoise::hash
