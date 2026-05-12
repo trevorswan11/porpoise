@@ -31,6 +31,9 @@ template <typename T>
 concept Integral = std::is_integral_v<T> && !std::same_as<T, bool>;
 
 template <typename T>
+concept Unsigned = std::is_unsigned_v<T>;
+
+template <typename T>
 concept TriviallyDestructible = std::is_trivially_destructible_v<T>;
 
 template <typename T>
