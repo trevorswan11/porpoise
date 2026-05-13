@@ -13,6 +13,13 @@ concept Wyhashable = std::is_convertible_v<T, u64>;
 
 namespace wyhash = ankerl::unordered_dense::detail::wyhash;
 
+template <typename T> struct Hash {
+    [[nodiscard]] static auto operator()(const T& t) noexcept -> u64 {
+        if constexpr (Wyhashable<T>) { return wyhash::hash(static_cast<u64>(t)); }
+        return ankerl::unordered_dense::hash<T>{}(t);
+    }
+};
+
 // A 'high-quality' hash backed by `wyhash` with a `std::hash` fallback
 class Hasher {
   public:
@@ -35,8 +42,7 @@ class Hasher {
 
   private:
     template <typename T> [[nodiscard]] static constexpr auto hash(const T& value) noexcept -> u64 {
-        if constexpr (Wyhashable<T>) { return wyhash::hash(static_cast<u64>(value)); }
-        return ankerl::unordered_dense::hash<T>{}(value);
+        return Hash<T>{}(value);
     }
 
   private:

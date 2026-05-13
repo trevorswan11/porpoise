@@ -25,4 +25,8 @@ template <Unsigned U> [[nodiscard]] constexpr auto ceil_power_of_two(U val) noex
     return ++val;
 }
 
+template <Unsigned U> [[nodiscard]] auto is_power_of_two(U val) noexcept -> bool {
+    return (val > 0) && ((val & (val - 1)) == 0);
+}
+
 } // namespace porpoise
