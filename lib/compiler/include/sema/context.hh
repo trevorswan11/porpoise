@@ -21,12 +21,13 @@ struct Context {
     std::ostream&        error_stream;
     opt::Index           prelude_index;
 
-    Context(mod::ModuleManager&  m,
-            SymbolTableRegistry& r,
-            TypePool&            p,
-            Diagnostics          d,
-            std::ostream&        s) noexcept
-        : modules{m}, registry{r}, pool{p}, diagnostics{std::move(d)}, error_stream{s} {}
+    Context(mod::ModuleManager&  modules,
+            SymbolTableRegistry& registry,
+            TypePool&            pool,
+            Diagnostics          diagnostics,
+            std::ostream&        error_stream) noexcept
+        : modules{modules}, registry{registry}, pool{pool}, diagnostics{std::move(diagnostics)},
+          error_stream{error_stream} {}
     ~Context() = default;
 
     // Creates a copy with identical data but a new diagnostic list
@@ -67,7 +68,7 @@ struct Context {
 
     // Poisons the node and constructs an associated diagnostic to insert into the list
     template <typename... Args>
-    auto poison_node(mod::Module& module, const ast::NodeID& id, Args&&... args) -> void {
+    auto poison_node(mod::Module& module, ast::NodeID id, Args&&... args) -> void {
         if constexpr (sizeof...(args) != 0) {
             diagnostics.emplace_back(std::forward<Args>(args)...);
         }

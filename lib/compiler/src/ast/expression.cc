@@ -144,7 +144,7 @@ template <typename MemberValidator>
         return false;
     }
 
-    if (decl.value && (*decl.value)->is<FunctionExpression>()) { return true; }
+    if (decl.value && decl.value->is<FunctionExpression>()) { return true; }
     return opt::none;
 }
 
@@ -514,7 +514,7 @@ auto InitializerExpression::parse(syntax::Parser& parser, opt::Option<Expression
 auto LabelExpression::parse(syntax::Parser& parser, ExpressionHandle name)
     -> Result<ExpressionHandle, syntax::Diagnostic> {
     const auto start_token = parser.get_current_token();
-    if (!name->is<IdentifierExpression>()) {
+    if (!name.is<IdentifierExpression>()) {
         return make_syntax_err(syntax::Error::ILLEGAL_LABEL, start_token);
     }
     parser.advance();
@@ -651,7 +651,7 @@ auto ImplicitAccessExpression::parse(syntax::Parser& parser)
 
     parser.advance();
     const auto operand = TRY(parser.parse_expression(syntax::Precedence::PREFIX));
-    if (!operand->is<IdentifierExpression>()) {
+    if (!operand.is<IdentifierExpression>()) {
         return make_syntax_err(syntax::Error::ILLEGAL_IMPLICIT_ACCESS_OPERAND,
                                parser.get_location_of(*operand));
     }
@@ -667,7 +667,7 @@ auto StringExpression::parse(syntax::Parser& parser)
 
 auto ScopeResolutionExpression::parse(syntax::Parser& parser, ExpressionHandle outer)
     -> Result<ExpressionHandle, syntax::Diagnostic> {
-    if (!outer->any<IdentifierExpression, ScopeResolutionExpression>()) {
+    if (!outer.any<IdentifierExpression, ScopeResolutionExpression>()) {
         return make_syntax_err(syntax::Error::ILLEGAL_OUTER_SCOPE_TYPE,
                                parser.get_location_of(*outer));
     }

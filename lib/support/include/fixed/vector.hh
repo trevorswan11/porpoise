@@ -1,0 +1,162 @@
+#pragma once
+
+#include <algorithm>
+#include <cstddef>
+#include <cstring>
+#include <memory>
+#include <span>
+#include <stdexcept>
+#include <utility>
+
+#include "assert.hh"
+#include "types.hh"
+
+#include "fixed/storage.hh"
+
+namespace porpoise::fixed {
+
+// A fixed-size zero-allocation container with a vector-like interface
+template <typename Item, usize Capacity> class Vector {
+  public:
+    using value_type      = Item;
+    using size_type       = usize;
+    using reference       = Item&;
+    using const_reference = const Item&;
+    using iterator        = Item*;
+    using const_iterator  = const Item*;
+
+  public:
+    Vector() = default;
+    ~Vector() { clear(); }
+    ~Vector()
+        requires(TriviallyDestructible<Item>)
+    = default;
+
+    // Constructs the vector in place by emplacing each item into the buffer
+    template <typename... Is> constexpr explicit Vector(Is&&... items) {
+        static_assert(sizeof...(Is) <= Capacity, "Cannot initialize with more items than capacity");
+        (..., emplace_back(std::forward<Is>(items)));
+    }
+
+    constexpr Vector(const Vector&)
+        requires(TriviallyCopyable<Item>)
+    = default;
+
+    constexpr Vector(const Vector& other) {
+        if constexpr (TriviallyCopyable<Item>) {
+            size_ = other.size_;
+            std::copy(other.begin(), other.end(), data());
+        } else {
+            for (const auto& item : other) { emplace_back(item); }
+        }
+    }
+
+    constexpr auto operator=(const Vector&) -> Vector&
+        requires(TriviallyCopyable<Item>)
+    = default;
+
+    constexpr auto operator=(const Vector& other) -> Vector& {
+        if (this != &other) {
+            Vector temp{other};
+            swap(temp);
+        }
+        return *this;
+    }
+
+    constexpr Vector(Vector&& other) noexcept {
+        if constexpr (TriviallyCopyable<Item>) {
+            size_ = other.size_;
+            std::copy(other.begin(), other.end(), data());
+        } else {
+            for (auto& item : other) { emplace_back(std::move(item)); }
+        }
+        other.clear();
+    }
+
+    constexpr auto operator=(Vector&& other) -> Vector& {
+        if (this != &other) {
+            clear();
+            if constexpr (TriviallyCopyable<Item>) {
+                size_ = other.size_;
+                std::copy(other.begin(), other.end(), data());
+            } else {
+                for (auto& item : other) { emplace_back(std::move(item)); }
+            }
+            other.clear();
+        }
+        return *this;
+    }
+
+    // Constructs an object in place at the end of the vector with the provided args
+    template <typename... Args> constexpr auto emplace_back(Args&&... args) -> void {
+        if (size_ >= Capacity) { throw std::out_of_range{"StaticVector size out of range"}; }
+        std::construct_at(data() + size_, std::forward<Args>(args)...);
+        size_++;
+    }
+
+    constexpr auto push_back(const Item& item) -> void { emplace_back(item); }
+    constexpr auto push_back(Item&& item) -> void { emplace_back(std::move(item)); }
+
+    [[nodiscard]] constexpr explicit operator std::span<Item>() noexcept { return {data(), size_}; }
+    [[nodiscard]] constexpr explicit operator std::span<const Item>() const noexcept {
+        return {data(), size_};
+    }
+
+    template <typename Self>
+    [[nodiscard]] constexpr auto operator[](this Self&& self, usize idx) noexcept
+        -> decltype(auto) {
+        ASSERT(idx < self.size_, "StaticVector index out of bounds");
+        return self.data()[idx];
+    }
+
+    template <typename Self>
+    [[nodiscard]] constexpr auto begin(this Self&& self) noexcept -> auto* {
+        return self.data();
+    }
+
+    template <typename Self> [[nodiscard]] constexpr auto end(this Self&& self) noexcept -> auto* {
+        return self.data() + self.size_;
+    }
+
+    [[nodiscard]] constexpr auto empty() const noexcept -> bool { return size_ == 0; }
+    [[nodiscard]] constexpr auto size() const noexcept -> usize { return size_; }
+
+    template <typename Self> [[nodiscard]] constexpr auto data(this Self&& self) noexcept -> auto* {
+        return self.items_.data();
+    }
+
+    constexpr auto clear() noexcept -> void {
+        if constexpr (!TriviallyDestructible<Item>) {
+            // The lion is now concerned with freeing non-trivial resources
+            for (usize i = 0; i < size_; ++i) { std::destroy_at(data() + i); }
+        }
+        size_ = 0;
+    }
+
+  private:
+    // https://en.cppreference.com/cpp/algorithm/swap
+    constexpr auto swap(Vector& other) noexcept -> void {
+        static_assert(!TriviallyCopyable<Item>, "Trivial copies should be defaulted");
+        auto& smaller = (size_ < other.size_) ? *this : other;
+        auto& larger  = (size_ < other.size_) ? other : *this;
+
+        std::swap_ranges(smaller.begin(), smaller.end(), larger.begin());
+        const auto smaller_size = smaller.size_;
+        const auto larger_size  = larger.size_;
+
+        // Manually destroy the moved-from object after moving it
+        for (usize i = smaller_size; i < larger_size; ++i) {
+            smaller.emplace_back(std::move(larger[i]));
+            larger.data()[i].~Item();
+        }
+
+        smaller.size_ = larger_size;
+        larger.size_  = smaller_size;
+    }
+
+  private:
+    detail::Storage<Item, Capacity> items_;
+    usize                           size_{0};
+};
+
+} // namespace porpoise::fixed

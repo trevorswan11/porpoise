@@ -45,20 +45,19 @@ MAKE_COLLECTOR_NOOPS(COLLECTOR_NOOP_X)
 #define COLLECTOR_NOOP_X(NodeType) AST_TYPE_VISITOR_NOOP(SymbolCollector, NodeType)
 FOREACH_AST_TYPE(COLLECTOR_NOOP_X)
 
-auto SymbolCollector::visit(const ast::NodeID&, const ast::ArrayExpression& array) -> void {
+auto SymbolCollector::visit(ast::NodeID, const ast::ArrayExpression& array) -> void {
     const auto g = in_expr_scope_.guard();
     for (const auto& item : array.items) { collect(*item); }
 }
 
-auto SymbolCollector::visit(const ast::NodeID&, const ast::CallExpression& call) -> void {
+auto SymbolCollector::visit(ast::NodeID, const ast::CallExpression& call) -> void {
     const auto g = in_expr_scope_.guard();
     for (const auto& arg : call.arguments) {
         std::visit([&](const auto& handle) { collect(handle); }, arg);
     }
 }
 
-auto SymbolCollector::visit(const ast::NodeID& id, const ast::DoWhileLoopExpression& do_while)
-    -> void {
+auto SymbolCollector::visit(ast::NodeID id, const ast::DoWhileLoopExpression& do_while) -> void {
     const auto  g     = loop_guard();
     const auto& block = collecting_.ast.get_as<ast::BlockStatement>(*do_while.block);
     const auto  idx =
@@ -74,7 +73,7 @@ auto SymbolCollector::visit(const ast::NodeID& id, const ast::DoWhileLoopExpress
     }
 }
 
-auto SymbolCollector::visit(const ast::NodeID& id, const ast::EnumExpression& enum_expr) -> void {
+auto SymbolCollector::visit(ast::NodeID id, const ast::EnumExpression& enum_expr) -> void {
     const auto scope_idx = visit_scopes(
         TypeKind::ENUM,
         IterPair{enum_expr.enumerations,
@@ -88,7 +87,7 @@ auto SymbolCollector::visit(const ast::NodeID& id, const ast::EnumExpression& en
     collecting_.set_sema_type(id, *last_type_);
 }
 
-auto SymbolCollector::visit(const ast::NodeID& id, const ast::ForLoopExpression& for_expr) -> void {
+auto SymbolCollector::visit(ast::NodeID id, const ast::ForLoopExpression& for_expr) -> void {
     // The guard shouldn't enclose the else clause
     const auto g_expr = in_expr_scope_.guard();
     for (const auto& iterable : for_expr.iterables) { collect(iterable); }
@@ -115,7 +114,7 @@ auto SymbolCollector::visit(const ast::NodeID& id, const ast::ForLoopExpression&
     collecting_.set_sema_type(id, *last_type_.take());
 }
 
-auto SymbolCollector::visit(const ast::NodeID& id, const ast::FunctionExpression& fn) -> void {
+auto SymbolCollector::visit(ast::NodeID id, const ast::FunctionExpression& fn) -> void {
     const auto  new_idx = ctx_.registry.create();
     const Scope s{table_stack_, new_idx, table_idx_};
     const auto  g = fn_guard();
@@ -141,20 +140,19 @@ auto SymbolCollector::visit(const ast::NodeID& id, const ast::FunctionExpression
     collecting_.set_sema_type(id, *last_type_);
 }
 
-auto SymbolCollector::visit(const ast::NodeID&, const ast::IfExpression& if_expr) -> void {
+auto SymbolCollector::visit(ast::NodeID, const ast::IfExpression& if_expr) -> void {
     const auto g = in_expr_scope_.guard();
     collect(if_expr.condition);
     collect(if_expr.consequence);
     if (if_expr.alternate) { collect(*if_expr.alternate); }
 }
 
-auto SymbolCollector::visit(const ast::NodeID&, const ast::IndexExpression& index) -> void {
+auto SymbolCollector::visit(ast::NodeID, const ast::IndexExpression& index) -> void {
     const auto g = in_expr_scope_.guard();
     collect(index.index);
 }
 
-auto SymbolCollector::visit(const ast::NodeID& id, const ast::InfiniteLoopExpression& loop)
-    -> void {
+auto SymbolCollector::visit(ast::NodeID id, const ast::InfiniteLoopExpression& loop) -> void {
     const auto  g     = loop_guard();
     const auto& block = collecting_.ast.get_as<ast::BlockStatement>(*loop.block);
     const auto  idx =
@@ -164,23 +162,23 @@ auto SymbolCollector::visit(const ast::NodeID& id, const ast::InfiniteLoopExpres
     collecting_.set_sema_type(id, *last_type_.take());
 }
 
-#define MAKE_INFIX_COLLECTOR(NodeType)                                              \
-    auto SymbolCollector::visit(const ast::NodeID&, const NodeType& node) -> void { \
-        const auto g = in_expr_scope_.guard();                                      \
-        collect(node.lhs);                                                          \
-        collect(node.rhs);                                                          \
+#define MAKE_INFIX_COLLECTOR(NodeType)                                       \
+    auto SymbolCollector::visit(ast::NodeID, const NodeType& node) -> void { \
+        const auto g = in_expr_scope_.guard();                               \
+        collect(node.lhs);                                                   \
+        collect(node.rhs);                                                   \
     }
 
 MAKE_INFIX_COLLECTOR(ast::RangeExpression)
 MAKE_INFIX_COLLECTOR(ast::AssignmentExpression)
 MAKE_INFIX_COLLECTOR(ast::BinaryExpression)
 
-auto SymbolCollector::visit(const ast::NodeID&, const ast::InitializerExpression& init) -> void {
+auto SymbolCollector::visit(ast::NodeID, const ast::InitializerExpression& init) -> void {
     const auto g = in_expr_scope_.guard();
     for (const auto& initializer : init.initializers) { collect(initializer.value); }
 }
 
-auto SymbolCollector::visit(const ast::NodeID& id, const ast::LabelExpression& label) -> void {
+auto SymbolCollector::visit(ast::NodeID id, const ast::LabelExpression& label) -> void {
     const auto  g     = label_guard();
     const auto& ident = collecting_.ast.get_as<ast::IdentifierExpression>(*label.name);
 
@@ -198,7 +196,7 @@ auto SymbolCollector::visit(const ast::NodeID& id, const ast::LabelExpression& l
     collecting_.set_sema_type(id, *last_type_.take());
 }
 
-auto SymbolCollector::visit(const ast::NodeID&, const ast::MatchExpression& match) -> void {
+auto SymbolCollector::visit(ast::NodeID, const ast::MatchExpression& match) -> void {
     const auto g = in_expr_scope_.guard();
     collect(match.matcher);
     for (const auto& arm : match.arms) {
@@ -220,18 +218,17 @@ auto SymbolCollector::visit(const ast::NodeID&, const ast::MatchExpression& matc
     if (match.catch_all) { collect(*match.catch_all); }
 }
 
-#define MAKE_PREFIX_COLLECTOR(NodeType)                                             \
-    auto SymbolCollector::visit(const ast::NodeID&, const NodeType& node) -> void { \
-        const auto g = in_expr_scope_.guard();                                      \
-        collect(node.rhs);                                                          \
+#define MAKE_PREFIX_COLLECTOR(NodeType)                                      \
+    auto SymbolCollector::visit(ast::NodeID, const NodeType& node) -> void { \
+        const auto g = in_expr_scope_.guard();                               \
+        collect(node.rhs);                                                   \
     }
 
 MAKE_PREFIX_COLLECTOR(ast::ReferenceExpression)
 MAKE_PREFIX_COLLECTOR(ast::DereferenceExpression)
 MAKE_PREFIX_COLLECTOR(ast::UnaryExpression)
 
-auto SymbolCollector::visit(const ast::NodeID& id, const ast::StructExpression& struct_expr)
-    -> void {
+auto SymbolCollector::visit(ast::NodeID id, const ast::StructExpression& struct_expr) -> void {
     const auto scope_idx =
         visit_scopes(TypeKind::STRUCT,
                      IterPair{struct_expr.members,
@@ -240,7 +237,7 @@ auto SymbolCollector::visit(const ast::NodeID& id, const ast::StructExpression& 
     collecting_.set_sema_type(id, *last_type_);
 }
 
-auto SymbolCollector::visit(const ast::NodeID& id, const ast::UnionExpression& union_expr) -> void {
+auto SymbolCollector::visit(ast::NodeID id, const ast::UnionExpression& union_expr) -> void {
     const auto scope_idx = visit_scopes(
         TypeKind::UNION,
         IterPair{union_expr.fields,
@@ -255,8 +252,7 @@ auto SymbolCollector::visit(const ast::NodeID& id, const ast::UnionExpression& u
     collecting_.set_sema_type(id, *last_type_);
 }
 
-auto SymbolCollector::visit(const ast::NodeID& id, const ast::WhileLoopExpression& while_expr)
-    -> void {
+auto SymbolCollector::visit(ast::NodeID id, const ast::WhileLoopExpression& while_expr) -> void {
     // The guard shouldn't enclose the else clause or condition
     const auto g_expr = in_expr_scope_.guard();
     collect(while_expr.condition);
@@ -277,7 +273,7 @@ auto SymbolCollector::visit(const ast::NodeID& id, const ast::WhileLoopExpressio
     collecting_.set_sema_type(id, *last_type_.take());
 }
 
-auto SymbolCollector::visit(const ast::NodeID& id, const ast::BlockStatement& block) -> void {
+auto SymbolCollector::visit(ast::NodeID id, const ast::BlockStatement& block) -> void {
     if (!in_expr_scope_ && table_stack_.size() == 1) {
         ctx_.diagnostics.emplace_back("Cannot have block at the top level",
                                       Error::ILLEGAL_TOP_LEVEL_STATEMENT,
@@ -291,7 +287,7 @@ auto SymbolCollector::visit(const ast::NodeID& id, const ast::BlockStatement& bl
     collecting_.set_sema_type(id, *last_type_.take());
 }
 
-auto SymbolCollector::visit(const ast::NodeID& id, const ast::BreakStatement& break_stmt) -> void {
+auto SymbolCollector::visit(ast::NodeID id, const ast::BreakStatement& break_stmt) -> void {
     if (!in_loop_scope_ && !in_label_scope_) {
         ctx_.diagnostics.emplace_back("Cannot break outside of a loop or label",
                                       Error::ILLEGAL_CONTROL_FLOW,
@@ -300,7 +296,7 @@ auto SymbolCollector::visit(const ast::NodeID& id, const ast::BreakStatement& br
     if (break_stmt.expression) { collect(*break_stmt.expression); }
 }
 
-auto SymbolCollector::visit(const ast::NodeID& id, const ast::ContinueStatement&) -> void {
+auto SymbolCollector::visit(ast::NodeID id, const ast::ContinueStatement&) -> void {
     if (!in_loop_scope_) {
         ctx_.diagnostics.emplace_back("Cannot continue outside of a loop",
                                       Error::ILLEGAL_CONTROL_FLOW,
@@ -308,7 +304,7 @@ auto SymbolCollector::visit(const ast::NodeID& id, const ast::ContinueStatement&
     }
 }
 
-auto SymbolCollector::visit(const ast::NodeID& id, const ast::DeclStatement& decl) -> void {
+auto SymbolCollector::visit(ast::NodeID id, const ast::DeclStatement& decl) -> void {
     // We can stop analyzing early if there's no value
     const auto& ident = collecting_.ast.get_as<ast::IdentifierExpression>(*decl.ident);
     const auto  name  = ident.name;
@@ -318,7 +314,7 @@ auto SymbolCollector::visit(const ast::NodeID& id, const ast::DeclStatement& dec
     // Valued decls should be evaluated to get shallow types
     auto&      symbol = ctx_.registry.get_from(table_idx_, name);
     const auto expr   = *decl.value;
-    if (expr->any<ast::EnumExpression, ast::UnionExpression, ast::StructExpression>()) {
+    if (expr.any<ast::EnumExpression, ast::UnionExpression, ast::StructExpression>()) {
         if (decl.has_modifier(ast::DeclModifiers::CONSTEXPR)) {
             ctx_.diagnostics.emplace_back(
                 fmt::format("All {}s are implicitly constexpr", expr->display_name()),
@@ -332,7 +328,7 @@ auto SymbolCollector::visit(const ast::NodeID& id, const ast::DeclStatement& dec
         } else {
             symbol.set_kind(SymbolKind::TYPE);
         }
-    } else if (expr->is<ast::FunctionExpression>()) {
+    } else if (expr.is<ast::FunctionExpression>()) {
         if (!decl.has_modifier(ast::DeclModifiers::CONSTEXPR) &&
             !decl.has_modifier(ast::DeclModifiers::CONSTANT)) {
             ctx_.poison_symbol(symbol,
@@ -348,7 +344,7 @@ auto SymbolCollector::visit(const ast::NodeID& id, const ast::DeclStatement& dec
     if (last_type_) { ctx_.registry.get_from(table_idx_, name).set_type(*last_type_.take()); }
 }
 
-auto SymbolCollector::visit(const ast::NodeID& id, const ast::DeferStatement& defer) -> void {
+auto SymbolCollector::visit(ast::NodeID id, const ast::DeferStatement& defer) -> void {
     if (!in_function_scope_) {
         ctx_.diagnostics.emplace_back("Cannot have defer outside of a function's scope",
                                       Error::ILLEGAL_TOP_LEVEL_STATEMENT,
@@ -357,16 +353,15 @@ auto SymbolCollector::visit(const ast::NodeID& id, const ast::DeferStatement& de
     collect(defer.deferred);
 }
 
-auto SymbolCollector::visit(const ast::NodeID&, const ast::DiscardStatement& discard) -> void {
+auto SymbolCollector::visit(ast::NodeID, const ast::DiscardStatement& discard) -> void {
     collect(discard.discarded);
 }
 
-auto SymbolCollector::visit(const ast::NodeID&, const ast::ExpressionStatement& expr) -> void {
+auto SymbolCollector::visit(ast::NodeID, const ast::ExpressionStatement& expr) -> void {
     collect(expr.expression);
 }
 
-auto SymbolCollector::visit(const ast::NodeID& id, const ast::ImportStatement& import_stmt)
-    -> void {
+auto SymbolCollector::visit(ast::NodeID id, const ast::ImportStatement& import_stmt) -> void {
     auto [alias, mod_result] =
         [&] -> std::pair<std::string_view, Result<mem::NonNull<mod::Module>, mod::Diagnostic>> {
         if (const auto& string =
@@ -385,7 +380,7 @@ auto SymbolCollector::visit(const ast::NodeID& id, const ast::ImportStatement& i
             import_stmt.alias
                 ? collecting_.ast.get_as<ast::IdentifierExpression>(**import_stmt.alias)
                 : payload;
-        return {ident.name, ctx_.modules.try_get_library_module(std::string{payload.name})};
+        return {ident.name, ctx_.modules.try_get_library_module(payload.name)};
     }();
 
     // Only set the table index if the module exists
@@ -415,8 +410,7 @@ auto SymbolCollector::visit(const ast::NodeID& id, const ast::ImportStatement& i
     }
 }
 
-auto SymbolCollector::visit(const ast::NodeID& id, const ast::ReturnStatement& return_stmt)
-    -> void {
+auto SymbolCollector::visit(ast::NodeID id, const ast::ReturnStatement& return_stmt) -> void {
     if (!in_function_scope_) {
         ctx_.diagnostics.emplace_back("Cannot return outside of a function",
                                       Error::ILLEGAL_CONTROL_FLOW,
@@ -425,7 +419,7 @@ auto SymbolCollector::visit(const ast::NodeID& id, const ast::ReturnStatement& r
     if (return_stmt.expression) { collect(*return_stmt.expression); }
 }
 
-auto SymbolCollector::visit(const ast::NodeID& id, const ast::TestStatement& test) -> void {
+auto SymbolCollector::visit(ast::NodeID id, const ast::TestStatement& test) -> void {
     if (table_stack_.size() != 1) {
         ctx_.diagnostics.emplace_back("Tests must be at the topmost level of a file",
                                       Error::ILLEGAL_TEST_LOCATION,
@@ -441,12 +435,12 @@ auto SymbolCollector::visit(const ast::NodeID& id, const ast::TestStatement& tes
     collecting_.set_sema_type(id, *last_type_.take());
 }
 
-auto SymbolCollector::visit(const ast::NodeID& id, const ast::UsingStatement& using_stmt) -> void {
+auto SymbolCollector::visit(ast::NodeID id, const ast::UsingStatement& using_stmt) -> void {
     const auto& ident = collecting_.ast.get_as<ast::IdentifierExpression>(*using_stmt.alias);
     try_declare(ident.name, SymbolicNode{id});
     ctx_.registry.get_from(table_idx_, ident.name).set_kind(SymbolKind::TYPE);
 }
 
-auto SymbolCollector::visit(const ast::NodeID&, const Unit&) -> void {}
+auto SymbolCollector::visit(ast::NodeID, const Unit&) -> void {}
 
 } // namespace porpoise::sema

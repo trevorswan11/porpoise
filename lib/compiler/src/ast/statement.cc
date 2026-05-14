@@ -2,7 +2,7 @@
 
 #include "syntax/parser.hh"
 
-#include "enum.hh"
+#include "fixed/enum_map.hh"
 
 namespace porpoise::ast {
 
@@ -73,7 +73,7 @@ namespace {
 using ModifierMapping          = std::pair<syntax::TokenType, DeclModifiers>;
 constexpr auto LEGAL_MODIFIERS = [] {
     using TokenType = syntax::TokenType;
-    EnumMap<TokenType, opt::Option<DeclModifiers>> modifiers{opt::none};
+    fixed::EnumMap<TokenType, opt::Option<DeclModifiers>> modifiers{opt::none};
     modifiers[TokenType::VAR]       = DeclModifiers::VARIABLE;
     modifiers[TokenType::CONSTANT]  = DeclModifiers::CONSTANT;
     modifiers[TokenType::CONSTEXPR] = DeclModifiers::CONSTEXPR;
@@ -156,7 +156,7 @@ auto DeferStatement::parse(syntax::Parser& parser) -> Result<StatementHandle, sy
     const auto stmt = TRY(parser.parse_statement(true));
 
     // The statement has different restrictions from expression alternates
-    if (!stmt->any<ExpressionStatement, DiscardStatement, BlockStatement>()) {
+    if (!stmt.any<ExpressionStatement, DiscardStatement, BlockStatement>()) {
         return make_syntax_err(syntax::Error::ILLEGAL_DEFERRED_STATEMENT,
                                parser.get_location_of(*stmt));
     }

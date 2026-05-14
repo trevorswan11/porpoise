@@ -287,19 +287,9 @@ enum class IntegerCategory : u8 {
 }
 
 [[nodiscard]] auto is_primitive(TokenType type) noexcept -> bool;
-[[nodiscard]] auto is_builtin(TokenType type) noexcept -> bool;
 
 // Check whether the token is an ident, primitive type, or builtin function.
-[[nodiscard]] constexpr auto is_valid_ident(TokenType type) noexcept -> bool {
-    switch (type) {
-    case TokenType::IDENT:
-    case TokenType::NORETURN:
-    case TokenType::TYPE_TYPE:
-    case TokenType::AUTO_TYPE:
-    case TokenType::OPAQUE_TYPE: return true;
-    default:                     return is_primitive(type) || is_builtin(type);
-    }
-}
+[[nodiscard]] auto is_valid_ident(TokenType type) noexcept -> bool;
 
 auto suffix_length(TokenType tt) noexcept -> usize;
 

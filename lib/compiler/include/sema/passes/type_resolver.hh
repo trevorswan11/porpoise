@@ -1,6 +1,6 @@
 #pragma once
 
-#include "ast/ast.hh"
+#include "ast/traits.hh"
 
 #include "sema/context.hh"
 #include "sema/symbol.hh"
@@ -12,17 +12,7 @@ class TypeResolver {
   public:
     static auto resolve_types(mod::Module& module, Context& ctx) -> mod::ModuleState;
 
-    auto resolve(const ast::NodeID& id) -> void {
-        ASSERT(id.is_valid(), "Attempt to resolve invalid handle");
-        std::visit([&](const auto& data) { visit(id, data); }, collecting_.ast[id]);
-    }
-
-    template <ast::NodeKind... Kinds> auto resolve(const ast::Handle<Kinds...>& id) -> void {
-        resolve(*id);
-    }
-
-    auto resolve(const ast::ExplicitTypeID& id) -> void {
-        ASSERT(id.is_valid(), "Attempt to resolve invalid handle");
+    template <ast::traits::IndexableID ID> auto resolve(ID id) -> void {
         std::visit([&](const auto& data) { visit(id, data); }, collecting_.ast[id]);
     }
 
@@ -31,6 +21,14 @@ class TypeResolver {
 
   private:
     AST_VISITOR_DEF_GEN()
+
+    auto resolve_builtin_call(ast::NodeID                   id,
+                              const ast::CallExpression&    call,
+                              const types::BuiltinFunction& builtin) -> void;
+
+    auto resolve_call_args(std::span<const ast::CallExpression::Argument> args) -> void;
+    [[nodiscard]] auto get_resolved_arg_type(const ast::CallExpression::Argument& arg)
+        -> mem::NonNull<Type>;
 
     TypeResolver(mod::Module& collecting, Context& ctx)
         : collecting_{collecting}, table_idx_{*collecting.root_table_idx}, ctx_{ctx} {

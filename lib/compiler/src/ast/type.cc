@@ -112,12 +112,12 @@ auto ExplicitType::parse(syntax::Parser& parser) -> Result<ExplicitTypeID, synta
         if (parser.peek_token_is(syntax::TokenType::COLON_COLON) ||
             parser.peek_token_is(syntax::TokenType::LPAREN)) {
             const auto parsed = TRY(parser.parse_expression(syntax::Precedence::TYPE));
-            if (parsed->is<ScopeResolutionExpression>()) {
+            if (parsed.is<ScopeResolutionExpression>()) {
                 return parser.add_type(
                     modifier_token,
                     modifier,
                     ScopeResolutionExpression{parser.get_node<ScopeResolutionExpression>(*parsed)});
-            } else if (parsed->is<CallExpression>()) {
+            } else if (parsed.is<CallExpression>()) {
                 return parser.add_type(modifier_token,
                                        modifier,
                                        CallExpression{parser.get_node<CallExpression>(*parsed)});

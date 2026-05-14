@@ -8,6 +8,7 @@
 #include "syntax/token.hh"
 
 #include "enum.hh"
+#include "fixed/enum_map.hh"
 
 namespace porpoise::syntax {
 
@@ -129,7 +130,7 @@ auto Parser::parse_expression(Precedence precedence) -> Result<ast::ExpressionHa
         return make_syntax_err(Error::END_OF_TOKEN_STREAM, current_token_);
     }
 
-    const auto& prefix = try_get_prefix_fn(current_token_.type);
+    const auto& prefix = get_prefix_fn_opt(current_token_.type);
     if (!prefix) {
         return make_syntax_err(fmt::format("No prefix parse function for {}({}) found",
                                            magic_enum::enum_name(current_token_.type),
@@ -140,7 +141,7 @@ auto Parser::parse_expression(Precedence precedence) -> Result<ast::ExpressionHa
     auto lhs_expression = TRY((*prefix)(*this));
 
     while (!peek_token_is(TokenType::SEMICOLON) && precedence < get_peek_precedence().first) {
-        const auto& infix = try_get_poll_infix_fn(peek_token_.type);
+        const auto& infix = get_poll_infix_fn_opt(peek_token_.type);
         if (!infix) { break; }
         advance();
         lhs_expression = TRY((*infix)(*this, std::move(lhs_expression)));
@@ -154,11 +155,11 @@ auto Parser::parse_expression(Precedence precedence) -> Result<ast::ExpressionHa
     auto clause = TRY(parse_statement(require_semicolon));
 
     // The clause can only be a jump, block, or expression statement
-    if (!clause->any<ast::ExpressionStatement,
-                     ast::BreakStatement,
-                     ast::ContinueStatement,
-                     ast::ReturnStatement,
-                     ast::BlockStatement>()) {
+    if (!clause.any<ast::ExpressionStatement,
+                    ast::BreakStatement,
+                    ast::ContinueStatement,
+                    ast::ReturnStatement,
+                    ast::BlockStatement>()) {
         return make_syntax_err(error, ast_->location_of(*clause));
     }
     return clause;
@@ -177,7 +178,7 @@ auto Parser::parse_expression(Precedence precedence) -> Result<ast::ExpressionHa
 namespace {
 
 constexpr auto PREFIX_FNS = [] {
-    EnumMap<TokenType, Parser::PrefixFn> fns;
+    fixed::EnumMap<TokenType, Parser::PrefixFn> fns;
 
     fns[TokenType::IDENT]            = ast::IdentifierExpression::parse;
     fns[TokenType::U8]               = ast::U8Expression::parse;
@@ -222,13 +223,13 @@ constexpr auto PREFIX_FNS = [] {
     }
 
     for (const auto tt : ALL_PRIMITIVES) { fns[tt] = ast::IdentifierExpression::parse; }
-    for (const auto& [_, tt] : ALL_BUILTINS) { fns[tt] = ast::IdentifierExpression::parse; }
+    for (const auto tt : builtins::ALL_TOKEN_TYPES) { fns[tt] = ast::IdentifierExpression::parse; }
 
     return fns;
 }();
 
 constexpr auto INFIX_FNS = [] {
-    EnumMap<TokenType, Parser::InfixFn> fns;
+    fixed::EnumMap<TokenType, Parser::InfixFn> fns;
 
     fns[TokenType::PLUS]           = ast::BinaryExpression::parse;
     fns[TokenType::MINUS]          = ast::BinaryExpression::parse;
@@ -274,11 +275,11 @@ constexpr auto INFIX_FNS = [] {
 
 } // namespace
 
-auto Parser::try_get_prefix_fn(TokenType tt) noexcept -> opt::Option<PrefixFn> {
+auto Parser::get_prefix_fn_opt(TokenType tt) noexcept -> opt::Option<PrefixFn> {
     return PREFIX_FNS.get_opt(tt);
 }
 
-auto Parser::try_get_poll_infix_fn(TokenType tt) noexcept -> opt::Option<InfixFn> {
+auto Parser::get_poll_infix_fn_opt(TokenType tt) noexcept -> opt::Option<InfixFn> {
     return INFIX_FNS.get_opt(tt);
 }
 

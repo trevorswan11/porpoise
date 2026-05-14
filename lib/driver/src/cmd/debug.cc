@@ -3,7 +3,7 @@
 #include <fmt/format.h>
 #include <fmt/ranges.h>
 
-#include "arguments/ast_dump.hh"
+#include "cmd/debug.hh"
 
 #include "ast/dumper.hh"
 
@@ -14,9 +14,9 @@
 
 #include "string.hh"
 
-namespace porpoise::driver {
+namespace porpoise::cmd {
 
-auto AstDump::run() -> void {
+auto Debug::run() -> void {
     const std::filesystem::path stdin_path = "stdin.porp";
     while (true) {
         fmt::print(">>> ");
@@ -51,4 +51,4 @@ auto AstDump::run() -> void {
     }
 }
 
-} // namespace porpoise::driver
+} // namespace porpoise::cmd

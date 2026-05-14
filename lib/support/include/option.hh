@@ -107,6 +107,13 @@ template <typename T> class Ref {
         return Ret{};
     }
 
+    // Creates a copy of the underlying data and forwards it to the standard optional
+    [[nodiscard]] constexpr auto materialize() const noexcept
+        requires(std::is_copy_constructible_v<T>)
+    {
+        return has_value() ? std::optional<std::remove_const_t<T>>{*ptr_} : opt::none;
+    }
+
   private:
     T* ptr_;
 };

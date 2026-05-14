@@ -8,7 +8,6 @@
 
 #include "ast/ast.hh"
 
-#include "ast/id.hh"
 #include "sema/attachments.hh"
 #include "sema/error.hh"
 
@@ -16,6 +15,7 @@
 
 #include "module/source_loader.hh"
 
+#include "hash.hh"
 #include "memory.hh"
 #include "result.hh"
 #include "source_file.hh"
@@ -99,35 +99,31 @@ struct Module {
                                   state == mod::ModuleState::POISONED_SYMBOL_COLLECTION);
     }
 
-    [[nodiscard]] constexpr auto has_sema_type(ast::NodeID id) const noexcept -> bool {
-        return sema_side_tables.node_types[id].has_value();
+    template <ast::traits::IndexableID ID>
+    [[nodiscard]] constexpr auto has_sema_type(ID id) const noexcept -> bool {
+        if constexpr (ast::traits::IndexableNodeID<ID>) {
+            return sema_side_tables.node_types[id].has_value();
+        } else {
+            return sema_side_tables.explicit_types[id].has_value();
+        }
     }
 
-    [[nodiscard]] constexpr auto get_sema_type(ast::NodeID id) const noexcept -> const sema::Type& {
-        return *sema_side_tables.node_types[id];
+    template <ast::traits::IndexableID ID>
+    [[nodiscard]] constexpr auto get_sema_type(ID id) noexcept -> sema::Type& {
+        if constexpr (ast::traits::IndexableNodeID<ID>) {
+            return *sema_side_tables.node_types[id];
+        } else {
+            return *sema_side_tables.explicit_types[id];
+        }
     }
 
-    constexpr auto set_sema_type(ast::NodeID id, sema::Type& type) noexcept -> void {
-        sema_side_tables.node_types[id].emplace(type);
-    }
-
-    template <ast::NodeKind... Kinds>
-    constexpr auto set_sema_type(const ast::Handle<Kinds...> id, sema::Type& type) noexcept
-        -> void {
-        set_sema_type(*id, type);
-    }
-
-    [[nodiscard]] constexpr auto has_sema_type(ast::ExplicitTypeID id) const noexcept -> bool {
-        return sema_side_tables.explicit_types[id].has_value();
-    }
-
-    [[nodiscard]] constexpr auto get_sema_type(ast::ExplicitTypeID id) const noexcept
-        -> const sema::Type& {
-        return *sema_side_tables.explicit_types[id];
-    }
-
-    constexpr auto set_sema_type(ast::ExplicitTypeID id, sema::Type& type) noexcept -> void {
-        sema_side_tables.explicit_types[id].emplace(type);
+    template <ast::traits::IndexableID ID>
+    constexpr auto set_sema_type(ID id, sema::Type& type) noexcept -> void {
+        if constexpr (ast::traits::IndexableNodeID<ID>) {
+            sema_side_tables.node_types[id].emplace(type);
+        } else {
+            sema_side_tables.explicit_types[id].emplace(type);
+        }
     }
 };
 
@@ -148,12 +144,11 @@ class ModuleManager {
         -> Result<mem::NonNull<Module>, Diagnostic>;
 
     // Attempts to load the module from the loader and parse its contents
-    [[nodiscard]] auto try_get_library_module(const std::string& name)
+    [[nodiscard]] auto try_get_library_module(std::string_view name)
         -> Result<mem::NonNull<Module>, Diagnostic>;
 
     // Adds a library module and its underlying path to the lookup table
-    [[nodiscard]] auto add_library_module(const std::string&           name,
-                                          const std::filesystem::path& path)
+    [[nodiscard]] auto add_library_module(std::string_view name, const std::filesystem::path& path)
         -> Result<Unit, Diagnostic>;
 
   private:
@@ -165,7 +160,9 @@ class ModuleManager {
     ankerl::unordered_dense::map<std::filesystem::path, mem::Box<Module>> modules_;
 
     // Maps physical porpoise modules to their path on disk
-    ankerl::unordered_dense::map<std::string, std::filesystem::path> module_lut_;
+    ankerl::unordered_dense::
+        map<std::string, std::filesystem::path, hash::StringTransparentHash, std::equal_to<>>
+            module_lut_;
 };
 
 } // namespace porpoise::mod

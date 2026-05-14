@@ -7,7 +7,6 @@
 #include "ast/ast.hh"
 #include "ast/format.hh" // IWYU pragma: keep
 
-#include "assert.hh"
 #include "indent.hh"
 
 namespace porpoise::ast {
@@ -16,17 +15,12 @@ class ASTDumper {
   public:
     explicit ASTDumper(const AST& ast, std::ostream& out) : out_{out}, ast_{ast} {}
 
-    auto dump(const NodeID& id) -> void {
+    template <ast::traits::IndexableNodeID ID> auto dump(ID id) -> void {
         ASSERT(id.is_valid(), "Attempt to dump invalid handle");
         std::visit([&](const auto& data) { visit(id, data); }, ast_[id]);
     }
 
-    template <NodeKind... Kinds> auto dump(const Handle<Kinds...>& id) -> void {
-        ASSERT(id.is_valid(), "Attempt to dump invalid handle");
-        dump(*id);
-    }
-
-    auto dump(const ExplicitTypeID& id) -> void {
+    auto dump(ExplicitTypeID id) -> void {
         ASSERT(id.is_valid(), "Attempt to dump invalid handle");
         fmt::println(out_, "ExplicitType (modifier: {})", id.get_modifier());
         const Indent::Guard g{indent_, true};

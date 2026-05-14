@@ -2,7 +2,8 @@
 
 #include <vector>
 
-#include "ast/meta.hh"
+#include "ast/kind.hh"
+#include "ast/traits.hh"
 #include "ast/visitor.hh"
 
 #include "assert.hh"
@@ -11,7 +12,7 @@
 
 namespace porpoise::ast {
 
-template <typename ID, typename Data> struct DataPoolBase {
+template <traits::IndexableID ID, typename Data> struct DataPoolBase {
     std::vector<Data>           pool;
     std::vector<SourceLocation> locations;
 
@@ -25,16 +26,6 @@ template <typename ID, typename Data> struct DataPoolBase {
         pool.emplace_back(std::forward<Data>(data));
         locations.emplace_back(::porpoise::traits::SourceInfo<syntax::Token>::get(start_token));
         return index;
-    }
-
-    [[nodiscard]] constexpr auto location_of(ID id) const noexcept -> const SourceLocation& {
-        ASSERT(id.is_valid(), "Attempt to access invalid id");
-        return locations[id.get_index()];
-    }
-
-    [[nodiscard]] constexpr auto operator[](ID id) const noexcept -> const Data& {
-        ASSERT(id.is_valid(), "Attempt to access invalid id");
-        return pool[id.get_index()];
     }
 };
 
@@ -71,29 +62,6 @@ class AST {
         return NodeID{kind, start_token.type, index};
     }
 
-    [[nodiscard]] constexpr auto location_of(NodeID id) const noexcept -> const SourceLocation& {
-        return nodes_.location_of(id);
-    }
-
-    // Returns the node data at the provided node id
-    [[nodiscard]] constexpr auto operator[](NodeID id) const noexcept -> auto& {
-        return nodes_[id];
-    }
-
-    // Returns the casted node data at the requested index
-    template <traits::ASTNode N>
-    [[nodiscard]] constexpr auto get_as(NodeID id) const noexcept -> const N& {
-        ASSERT(id.is<N>(), "Illegal node data retrieval");
-        return std::get<N>(nodes_[id]);
-    }
-
-    // Returns the casted node data at the requested index if present
-    template <traits::ASTNode N>
-    [[nodiscard]] constexpr auto get_as_opt(NodeID id) const noexcept -> opt::Option<const N&> {
-        if (!id.is<N>()) { return opt::none; }
-        return opt::Option<const N&>{std::get<N>(nodes_[id])};
-    }
-
     template <traits::ASTExplicitType Data>
     [[nodiscard]] constexpr auto
     add_type(const syntax::Token& start_token, TypeModifier mod, Data&& data) -> ExplicitTypeID {
@@ -102,14 +70,39 @@ class AST {
         return ExplicitTypeID{kind, mod, start_token.type, index};
     }
 
-    [[nodiscard]] constexpr auto location_of(ExplicitTypeID id) const noexcept
-        -> const SourceLocation& {
-        return explicit_types_.location_of(id);
+    template <traits::IndexableID ID>
+    [[nodiscard]] constexpr auto location_of(ID id) const noexcept -> const SourceLocation& {
+        ASSERT(id.is_valid(), "Attempt to access invalid id");
+        if constexpr (traits::IndexableNodeID<ID>) {
+            return nodes_.locations[id.get_index()];
+        } else {
+            return explicit_types_.locations[id.get_index()];
+        }
     }
 
-    // Returns the type data at the provided type id
-    [[nodiscard]] constexpr auto operator[](ExplicitTypeID id) const noexcept -> auto& {
-        return explicit_types_[id];
+    // Returns the node data at the provided id
+    template <traits::IndexableID ID>
+    [[nodiscard]] constexpr auto operator[](ID id) const noexcept -> auto& {
+        ASSERT(id.is_valid(), "Attempt to access invalid id");
+        if constexpr (traits::IndexableNodeID<ID>) {
+            return nodes_.pool[id.get_index()];
+        } else {
+            return explicit_types_.pool[id.get_index()];
+        }
+    }
+
+    // Returns the casted node at the requested index
+    template <typename Data, traits::IndexableNodeID ID>
+    [[nodiscard]] constexpr auto get_as(ID id) const noexcept -> const Data& {
+        ASSERT(id.template is<Data>(), "Illegal node data retrieval");
+        return std::get<Data>(operator[](id));
+    }
+
+    // Returns the casted node data at the requested index if present
+    template <typename Data, traits::IndexableNodeID ID>
+    [[nodiscard]] constexpr auto get_as_opt(ID id) const noexcept -> opt::Option<const Data&> {
+        if (!id.template is<Data>()) { return opt::none; }
+        return opt::Option<const Data&>{std::get<Data>(operator[](id))};
     }
 
     constexpr auto clear() noexcept -> void {

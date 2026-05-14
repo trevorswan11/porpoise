@@ -6,10 +6,10 @@
 #include <ankerl/unordered_dense.h>
 
 #include "arena.hh"
+#include "fixed/vector.hh"
 #include "hash.hh"
 #include "memory.hh"
 #include "option.hh"
-#include "static_vector.hh"
 #include "types.hh"
 #include "utility.hh"
 #include "variant.hh"
@@ -95,7 +95,7 @@ struct Function {
 };
 
 constexpr usize MAX_BUILTIN_PARAMS{4};
-using BuiltinParams = StaticVector<mem::NonNull<Type>, MAX_BUILTIN_PARAMS>;
+using BuiltinParams = fixed::Vector<mem::NonNull<Type>, MAX_BUILTIN_PARAMS>;
 
 struct BuiltinFunction {
     BuiltinParams params;

@@ -1,13 +1,13 @@
 #include "ast/id.hh"
 
-#include "enum.hh"
+#include "fixed/enum_map.hh"
 
 namespace porpoise::ast {
 
 namespace {
 
 constexpr auto NODE_NAMES = [] {
-    EnumMap<NodeKind, std::string_view> names{"expression"};
+    fixed::EnumMap<NodeKind, std::string_view> names{"expression"};
 
     names[NodeKind::ENUM_EXPRESSION]     = "enum";
     names[NodeKind::FUNCTION_EXPRESSION] = "function";
@@ -30,7 +30,7 @@ using Modifier           = TypeModifier::Modifier;
 using ModifierMapping    = std::pair<syntax::TokenType, Modifier>;
 constexpr auto MODIFIERS = [] {
     using TokenType = syntax::TokenType;
-    EnumMap<TokenType, Modifier> modifiers{Modifier::VALUE};
+    fixed::EnumMap<TokenType, Modifier> modifiers{Modifier::VALUE};
     modifiers[TokenType::BW_AND]   = Modifier::REF;
     modifiers[TokenType::AND_MUT]  = Modifier::MUT_REF;
     modifiers[TokenType::STAR]     = Modifier::PTR;

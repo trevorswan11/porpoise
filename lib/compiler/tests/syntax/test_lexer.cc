@@ -332,13 +332,13 @@ TEST_CASE("Lexing pointers and references") {
 }
 
 TEST_CASE("Lexing compiler builtins & Lexer resetting") {
-    const auto expecteds = std::ranges::views::transform(
-        syntax::ALL_BUILTINS,
-        [](const auto& builtin) -> ExpectedLexeme { return {builtin.second, builtin.first}; });
+    constexpr auto expecteds = std::ranges::views::transform(
+        syntax::builtins::ALL_TOKEN_TYPES,
+        [](const auto& tt) -> syntax::Builtin { return {*syntax::get_builtin_opt(tt), tt}; });
 
     std::string input;
-    std::ranges::for_each(syntax::ALL_BUILTINS, [&input](const auto& builtin) -> void {
-        input.append(builtin.first);
+    std::ranges::for_each(expecteds, [&input](const auto& lexeme) -> void {
+        input.append(lexeme.first);
         input.push_back(' ');
     });
     syntax::Lexer l{input};
@@ -349,7 +349,7 @@ TEST_CASE("Lexing compiler builtins & Lexer resetting") {
     const auto reset_acc = l_accumulator.consume();
 
     usize i = 0;
-    for (const auto& [expected_tt, expected_slice] : expecteds) {
+    for (const auto& [expected_slice, expected_tt] : expecteds) {
         const auto  token             = l.advance();
         const auto& accumulated_token = accumulated_tokens[i];
         const auto& reset             = reset_acc[i];

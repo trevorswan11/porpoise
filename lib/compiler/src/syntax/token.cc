@@ -6,7 +6,6 @@
 #include "syntax/token.hh"
 
 #include "assert.hh"
-#include "enum.hh"
 
 namespace porpoise::syntax {
 
@@ -81,17 +80,16 @@ auto is_primitive(TokenType type) noexcept -> bool {
     return std::ranges::contains(ALL_PRIMITIVES, type);
 }
 
-namespace {
-
-constexpr auto ALL_BUILTINS_BY_TT = [] {
-    EnumMap<TokenType, bool> builtins{false};
-    for (const auto& builtin : ALL_BUILTINS) { builtins[builtin.second] = true; }
-    return builtins;
-}();
-
-} // namespace
-
-auto is_builtin(TokenType type) noexcept -> bool { return ALL_BUILTINS_BY_TT[type]; }
+auto is_valid_ident(TokenType type) noexcept -> bool {
+    switch (type) {
+    case TokenType::IDENT:
+    case TokenType::NORETURN:
+    case TokenType::TYPE_TYPE:
+    case TokenType::AUTO_TYPE:
+    case TokenType::OPAQUE_TYPE: return true;
+    default:                     return is_primitive(type) || get_builtin_opt(type);
+    }
+}
 
 namespace {
 

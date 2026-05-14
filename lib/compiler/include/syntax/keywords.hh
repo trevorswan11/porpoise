@@ -1,6 +1,5 @@
 #pragma once
 
-#include <algorithm>
 #include <array>
 #include <string_view>
 #include <utility>
@@ -63,34 +62,7 @@ constexpr Keyword TEST{"test", TokenType::TEST};
 
 } // namespace keywords
 
-constexpr auto ALL_KEYWORDS = [] {
-    auto all_keywords = std::array{
-        keywords::FN,        keywords::VAR,          keywords::CONSTANT,
-        keywords::CONSTEXPR, keywords::STRUCT,       keywords::ENUM,
-        keywords::UNION,     keywords::BOOLEAN_TRUE, keywords::BOOLEAN_FALSE,
-        keywords::IF,        keywords::ELSE,         keywords::DO,
-        keywords::MATCH,     keywords::RETURN,       keywords::DEFER,
-        keywords::LOOP,      keywords::FOR,          keywords::WHILE,
-        keywords::CONTINUE,  keywords::BREAK,        keywords::IMPORT,
-        keywords::I32,       keywords::I64,          keywords::ISIZE,
-        keywords::U32,       keywords::U64,          keywords::USIZE,
-        keywords::F32,       keywords::F64,          keywords::U8,
-        keywords::BOOL,      keywords::VOID,         keywords::TYPE,
-        keywords::AUTO,      keywords::OPAQUE,       keywords::AS,
-        keywords::PUBLIC,    keywords::EXTERN,       keywords::EXPORT,
-        keywords::VOLATILE,  keywords::STATIC,       keywords::NORETURN,
-        keywords::NULLPTR,   keywords::USING,        keywords::TEST,
-    };
-
-    std::ranges::sort(all_keywords, {}, &Keyword::first);
-    return all_keywords;
-}();
-
-constexpr auto get_keyword(std::string_view sv) noexcept -> opt::Option<Keyword> {
-    const auto it = std::ranges::lower_bound(ALL_KEYWORDS, sv, {}, &Keyword::first);
-    if (it == ALL_KEYWORDS.end() || it->first != sv) { return opt::none; }
-    return opt::Option<Keyword>{*it};
-}
+[[nodiscard]] auto get_keyword_opt(std::string_view sv) noexcept -> opt::Option<TokenType>;
 
 constexpr auto ALL_PRIMITIVES = std::array{
     keywords::I32.second,

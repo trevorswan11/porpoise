@@ -70,15 +70,11 @@ auto Lexer::skip_whitespace() noexcept -> void {
 }
 
 auto Lexer::lu_builtin(std::string_view ident) noexcept -> TokenType {
-    return get_builtin(ident)
-        .transform([](const auto& keyword) noexcept -> TokenType { return keyword.second; })
-        .value_or(TokenType::ILLEGAL);
+    return get_builtin_opt(ident).value_or(TokenType::ILLEGAL);
 }
 
 auto Lexer::lu_ident(std::string_view ident) noexcept -> TokenType {
-    return get_keyword(ident)
-        .transform([](const auto& keyword) noexcept -> TokenType { return keyword.second; })
-        .value_or(TokenType::IDENT);
+    return get_keyword_opt(ident).value_or(TokenType::IDENT);
 }
 
 auto Lexer::read_character(u8 n) noexcept -> void {
@@ -111,10 +107,9 @@ auto Lexer::read_operator() const noexcept -> opt::Option<Token> {
     auto  matched_type = TokenType::ILLEGAL;
 
     // Try extending from length 1 up to the max operator size
-    for (usize len = 1; len <= MAX_OPERATOR_LEN && pos_ + len <= input_.size(); ++len) {
-        const auto op = get_operator(string::substr(input_, pos_, len));
-        if (op) {
-            matched_type = op->second;
+    for (usize len = 1; len <= max_operator_length() && pos_ + len <= input_.size(); ++len) {
+        if (const auto op = get_operator_opt(string::substr(input_, pos_, len))) {
+            matched_type = *op;
             max_len      = len;
         }
     }
