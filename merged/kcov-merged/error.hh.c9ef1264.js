@@ -1,0 +1,30 @@
+var data = {lines:[
+{"lineNum":"    1","line":"#pragma once"},
+{"lineNum":"    2","line":""},
+{"lineNum":"    3","line":"#include \"diagnostic.hh\""},
+{"lineNum":"    4","line":"#include \"result.hh\""},
+{"lineNum":"    5","line":""},
+{"lineNum":"    6","line":"namespace porpoise::mod {"},
+{"lineNum":"    7","line":""},
+{"lineNum":"    8","line":"enum class Error : u8 {"},
+{"lineNum":"    9","line":"    PATH_DOES_NOT_EXIST,"},
+{"lineNum":"   10","line":"    PATH_IS_NOT_FILE,"},
+{"lineNum":"   11","line":"    FAILED_TO_OPEN_FILE,"},
+{"lineNum":"   12","line":"    NORMALIZATION_FAILED,"},
+{"lineNum":"   13","line":"    MODULE_PATH_NOT_RELATIVE,"},
+{"lineNum":"   14","line":"    MODULE_DOES_NOT_EXIST,"},
+{"lineNum":"   15","line":"    MODULE_ALREADY_EXISTS,"},
+{"lineNum":"   16","line":"};"},
+{"lineNum":"   17","line":""},
+{"lineNum":"   18","line":"using Diagnostic = Diagnostic<Error>;"},
+{"lineNum":"   19","line":""},
+{"lineNum":"   20","line":"template <typename... Args>"},
+{"lineNum":"   21","line":"[[nodiscard]] constexpr auto make_mod_err(Args&&... args) -> Err<Diagnostic> {","class":"lineCov","hits":"1","order":"1571",},
+{"lineNum":"   22","line":"    return make_err<Diagnostic>(std::forward<Args>(args)...);","class":"lineCov","hits":"1","order":"1570",},
+{"lineNum":"   23","line":"}"},
+{"lineNum":"   24","line":""},
+{"lineNum":"   25","line":"} // namespace porpoise::mod"},
+]};
+var percent_low = 25;var percent_high = 75;
+var header = { "command" : "", "date" : "2026-05-14 22:03:35", "instrumented" : 2, "covered" : 2,};
+var merged_data = [];

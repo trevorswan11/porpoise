@@ -1,0 +1,30 @@
+var data = {lines:[
+{"lineNum":"    1","line":"#pragma once"},
+{"lineNum":"    2","line":""},
+{"lineNum":"    3","line":"#include <vector>"},
+{"lineNum":"    4","line":""},
+{"lineNum":"    5","line":"#include \"ast/id.hh\""},
+{"lineNum":"    6","line":"#include \"ast/side_table.hh\""},
+{"lineNum":"    7","line":""},
+{"lineNum":"    8","line":"#include \"option.hh\""},
+{"lineNum":"    9","line":""},
+{"lineNum":"   10","line":"namespace porpoise::sema {"},
+{"lineNum":"   11","line":""},
+{"lineNum":"   12","line":"class Type;"},
+{"lineNum":"   13","line":""},
+{"lineNum":"   14","line":"struct SideTables {","class":"lineCov","hits":"1","order":"1188",},
+{"lineNum":"   15","line":"    ast::SideTable<ast::NodeID, opt::Option<sema::Type&>>         node_types;"},
+{"lineNum":"   16","line":"    ast::SideTable<ast::ExplicitTypeID, opt::Option<sema::Type&>> explicit_types;"},
+{"lineNum":"   17","line":""},
+{"lineNum":"   18","line":"    // Allocates `size` slots in all backing vectors"},
+{"lineNum":"   19","line":"    constexpr auto resize(usize size) -> void {","class":"lineCov","hits":"1","order":"1189",},
+{"lineNum":"   20","line":"        node_types.values.resize(size);","class":"lineCov","hits":"1","order":"1187",},
+{"lineNum":"   21","line":"        explicit_types.values.resize(size);","class":"lineCov","hits":"1","order":"1186",},
+{"lineNum":"   22","line":"    }","class":"lineCov","hits":"1","order":"1185",},
+{"lineNum":"   23","line":"};"},
+{"lineNum":"   24","line":""},
+{"lineNum":"   25","line":"} // namespace porpoise::sema"},
+]};
+var percent_low = 25;var percent_high = 75;
+var header = { "command" : "", "date" : "2026-05-14 22:03:35", "instrumented" : 5, "covered" : 5,};
+var merged_data = [];

@@ -1,0 +1,30 @@
+var data = {lines:[
+{"lineNum":"    1","line":"#pragma once"},
+{"lineNum":"    2","line":""},
+{"lineNum":"    3","line":"#include <concepts>"},
+{"lineNum":"    4","line":"#include <vector>"},
+{"lineNum":"    5","line":""},
+{"lineNum":"    6","line":"#include \"ast/traits.hh\""},
+{"lineNum":"    7","line":""},
+{"lineNum":"    8","line":"#include \"types.hh\""},
+{"lineNum":"    9","line":""},
+{"lineNum":"   10","line":"namespace porpoise::ast {"},
+{"lineNum":"   11","line":""},
+{"lineNum":"   12","line":"// An ID-indexable side table containing attached data"},
+{"lineNum":"   13","line":"template <traits::IndexableID ID, DefaultConstructible T> struct SideTable {","class":"lineCov","hits":"1","order":"3162",},
+{"lineNum":"   14","line":"    std::vector<T> values;"},
+{"lineNum":"   15","line":""},
+{"lineNum":"   16","line":"    // Allows a handle wrapper of a node to be used for raw ID-based tables"},
+{"lineNum":"   17","line":"    template <typename Self, typename U>"},
+{"lineNum":"   18","line":"        requires(std::convertible_to<U, ID>)"},
+{"lineNum":"   19","line":"    [[nodiscard]] constexpr auto operator[](this Self&& self, U id) noexcept -> auto& {","class":"lineCov","hits":"1","order":"3165",},
+{"lineNum":"   20","line":"        ASSERT(id.is_valid(), \"Attempt to access invalid id\");","class":"lineCov","hits":"1","order":"3164",},
+{"lineNum":"   21","line":"        return self.values[static_cast<ID>(id).get_index()];","class":"lineCov","hits":"1","order":"3163",},
+{"lineNum":"   22","line":"    }"},
+{"lineNum":"   23","line":"};"},
+{"lineNum":"   24","line":""},
+{"lineNum":"   25","line":"} // namespace porpoise::ast"},
+]};
+var percent_low = 25;var percent_high = 75;
+var header = { "command" : "", "date" : "2026-05-14 22:03:35", "instrumented" : 4, "covered" : 4,};
+var merged_data = [];
