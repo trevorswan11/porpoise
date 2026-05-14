@@ -53,11 +53,9 @@ constexpr auto ALL_OPERATORS = fixed::make_hash_map(operators::ASSIGN,
                                                     operators::MULTILINE_STRING,
                                                     operators::NULL_TERMINATED);
 
-constexpr auto MAX_OPERATOR_LEN = [] {
-    usize max_len = 0;
-    for (const auto [name, _] : ALL_OPERATORS) { max_len = std::max(max_len, name.size()); }
-    return max_len;
-}();
+constexpr auto MAX_OPERATOR_LEN = std::ranges::max_element(ALL_OPERATORS, [](auto a, auto b) {
+                                      return a.first.size() < b.first.size();
+                                  })->first.size();
 
 } // namespace
 

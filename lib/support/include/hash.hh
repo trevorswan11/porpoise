@@ -95,25 +95,18 @@ static constexpr auto crc_table = std::to_array<u32>(
      0xb40bbe37, 0xc30c8ea1, 0x5a05df1b, 0x2d02ef8d});
 
 // Pulled almost verbatim from stack overflow, just rearranged for modern C++
-[[nodiscard]] constexpr auto crc32(std::string_view str) noexcept -> u32 {
+[[nodiscard]] constexpr auto crc32(std::string_view str) noexcept -> u64 {
     u32 crc = 0xFFFFFFFF;
     for (const auto c : str) { crc = (crc >> 8) ^ crc_table[(crc ^ static_cast<u32>(c)) & 0xFF]; }
-    return crc ^ 0xFFFFFFFF;
+    return wyhash::hash(crc ^ 0xFFFFFFFF);
 }
 
+// This exists for constexpr string hashing only. `std::hash` is appropriate in other scenarios
 template <typename T> struct Hash {
     using is_transparent = void;
     using is_avalanching = void;
 
     [[nodiscard]] static constexpr auto operator()(std::string_view str) noexcept -> u64 {
-        return crc32(str);
-    }
-
-    [[nodiscard]] static constexpr auto operator()(const std::string& str) noexcept -> u64 {
-        return crc32(str);
-    }
-
-    [[nodiscard]] static constexpr auto operator()(const byte* str) noexcept -> u64 {
         return crc32(str);
     }
 };

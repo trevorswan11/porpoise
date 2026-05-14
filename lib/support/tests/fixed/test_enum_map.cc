@@ -74,4 +74,13 @@ TEST_CASE("Non-monotonic enum map") {
     CHECK(map[NonMonotonicEnum::D] == 0xC0FFEE);
 }
 
+TEST_CASE("EnumMap ranges compatibility") {
+    using EnumMap = fixed::EnumMap<NonMonotonicEnum, usize>;
+    STATIC_REQUIRE(std::forward_iterator<EnumMap::iterator>);
+    STATIC_REQUIRE(std::forward_iterator<EnumMap::const_iterator>);
+
+    constexpr EnumMap map{0xDEADBEEF};
+    std::ranges::for_each(map, [&](usize value) { CHECK(value == 0xDEADBEEF); });
+}
+
 } // namespace porpoise::tests

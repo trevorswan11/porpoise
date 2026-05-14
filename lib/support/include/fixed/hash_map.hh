@@ -3,6 +3,7 @@
 #include <array>
 #include <bit>
 #include <functional>
+#include <iterator>
 #include <memory>
 #include <span>
 #include <stdexcept>
@@ -85,7 +86,7 @@ class Metadata {
 template <typename HashMapSelf, typename Key, typename Value, usize Capacity>
 class HashMapIterator {
   public:
-    using iterator_category = std::input_iterator_tag;
+    using iterator_category = std::forward_iterator_tag;
     using value_type        = std::pair<const Key, Value>;
     using difference_type   = idiff;
     using pointer           = void;
@@ -93,8 +94,18 @@ class HashMapIterator {
         std::pair<const Key&,
                   std::conditional_t<std::is_const_v<HashMapSelf>, const Value, Value>&>;
 
+    // Facilitates `->` operator usage without violating memory safety
+    struct Proxy {
+        reference value;
+
+        [[nodiscard]] constexpr auto operator->() const noexcept -> const reference* {
+            return &value;
+        }
+    };
+
   public:
-    constexpr HashMapIterator(HashMapSelf& hm, usize index) noexcept : hm_{hm}, index_{index} {
+    constexpr HashMapIterator() noexcept = default;
+    constexpr HashMapIterator(HashMapSelf& hm, usize index) noexcept : hm_{&hm}, index_{index} {
         next();
     }
 
@@ -107,12 +118,21 @@ class HashMapIterator {
         return *this;
     }
 
-    [[nodiscard]] constexpr auto operator*() const noexcept -> reference {
-        return reference{*(hm_.key_data() + index_), *(hm_.value_data() + index_)};
+    [[nodiscard]] constexpr auto operator++(int) -> HashMapIterator {
+        HashMapIterator it{*this};
+        ++(*this);
+        return it;
     }
 
+    [[nodiscard]] constexpr auto operator*() const noexcept -> reference {
+        ASSERT(hm_, "Attempt to dereference null hash map");
+        return reference{*(hm_->key_data() + index_), *(hm_->value_data() + index_)};
+    }
+
+    [[nodiscard]] constexpr auto operator->() const noexcept -> Proxy { return {operator*()}; }
+
     [[nodiscard]] constexpr auto operator==(const HashMapIterator& other) const noexcept -> bool {
-        return &hm_ == &other.hm_ && index_ == other.index_;
+        return hm_ == other.hm_ && index_ == other.index_;
     }
 
     [[nodiscard]] constexpr auto operator==(std::default_sentinel_t) const noexcept -> bool {
@@ -121,13 +141,14 @@ class HashMapIterator {
 
   private:
     constexpr auto next() noexcept -> void {
-        const auto metadata = hm_.get_metadata();
+        if (!hm_) { return; }
+        const auto metadata = hm_->get_metadata();
         while (index_ < Capacity && !metadata[index_].is_used()) { index_++; }
     }
 
   private:
-    HashMapSelf& hm_;
-    usize        index_;
+    HashMapSelf* hm_{nullptr};
+    usize        index_{0};
 };
 
 // Heavily inspired by Zig's hash map implementation and trevor's C version:
@@ -135,6 +156,10 @@ class HashMapIterator {
 template <typename Key, typename Value, usize Capacity, typename Hash, typename Equal>
 class HashMap {
     static_assert(is_power_of_two(Capacity), "HashMap capacity must be a power of two");
+
+  public:
+    using iterator       = HashMapIterator<HashMap, Key, Value, Capacity>;
+    using const_iterator = HashMapIterator<std::add_const_t<HashMap>, Key, Value, Capacity>;
 
   public:
     constexpr HashMap() noexcept = default;

@@ -1,4 +1,5 @@
 #include <initializer_list>
+#include <ranges>
 #include <string_view>
 #include <utility>
 
@@ -331,11 +332,15 @@ TEST_CASE("Lexing pointers and references") {
 }
 
 TEST_CASE("Lexing compiler builtins & Lexer resetting") {
+    constexpr auto expecteds = std::ranges::views::transform(
+        syntax::builtins::ALL_TOKEN_TYPES,
+        [](const auto& tt) -> syntax::Builtin { return {*syntax::get_builtin_opt(tt), tt}; });
+
     std::string input;
-    for (const auto tt : syntax::builtins::ALL_TOKEN_TYPES) {
-        input.append(*syntax::get_builtin_opt(tt));
+    std::ranges::for_each(expecteds, [&input](const auto& lexeme) -> void {
+        input.append(lexeme.first);
         input.push_back(' ');
-    }
+    });
     syntax::Lexer l{input};
 
     syntax::Lexer l_accumulator{input};
@@ -344,15 +349,13 @@ TEST_CASE("Lexing compiler builtins & Lexer resetting") {
     const auto reset_acc = l_accumulator.consume();
 
     usize i = 0;
-    for (const auto& expected_tt : syntax::builtins::ALL_TOKEN_TYPES) {
+    for (const auto& [expected_slice, expected_tt] : expecteds) {
         const auto  token             = l.advance();
         const auto& accumulated_token = accumulated_tokens[i];
         const auto& reset             = reset_acc[i];
 
         CHECK(expected_tt == token.type);
         CHECK(expected_tt == accumulated_token.type);
-
-        const auto expected_slice = *syntax::get_builtin_opt(expected_tt);
         CHECK(expected_slice == token.slice);
         CHECK(expected_slice == accumulated_token.slice);
         CHECK(accumulated_token == reset);

@@ -152,4 +152,20 @@ TEST_CASE("Vector self assignment") {
     CHECK(Tracker::live_count == 1);
 }
 
+TEST_CASE("StaticVector ranges compatibility") {
+    STATIC_REQUIRE(std::forward_iterator<fixed::Vector<mem::NonNull<i32>, 4>::iterator>);
+    STATIC_REQUIRE(std::forward_iterator<fixed::Vector<mem::NonNull<i32>, 4>::const_iterator>);
+
+    constexpr auto vec        = fixed::Vector<i32, 4>{1, 2, 3};
+    i32            sum        = 0;
+    usize          iter_count = 0;
+    std::ranges::for_each(vec, [&](i32 val) {
+        sum += val;
+        iter_count++;
+    });
+
+    CHECK(iter_count == 3);
+    CHECK(sum == 6);
+}
+
 } // namespace porpoise::tests

@@ -118,7 +118,6 @@ template <typename Item, usize Capacity> class Vector {
         return self.data() + self.size_;
     }
 
-    // Ambiguous but required for iterator, only checks for emptiness
     [[nodiscard]] constexpr auto empty() const noexcept -> bool { return size_ == 0; }
     [[nodiscard]] constexpr auto size() const noexcept -> usize { return size_; }
 

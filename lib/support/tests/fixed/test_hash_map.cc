@@ -217,4 +217,20 @@ TEST_CASE("HashMap const iterator") {
     CHECK(iter_count == hm.size());
 }
 
+TEST_CASE("HashMap ranges compatibility") {
+    STATIC_REQUIRE(std::forward_iterator<fixed::HashMap<u16, u32, 4>::iterator>);
+    STATIC_REQUIRE(std::forward_iterator<fixed::HashMap<u16, u32, 4>::const_iterator>);
+
+    constexpr auto hm = fixed::make_hash_map(std::pair{-2, -1}, std::pair{1, -1}, std::pair{5, -1});
+    i32            sum        = 0;
+    usize          iter_count = 0;
+    std::ranges::for_each(hm, [&](auto pair) {
+        sum += pair.first;
+        iter_count++;
+    });
+
+    CHECK(sum == 4);
+    CHECK(iter_count == 3);
+}
+
 } // namespace porpoise::tests
