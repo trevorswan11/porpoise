@@ -1,12 +1,11 @@
 #pragma once
 
-#include <algorithm>
-#include <array>
 #include <string_view>
 #include <utility>
 
 #include "syntax/token.hh"
 
+#include "enum.hh"
 #include "option.hh"
 
 namespace porpoise::syntax {
@@ -56,55 +55,12 @@ constexpr Builtin CEIL{"@ceil", TokenType::BUILTIN_CEIL};
 
 constexpr Builtin PANIC{"@panic", TokenType::BUILTIN_PANIC};
 
+constexpr auto ALL_TOKEN_TYPES =
+    enum_range<TokenType::BUILTIN_ALIGN_CAST, TokenType::BUILTIN_PANIC>();
+
 } // namespace builtins
 
-constexpr auto ALL_BUILTINS = [] {
-    auto all_builtins = std::array{
-        builtins::ALIGN_CAST,
-        builtins::PTR_CAST,
-        builtins::BIT_CAST,
-        builtins::CONST_CAST,
-        builtins::VOLATILE_CAST,
-        builtins::AS,
-        builtins::INT_FROM_PTR,
-        builtins::PTR_FROM_INT,
-        builtins::PTR_FROM_ARRAY,
-        builtins::SLICE_FROM_PTR,
-        builtins::ALIGN_OF,
-        builtins::SIZE_OF,
-        builtins::TYPE_OF,
-        builtins::TAG_NAME,
-        builtins::MEMCPY,
-        builtins::MEMSET,
-        builtins::MEMMOVE,
-        builtins::MUL_ADD,
-        builtins::CLZ,
-        builtins::CTZ,
-        builtins::DIV_MOD,
-        builtins::POP_COUNT,
-        builtins::SQRT,
-        builtins::SIN,
-        builtins::COS,
-        builtins::TAN,
-        builtins::EXP,
-        builtins::EXP2,
-        builtins::LOG,
-        builtins::LOG2,
-        builtins::LOG10,
-        builtins::ABS,
-        builtins::FLOOR,
-        builtins::CEIL,
-        builtins::PANIC,
-    };
-
-    std::ranges::sort(all_builtins, {}, &Builtin::first);
-    return all_builtins;
-}();
-
-constexpr auto get_builtin(std::string_view sv) noexcept -> opt::Option<Builtin> {
-    const auto it = std::ranges::lower_bound(ALL_BUILTINS, sv, {}, &Builtin::first);
-    if (it == ALL_BUILTINS.end() || it->first != sv) { return opt::none; }
-    return opt::Option<Builtin>{*it};
-}
+[[nodiscard]] auto get_builtin_opt(TokenType tok) noexcept -> opt::Option<std::string_view>;
+[[nodiscard]] auto get_builtin_opt(std::string_view sv) noexcept -> opt::Option<TokenType>;
 
 } // namespace porpoise::syntax

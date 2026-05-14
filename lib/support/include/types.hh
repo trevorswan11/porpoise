@@ -34,10 +34,13 @@ template <typename T>
 concept Unsigned = std::is_unsigned_v<T>;
 
 template <typename T>
-concept TriviallyDestructible = std::is_trivially_destructible_v<T>;
+concept TriviallyConstructible = std::is_trivially_constructible_v<T>;
 
 template <typename T>
 concept DefaultConstructible = std::is_default_constructible_v<T>;
+
+template <typename T>
+concept TriviallyDestructible = std::is_trivially_destructible_v<T>;
 
 template <typename T>
 concept TriviallyCopyable = std::is_trivially_copyable_v<T>;

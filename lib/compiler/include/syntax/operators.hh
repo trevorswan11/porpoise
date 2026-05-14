@@ -1,7 +1,5 @@
 #pragma once
 
-#include <algorithm>
-#include <array>
 #include <string_view>
 #include <utility>
 
@@ -65,66 +63,7 @@ constexpr Operator NULL_TERMINATED{":0", TokenType::NULL_TERMINATED};
 
 } // namespace operators
 
-constexpr auto ALL_OPERATORS = [] {
-    auto all_operators = std::array{
-        operators::ASSIGN,
-        operators::WALRUS,
-        operators::PLUS,
-        operators::PLUS_ASSIGN,
-        operators::MINUS,
-        operators::MINUS_ASSIGN,
-        operators::STAR,
-        operators::STAR_ASSIGN,
-        operators::SLASH,
-        operators::SLASH_ASSIGN,
-        operators::PERCENT,
-        operators::PERCENT_ASSIGN,
-        operators::BANG,
-        operators::AND_MUT,
-        operators::STAR_MUT,
-        operators::BW_AND,
-        operators::BW_AND_ASSIGN,
-        operators::BW_OR,
-        operators::BW_OR_ASSIGN,
-        operators::SHL,
-        operators::SHL_ASSIGN,
-        operators::SHR,
-        operators::SHR_ASSIGN,
-        operators::NOT,
-        operators::NOT_ASSIGN,
-        operators::XOR,
-        operators::XOR_ASSIGN,
-        operators::BOOLEAN_AND,
-        operators::BOOLEAN_OR,
-        operators::LT,
-        operators::LT_EQ,
-        operators::GT,
-        operators::GT_EQ,
-        operators::EQ,
-        operators::NEQ,
-        operators::ELLIPSIS,
-        operators::COLON_COLON,
-        operators::DOT,
-        operators::DOT_DOT,
-        operators::DOT_DOT_EQ,
-        operators::FAT_ARROW,
-        operators::COMMENT,
-        operators::MULTILINE_STRING,
-        operators::NULL_TERMINATED,
-    };
-
-    std::ranges::sort(all_operators, {}, &Operator::first);
-    return all_operators;
-}();
-
-constexpr auto MAX_OPERATOR_LEN = std::ranges::max_element(ALL_OPERATORS, [](auto a, auto b) {
-                                      return a.first.size() < b.first.size();
-                                  })->first.size();
-
-constexpr auto get_operator(std::string_view sv) noexcept -> opt::Option<Operator> {
-    const auto it = std::ranges::lower_bound(ALL_OPERATORS, sv, {}, &Operator::first);
-    if (it == ALL_OPERATORS.end() || it->first != sv) { return opt::none; }
-    return opt::Option<Operator>{*it};
-}
+[[nodiscard]] auto max_operator_length() noexcept -> usize;
+[[nodiscard]] auto get_operator_opt(std::string_view sv) noexcept -> opt::Option<TokenType>;
 
 } // namespace porpoise::syntax

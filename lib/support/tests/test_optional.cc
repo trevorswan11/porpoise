@@ -72,6 +72,13 @@ TEST_CASE("Ref conversions") {
         CHECK(base_opt.has_value());
         CHECK(base_opt->x == 10);
     }
+
+    SECTION("To standard optional") {
+        i32                         val = 42;
+        const opt::detail::Ref<i32> ref_opt{val};
+        const auto                  std_opt = ref_opt.materialize();
+        CHECK(std_opt == 42);
+    }
 }
 
 TEST_CASE("Ref reassignment") {

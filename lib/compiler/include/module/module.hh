@@ -161,7 +161,7 @@ class ModuleManager {
 
     // Maps physical porpoise modules to their path on disk
     ankerl::unordered_dense::
-        map<std::string, std::filesystem::path, hash::StringTransparent, std::equal_to<>>
+        map<std::string, std::filesystem::path, hash::StringTransparentHash, std::equal_to<>>
             module_lut_;
 };
 

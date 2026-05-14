@@ -95,8 +95,8 @@ class Parser {
     [[nodiscard]] auto try_parse_restricted_alternate(Error error, bool require_semicolon = true)
         -> Result<opt::Option<ast::StatementHandle>, Diagnostic>;
 
-    static auto try_get_prefix_fn(TokenType tt) noexcept -> opt::Option<PrefixFn>;
-    static auto try_get_poll_infix_fn(TokenType tt) noexcept -> opt::Option<InfixFn>;
+    static auto get_prefix_fn_opt(TokenType tt) noexcept -> opt::Option<PrefixFn>;
+    static auto get_poll_infix_fn_opt(TokenType tt) noexcept -> opt::Option<InfixFn>;
 
     [[nodiscard]] auto get_ast() noexcept -> ast ::AST& { return *ast_; }
 

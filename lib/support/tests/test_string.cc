@@ -57,4 +57,15 @@ TEST_CASE("Blank string check") {
     CHECK(string::is_blank("        \t\n\r"));
 }
 
+TEST_CASE("String view conversion") {
+    const auto*            c_str = "Hello, World!";
+    const std::string_view view  = c_str;
+    const std::string      str   = c_str;
+
+    CHECK(string::to_view(c_str) == string::to_view(c_str));
+    CHECK(string::to_view(c_str) == string::to_view(view));
+    CHECK(string::to_view(c_str) == string::to_view(str));
+    CHECK(string::to_view(view) == string::to_view(str));
+}
+
 } // namespace porpoise::tests

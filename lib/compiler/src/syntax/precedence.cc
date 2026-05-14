@@ -1,13 +1,13 @@
 #include "syntax/precedence.hh"
 
-#include "enum.hh"
+#include "fixed/enum_map.hh"
 
 namespace porpoise::syntax {
 
 namespace {
 
 constexpr auto ALL_BINDINGS = [] {
-    EnumMap<TokenType, opt::Option<Binding>> bindings;
+    fixed::EnumMap<TokenType, opt::Option<Binding>> bindings;
 
     bindings[TokenType::PLUS]           = {Precedence::ADD_SUB};
     bindings[TokenType::MINUS]          = {Precedence::ADD_SUB};

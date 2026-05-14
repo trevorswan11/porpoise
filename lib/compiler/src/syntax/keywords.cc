@@ -1,0 +1,61 @@
+#include "syntax/keywords.hh"
+
+#include "fixed/hash_map.hh"
+
+namespace porpoise::syntax {
+
+namespace {
+
+constexpr auto ALL_KEYWORDS = fixed::make_hash_map(keywords::FN,
+                                                   keywords::VAR,
+                                                   keywords::CONSTANT,
+                                                   keywords::CONSTEXPR,
+                                                   keywords::STRUCT,
+                                                   keywords::ENUM,
+                                                   keywords::UNION,
+                                                   keywords::BOOLEAN_TRUE,
+                                                   keywords::BOOLEAN_FALSE,
+                                                   keywords::IF,
+                                                   keywords::ELSE,
+                                                   keywords::DO,
+                                                   keywords::MATCH,
+                                                   keywords::RETURN,
+                                                   keywords::DEFER,
+                                                   keywords::LOOP,
+                                                   keywords::FOR,
+                                                   keywords::WHILE,
+                                                   keywords::CONTINUE,
+                                                   keywords::BREAK,
+                                                   keywords::IMPORT,
+                                                   keywords::I32,
+                                                   keywords::I64,
+                                                   keywords::ISIZE,
+                                                   keywords::U32,
+                                                   keywords::U64,
+                                                   keywords::USIZE,
+                                                   keywords::F32,
+                                                   keywords::F64,
+                                                   keywords::U8,
+                                                   keywords::BOOL,
+                                                   keywords::VOID,
+                                                   keywords::TYPE,
+                                                   keywords::AUTO,
+                                                   keywords::OPAQUE,
+                                                   keywords::AS,
+                                                   keywords::PUBLIC,
+                                                   keywords::EXTERN,
+                                                   keywords::EXPORT,
+                                                   keywords::VOLATILE,
+                                                   keywords::STATIC,
+                                                   keywords::NORETURN,
+                                                   keywords::NULLPTR,
+                                                   keywords::USING,
+                                                   keywords::TEST);
+
+} // namespace
+
+auto get_keyword_opt(std::string_view sv) noexcept -> opt::Option<TokenType> {
+    return ALL_KEYWORDS.get_opt(sv).materialize();
+}
+
+} // namespace porpoise::syntax

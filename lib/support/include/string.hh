@@ -17,6 +17,7 @@ template <typename T> struct is_string_like : std::false_type {};
 template <> struct is_string_like<std::string> : std::true_type {};
 template <> struct is_string_like<std::string_view> : std::true_type {};
 template <> struct is_string_like<const byte*> : std::true_type {};
+template <> struct is_string_like<byte*> : std::true_type {};
 template <typename T> constexpr auto is_string_like_v = is_string_like<T>::value;
 
 template <typename T>
@@ -86,6 +87,12 @@ auto substr(std::string&& str, usize pos, usize len = std::string_view::npos) no
 // Checks if the provided string contains entirely whitespace characters
 [[nodiscard]] constexpr auto is_blank(std::string_view text) -> bool {
     return std::ranges::all_of(text, [](byte b) { return std::isspace(b); });
+}
+
+// Converts a string-like object to its string_view representation
+template <traits::StringLike S>
+[[nodiscard]] constexpr auto to_view(const S& input) noexcept -> std::string_view {
+    return input;
 }
 
 } // namespace string

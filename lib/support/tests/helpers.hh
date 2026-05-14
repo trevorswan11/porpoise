@@ -22,7 +22,8 @@ struct RAIITracker {
 
     static auto reset() -> void { live_count = copy_count = move_count = destruct_count = 0; }
 
-    RAIITracker() { live_count++; }
+    // Dummy variable for constructor to prevent default construction
+    RAIITracker(i32) { live_count++; }
     ~RAIITracker() {
         live_count--;
         destruct_count++;
@@ -47,6 +48,34 @@ struct RAIITracker {
         move_count++;
         return *this;
     }
+};
+
+enum class MockEnum : u8 {
+    A,
+    B,
+    C,
+    D,
+};
+
+enum class MockPositiveEnum : u8 {
+    A = 1,
+    B,
+    C,
+    D,
+};
+
+enum class MockNegativeEnum : i8 {
+    A = -1,
+    B,
+    C,
+    D,
+};
+
+enum class NonMonotonicEnum : u8 {
+    A = 0,
+    B = 10,
+    C = 25,
+    D = 23,
 };
 
 } // namespace porpoise::tests::helpers

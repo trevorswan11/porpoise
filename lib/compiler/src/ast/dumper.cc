@@ -4,6 +4,8 @@
 #include <magic_enum/magic_enum.hpp>
 #include <magic_enum/magic_enum_flags.hpp>
 
+#include "syntax/builtins.hh"
+
 #include "ast/dumper.hh"
 
 namespace porpoise::ast {
@@ -196,7 +198,7 @@ auto ASTDumper::visit(ast::NodeID, const FunctionExpression& function) -> void {
 
 auto ASTDumper::visit(ast::NodeID id, const IdentifierExpression& ident) -> void {
     fmt::print(out_, "IdentifierExpression: {}", ident);
-    if (syntax::token_type::is_builtin(id.get_token_type())) {
+    if (syntax::get_builtin_opt(id.get_token_type())) {
         fmt::print(out_, " (builtin)");
     } else if (syntax::token_type::is_primitive(id.get_token_type())) {
         fmt::print(out_, " (primitive)");
@@ -430,7 +432,7 @@ auto ASTDumper::visit(ast::NodeID, const StructExpression& struct_expr) -> void 
 auto ASTDumper::visit(ExplicitTypeID id, const IdentifierExpression& ident) -> void {
     fmt::print(out_, "{}", indent_.current_branch());
     fmt::print(out_, "IdentifierExpression: {}", ident);
-    if (syntax::token_type::is_builtin(id.get_token_type())) {
+    if (syntax::get_builtin_opt(id.get_token_type())) {
         fmt::print(out_, " (builtin)");
     } else if (syntax::token_type::is_primitive(id.get_token_type())) {
         fmt::print(out_, " (primitive)");

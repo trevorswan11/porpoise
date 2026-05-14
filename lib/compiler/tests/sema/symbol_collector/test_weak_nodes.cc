@@ -14,9 +14,10 @@ TEST_CASE("Array/Index collection") {
 }
 
 TEST_CASE("Builtin calling collection") {
-    for (const auto& builtin : syntax::ALL_BUILTINS) {
-        const auto input = fmt::format(
-            "const a := {}(match (b) {{ c => d e => f}}, g, if (5 <= h) i else j);", builtin.first);
+    for (const auto& builtin : syntax::builtins::ALL_TOKEN_TYPES) {
+        const auto input =
+            fmt::format("const a := {}(match (b) {{ c => d e => f}}, g, if (5 <= h) i else j);",
+                        *get_builtin_opt(builtin));
         helpers::collect_and_check(input);
     }
 }
