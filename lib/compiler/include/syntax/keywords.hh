@@ -59,6 +59,7 @@ constexpr Keyword NORETURN{"noreturn", TokenType::NORETURN};
 constexpr Keyword NULLPTR{"nullptr", TokenType::NULLPTR};
 constexpr Keyword USING{"using", TokenType::USING};
 constexpr Keyword TEST{"test", TokenType::TEST};
+constexpr Keyword UNDEFINED{"undefined", TokenType::UNDEFINED};
 
 } // namespace keywords
 

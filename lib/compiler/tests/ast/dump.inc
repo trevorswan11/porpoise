@@ -465,4 +465,9 @@ ExpressionStatement
 └─ Expr: U8Expression: 39
 ExpressionStatement
 └─ Expr: U8Expression: 0
+DeclStatement (a)
+├─ Modifiers: VARIABLE
+├─ Type: ExplicitType (modifier: VALUE)
+│   └─ IdentifierExpression: i32 (primitive)
+└─ Value: UndefinedExpression
 )"

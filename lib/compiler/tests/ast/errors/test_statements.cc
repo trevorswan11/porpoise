@@ -86,6 +86,13 @@ TEST_CASE("Duplicate declaration modifier") {
                               syntax::Diagnostic{syntax::Error::DUPLICATE_DECL_MODIFIER, 0, 4});
 }
 
+TEST_CASE("Undefined declaration without type") {
+    helpers::test_parser_fail("var a := undefined;",
+                              syntax::Diagnostic{"Undefined declarations require an explicit type",
+                                                 syntax::Error::UNDEFINED_DECL_MISSING_TYPE,
+                                                 std::pair{0uz, 0uz}});
+}
+
 TEST_CASE("Illegal deferred statements") {
     helpers::test_parser_fail("defer import std;",
                               syntax::Diagnostic{syntax::Error::ILLEGAL_DEFERRED_STATEMENT, 0, 6});

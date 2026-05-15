@@ -402,6 +402,10 @@ auto ASTDumper::visit(ast::NodeID, const VoidExpression&) -> void {
     fmt::println(out_, "VoidExpression");
 }
 
+auto ASTDumper::visit(ast::NodeID, const UndefinedExpression&) -> void {
+    fmt::println(out_, "UndefinedExpression");
+}
+
 // Safe to call with invalid ID in type dispatch
 auto ASTDumper::visit(ast::NodeID, const ScopeResolutionExpression& scope_resolve) -> void {
     fmt::println(out_, "ScopeResolutionExpression");

@@ -64,11 +64,17 @@ struct VoidExpression {
         -> Result<ExpressionHandle, syntax::Diagnostic>;
 };
 
+struct UndefinedExpression {
+    [[nodiscard]] static auto parse(syntax::Parser& parser)
+        -> Result<ExpressionHandle, syntax::Diagnostic>;
+};
+
 namespace traits {
 
 template <typename T> struct is_light_primitive : std::false_type {};
 template <> struct is_light_primitive<BoolExpression> : std::true_type {};
 template <> struct is_light_primitive<VoidExpression> : std::true_type {};
+template <> struct is_light_primitive<UndefinedExpression> : std::true_type {};
 template <typename T> constexpr auto is_light_primitive_v = is_light_primitive<T>::value;
 
 // A primitive node with its value embedded in its id

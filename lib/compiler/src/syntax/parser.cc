@@ -194,6 +194,7 @@ constexpr auto PREFIX_FNS = [] {
     fns[TokenType::DOT]              = ast::ImplicitAccessExpression::parse;
     fns[TokenType::BOOLEAN_TRUE]     = ast::BoolExpression::parse;
     fns[TokenType::BOOLEAN_FALSE]    = ast::BoolExpression::parse;
+    fns[TokenType::UNDEFINED]        = ast::UndefinedExpression::parse;
     fns[TokenType::LBRACE]           = ast::VoidExpression::parse;
     fns[TokenType::STRING]           = ast::StringExpression::parse;
     fns[TokenType::MULTILINE_STRING] = ast::StringExpression::parse;

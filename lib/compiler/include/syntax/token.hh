@@ -139,6 +139,7 @@ enum class TokenType : u8 {
     AS,
     DEFER,
     TEST,
+    UNDEFINED,
 
     I32_TYPE,
     I64_TYPE,

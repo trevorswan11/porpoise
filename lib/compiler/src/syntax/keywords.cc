@@ -50,7 +50,8 @@ constexpr auto ALL_KEYWORDS = fixed::make_hash_map(keywords::FN,
                                                    keywords::NORETURN,
                                                    keywords::NULLPTR,
                                                    keywords::USING,
-                                                   keywords::TEST);
+                                                   keywords::TEST,
+                                                   keywords::UNDEFINED);
 
 } // namespace
 

@@ -42,8 +42,8 @@ auto ArrayExpression::parse(syntax::Parser& parser)
     }
 
     TRY(parser.expect_peek(syntax::TokenType::RBRACE));
-    return parser.add_expr(start_token,
-                           ArrayExpression{size, null_terminated, item_type, std::move(items)});
+    return parser.add_expr<ArrayExpression>(
+        start_token, size, null_terminated, item_type, std::move(items));
 }
 
 auto CallExpression::parse(syntax::Parser& parser, ExpressionHandle function)
@@ -78,7 +78,7 @@ auto CallExpression::parse(syntax::Parser& parser, ExpressionHandle function)
     }
     TRY(parser.expect_peek(syntax::TokenType::RPAREN));
 
-    return parser.add_expr(start_token, CallExpression{function, std::move(arguments)});
+    return parser.add_expr<CallExpression>(start_token, function, std::move(arguments));
 }
 
 auto DoWhileLoopExpression::parse(syntax::Parser& parser)
@@ -102,7 +102,7 @@ auto DoWhileLoopExpression::parse(syntax::Parser& parser)
         return make_syntax_err(syntax::Error::EMPTY_LOOP, parser.get_location_of(*block));
     }
 
-    return parser.add_expr(start_token, DoWhileLoopExpression{block, condition});
+    return parser.add_expr<DoWhileLoopExpression>(start_token, block, condition);
 }
 
 namespace {
@@ -205,8 +205,8 @@ auto EnumExpression::parse(syntax::Parser& parser) -> Result<ExpressionHandle, s
 
     // Validate here so that there aren't 3 errors spawning from an empty enum with decls
     if (enumerations.empty()) { return make_syntax_err(syntax::Error::EMPTY_ENUM, start_token); }
-    return parser.add_expr(start_token,
-                           EnumExpression{underlying, std::move(enumerations), std::move(members)});
+    return parser.add_expr<EnumExpression>(
+        start_token, underlying, std::move(enumerations), std::move(members));
 }
 
 auto ForLoopExpression::parse(syntax::Parser& parser)
@@ -242,7 +242,7 @@ auto ForLoopExpression::parse(syntax::Parser& parser)
         parser.advance();
         if (parser.current_token_is(syntax::TokenType::UNDERSCORE)) {
             const auto discarded =
-                parser.add_node<DiscardableIdentHandle>(parser.get_current_token(), Unit{});
+                parser.add_node<DiscardableIdentHandle, Unit>(parser.get_current_token());
             captures.emplace_back(TypeModifier{}, discarded);
         } else {
             // Always check for a modifier and advance past it if present
@@ -274,9 +274,8 @@ auto ForLoopExpression::parse(syntax::Parser& parser)
         return make_syntax_err(syntax::Error::EMPTY_LOOP, parser.get_location_of(*block));
     }
 
-    return parser.add_expr(
-        start_token,
-        ForLoopExpression{std::move(iterables), std::move(captures), block, non_break});
+    return parser.add_expr<ForLoopExpression>(
+        start_token, std::move(iterables), std::move(captures), block, non_break);
 }
 
 // Variadic must be handled first and should break the enclosing loop
@@ -376,8 +375,8 @@ auto FunctionExpression::parse(syntax::Parser& parser)
     // Otherwise there must be a well-formed block
     TRY(parser.expect_peek(syntax::TokenType::LBRACE));
     const BlockHandle body = TRY(BlockStatement::parse(parser));
-    return parser.add_expr(
-        start_token, FunctionExpression{self, std::move(parameters), variadic, return_type, body});
+    return parser.add_expr<FunctionExpression>(
+        start_token, self, std::move(parameters), variadic, return_type, body);
 }
 
 auto GroupedExpression::parse(syntax::Parser& parser)
@@ -395,7 +394,7 @@ auto IdentifierExpression::parse(syntax::Parser& parser)
         return make_syntax_err(syntax::Error::ILLEGAL_IDENTIFIER, start_token);
     }
 
-    return parser.add_expr(start_token, IdentifierExpression{start_token.slice});
+    return parser.add_expr<IdentifierExpression>(start_token, start_token.slice);
 }
 
 auto IfExpression::parse(syntax::Parser& parser) -> Result<ExpressionHandle, syntax::Diagnostic> {
@@ -424,8 +423,8 @@ auto IfExpression::parse(syntax::Parser& parser) -> Result<ExpressionHandle, syn
     const auto alternate =
         TRY(parser.try_parse_restricted_alternate(syntax::Error::ILLEGAL_IF_BRANCH, false));
 
-    return parser.add_expr(start_token,
-                           IfExpression{constexpr_condition, condition, consequence, alternate});
+    return parser.add_expr<IfExpression>(
+        start_token, constexpr_condition, condition, consequence, alternate);
 }
 
 auto IndexExpression::parse(syntax::Parser& parser, ExpressionHandle array)
@@ -438,7 +437,7 @@ auto IndexExpression::parse(syntax::Parser& parser, ExpressionHandle array)
 
     const auto idx_expr = TRY(parser.parse_expression());
     TRY(parser.expect_peek(syntax::TokenType::RBRACKET));
-    return parser.add_expr(start_token, IndexExpression{array, idx_expr});
+    return parser.add_expr<IndexExpression>(start_token, array, idx_expr);
 }
 
 auto InfiniteLoopExpression::parse(syntax::Parser& parser)
@@ -450,12 +449,12 @@ auto InfiniteLoopExpression::parse(syntax::Parser& parser)
     if (parser.get_node<BlockStatement>(*block).empty()) {
         return make_syntax_err(syntax::Error::EMPTY_LOOP, parser.get_location_of(*block));
     }
-    return parser.add_expr(start_token, InfiniteLoopExpression{block});
+    return parser.add_expr<InfiniteLoopExpression>(start_token, block);
 }
 
 namespace {
 
-template <traits::ASTNode Node>
+template <traits::ASTNode Expr>
 [[nodiscard]] auto parse_infix(syntax::Parser& parser, ExpressionHandle lhs)
     -> Result<ExpressionHandle, syntax::Diagnostic> {
     const auto op_token = parser.get_current_token();
@@ -471,7 +470,7 @@ template <traits::ASTNode Node>
 
     parser.advance();
     const auto rhs = TRY(parser.parse_expression(current_precedence));
-    return parser.add_expr(op_token, Node{lhs, rhs});
+    return parser.add_expr<Expr>(op_token, lhs, rhs);
 }
 
 } // namespace
@@ -508,7 +507,7 @@ auto InitializerExpression::parse(syntax::Parser& parser, opt::Option<Expression
     }
     TRY(parser.expect_peek(syntax::TokenType::RBRACE));
 
-    return parser.add_expr(start_token, InitializerExpression{object, std::move(initializers)});
+    return parser.add_expr<InitializerExpression>(start_token, object, std::move(initializers));
 }
 
 auto LabelExpression::parse(syntax::Parser& parser, ExpressionHandle name)
@@ -523,7 +522,7 @@ auto LabelExpression::parse(syntax::Parser& parser, ExpressionHandle name)
     const auto raw_stmt = TRY(parser.parse_statement(true));
     const auto body     = TRY(deconstruct_body(parser, raw_stmt));
 
-    return parser.add_expr(start_token, LabelExpression{name, body});
+    return parser.add_expr<LabelExpression>(start_token, name, body);
 }
 
 auto LabelExpression::deconstruct_body(syntax::Parser& parser, StatementHandle raw_stmt)
@@ -588,7 +587,7 @@ auto MatchExpression::parse(syntax::Parser& parser)
             if (parser.peek_token_is(syntax::TokenType::UNDERSCORE)) {
                 parser.advance();
                 capture.emplace(
-                    parser.add_node<DiscardableIdentHandle>(parser.get_current_token(), Unit{}));
+                    parser.add_node<DiscardableIdentHandle, Unit>(parser.get_current_token()));
             } else {
                 TRY(parser.expect_peek(syntax::TokenType::IDENT));
                 capture.emplace(TRY(IdentifierExpression::parse(parser)));
@@ -606,12 +605,12 @@ auto MatchExpression::parse(syntax::Parser& parser)
     const auto catch_all =
         TRY(parser.try_parse_restricted_alternate(syntax::Error::ILLEGAL_MATCH_CATCH_ALL));
 
-    return parser.add_expr(start_token, MatchExpression{matcher, std::move(arms), catch_all});
+    return parser.add_expr<MatchExpression>(start_token, matcher, std::move(arms), catch_all);
 }
 
 namespace {
 
-template <traits::ASTNode Node>
+template <traits::ASTNode Expr>
 [[nodiscard]] auto parse_prefix(syntax::Parser& parser)
     -> Result<ExpressionHandle, syntax::Diagnostic> {
     const auto prefix_token = parser.get_current_token();
@@ -621,7 +620,7 @@ template <traits::ASTNode Node>
     parser.advance();
 
     const auto operand = TRY(parser.parse_expression(syntax::Precedence::PREFIX));
-    return parser.add_expr(prefix_token, Node{operand});
+    return parser.add_expr<Expr>(prefix_token, operand);
 }
 
 } // namespace
@@ -656,13 +655,13 @@ auto ImplicitAccessExpression::parse(syntax::Parser& parser)
                                parser.get_location_of(*operand));
     }
 
-    return parser.add_expr(prefix_token, ImplicitAccessExpression{operand});
+    return parser.add_expr<ImplicitAccessExpression>(prefix_token, operand);
 }
 
 auto StringExpression::parse(syntax::Parser& parser)
     -> Result<ExpressionHandle, syntax::Diagnostic> {
     const auto start_token = parser.get_current_token();
-    return parser.add_expr(start_token, StringExpression{start_token.materialize_string()});
+    return parser.add_expr<StringExpression>(start_token, start_token.materialize_string());
 }
 
 auto ScopeResolutionExpression::parse(syntax::Parser& parser, ExpressionHandle outer)
@@ -675,7 +674,7 @@ auto ScopeResolutionExpression::parse(syntax::Parser& parser, ExpressionHandle o
     const auto start_token = parser.get_current_token();
     TRY(parser.expect_peek(syntax::TokenType::IDENT));
     const IdentifierHandle inner = TRY(IdentifierExpression::parse(parser));
-    return parser.add_expr(start_token, ScopeResolutionExpression{outer, inner});
+    return parser.add_expr<ScopeResolutionExpression>(start_token, outer, inner);
 }
 
 auto StructExpression::parse(syntax::Parser& parser)
@@ -690,7 +689,7 @@ auto StructExpression::parse(syntax::Parser& parser)
     }));
 
     TRY(parser.expect_peek(syntax::TokenType::RBRACE));
-    return parser.add_expr(start_token, StructExpression{std::move(members)});
+    return parser.add_expr<StructExpression>(start_token, std::move(members));
 }
 
 auto UnionExpression::parse(syntax::Parser& parser)
@@ -727,7 +726,7 @@ auto UnionExpression::parse(syntax::Parser& parser)
 
     // Validate here so that there aren't 3 errors spawning from an empty union with decls
     if (fields.empty()) { return make_syntax_err(syntax::Error::EMPTY_UNION, start_token); }
-    return parser.add_expr(start_token, UnionExpression{std::move(fields), std::move(members)});
+    return parser.add_expr<UnionExpression>(start_token, std::move(fields), std::move(members));
 }
 
 auto WhileLoopExpression::parse(syntax::Parser& parser)
@@ -772,8 +771,8 @@ auto WhileLoopExpression::parse(syntax::Parser& parser)
         return make_syntax_err(syntax::Error::EMPTY_LOOP, parser.get_location_of(*block));
     }
 
-    return parser.add_expr(start_token,
-                           WhileLoopExpression{condition, continuation, block, non_break});
+    return parser.add_expr<WhileLoopExpression>(
+        start_token, condition, continuation, block, non_break);
 }
 
 } // namespace porpoise::ast

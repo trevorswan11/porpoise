@@ -29,6 +29,7 @@ enum class TypeKind : u8 {
     F32,
     F64,
     VOID,
+    UNDEFINED,
     TYPE,
     SLICE,
     ARRAY,

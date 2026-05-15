@@ -35,6 +35,7 @@ auto SymbolCollector::collect_symbols(mod::Module& module, Context& ctx) -> mod:
     X(F64Expression)             \
     X(BoolExpression)            \
     X(VoidExpression)            \
+    X(UndefinedExpression)       \
     X(ScopeResolutionExpression) \
     X(TypeExpression)
 

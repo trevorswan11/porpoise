@@ -46,9 +46,8 @@ auto parse_function_type(syntax::Parser& parser) -> Result<ExpressionHandle, syn
         return make_syntax_err(syntax::Error::EXPLICIT_FN_TYPE_HAS_BODY, start_token);
     }
 
-    return parser.add_expr(
-        start_token,
-        FunctionExpression{opt::none, std::move(parameters), variadic, return_type, opt::none});
+    return parser.add_expr<FunctionExpression>(
+        start_token, opt::none, std::move(parameters), variadic, return_type, opt::none);
 }
 
 } // namespace
@@ -82,12 +81,12 @@ auto ExplicitType::parse(syntax::Parser& parser) -> Result<ExplicitTypeID, synta
 
         // Arrays are recursively defined
         const auto inner = TRY(ExplicitType::parse(parser));
-        return parser.add_type(
-            modifier_token, modifier, ExplicitArrayType{dimension, null_terminated, inner});
+        return parser.add_type<ExplicitArrayType>(
+            modifier_token, modifier, dimension, null_terminated, inner);
     } else if (!TypeModifier{parser.get_peek_token()}.is_value()) {
         // Don't advance since the parser does it implicitly here (costs two modifier queries)
         const auto inner = TRY(ExplicitType::parse(parser));
-        return parser.add_type(modifier_token, modifier, ExplicitTypeID{inner});
+        return parser.add_type<ExplicitTypeID>(modifier_token, modifier, inner);
     }
 
     // Otherwise the type has to be a 'simple' function or ident
@@ -113,14 +112,11 @@ auto ExplicitType::parse(syntax::Parser& parser) -> Result<ExplicitTypeID, synta
             parser.peek_token_is(syntax::TokenType::LPAREN)) {
             const auto parsed = TRY(parser.parse_expression(syntax::Precedence::TYPE));
             if (parsed.is<ScopeResolutionExpression>()) {
-                return parser.add_type(
-                    modifier_token,
-                    modifier,
-                    ScopeResolutionExpression{parser.get_node<ScopeResolutionExpression>(*parsed)});
+                return parser.add_type<ScopeResolutionExpression>(
+                    modifier_token, modifier, parser.get_node<ScopeResolutionExpression>(*parsed));
             } else if (parsed.is<CallExpression>()) {
-                return parser.add_type(modifier_token,
-                                       modifier,
-                                       CallExpression{parser.get_node<CallExpression>(*parsed)});
+                return parser.add_type<CallExpression>(
+                    modifier_token, modifier, parser.get_node<CallExpression>(*parsed));
             }
 
             return make_syntax_err(syntax::Error::ILLEGAL_EXPLICIT_TYPE,
@@ -128,9 +124,8 @@ auto ExplicitType::parse(syntax::Parser& parser) -> Result<ExplicitTypeID, synta
         }
 
         const auto ident = TRY(IdentifierExpression::parse(parser));
-        return parser.add_type(modifier_token,
-                               modifier,
-                               IdentifierExpression{parser.get_node<IdentifierExpression>(*ident)});
+        return parser.add_type<IdentifierExpression>(
+            modifier_token, modifier, parser.get_node<IdentifierExpression>(*ident));
     }
 
     // The inner type is limited to functions and user-defined types
@@ -145,7 +140,7 @@ auto ExplicitType::parse(syntax::Parser& parser) -> Result<ExplicitTypeID, synta
         // Function types cannot have bodies
         const auto& function = parser.get_node<FunctionExpression>(*type_expr);
         ASSERT(!function.body, "Function type has body");
-        return parser.add_type(modifier_token, modifier, FunctionExpression{function});
+        return parser.add_type<FunctionExpression>(modifier_token, modifier, function);
     }
 
     // The user-defined types can be handled by parsing any expression and verifying it
@@ -156,14 +151,14 @@ auto ExplicitType::parse(syntax::Parser& parser) -> Result<ExplicitTypeID, synta
 
     switch (const auto user = TRY(parser.parse_expression()); user->get_kind()) {
     case NodeKind::STRUCT_EXPRESSION:
-        return parser.add_type(
-            modifier_token, modifier, StructExpression{parser.get_node<StructExpression>(*user)});
+        return parser.add_type<StructExpression>(
+            modifier_token, modifier, parser.get_node<StructExpression>(*user));
     case NodeKind::ENUM_EXPRESSION:
-        return parser.add_type(
-            modifier_token, modifier, EnumExpression{parser.get_node<EnumExpression>(*user)});
+        return parser.add_type<EnumExpression>(
+            modifier_token, modifier, parser.get_node<EnumExpression>(*user));
     case NodeKind::UNION_EXPRESSION:
-        return parser.add_type(
-            modifier_token, modifier, UnionExpression{parser.get_node<UnionExpression>(*user)});
+        return parser.add_type<UnionExpression>(
+            modifier_token, modifier, parser.get_node<UnionExpression>(*user));
     default: break;
     }
     return make_syntax_err(syntax::Error::ILLEGAL_EXPLICIT_TYPE, type_start);
@@ -178,14 +173,14 @@ namespace {
     const auto start_token = parser.get_peek_token();
 
     if (parser.peek_token_is(syntax::TokenType::WALRUS)) {
-        const auto type_expr = parser.add_node<TypeHandle>(start_token, TypeExpression{opt::none});
+        const auto type_expr = parser.add_node<TypeHandle, TypeExpression>(start_token, opt::none);
         parser.advance();
         return std::pair{type_expr, true};
     } else if (parser.peek_token_is(syntax::TokenType::COLON)) {
         parser.advance();
         const auto explicit_type = TRY(ExplicitType::parse(parser));
         const auto type_expr =
-            parser.add_node<TypeHandle>(start_token, TypeExpression{explicit_type});
+            parser.add_node<TypeHandle, TypeExpression>(start_token, explicit_type);
         if (parser.peek_token_is(syntax::TokenType::ASSIGN)) {
             parser.advance();
             return std::pair{type_expr, true};

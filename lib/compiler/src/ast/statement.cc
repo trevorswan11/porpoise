@@ -17,7 +17,7 @@ auto BlockStatement::parse(syntax::Parser& parser) -> Result<StatementHandle, sy
     }
     TRY(parser.expect_peek(syntax::TokenType::RBRACE));
 
-    return parser.add_stmt(start_token, BlockStatement{std::move(statements)});
+    return parser.add_stmt<BlockStatement>(start_token, std::move(statements));
 }
 
 auto BreakStatement::parse(syntax::Parser& parser) -> Result<StatementHandle, syntax::Diagnostic> {
@@ -43,7 +43,7 @@ auto BreakStatement::parse(syntax::Parser& parser) -> Result<StatementHandle, sy
         return make_syntax_err(syntax::Error::VALUED_BREAK_MISSING_LABEL, start_token);
     }
     TRY(parser.expect_peek(syntax::TokenType::SEMICOLON));
-    return parser.add_stmt(start_token, BreakStatement{label, value});
+    return parser.add_stmt<BreakStatement>(start_token, label, value);
 }
 
 auto ContinueStatement::parse(syntax::Parser& parser)
@@ -65,7 +65,7 @@ auto ContinueStatement::parse(syntax::Parser& parser)
     }
 
     TRY(parser.expect_peek(syntax::TokenType::SEMICOLON));
-    return parser.add_stmt(start_token, ContinueStatement{label});
+    return parser.add_stmt<ContinueStatement>(start_token, label);
 }
 
 namespace {
@@ -129,9 +129,17 @@ auto DeclStatement::parse(syntax::Parser& parser) -> Result<StatementHandle, syn
     if (value_initialized) {
         decl_value.emplace(TRY(parser.parse_expression()));
 
-        // If there is a value, then there cannot be an extern keyword
+        // If there is a value, then there cannot be an extern due to a contradiction
         if (modifiers_has(modifiers, DeclModifiers::EXTERN)) {
             return make_syntax_err(syntax::Error::EXTERN_VALUE_INITIALIZED, start_token);
+        }
+
+        // Initialized decls with undefined requires a type for well-formed future use
+        const auto& type_expr = parser.get_node<TypeExpression>(decl_type);
+        if (decl_value->is<UndefinedExpression>() && !type_expr.explicit_type) {
+            return make_syntax_err("Undefined declarations require an explicit type",
+                                   syntax::Error::UNDEFINED_DECL_MISSING_TYPE,
+                                   start_token);
         }
     } else if ((modifiers_has(modifiers, DeclModifiers::CONSTANT) &&
                 !modifiers_has(modifiers, DeclModifiers::EXTERN)) ||
@@ -143,7 +151,7 @@ auto DeclStatement::parse(syntax::Parser& parser) -> Result<StatementHandle, syn
     if (!parser.current_token_is(syntax::TokenType::SEMICOLON)) {
         TRY(parser.expect_peek(syntax::TokenType::SEMICOLON));
     }
-    return parser.add_stmt(start_token, DeclStatement{decl_name, decl_type, decl_value, modifiers});
+    return parser.add_stmt<DeclStatement>(start_token, decl_name, decl_type, decl_value, modifiers);
 }
 
 auto DeferStatement::parse(syntax::Parser& parser) -> Result<StatementHandle, syntax::Diagnostic> {
@@ -160,7 +168,7 @@ auto DeferStatement::parse(syntax::Parser& parser) -> Result<StatementHandle, sy
         return make_syntax_err(syntax::Error::ILLEGAL_DEFERRED_STATEMENT,
                                parser.get_location_of(*stmt));
     }
-    return parser.add_stmt(start_token, DeferStatement{stmt});
+    return parser.add_stmt<DeferStatement>(start_token, stmt);
 }
 
 auto DiscardStatement::parse(syntax::Parser& parser)
@@ -180,7 +188,7 @@ auto DiscardStatement::parse(syntax::Parser& parser)
     if (!parser.current_token_is(syntax::TokenType::SEMICOLON)) {
         TRY(parser.expect_peek(syntax::TokenType::SEMICOLON));
     }
-    return parser.add_stmt(start_token, DiscardStatement{expr});
+    return parser.add_stmt<DiscardStatement>(start_token, expr);
 }
 
 auto ExpressionStatement::parse(syntax::Parser& parser, bool require_semicolon)
@@ -195,7 +203,7 @@ auto ExpressionStatement::parse(syntax::Parser& parser, bool require_semicolon)
             TRY(parser.expect_peek(syntax::TokenType::SEMICOLON));
         }
     }
-    return parser.add_stmt(start_token, ExpressionStatement{expr});
+    return parser.add_stmt<ExpressionStatement>(start_token, expr);
 }
 
 namespace {
@@ -241,7 +249,7 @@ auto ImportStatement::parse(syntax::Parser& parser) -> Result<StatementHandle, s
         TRY(parser.expect_peek(syntax::TokenType::SEMICOLON));
     }
 
-    return parser.add_stmt(start_token, ImportStatement{imported_core, imported_alias});
+    return parser.add_stmt<ImportStatement>(start_token, imported_core, imported_alias);
 }
 
 auto ReturnStatement::parse(syntax::Parser& parser) -> Result<StatementHandle, syntax::Diagnostic> {
@@ -255,7 +263,7 @@ auto ReturnStatement::parse(syntax::Parser& parser) -> Result<StatementHandle, s
     }
 
     TRY(parser.expect_peek(syntax::TokenType::SEMICOLON));
-    return parser.add_stmt(start_token, ReturnStatement{value});
+    return parser.add_stmt<ReturnStatement>(start_token, value);
 }
 
 auto TestStatement::parse(syntax::Parser& parser) -> Result<StatementHandle, syntax::Diagnostic> {
@@ -275,7 +283,7 @@ auto TestStatement::parse(syntax::Parser& parser) -> Result<StatementHandle, syn
 
     TRY(parser.expect_peek(syntax::TokenType::LBRACE));
     const BlockHandle block = TRY(BlockStatement::parse(parser));
-    return parser.add_stmt(start_token, TestStatement{description, block});
+    return parser.add_stmt<TestStatement>(start_token, description, block);
 }
 
 auto UsingStatement::parse(syntax::Parser& parser) -> Result<StatementHandle, syntax::Diagnostic> {
@@ -290,7 +298,7 @@ auto UsingStatement::parse(syntax::Parser& parser) -> Result<StatementHandle, sy
     const auto type = TRY(ExplicitType::parse(parser));
 
     TRY(parser.expect_peek(syntax::TokenType::SEMICOLON));
-    return parser.add_stmt(start_token, UsingStatement{alias, type});
+    return parser.add_stmt<UsingStatement>(start_token, alias, type);
 }
 
 } // namespace porpoise::ast

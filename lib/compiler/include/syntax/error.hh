@@ -62,6 +62,7 @@ enum class Error : u8 {
     ILLEGAL_LABEL,
     ILLEGAL_LABEL_EXPRESSION,
     ILLEGAL_LABEL_STATEMENT,
+    UNDEFINED_DECL_MISSING_TYPE,
 };
 
 using Diagnostic  = Diagnostic<Error>;

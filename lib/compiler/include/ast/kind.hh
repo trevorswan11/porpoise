@@ -41,6 +41,7 @@ enum class NodeKind : u8 {
     F64_EXPRESSION,
     BOOL_EXPRESSION,
     VOID_EXPRESSION,
+    UNDEFINED_EXPRESSION,
     SCOPE_RESOLUTION_EXPRESSION,
     STRUCT_EXPRESSION,
     TYPE_EXPRESSION,
@@ -96,6 +97,7 @@ enum class NodeKind : u8 {
     X(F64Expression)             \
     X(BoolExpression)            \
     X(VoidExpression)            \
+    X(UndefinedExpression)       \
     X(ScopeResolutionExpression) \
     X(StructExpression)          \
     X(TypeExpression)            \
@@ -199,6 +201,7 @@ NODE_KIND_OF_TRAIT(F32Expression, F32_EXPRESSION)
 NODE_KIND_OF_TRAIT(F64Expression, F64_EXPRESSION)
 NODE_KIND_OF_TRAIT(BoolExpression, BOOL_EXPRESSION)
 NODE_KIND_OF_TRAIT(VoidExpression, VOID_EXPRESSION)
+NODE_KIND_OF_TRAIT(UndefinedExpression, UNDEFINED_EXPRESSION)
 NODE_KIND_OF_TRAIT(ScopeResolutionExpression, SCOPE_RESOLUTION_EXPRESSION)
 NODE_KIND_OF_TRAIT(StructExpression, STRUCT_EXPRESSION)
 NODE_KIND_OF_TRAIT(TypeExpression, TYPE_EXPRESSION)

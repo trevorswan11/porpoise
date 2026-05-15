@@ -109,29 +109,28 @@ class Parser {
     [[nodiscard]] auto get_location_of(ast::ExplicitTypeID id) -> SourceLocation;
 
     // Adds an expression to the ast and returns its handle
-    template <ast::traits::ASTNode Data>
-    [[nodiscard]] constexpr auto add_expr(const syntax::Token& start_token, Data&& data) {
-        return add_node<ast::ExpressionHandle>(start_token, std::forward<Data>(data));
+    template <ast::traits::ASTNode Data, typename... Args>
+    [[nodiscard]] constexpr auto add_expr(const syntax::Token& start_token, Args&&... args) {
+        return add_node<ast::ExpressionHandle, Data>(start_token, std::forward<Args>(args)...);
     }
 
     // Adds a statement to the ast and returns its handle
-    template <ast::traits::ASTNode Data>
-    [[nodiscard]] constexpr auto add_stmt(const syntax::Token& start_token, Data&& data) {
-        return add_node<ast::StatementHandle>(start_token, std::forward<Data>(data));
+    template <ast::traits::ASTNode Data, typename... Args>
+    [[nodiscard]] constexpr auto add_stmt(const syntax::Token& start_token, Args&&... args) {
+        return add_node<ast::StatementHandle, Data>(start_token, std::forward<Args>(args)...);
     }
 
     // Adds a node to the ast and casts the result to the requested handle
-    template <typename Handle, ast::traits::ASTNode Data>
-    [[nodiscard]] constexpr auto add_node(const syntax::Token& start_token, Data&& data) -> Handle {
-        return Handle{ast_->add_node(start_token, std::forward<Data>(data))};
+    template <typename Handle, ast::traits::ASTNode Data, typename... Args>
+    [[nodiscard]] constexpr auto add_node(const syntax::Token& start_token, Args&&... args) {
+        return Handle{ast_->add_node(start_token, Data{std::forward<Args>(args)...})};
     }
 
     // Helper for type-ast insertion, reducing a layer of call-site indirection
-    template <ast::traits::ASTExplicitType Data>
-    [[nodiscard]] constexpr auto add_type(const syntax::Token& start_token,
-                                          ast::TypeModifier    mod,
-                                          Data&&               data) -> ast::ExplicitTypeID {
-        return ast_->add_type(start_token, mod, std::forward<Data>(data));
+    template <ast::traits::ASTExplicitType Data, typename... Args>
+    [[nodiscard]] constexpr auto
+    add_type(const syntax::Token& start_token, ast::TypeModifier mod, Args&&... args) {
+        return ast_->add_type(start_token, mod, Data{std::forward<Args>(args)...});
     }
 
   private:

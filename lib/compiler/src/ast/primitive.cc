@@ -9,7 +9,7 @@ namespace porpoise::ast {
 namespace {
 
 // Parses the requested value from the string, asserting the from_chars result if requested
-template <typename ValueType, bool AssertLast = true>
+template <typename ValueType>
 [[nodiscard]] auto parse_primitive_value(std::string_view slice, syntax::TokenType type) noexcept
     -> opt::Option<ValueType> {
     const auto  base  = syntax::token_type::to_base(type);
@@ -24,23 +24,18 @@ template <typename ValueType, bool AssertLast = true>
         result = std::from_chars(first, last, v, std::to_underlying(*base));
     }
 
-    if constexpr (AssertLast) {
-        ASSERT(result.ptr == last);
-        if (result.ec == std::errc{}) { return v; }
-    } else {
-        if (result.ec == std::errc{} && result.ptr == last) { return v; }
-    }
-
+    // There should only be one error case, hence the use of option vs. result
+    if (result.ec == std::errc{} && result.ptr == last) { return v; }
     ASSERT(result.ec == std::errc::result_out_of_range);
     return opt::none;
 }
 
-template <traits::ValuedPrimitiveNode Node>
+template <traits::ValuedPrimitiveNode Primitive>
 auto parse_primitive(syntax::Parser& parser) -> Result<ExpressionHandle, syntax::Diagnostic> {
-    using value_type       = typename Node::value_type;
+    using value_type       = typename Primitive::value_type;
     const auto start_token = parser.get_current_token();
     const auto value       = parse_primitive_value<value_type>(start_token.slice, start_token.type);
-    if (value) { return parser.add_expr(start_token, Node{*value}); }
+    if (value) { return parser.add_expr<Primitive>(start_token, *value); }
 
     return make_syntax_err(std::is_same_v<value_type, f64>
                                ? syntax::Error::DOUBLE_OVERFLOW
@@ -68,7 +63,7 @@ auto U8Expression::parse(syntax::Parser& parser) -> Result<ExpressionHandle, syn
     const auto start_token = parser.get_current_token();
     const auto slice       = start_token.slice;
     if (slice[1] != '\\') {
-        return parser.add_expr(start_token, U8Expression{static_cast<u8>(slice[1])});
+        return parser.add_expr<U8Expression>(start_token, static_cast<u8>(slice[1]));
     }
 
     const auto escaped = slice[2];
@@ -83,20 +78,25 @@ auto U8Expression::parse(syntax::Parser& parser) -> Result<ExpressionHandle, syn
     default:   return make_syntax_err(syntax::Error::UNKNOWN_CHARACTER_ESCAPE, start_token);
     }
 
-    return parser.add_expr(start_token, U8Expression{value});
+    return parser.add_expr<U8Expression>(start_token, value);
 }
 
 MAKE_PRIMITIVE_PARSER(F32Expression)
 MAKE_PRIMITIVE_PARSER(F64Expression)
 
 auto BoolExpression::parse(syntax::Parser& parser) -> Result<ExpressionHandle, syntax::Diagnostic> {
-    return parser.add_expr(parser.get_current_token(), BoolExpression{});
+    return parser.add_expr<BoolExpression>(parser.get_current_token());
 }
 
 auto VoidExpression::parse(syntax::Parser& parser) -> Result<ExpressionHandle, syntax::Diagnostic> {
     const auto start_token = parser.get_current_token();
     TRY(parser.expect_peek(syntax::TokenType::RBRACE));
-    return parser.add_expr(start_token, VoidExpression{});
+    return parser.add_expr<VoidExpression>(start_token);
+}
+
+auto UndefinedExpression::parse(syntax::Parser& parser)
+    -> Result<ExpressionHandle, syntax::Diagnostic> {
+    return parser.add_expr<UndefinedExpression>(parser.get_current_token());
 }
 
 } // namespace porpoise::ast
