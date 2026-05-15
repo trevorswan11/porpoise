@@ -1,11 +1,19 @@
 #pragma once
 
+#include <filesystem>
 #include <ostream>
 
 #include "module/module.hh"
-
 #include "sema/context.hh"
+#include "sema/error.hh"
 #include "sema/symbol.hh"
+#include "sema/type.hh"
+
+#include "option.hh"
+#include "result.hh"
+#include "types.hh"
+#include "utility.hh"
+#include "variant.hh"
 
 namespace porpoise::sema {
 

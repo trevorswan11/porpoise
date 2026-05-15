@@ -1,9 +1,20 @@
 #pragma once
 
-#include "ast/traits.hh"
+#include <span>
 
+#include "ast/expression.hh"
+#include "ast/id.hh"
+#include "ast/traits.hh"
+#include "ast/visitor.hh"
+#include "module/module.hh"
 #include "sema/context.hh"
 #include "sema/symbol.hh"
+#include "sema/type.hh"
+
+#include "assert.hh"
+#include "memory.hh"
+#include "option.hh"
+#include "types.hh"
 
 namespace porpoise::sema {
 

@@ -1,9 +1,17 @@
-#include <catch2/catch_test_macros.hpp>
+#include <string>
 #include <tuple>
+#include <utility>
 
+#include <catch2/catch_test_macros.hpp>
+
+#include "ast/handle.hh"
 #include "helpers/sema.hh"
-
+#include "module/memory_loader.hh"
+#include "module/module.hh"
+#include "sema/error.hh"
 #include "sema/symbol.hh"
+
+#include "option.hh"
 
 namespace porpoise::tests {
 

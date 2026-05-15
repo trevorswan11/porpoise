@@ -1,8 +1,12 @@
-#include <sstream>
-
-#include <fmt/ostream.h>
-
 #include "clap/formatter.hh"
+
+#include <sstream>
+#include <string>
+#include <vector>
+
+#include <CLI/CLI.hpp>
+#include <fmt/color.h>
+#include <fmt/ostream.h>
 
 #include "string.hh"
 #include "style.hh"

@@ -1,11 +1,12 @@
 #include <algorithm>
 #include <cctype>
+#include <optional>
 #include <string>
+#include <type_traits>
 
 #include <catch2/catch_test_macros.hpp>
 
-#include "helpers.hh"
-
+#include "helpers/inheritance.hh"
 #include "option.hh"
 #include "types.hh"
 
@@ -145,7 +146,7 @@ TEST_CASE("Ref transform on none") {
 }
 
 TEST_CASE("Boolean wrapper") {
-    opt::detail::Boolean b;
+    opt::Tribool b;
     CHECK_FALSE(b.has_value());
     CHECK_THROWS_AS(b.value(), std::bad_optional_access);
     CHECK_FALSE(b.value_or(false));
@@ -157,8 +158,8 @@ TEST_CASE("Boolean wrapper") {
 }
 
 TEST_CASE("Boolean-std optional conversion") {
-    std::optional<bool>  std_b{true};
-    opt::detail::Boolean my_b = std_b;
+    std::optional<bool> std_b{true};
+    opt::Tribool        my_b = std_b;
     REQUIRE(std_b.has_value());
     CHECK(*std_b == *my_b);
 

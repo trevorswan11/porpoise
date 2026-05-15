@@ -1,10 +1,14 @@
 #include <initializer_list>
 #include <string>
+#include <variant>
 #include <vector>
 
 #include <catch2/catch_test_macros.hpp>
 
 #include "clap/parser.hh"
+#include "cmd/debug.hh"
+
+#include "types.hh"
 
 namespace porpoise::tests {
 

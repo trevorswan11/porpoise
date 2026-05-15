@@ -1,6 +1,11 @@
+#include <utility>
+
 #include <catch2/catch_test_macros.hpp>
 
 #include "helpers/ast.hh"
+#include "syntax/error.hh"
+
+#include "types.hh"
 
 namespace porpoise::tests {
 

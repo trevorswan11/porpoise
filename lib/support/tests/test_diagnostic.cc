@@ -1,6 +1,9 @@
+#include <utility>
+
 #include <catch2/catch_test_macros.hpp>
 
 #include "diagnostic.hh"
+#include "option.hh"
 
 namespace porpoise {
 

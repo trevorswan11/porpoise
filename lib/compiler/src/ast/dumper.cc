@@ -1,12 +1,22 @@
+#include "ast/dumper.hh"
+
+#include <variant>
+
 #include <fmt/format.h>
 #include <fmt/ostream.h>
-
 #include <magic_enum/magic_enum.hpp>
 #include <magic_enum/magic_enum_flags.hpp>
 
+#include "ast/expression.hh"
+#include "ast/id.hh"
+#include "ast/primitive.hh"
+#include "ast/statement.hh"
+#include "ast/type.hh"
 #include "syntax/builtins.hh"
+#include "syntax/token_type.hh"
 
-#include "ast/dumper.hh"
+#include "indent.hh"
+#include "variant.hh"
 
 namespace porpoise::ast {
 

@@ -1,5 +1,8 @@
+#include <string>
+
 #include <catch2/catch_test_macros.hpp>
 
+#include "module/error.hh"
 #include "module/memory_loader.hh"
 
 namespace porpoise::tests {

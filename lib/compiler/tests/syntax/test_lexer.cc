@@ -1,5 +1,7 @@
+#include <algorithm>
 #include <initializer_list>
 #include <ranges>
+#include <string>
 #include <string_view>
 #include <utility>
 
@@ -8,6 +10,9 @@
 #include "syntax/builtins.hh"
 #include "syntax/lexer.hh"
 #include "syntax/token.hh"
+#include "syntax/token_type.hh"
+
+#include "types.hh"
 
 namespace porpoise::tests {
 
@@ -338,7 +343,7 @@ TEST_CASE("Lexing compiler builtins & Lexer resetting") {
 
     std::string input;
     std::ranges::for_each(expecteds, [&input](const auto& lexeme) -> void {
-        input.append(lexeme.first);
+        input.append(lexeme.name);
         input.push_back(' ');
     });
     syntax::Lexer l{input};

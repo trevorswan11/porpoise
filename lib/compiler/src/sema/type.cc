@@ -1,5 +1,7 @@
 #include "sema/type.hh"
 
+#include "option.hh"
+
 namespace porpoise::sema {
 
 auto TypePool::get_opt(const types::Key& key) noexcept -> opt::Option<Type&> {

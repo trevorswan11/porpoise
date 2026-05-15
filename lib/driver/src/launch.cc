@@ -1,8 +1,13 @@
 #include "launch.hh"
 
-#include "clap/parser.hh"
+#include <variant>
 
+#include "clap/parser.hh"
 #include "cmd/dispatcher.hh"
+
+#include "result.hh"
+#include "types.hh"
+#include "variant.hh"
 
 namespace porpoise::driver {
 

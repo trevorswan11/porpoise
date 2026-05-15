@@ -1,17 +1,27 @@
 #pragma once
 
-#include <catch2/catch_test_macros.hpp>
+#include <concepts>
+#include <filesystem>
+#include <iostream>
+#include <ostream>
+#include <string_view>
+#include <utility>
+#include <vector>
 
+#include <catch2/catch_test_macros.hpp>
 #include <fmt/format.h>
 #include <fmt/ranges.h>
 
-#include "helpers/ast.hh" // IWYU pragma: keep
-
+#include "helpers/common.hh"
+#include "module/memory_loader.hh"
+#include "module/module.hh"
 #include "sema/analyzer.hh"
 #include "sema/error.hh"
-#include "sema/symbol.hh" // IWYU pragma: keep
+#include "sema/symbol.hh"
 
-#include "module/memory_loader.hh"
+#include "memory.hh"
+#include "option.hh"
+#include "types.hh"
 
 namespace porpoise::tests::helpers {
 

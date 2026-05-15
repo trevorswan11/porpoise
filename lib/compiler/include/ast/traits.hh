@@ -3,6 +3,8 @@
 #include <type_traits>
 
 #include "ast/handle.hh"
+#include "ast/id.hh"
+#include "ast/kind.hh"
 
 namespace porpoise::ast::traits {
 

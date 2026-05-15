@@ -5,6 +5,7 @@
 
 #include <magic_enum/magic_enum.hpp>
 
+#include "assert.hh"
 #include "enum.hh"
 #include "iterator.hh"
 #include "option.hh"

@@ -1,10 +1,14 @@
 #pragma once
 
+#include <filesystem>
 #include <string>
 
 #include <ankerl/unordered_dense.h>
 
+#include "module/error.hh"
 #include "module/source_loader.hh"
+
+#include "result.hh"
 
 namespace porpoise::mod {
 

@@ -1,14 +1,18 @@
 #pragma once
 
 #include <algorithm>
+#include <array>
 #include <span>
+#include <string_view>
+#include <utility>
+#include <vector>
 
 #include <catch2/catch_test_macros.hpp>
-
 #include <fmt/format.h>
 #include <fmt/ranges.h>
 
 #include "string.hh"
+#include "types.hh"
 
 namespace porpoise::tests::helpers {
 

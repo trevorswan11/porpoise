@@ -2,6 +2,7 @@
 
 #include "diagnostic.hh"
 #include "result.hh"
+#include "types.hh"
 
 namespace porpoise::sema {
 

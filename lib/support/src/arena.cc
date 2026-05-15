@@ -1,6 +1,7 @@
 #include "arena.hh"
 
 #include "assert.hh"
+#include "types.hh"
 
 namespace porpoise::mem {
 

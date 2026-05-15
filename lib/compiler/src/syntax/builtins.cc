@@ -1,5 +1,9 @@
 #include "syntax/builtins.hh"
 
+#include <string_view>
+
+#include "syntax/token_type.hh"
+
 #include "fixed/enum_map.hh"
 #include "fixed/hash_map.hh"
 

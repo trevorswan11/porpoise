@@ -1,5 +1,34 @@
 #include "sema/passes/symbol_collector.hh"
 
+#include <string_view>
+#include <utility>
+#include <variant>
+
+#include <fmt/format.h>
+
+#include "ast/expression.hh"
+#include "ast/handle.hh"
+#include "ast/id.hh"
+#include "ast/kind.hh"
+#include "ast/primitive.hh"
+#include "ast/statement.hh"
+#include "ast/type.hh"
+#include "ast/visitor.hh"
+#include "module/error.hh"
+#include "module/module.hh"
+#include "sema/context.hh"
+#include "sema/error.hh"
+#include "sema/symbol.hh"
+#include "sema/type.hh"
+
+#include "assert.hh"
+#include "iterator.hh"
+#include "memory.hh"
+#include "option.hh"
+#include "result.hh"
+#include "types.hh"
+#include "variant.hh"
+
 namespace porpoise::sema {
 
 auto SymbolCollector::collect_symbols(mod::Module& module, Context& ctx) -> mod::ModuleState {

@@ -4,9 +4,8 @@
 #include <catch2/catch_test_macros.hpp>
 
 #include "helpers/common.hh"
-
 #include "ast/dumper.hh"
-
+#include "syntax/error.hh"
 #include "syntax/parser.hh"
 
 namespace porpoise::tests {

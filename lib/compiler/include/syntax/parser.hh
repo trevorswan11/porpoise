@@ -4,13 +4,19 @@
 #include <utility>
 
 #include "ast/ast.hh"
-
+#include "ast/handle.hh"
+#include "ast/id.hh"
+#include "ast/kind.hh"
 #include "syntax/error.hh"
 #include "syntax/lexer.hh"
 #include "syntax/precedence.hh"
 #include "syntax/token.hh"
+#include "syntax/token_type.hh"
 
+#include "diagnostic.hh"
+#include "option.hh"
 #include "result.hh"
+#include "types.hh"
 #include "variant.hh"
 
 namespace porpoise::ast { class AST; } // namespace porpoise::ast

@@ -1,6 +1,10 @@
+#include <array>
+#include <vector>
+
 #include <catch2/catch_test_macros.hpp>
 
 #include "arena.hh"
+#include "types.hh"
 
 namespace porpoise::tests {
 

@@ -1,24 +1,29 @@
 #pragma once
 
+#include <concepts>
 #include <filesystem>
+#include <functional>
 #include <ostream>
 #include <string>
+#include <string_view>
+#include <type_traits>
 
 #include <ankerl/unordered_dense.h>
 
 #include "ast/ast.hh"
-
+#include "ast/traits.hh"
+#include "module/error.hh"
+#include "module/source_loader.hh"
 #include "sema/attachments.hh"
 #include "sema/error.hh"
-
 #include "syntax/error.hh"
-
-#include "module/source_loader.hh"
 
 #include "hash.hh"
 #include "memory.hh"
+#include "option.hh"
 #include "result.hh"
 #include "source_file.hh"
+#include "types.hh"
 #include "utility.hh"
 #include "variant.hh"
 

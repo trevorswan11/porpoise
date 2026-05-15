@@ -2,12 +2,15 @@
 
 #include <bit>
 #include <limits>
+#include <string_view>
 
+#include <fmt/base.h>
 #include <fmt/format.h>
+#include <magic_enum/magic_enum.hpp>
 
 #include "ast/kind.hh"
-
 #include "syntax/token.hh"
+#include "syntax/token_type.hh"
 
 #include "assert.hh"
 #include "option.hh"

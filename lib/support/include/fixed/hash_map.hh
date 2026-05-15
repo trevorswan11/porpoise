@@ -7,17 +7,18 @@
 #include <memory>
 #include <span>
 #include <stdexcept>
+#include <tuple>
 #include <type_traits>
 #include <utility>
 
+#include "assert.hh"
+#include "fixed/storage.hh"
 #include "hash.hh"
 #include "iterator.hh"
 #include "math.hh"
 #include "option.hh"
 #include "string.hh"
 #include "types.hh"
-
-#include "fixed/storage.hh"
 
 namespace porpoise::fixed {
 
@@ -425,10 +426,11 @@ template <traits::InsertablePair... Pairs>
     using Key   = std::common_type_t<std::tuple_element_t<0, std::remove_cvref_t<Pairs>>...>;
     using Value = std::common_type_t<std::tuple_element_t<1, std::remove_cvref_t<Pairs>>...>;
 
+    using std::get;
     HashMap<Key, Value, N> map;
     (..., [&map](auto&& pair) {
-        map.emplace(std::get<0>(std::forward<decltype(pair)>(pair)),
-                    std::get<1>(std::forward<decltype(pair)>(pair)));
+        map.emplace(get<0>(std::forward<decltype(pair)>(pair)),
+                    get<1>(std::forward<decltype(pair)>(pair)));
     }(kv_pairs));
     return map;
 }

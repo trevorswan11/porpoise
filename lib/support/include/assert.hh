@@ -3,6 +3,7 @@
 #include <exception>
 #include <iostream>
 #include <source_location>
+#include <string_view>
 
 #include <fmt/ostream.h>
 

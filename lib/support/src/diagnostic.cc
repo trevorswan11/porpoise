@@ -1,9 +1,14 @@
+#include "diagnostic.hh"
+
+#include <ostream>
+#include <string>
+
 #include <fmt/color.h>
 #include <fmt/format.h>
 #include <fmt/ostream.h>
 
-#include "diagnostic.hh"
-
+#include "option.hh"
+#include "style.hh"
 #include "utility.hh"
 
 namespace porpoise::detail {

@@ -1,10 +1,26 @@
-#include <fmt/format.h>
-
-#include "syntax/parser.hh"
-
 #include "module/module.hh"
 
+#include <filesystem>
+#include <ostream>
+#include <string_view>
+#include <utility>
+
+#include <fmt/color.h>
+#include <fmt/format.h>
+#include <fmt/ostream.h>
+
+#include "module/error.hh"
+#include "source_file.hh"
+#include "syntax/parser.hh"
+
+#include "assert.hh"
 #include "diagnostic.hh"
+#include "memory.hh"
+#include "option.hh"
+#include "result.hh"
+#include "style.hh"
+#include "utility.hh"
+#include "variant.hh"
 
 namespace porpoise::mod {
 

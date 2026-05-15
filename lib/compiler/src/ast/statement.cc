@@ -1,8 +1,22 @@
 #include "ast/statement.hh"
 
+#include <bit>
+#include <string>
+#include <string_view>
+#include <utility>
+
+#include "ast/expression.hh"
+#include "ast/handle.hh"
+#include "ast/kind.hh"
+#include "ast/primitive.hh"
+#include "ast/type.hh"
+#include "syntax/error.hh"
 #include "syntax/parser.hh"
+#include "syntax/token_type.hh"
 
 #include "fixed/enum_map.hh"
+#include "option.hh"
+#include "result.hh"
 
 namespace porpoise::ast {
 

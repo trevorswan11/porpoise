@@ -1,8 +1,10 @@
-#include <algorithm>
-
 #include "syntax/operators.hh"
 
+#include <algorithm>
+#include <string_view>
+
 #include "fixed/hash_map.hh"
+#include "types.hh"
 
 namespace porpoise::syntax {
 

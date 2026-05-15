@@ -123,60 +123,6 @@ template <typename T>
 using TryDispatchRef =
     std::conditional_t<Reference<T>, Ref<std::remove_reference_t<T>>, std::optional<T>>;
 
-// An efficient optional representation of boolean values
-class Boolean {
-  public:
-    // cppcheck-suppress-begin noExplicitConstructor
-    constexpr Boolean() noexcept : value_{NO_VALUE} {}
-    constexpr Boolean(bool value) noexcept : value_{static_cast<u8>(value)} {}
-    constexpr Boolean(None) noexcept : value_{NO_VALUE} {}
-    constexpr Boolean(const std::optional<bool>& ob) noexcept
-        : value_{ob.transform([](bool b) { return static_cast<u8>(b); }).value_or(NO_VALUE)} {}
-    // cppcheck-suppress-end noExplicitConstructor
-
-    [[nodiscard]] constexpr auto has_value() const noexcept -> bool { return value_ != NO_VALUE; }
-    [[nodiscard]] constexpr explicit operator bool() const noexcept { return has_value(); }
-
-    constexpr auto emplace(bool value) noexcept -> void { value_ = value; }
-    constexpr auto reset() noexcept -> void { value_ = NO_VALUE; }
-
-    // Resets the optional and returns the stored bool
-    [[nodiscard]] constexpr auto take() noexcept -> bool {
-        const auto value = value_;
-        reset();
-        return value;
-    }
-
-    [[nodiscard]] constexpr auto value() const -> bool {
-        if (!has_value()) { throw std::bad_optional_access(); }
-        return static_cast<bool>(value_);
-    }
-
-    [[nodiscard]] constexpr auto get() const noexcept -> bool {
-        ASSERT(has_value(), "Attempt to access empty optional boolean");
-        return static_cast<bool>(value_);
-    }
-
-    [[nodiscard]] constexpr auto operator*() const noexcept -> bool { return get(); }
-
-    template <typename Or> [[nodiscard]] constexpr auto value_or(Or&& or_value) -> bool {
-        // This is straight from clang's stdc++ C++23 optional implementation
-        static_assert(std::is_copy_constructible_v<Or>, "value_or: Or must be copy constructible");
-        static_assert(std::is_convertible_v<Or, bool>, "value_or: Or must be convertible to T");
-        return has_value() ? get() : static_cast<bool>(std::forward<Or>(or_value));
-    }
-
-    [[nodiscard]] constexpr operator std::optional<bool>() const noexcept {
-        return has_value() ? std::optional<bool>{value_} : opt::none;
-    }
-
-  private:
-    static constexpr u8 NO_VALUE = 3;
-
-  private:
-    u8 value_;
-};
-
 // An efficient optional enum representation for enums with a sentinel value
 template <traits::Compactable T> class CompactOpt {
   public:
@@ -266,10 +212,6 @@ template <Reference T> struct OptionImpl<T> {
     using type = Ref<std::remove_reference_t<T>>;
 };
 
-template <> struct OptionImpl<bool> {
-    using type = Boolean;
-};
-
 template <traits::Compactable T> struct OptionImpl<T> {
     using type = CompactOpt<T>;
 };
@@ -282,7 +224,6 @@ template <typename T> using Option = typename detail::OptionImpl<T>::type;
 template <typename T> struct is_option : std::false_type {};
 template <typename T> struct is_option<std::optional<T>> : std::true_type {};
 template <typename T> struct is_option<detail::Ref<T>> : std::true_type {};
-template <> struct is_option<detail::Boolean> : std::true_type {};
 template <typename T> struct is_option<detail::CompactOpt<T>> : std::true_type {};
 template <typename T> constexpr bool is_option_v = is_option<T>::value;
 
@@ -309,6 +250,60 @@ constexpr auto safe_eq(const Option<T>& a, const Option<T>& b) noexcept -> bool 
 #define MAKE_NON_CONST_OPTIONAL_UNPACKER(name, ReturnType, member, deref)           \
     [[nodiscard]] auto get_##name() noexcept -> ReturnType { return deref member; } \
     [[nodiscard]] auto has_##name() const noexcept -> bool { return member.has_value(); }
+
+// An efficient optional representation of boolean values
+class Tribool {
+  public:
+    // cppcheck-suppress-begin noExplicitConstructor
+    constexpr Tribool() noexcept : value_{NO_VALUE} {}
+    constexpr Tribool(bool value) noexcept : value_{static_cast<u8>(value)} {}
+    constexpr Tribool(None) noexcept : value_{NO_VALUE} {}
+    constexpr Tribool(const std::optional<bool>& ob) noexcept
+        : value_{ob.transform([](bool b) { return static_cast<u8>(b); }).value_or(NO_VALUE)} {}
+    // cppcheck-suppress-end noExplicitConstructor
+
+    [[nodiscard]] constexpr auto has_value() const noexcept -> bool { return value_ != NO_VALUE; }
+    [[nodiscard]] constexpr explicit operator bool() const noexcept { return has_value(); }
+
+    constexpr auto emplace(bool value) noexcept -> void { value_ = value; }
+    constexpr auto reset() noexcept -> void { value_ = NO_VALUE; }
+
+    // Resets the optional and returns the stored bool
+    [[nodiscard]] constexpr auto take() noexcept -> bool {
+        const auto value = value_;
+        reset();
+        return value;
+    }
+
+    [[nodiscard]] constexpr auto value() const -> bool {
+        if (!has_value()) { throw std::bad_optional_access(); }
+        return static_cast<bool>(value_);
+    }
+
+    [[nodiscard]] constexpr auto get() const noexcept -> bool {
+        ASSERT(has_value(), "Attempt to access empty optional boolean");
+        return static_cast<bool>(value_);
+    }
+
+    [[nodiscard]] constexpr auto operator*() const noexcept -> bool { return get(); }
+
+    template <typename Or> [[nodiscard]] constexpr auto value_or(Or&& or_value) -> bool {
+        // This is straight from clang's stdc++ C++23 optional implementation
+        static_assert(std::is_copy_constructible_v<Or>, "value_or: Or must be copy constructible");
+        static_assert(std::is_convertible_v<Or, bool>, "value_or: Or must be convertible to T");
+        return has_value() ? get() : static_cast<bool>(std::forward<Or>(or_value));
+    }
+
+    [[nodiscard]] constexpr operator std::optional<bool>() const noexcept {
+        return has_value() ? std::optional<bool>{value_} : opt::none;
+    }
+
+  private:
+    static constexpr u8 NO_VALUE = 3;
+
+  private:
+    u8 value_;
+};
 
 // A minimal, zero-cost optional usize wrapper
 class Index {

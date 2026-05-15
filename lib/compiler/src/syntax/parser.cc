@@ -1,14 +1,30 @@
+#include "syntax/parser.hh"
+
+#include <string_view>
+#include <utility>
+
 #include <fmt/format.h>
 #include <magic_enum/magic_enum.hpp>
 
+#include "ast/expression.hh"
+#include "ast/handle.hh"
+#include "ast/id.hh"
+#include "ast/primitive.hh"
+#include "ast/statement.hh"
 #include "syntax/builtins.hh"
+#include "syntax/error.hh"
 #include "syntax/keywords.hh"
-#include "syntax/parser.hh"
 #include "syntax/precedence.hh"
 #include "syntax/token.hh"
+#include "syntax/token_type.hh"
 
+#include "diagnostic.hh"
 #include "enum.hh"
 #include "fixed/enum_map.hh"
+#include "option.hh"
+#include "result.hh"
+#include "types.hh"
+#include "variant.hh"
 
 namespace porpoise::syntax {
 

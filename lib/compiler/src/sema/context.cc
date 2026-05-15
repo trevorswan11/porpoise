@@ -1,7 +1,13 @@
 #include "sema/context.hh"
 
+#include <utility>
+
+#include "sema/symbol.hh"
+#include "sema/type.hh"
 #include "syntax/builtins.hh"
 #include "syntax/keywords.hh"
+
+#include "assert.hh"
 
 namespace porpoise::sema {
 
@@ -18,10 +24,8 @@ auto inject_types(SymbolTable& prelude, TypePool& pool) -> void {
         auto& type = pool[{kind, types::Key::Mutability::IMMUTABLE}];
         if (!type.has_resolved()) { type.resolve<types::BuiltinType>(); }
 
-        const auto name = keyword.first;
-        prelude.insert_unchecked(name, VirtualSymbol{keyword});
-
-        auto& symbol = prelude.get(name);
+        prelude.insert_unchecked(keyword.name, VirtualSymbol{keyword});
+        auto& symbol = prelude.get(keyword.name);
         symbol.set_type(type);
         symbol.set_kind(SymbolKind::TYPE);
         symbol.set_status(ResolveStatus::RESOLVED);
@@ -64,10 +68,8 @@ auto inject_functions(SymbolTable& prelude, TypePool& pool) -> void {
                 type.resolve<types::BuiltinFunction>(std::move(param_types), return_type);
             }
 
-            const auto name = builtin.first;
-            prelude.insert_unchecked(name, VirtualSymbol{builtin});
-
-            auto& symbol = prelude.get(name);
+            prelude.insert_unchecked(builtin.name, VirtualSymbol{builtin});
+            auto& symbol = prelude.get(builtin.name);
             symbol.set_type(type);
             symbol.set_kind(SymbolKind::CALLABLE);
             symbol.set_status(ResolveStatus::RESOLVED);

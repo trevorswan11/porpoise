@@ -1,11 +1,13 @@
 #pragma once
 
+#include <concepts>
+#include <string_view>
+
 #include <catch2/catch_test_macros.hpp>
 
 #include "helpers/common.hh"
-
 #include "ast/ast.hh"
-
+#include "syntax/error.hh"
 #include "syntax/parser.hh"
 
 namespace porpoise::tests::helpers {

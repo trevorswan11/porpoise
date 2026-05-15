@@ -1,7 +1,14 @@
+#include <array>
+#include <initializer_list>
+#include <sstream>
+#include <string_view>
+#include <utility>
+
 #include <catch2/catch_test_macros.hpp>
 
 #include "helpers/ast.hh"
-
+#include "helpers/common.hh"
+#include "syntax/error.hh"
 #include "syntax/keywords.hh"
 
 namespace porpoise::tests {
@@ -21,7 +28,7 @@ auto test_decl_fail(std::initializer_list<syntax::Keyword> modifiers,
                     syntax::Diagnostic&&                   expected_error,
                     std::string_view                       init = "a := 2;") -> void {
     std::stringstream ss;
-    for (const auto& keyword : modifiers) { ss << keyword.first << " "; }
+    for (const auto& keyword : modifiers) { ss << keyword.name << " "; }
     ss << init;
     helpers::test_parser_fail(ss.view(), std::move(expected_error));
 }

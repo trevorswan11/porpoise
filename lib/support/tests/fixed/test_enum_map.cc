@@ -1,8 +1,12 @@
+#include <algorithm>
+#include <iterator>
+
 #include <catch2/catch_test_macros.hpp>
 
-#include "helpers.hh"
-
 #include "fixed/enum_map.hh"
+#include "helpers/enum.hh"
+#include "option.hh"
+#include "types.hh"
 
 namespace porpoise::tests {
 

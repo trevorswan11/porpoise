@@ -1,5 +1,26 @@
 #include "sema/passes/type_resolver.hh"
 
+#include <span>
+#include <utility>
+#include <variant>
+
+#include <fmt/format.h>
+
+#include "ast/expression.hh"
+#include "ast/id.hh"
+#include "ast/primitive.hh"
+#include "ast/statement.hh"
+#include "ast/type.hh"
+#include "module/module.hh"
+#include "sema/context.hh"
+#include "sema/error.hh"
+#include "sema/type.hh"
+#include "syntax/builtins.hh"
+
+#include "assert.hh"
+#include "memory.hh"
+#include "variant.hh"
+
 namespace porpoise::sema {
 
 auto TypeResolver::resolve_types(mod::Module& module, Context& ctx) -> mod::ModuleState {
@@ -70,6 +91,10 @@ auto TypeResolver::resolve_builtin_call(ast::NodeID                   id,
         collecting_.set_sema_type(id, ctx_.get_poison());
         return last_type_.emplace(ctx_.get_poison());
     }
+
+    // There must be an actual builtin present with a token id
+    const auto builtin_id = call.function->get_token_type();
+    ASSERT(syntax::get_builtin_opt(builtin_id), "Cannot resolve non-builtin function");
 }
 
 auto TypeResolver::visit(ast::NodeID id, const ast::CallExpression& call) -> void {

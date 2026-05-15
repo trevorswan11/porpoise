@@ -1,6 +1,11 @@
+#include <string>
+#include <string_view>
+#include <type_traits>
+
 #include <catch2/catch_test_macros.hpp>
 
 #include "string.hh"
+#include "types.hh"
 
 namespace porpoise::tests {
 

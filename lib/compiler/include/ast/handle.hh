@@ -3,6 +3,11 @@
 #include <vector>
 
 #include "ast/id.hh"
+#include "ast/kind.hh"
+
+#include "assert.hh"
+#include "option.hh"
+#include "types.hh"
 
 namespace porpoise {
 

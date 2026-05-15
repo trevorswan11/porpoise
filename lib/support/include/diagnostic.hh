@@ -1,15 +1,18 @@
 #pragma once
 
+#include <concepts>
 #include <ostream>
 #include <span>
 #include <sstream>
+#include <string>
 #include <string_view>
+#include <type_traits>
 #include <utility>
 #include <vector>
 
-#include <magic_enum/magic_enum.hpp>
-
+#include <fmt/base.h>
 #include <fmt/format.h>
+#include <magic_enum/magic_enum.hpp>
 
 #include "iterator.hh"
 #include "option.hh"

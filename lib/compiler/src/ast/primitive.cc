@@ -1,8 +1,19 @@
-#include <charconv>
-
 #include "ast/primitive.hh"
 
+#include <charconv>
+#include <string_view>
+#include <system_error>
+#include <utility>
+
+#include "ast/handle.hh"
+#include "syntax/error.hh"
 #include "syntax/parser.hh"
+#include "syntax/token_type.hh"
+
+#include "assert.hh"
+#include "option.hh"
+#include "result.hh"
+#include "types.hh"
 
 namespace porpoise::ast {
 

@@ -1,5 +1,16 @@
 #include "module/memory_loader.hh"
 
+#include <filesystem>
+#include <string>
+#include <utility>
+
+#include <fmt/format.h>
+
+#include "module/error.hh"
+
+#include "assert.hh"
+#include "result.hh"
+
 namespace porpoise::mod {
 
 auto MemoryLoader::add(const std::filesystem::path& path, const std::string& content) -> void {

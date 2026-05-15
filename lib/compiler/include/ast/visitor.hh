@@ -2,6 +2,8 @@
 
 // IWYU pragma: begin_keep
 #include "ast/expression.hh"
+#include "ast/id.hh"
+#include "ast/kind.hh"
 #include "ast/primitive.hh"
 #include "ast/statement.hh"
 #include "ast/type.hh"

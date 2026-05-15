@@ -2,6 +2,10 @@
 
 #include "cmd/debug.hh"
 
+#include "result.hh"
+#include "types.hh"
+#include "variant.hh"
+
 namespace porpoise::cmd {
 
 auto Dispatcher::operator()(Debug& dump) -> Result<Unit, i32> {

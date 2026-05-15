@@ -1,16 +1,18 @@
-#include <iostream>
-
-#include <fmt/format.h>
-#include <fmt/ranges.h>
-
 #include "cmd/debug.hh"
 
+#include <filesystem>
+#include <iostream>
+#include <string>
+
+#include <fmt/base.h>
+#include <fmt/format.h>
+#include <fmt/ostream.h>
+#include <fmt/ranges.h>
+
 #include "ast/dumper.hh"
-
-#include "sema/analyzer.hh"
-
 #include "module/memory_loader.hh"
 #include "module/module.hh"
+#include "sema/analyzer.hh"
 
 #include "string.hh"
 

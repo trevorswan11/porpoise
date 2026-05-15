@@ -1,8 +1,10 @@
+#include <array>
+
 #include <catch2/catch_test_macros.hpp>
 
-#include "helpers.hh"
-
 #include "enum.hh"
+#include "helpers/enum.hh"
+#include "types.hh"
 
 namespace porpoise::tests {
 

@@ -1,8 +1,10 @@
-#include <fmt/format.h>
+#include <string_view>
 
+#include <fmt/format.h>
 #include <catch2/catch_test_macros.hpp>
 
 #include "syntax/token.hh"
+#include "syntax/token_type.hh"
 
 namespace porpoise::tests {
 

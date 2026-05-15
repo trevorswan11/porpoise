@@ -1,5 +1,7 @@
 #pragma once
 
+#include <array>
+#include <string_view>
 #include <type_traits>
 
 #include <ankerl/unordered_dense.h>

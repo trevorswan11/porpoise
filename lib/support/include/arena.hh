@@ -4,6 +4,7 @@
 #include <span>
 #include <utility>
 
+#include "assert.hh"
 #include "memory.hh"
 #include "types.hh"
 

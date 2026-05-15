@@ -6,6 +6,7 @@
 #include "ast/side_table.hh"
 
 #include "option.hh"
+#include "types.hh"
 
 namespace porpoise::sema {
 

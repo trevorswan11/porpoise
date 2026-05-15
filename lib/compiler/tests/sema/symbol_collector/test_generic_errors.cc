@@ -1,6 +1,13 @@
-#include <catch2/catch_test_macros.hpp>
+#include <array>
+#include <string_view>
+#include <utility>
 
+#include <catch2/catch_test_macros.hpp>
+#include <fmt/format.h>
+
+#include "helpers/common.hh"
 #include "helpers/sema.hh"
+#include "sema/error.hh"
 
 namespace porpoise::tests {
 

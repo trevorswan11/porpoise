@@ -1,5 +1,9 @@
-#include <catch2/catch_test_macros.hpp>
+#include <string_view>
 
+#include <catch2/catch_test_macros.hpp>
+#include <fmt/format.h>
+
+#include "module/error.hh"
 #include "module/memory_loader.hh"
 #include "module/module.hh"
 

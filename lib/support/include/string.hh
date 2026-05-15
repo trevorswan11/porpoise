@@ -4,6 +4,7 @@
 #include <cctype>
 #include <concepts>
 #include <ranges>
+#include <string>
 #include <string_view>
 #include <type_traits>
 

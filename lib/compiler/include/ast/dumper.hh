@@ -1,12 +1,18 @@
 #pragma once
 
 #include <ostream>
+#include <variant>
 
 #include <fmt/ostream.h>
 
 #include "ast/ast.hh"
 #include "ast/format.hh" // IWYU pragma: keep
+#include "ast/handle.hh"
+#include "ast/id.hh"
+#include "ast/traits.hh"
+#include "ast/visitor.hh"
 
+#include "assert.hh"
 #include "indent.hh"
 
 namespace porpoise::ast {

@@ -1,6 +1,6 @@
 #pragma once
 
-#include "syntax/token.hh"
+#include "syntax/token_type.hh"
 
 #include "option.hh"
 #include "types.hh"

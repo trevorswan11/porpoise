@@ -2,22 +2,26 @@
 
 #include <ranges>
 #include <string_view>
+#include <type_traits>
 #include <vector>
 
 #include <ankerl/unordered_dense.h>
 
-#include "sema/error.hh"
-
+#include "ast/expression.hh"
+#include "ast/handle.hh"
 #include "ast/id.hh"
-
+#include "ast/kind.hh"
 #include "module/module.hh"
-
+#include "sema/error.hh"
 #include "syntax/token.hh"
+#include "syntax/token_type.hh"
 
 #include "assert.hh"
+#include "diagnostic.hh"
 #include "iterator.hh"
 #include "option.hh"
 #include "result.hh"
+#include "types.hh"
 #include "utility.hh"
 #include "variant.hh"
 
@@ -26,8 +30,7 @@ namespace porpoise::sema {
 // A non-AST-based symbol for primitives and builtins
 class VirtualSymbol {
   public:
-    explicit VirtualSymbol(const std::pair<std::string_view, syntax::TokenType>& tok) noexcept
-        : token_{tok} {}
+    explicit VirtualSymbol(const syntax::TypedIdentifier& tok) noexcept : token_{tok} {}
 
     [[nodiscard]] auto get_token() const noexcept -> const syntax::Token& { return token_; }
 

@@ -1,4 +1,22 @@
+#include <filesystem>
+#include <ostream>
+#include <string>
+#include <string_view>
+#include <utility>
+#include <vector>
+
+#include <catch2/catch_test_macros.hpp>
+
+#include "helpers/common.hh"
 #include "helpers/sema.hh"
+#include "ast/statement.hh"
+#include "module/memory_loader.hh"
+#include "module/module.hh"
+#include "sema/error.hh"
+#include "sema/symbol.hh"
+
+#include "memory.hh"
+#include "types.hh"
 
 namespace porpoise::tests::helpers {
 

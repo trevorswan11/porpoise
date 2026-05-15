@@ -1,10 +1,19 @@
 #pragma once
 
-#include <magic_enum/magic_enum_flags.hpp>
+#include <utility>
+#include <vector>
+
+#include <magic_enum/magic_enum.hpp>
 
 #include "ast/handle.hh"
-
+#include "ast/id.hh"
 #include "syntax/error.hh"
+#include "syntax/token_type.hh"
+
+#include "iterator.hh"
+#include "option.hh"
+#include "result.hh"
+#include "types.hh"
 
 namespace porpoise {
 

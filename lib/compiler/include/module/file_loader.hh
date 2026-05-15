@@ -1,5 +1,11 @@
 #pragma once
 
+#include <filesystem>
+#include <string>
+
+#include "module/error.hh"
+
+#include "result.hh"
 #include "source_loader.hh"
 
 namespace porpoise::mod {

@@ -1,10 +1,13 @@
 #pragma once
 
+#include <string>
 #include <type_traits>
 
 #include "ast/handle.hh"
-
 #include "syntax/error.hh"
+
+#include "result.hh"
+#include "types.hh"
 
 namespace porpoise {
 

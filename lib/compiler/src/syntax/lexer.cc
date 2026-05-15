@@ -1,13 +1,19 @@
+#include "syntax/lexer.hh"
+
 #include <cctype>
 #include <string_view>
+#include <utility>
+#include <vector>
 
 #include "syntax/builtins.hh"
 #include "syntax/keywords.hh"
-#include "syntax/lexer.hh"
 #include "syntax/operators.hh"
 #include "syntax/token.hh"
+#include "syntax/token_type.hh"
 
+#include "option.hh"
 #include "string.hh"
+#include "types.hh"
 
 namespace porpoise::syntax {
 

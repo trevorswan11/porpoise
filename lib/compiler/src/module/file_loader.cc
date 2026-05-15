@@ -1,9 +1,17 @@
+#include "module/file_loader.hh"
+
 #include <filesystem>
 #include <fstream>
+#include <ios>
 #include <sstream>
+#include <string>
 #include <system_error>
 
-#include "module/file_loader.hh"
+#include <fmt/format.h>
+
+#include "module/error.hh"
+
+#include "result.hh"
 
 namespace porpoise::mod {
 

@@ -2,15 +2,14 @@
 
 #include <array>
 #include <string_view>
-#include <utility>
 
-#include "syntax/token.hh"
+#include "syntax/token_type.hh"
 
 #include "option.hh"
 
 namespace porpoise::syntax {
 
-using Keyword = std::pair<std::string_view, TokenType>;
+using Keyword = TypedIdentifier;
 
 namespace keywords {
 
@@ -66,17 +65,17 @@ constexpr Keyword UNDEFINED{"undefined", TokenType::UNDEFINED};
 [[nodiscard]] auto get_keyword_opt(std::string_view sv) noexcept -> opt::Option<TokenType>;
 
 constexpr auto ALL_PRIMITIVES = std::array{
-    keywords::I32.second,
-    keywords::I64.second,
-    keywords::ISIZE.second,
-    keywords::U32.second,
-    keywords::U64.second,
-    keywords::USIZE.second,
-    keywords::F32.second,
-    keywords::F64.second,
-    keywords::U8.second,
-    keywords::BOOL.second,
-    keywords::VOID.second,
+    keywords::I32.type,
+    keywords::I64.type,
+    keywords::ISIZE.type,
+    keywords::U32.type,
+    keywords::U64.type,
+    keywords::USIZE.type,
+    keywords::F32.type,
+    keywords::F64.type,
+    keywords::U8.type,
+    keywords::BOOL.type,
+    keywords::VOID.type,
 };
 
 } // namespace porpoise::syntax

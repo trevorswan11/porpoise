@@ -1,8 +1,22 @@
+#include "sema/symbol.hh"
+
 #include <ranges>
+#include <string_view>
+#include <variant>
 
 #include <fmt/format.h>
 
-#include "sema/symbol.hh"
+#include "ast/kind.hh"
+#include "ast/statement.hh"
+#include "module/module.hh"
+#include "sema/error.hh"
+#include "syntax/token_type.hh"
+
+#include "assert.hh"
+#include "diagnostic.hh"
+#include "result.hh"
+#include "types.hh"
+#include "variant.hh"
 
 namespace porpoise::sema {
 

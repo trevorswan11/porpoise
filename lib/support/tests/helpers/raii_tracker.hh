@@ -4,15 +4,6 @@
 
 namespace porpoise::tests::helpers {
 
-struct Base {
-    virtual ~Base() = default;
-    i32 x           = 10;
-};
-
-struct Derived : Base {
-    i32 y = 20;
-};
-
 // Non-thread-safe tracker for memory-critical testing
 struct RAIITracker {
     static inline i32 live_count     = 0;
@@ -48,34 +39,6 @@ struct RAIITracker {
         move_count++;
         return *this;
     }
-};
-
-enum class MockEnum : u8 {
-    A,
-    B,
-    C,
-    D,
-};
-
-enum class MockPositiveEnum : u8 {
-    A = 1,
-    B,
-    C,
-    D,
-};
-
-enum class MockNegativeEnum : i8 {
-    A = -1,
-    B,
-    C,
-    D,
-};
-
-enum class NonMonotonicEnum : u8 {
-    A = 0,
-    B = 10,
-    C = 25,
-    D = 23,
 };
 
 } // namespace porpoise::tests::helpers

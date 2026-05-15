@@ -1,6 +1,8 @@
 #pragma once
 
+#include <concepts>
 #include <memory>
+#include <optional>
 #include <stdexcept>
 #include <string>
 #include <type_traits>

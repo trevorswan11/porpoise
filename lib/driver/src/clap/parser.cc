@@ -1,15 +1,20 @@
-#include <iostream>
-
-#include <fmt/color.h>
-#include <fmt/ostream.h>
-
-#include <CLI/CLI.hpp>
-
-#include "clap/formatter.hh"
 #include "clap/parser.hh"
 
+#include <iostream>
+
+#include <CLI/CLI.hpp>
+#include <fmt/color.h>
+#include <fmt/format.h>
+#include <fmt/ostream.h>
+
+#include "clap/formatter.hh"
+#include "cmd/debug.hh"
+
 #include "memory.hh"
+#include "result.hh"
 #include "style.hh"
+#include "types.hh"
+#include "variant.hh"
 
 #include <config.h>
 

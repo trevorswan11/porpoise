@@ -1,6 +1,15 @@
+#include <string_view>
+#include <utility>
+
 #include <catch2/catch_test_macros.hpp>
 
+#include "ast/statement.hh"
 #include "helpers/sema.hh"
+#include "sema/error.hh"
+#include "sema/symbol.hh"
+#include "sema/type.hh"
+
+#include "types.hh"
 
 namespace porpoise::tests {
 

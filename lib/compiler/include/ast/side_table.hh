@@ -5,6 +5,7 @@
 
 #include "ast/traits.hh"
 
+#include "assert.hh"
 #include "types.hh"
 
 namespace porpoise::ast {

@@ -1,5 +1,9 @@
 #pragma once
 
+#include <string>
+#include <vector>
+
+#include <CLI/CLI.hpp>
 #include <CLI/Formatter.hpp>
 
 namespace porpoise::clap {

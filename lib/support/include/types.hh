@@ -4,6 +4,7 @@
 #include <cstddef>
 #include <cstdint>
 #include <string_view>
+#include <tuple>
 #include <type_traits>
 
 namespace porpoise {

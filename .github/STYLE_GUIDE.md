@@ -24,6 +24,7 @@ Upon PR creation and workflow approval, GitHub actions will run `zig build fmt-c
 - Prefer enum class over standard enum
 - Use the `#pragma once` directive over `#ifdef` include guards
 - `#undef` macros in header files after use when possible
+- All files should include only what they use and should avoid transitive includes wherever possible
 
 ### Zig
 - Use PascalCase for functions that return a type

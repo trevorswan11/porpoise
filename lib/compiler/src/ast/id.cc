@@ -1,5 +1,13 @@
 #include "ast/id.hh"
 
+#include <string_view>
+#include <utility>
+
+#include "ast/kind.hh"
+#include "syntax/token.hh"
+#include "syntax/token_type.hh"
+
+#include "enum.hh"
 #include "fixed/enum_map.hh"
 
 namespace porpoise::ast {

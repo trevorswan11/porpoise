@@ -1,5 +1,7 @@
 #include "syntax/keywords.hh"
 
+#include <string_view>
+
 #include "fixed/hash_map.hh"
 
 namespace porpoise::syntax {

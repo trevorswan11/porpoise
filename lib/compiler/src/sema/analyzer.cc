@@ -1,8 +1,16 @@
 #include "sema/analyzer.hh"
 
+#include <filesystem>
+#include <utility>
+
+#include "module/module.hh"
+#include "sema/context.hh"
 #include "sema/error.hh"
 #include "sema/passes/symbol_collector.hh"
 #include "sema/passes/type_resolver.hh"
+
+#include "result.hh"
+#include "variant.hh"
 
 namespace porpoise::sema {
 

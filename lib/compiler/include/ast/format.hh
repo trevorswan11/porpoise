@@ -1,6 +1,8 @@
 #pragma once
 
+#include <fmt/base.h>
 #include <fmt/format.h>
+#include <magic_enum/magic_enum.hpp>
 
 #include "ast/expression.hh"
 #include "ast/id.hh"

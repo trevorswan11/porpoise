@@ -1,6 +1,14 @@
 #include "source_file.hh"
 
+#include <cctype>
+#include <string>
+#include <string_view>
+#include <utility>
+
+#include "diagnostic.hh"
+#include "option.hh"
 #include "string.hh"
+#include "types.hh"
 
 namespace porpoise {
 

@@ -1,15 +1,18 @@
 #pragma once
 
+#include <string_view>
+#include <utility>
+
 #include "ast/traits.hh"
 #include "ast/visitor.hh"
-
 #include "module/module.hh"
-
 #include "sema/context.hh"
 #include "sema/symbol.hh"
 #include "sema/type.hh"
 
 #include "counter.hh"
+#include "option.hh"
+#include "types.hh"
 
 namespace porpoise::sema {
 

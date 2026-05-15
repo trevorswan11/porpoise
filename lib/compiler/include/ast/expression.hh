@@ -1,8 +1,16 @@
 #pragma once
 
-#include "ast/handle.hh"
+#include <string_view>
+#include <utility>
+#include <variant>
+#include <vector>
 
+#include "ast/handle.hh"
+#include "ast/id.hh"
 #include "syntax/error.hh"
+
+#include "option.hh"
+#include "result.hh"
 
 namespace porpoise {
 

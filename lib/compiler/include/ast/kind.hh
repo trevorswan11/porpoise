@@ -1,5 +1,7 @@
 #pragma once
 
+#include <concepts>
+
 #include "types.hh"
 #include "variant.hh"
 

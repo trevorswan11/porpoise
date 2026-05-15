@@ -1,9 +1,15 @@
+#include <algorithm>
+#include <iterator>
+#include <span>
+#include <stdexcept>
+#include <utility>
+
 #include <catch2/catch_test_macros.hpp>
 
-#include "helpers.hh"
-
 #include "fixed/vector.hh"
+#include "helpers/raii_tracker.hh"
 #include "memory.hh"
+#include "types.hh"
 
 namespace porpoise::tests {
 

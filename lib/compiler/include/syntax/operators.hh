@@ -1,15 +1,14 @@
 #pragma once
 
 #include <string_view>
-#include <utility>
 
-#include "syntax/token.hh"
+#include "syntax/token_type.hh"
 
 #include "option.hh"
 
 namespace porpoise::syntax {
 
-using Operator = std::pair<std::string_view, TokenType>;
+using Operator = TypedIdentifier;
 
 namespace operators {
 

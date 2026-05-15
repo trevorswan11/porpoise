@@ -1,6 +1,25 @@
 #include "ast/expression.hh"
 
+#include <string>
+#include <string_view>
+#include <utility>
+#include <variant>
+#include <vector>
+
+#include "ast/handle.hh"
+#include "ast/id.hh"
+#include "ast/kind.hh"
+#include "ast/primitive.hh"
+#include "ast/statement.hh"
+#include "ast/type.hh"
+#include "syntax/error.hh"
 #include "syntax/parser.hh"
+#include "syntax/precedence.hh"
+#include "syntax/token_type.hh"
+
+#include "option.hh"
+#include "result.hh"
+#include "variant.hh"
 
 namespace porpoise::ast {
 

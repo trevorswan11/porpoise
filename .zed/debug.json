@@ -10,7 +10,7 @@
         "name": "porpoise",
         "program": "zig-out/bin/porpoise",
         "args": [
-            "ast"
+            "debug"
         ],
         "stopOnEntry": false,
     },

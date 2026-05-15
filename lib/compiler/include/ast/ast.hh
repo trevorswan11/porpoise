@@ -2,13 +2,17 @@
 
 #include <vector>
 
+#include "ast/id.hh"
 #include "ast/kind.hh"
 #include "ast/traits.hh"
 #include "ast/visitor.hh"
+#include "syntax/token.hh"
 
 #include "assert.hh"
 #include "diagnostic.hh"
 #include "iterator.hh"
+#include "option.hh"
+#include "types.hh"
 
 namespace porpoise::ast {
 

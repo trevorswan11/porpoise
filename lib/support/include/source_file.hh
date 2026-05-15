@@ -7,6 +7,7 @@
 #include "diagnostic.hh"
 #include "iterator.hh"
 #include "option.hh"
+#include "types.hh"
 #include "utility.hh"
 
 namespace porpoise {

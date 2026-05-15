@@ -1,6 +1,14 @@
+#include <sstream>
+#include <string_view>
+
 #include <catch2/catch_test_macros.hpp>
 
+#include "helpers/common.hh"
 #include "helpers/sema.hh"
+#include "sema/symbol.hh"
+#include "sema/type.hh"
+
+#include "types.hh"
 
 namespace porpoise::tests {
 

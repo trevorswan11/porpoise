@@ -1,8 +1,13 @@
+#include <array>
 #include <ranges>
+#include <string_view>
 
 #include <catch2/catch_test_macros.hpp>
 
+#include "diagnostic.hh"
+#include "option.hh"
 #include "source_file.hh"
+#include "types.hh"
 
 namespace porpoise::tests {
 
