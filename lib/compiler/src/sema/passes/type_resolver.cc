@@ -16,6 +16,7 @@
 #include "sema/error.hh"
 #include "sema/type.hh"
 #include "syntax/builtins.hh"
+#include "syntax/token_type.hh"
 
 #include "assert.hh"
 #include "memory.hh"
@@ -53,7 +54,7 @@ auto TypeResolver::visit(ast::NodeID id, const ast::ArrayExpression& array) -> v
     const auto items_size      = array.items.size();
     const auto null_terminated = array.null_terminated;
     last_type_.emplace(ctx_.pool[{
-        TypeKind::ARRAY, types::mut::IMMUTABLE, null_terminated, items_size, *item_type}]);
+        TypeKind::ARRAY, types::mut::CONSTANT, null_terminated, items_size, *item_type}]);
     if (!last_type_->has_resolved()) {
         last_type_->resolve<types::Array>(*item_type, items_size, null_terminated);
     }
@@ -63,7 +64,7 @@ auto TypeResolver::visit(ast::NodeID id, const ast::ArrayExpression& array) -> v
 auto TypeResolver::resolve_call_args(std::span<const ast::CallExpression::Argument> args) -> void {
     for (const auto& arg : args) {
         std::visit(
-            [&](const auto& handle) {
+            [this](const auto& handle) {
                 resolve(handle);
                 collecting_.set_sema_type(handle, *last_type_.take());
             },
@@ -74,9 +75,15 @@ auto TypeResolver::resolve_call_args(std::span<const ast::CallExpression::Argume
 auto TypeResolver::get_resolved_arg_type(const ast::CallExpression::Argument& arg)
     -> mem::NonNull<Type> {
     return std::visit(
-        [&](const auto& handle) -> auto& { return collecting_.get_sema_type(handle); }, arg);
+        [this](const auto& handle) -> auto& {
+            auto& type = collecting_.get_sema_type(handle);
+            ASSERT(type.has_resolved(), "Call argument was not already resolved");
+            return type;
+        },
+        arg);
 }
 
+// This is called after the call expression's arguments have all been resolved
 auto TypeResolver::resolve_builtin_call(ast::NodeID                   id,
                                         const ast::CallExpression&    call,
                                         const types::BuiltinFunction& builtin) -> void {
@@ -95,6 +102,68 @@ auto TypeResolver::resolve_builtin_call(ast::NodeID                   id,
     // There must be an actual builtin present with a token id
     const auto builtin_id = call.function->get_token_type();
     ASSERT(syntax::get_builtin_opt(builtin_id), "Cannot resolve non-builtin function");
+
+    using syntax::TokenType;
+    mem::NonNull<Type> result_type = ctx_.get_poison();
+
+    // Indexing can be done freely as arity is already validated
+    switch (builtin_id) {
+    case TokenType::BUILTIN_ALIGN_CAST:
+    case TokenType::BUILTIN_PTR_CAST:
+    case TokenType::BUILTIN_BIT_CAST:
+    case TokenType::BUILTIN_AS:         {
+        // These builtins take in a resulting type to cast to
+        result_type = get_resolved_arg_type(call.arguments[0]);
+        break;
+    }
+    case TokenType::BUILTIN_CONST_CAST: {
+        auto& expr_type = *get_resolved_arg_type(call.arguments[0]);
+        result_type = ctx_.pool.strip_const(expr_type);
+        break;
+    }
+    case TokenType::BUILTIN_VOLATILE_CAST: {
+        auto& expr_type = *get_resolved_arg_type(call.arguments[0]);
+        result_type = ctx_.pool.strip_volatile(expr_type);
+        break;
+    }
+    case TokenType::BUILTIN_INT_FROM_PTR:   break;
+    case TokenType::BUILTIN_PTR_FROM_INT:   break;
+    case TokenType::BUILTIN_PTR_FROM_ARRAY: break;
+    case TokenType::BUILTIN_SLICE_FROM_PTR: break;
+    case TokenType::BUILTIN_ALIGN_OF:       break;
+    case TokenType::BUILTIN_SIZE_OF:        break;
+    case TokenType::BUILTIN_TYPE_OF:        break;
+    case TokenType::BUILTIN_TAG_NAME:       break;
+    case TokenType::BUILTIN_MEMCPY:
+    case TokenType::BUILTIN_MEMSET:
+    case TokenType::BUILTIN_MEMMOVE:        {
+        ASSERT(builtin.return_type.get_kind() == TypeKind::VOID);
+        result_type = builtin.return_type;
+        break;
+    }
+    case TokenType::BUILTIN_MUL_ADD:   break;
+    case TokenType::BUILTIN_CLZ:       break;
+    case TokenType::BUILTIN_CTZ:       break;
+    case TokenType::BUILTIN_DIV_MOD:   break;
+    case TokenType::BUILTIN_POP_COUNT: break;
+    case TokenType::BUILTIN_SQRT:      break;
+    case TokenType::BUILTIN_SIN:       break;
+    case TokenType::BUILTIN_COS:       break;
+    case TokenType::BUILTIN_TAN:       break;
+    case TokenType::BUILTIN_EXP:       break;
+    case TokenType::BUILTIN_EXP2:      break;
+    case TokenType::BUILTIN_LOG:       break;
+    case TokenType::BUILTIN_LOG2:      break;
+    case TokenType::BUILTIN_LOG10:     break;
+    case TokenType::BUILTIN_ABS:       break;
+    case TokenType::BUILTIN_FLOOR:     break;
+    case TokenType::BUILTIN_CEIL:      break;
+    case TokenType::BUILTIN_PANIC:     break;
+    default:                           ASSERT(false, "Unimplemented builtin type resolution"); break;
+    }
+
+    collecting_.set_sema_type(id, *result_type);
+    last_type_.emplace(*result_type);
 }
 
 auto TypeResolver::visit(ast::NodeID id, const ast::CallExpression& call) -> void {
@@ -197,7 +266,7 @@ auto TypeResolver::visit(ast::NodeID, const ast::StringExpression&) -> void {}
 
 #define MAKE_PRIMITIVE_RESOLVER(NodeType, kind)                                         \
     auto TypeResolver::visit(ast::NodeID id, const ast::NodeType&) -> void {            \
-        last_type_.emplace(ctx_.pool[{TypeKind::kind, types::mut::IMMUTABLE}]);         \
+        last_type_.emplace(ctx_.pool[{TypeKind::kind, types::mut::CONSTANT}]);          \
         if (!last_type_->has_resolved()) { last_type_->resolve<types::BuiltinType>(); } \
         collecting_.set_sema_type(id, *last_type_);                                     \
     }

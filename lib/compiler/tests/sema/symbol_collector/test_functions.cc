@@ -29,7 +29,7 @@ TEST_CASE("Function hollow types") {
 
     auto& pool = ctx.analyzer.get_pool();
     REQUIRE(symbol_a.has_type());
-    CHECK(&symbol_a.get_type() == &pool[{sema::TypeKind::FUNCTION, mut::IMMUTABLE, 1}]);
+    CHECK(&symbol_a.get_type() == &pool[{sema::TypeKind::FUNCTION, mut::CONSTANT, 1}]);
     CHECK(&symbol_a.get_type() == &fn_type);
 
     const auto& self_param = registry.get_from(1, "self");

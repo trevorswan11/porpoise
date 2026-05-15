@@ -19,7 +19,7 @@ TEST_CASE("Test statement symbol collection") {
     auto& pool = ctx.analyzer.get_pool();
     REQUIRE(ctx.root_mod->has_sema_type(ctx.root_mod->ast[0]));
     const auto& test_type = ctx.root_mod->get_sema_type(ctx.root_mod->ast[0]);
-    CHECK(&test_type == &pool[{sema::TypeKind::BLOCK, mut::IMMUTABLE, 1}]);
+    CHECK(&test_type == &pool[{sema::TypeKind::BLOCK, mut::CONSTANT, 1}]);
     ctx.test_common_decl_collection(1);
 }
 

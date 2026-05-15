@@ -67,4 +67,26 @@ template <BoundedEnum E> consteval auto enum_range() noexcept {
     return enum_range<enum_min_value<E>(), enum_max_value<E>()>();
 }
 
+#define MAKE_ENUM_OPERATORS(EnumType)                                                    \
+    constexpr auto operator|(EnumType lhs, EnumType rhs)->EnumType {                     \
+        return static_cast<EnumType>(std::to_underlying(lhs) | std::to_underlying(rhs)); \
+    }                                                                                    \
+                                                                                         \
+    constexpr auto operator&(EnumType lhs, EnumType rhs)->EnumType {                     \
+        return static_cast<EnumType>(std::to_underlying(lhs) & std::to_underlying(rhs)); \
+    }                                                                                    \
+                                                                                         \
+    constexpr auto operator^(EnumType lhs, EnumType rhs)->EnumType {                     \
+        return static_cast<EnumType>(std::to_underlying(lhs) ^ std::to_underlying(rhs)); \
+    }                                                                                    \
+                                                                                         \
+    constexpr auto operator|=(EnumType& lhs, EnumType rhs)->EnumType& {                  \
+        lhs = lhs | rhs;                                                                 \
+        return lhs;                                                                      \
+    }                                                                                    \
+                                                                                         \
+    constexpr auto operator~(EnumType op)->EnumType {                     \
+        return static_cast<EnumType>(~std::to_underlying(op)); \
+    }
+
 } // namespace porpoise

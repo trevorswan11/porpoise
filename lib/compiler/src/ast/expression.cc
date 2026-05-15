@@ -230,7 +230,7 @@ auto EnumExpression::parse(syntax::Parser& parser) -> Result<ExpressionHandle, s
         parser.advance();
     }
 
-    auto members = TRY(parse_members(parser, [&](const MemberHandle& member) {
+    auto members = TRY(parse_members(parser, [&parser](const MemberHandle& member) {
         return std::visit(
             Overloaded{
                 [](const DeclStatement& decl) { return validate_non_struct_member_decl(decl); },
@@ -752,7 +752,7 @@ auto StructExpression::parse(syntax::Parser& parser)
     -> Result<ExpressionHandle, syntax::Diagnostic> {
     const auto start_token = parser.get_current_token();
     TRY(parser.expect_peek(syntax::TokenType::LBRACE));
-    auto members = TRY(parse_members(parser, [&](const MemberHandle& member) {
+    auto members = TRY(parse_members(parser, [&parser](const MemberHandle& member) {
         return std::visit(
             Overloaded{[](const DeclStatement& decl) { return validate_struct_member_decl(decl); },
                        [](const auto&) -> opt::Option<std::string_view> { return opt::none; }},
@@ -786,7 +786,7 @@ auto UnionExpression::parse(syntax::Parser& parser)
         parser.advance();
     }
 
-    auto members = TRY(parse_members(parser, [&](const MemberHandle& member) {
+    auto members = TRY(parse_members(parser, [&parser](const MemberHandle& member) {
         return std::visit(
             Overloaded{
                 [](const DeclStatement& decl) { return validate_non_struct_member_decl(decl); },

@@ -165,7 +165,7 @@ TEST_CASE("StaticVector ranges compatibility") {
     constexpr auto vec        = fixed::Vector<i32, 4>{1, 2, 3};
     i32            sum        = 0;
     usize          iter_count = 0;
-    std::ranges::for_each(vec, [&](i32 val) {
+    std::ranges::for_each(vec, [&sum, &iter_count](i32 val) {
         sum += val;
         iter_count++;
     });

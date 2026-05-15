@@ -6,6 +6,7 @@
 #include <ankerl/unordered_dense.h>
 
 #include "arena.hh"
+#include "enum.hh"
 #include "fixed/vector.hh"
 #include "hash.hh"
 #include "memory.hh"
@@ -103,21 +104,25 @@ struct BuiltinFunction {
     Type&         return_type;
 };
 
+enum class MutabilityModifiers : u8 {
+    CONSTANT = 1 << 0,
+    VOLATILE = 1 << 1,
+};
+
+MAKE_ENUM_OPERATORS(MutabilityModifiers)
+
 class Key {
   public:
-    enum class Mutability : u8 {
-        MUTABLE,
-        IMMUTABLE,
-    };
-
-  public:
     template <typename... Markers>
-    constexpr Key(TypeKind kind, Mutability mut, Markers&&... markers) noexcept
+    constexpr Key(TypeKind kind, MutabilityModifiers mut, Markers&&... markers) noexcept
         : kind_{kind}, mut_{mut} {
         (..., markers_.combine(markers));
     }
 
     MAKE_GETTER(kind, TypeKind)
+    MAKE_GETTER(mut, MutabilityModifiers)
+
+    auto set_mut(MutabilityModifiers mut) noexcept -> void { mut_ = mut; }
 
     // This is a high quality hash for the purposes of `unordered_dense`
     [[nodiscard]] constexpr auto hash() const noexcept -> u64 {
@@ -135,15 +140,19 @@ class Key {
     [[nodiscard]] constexpr auto operator==(const Key&) const noexcept -> bool = default;
 
   private:
-    TypeKind     kind_;
-    Mutability   mut_;
-    hash::Hasher markers_;
+    TypeKind            kind_;
+    MutabilityModifiers mut_;
+    hash::Hasher        markers_;
+
+    friend class Type;
 };
 
 namespace mut {
 
-constexpr auto MUTABLE   = types::Key::Mutability::MUTABLE;
-constexpr auto IMMUTABLE = types::Key::Mutability::IMMUTABLE;
+using enum types::MutabilityModifiers;
+
+constexpr auto MUTABLE           = static_cast<types::MutabilityModifiers>(0);
+constexpr auto CONSTANT_VOLATILE = CONSTANT | VOLATILE;
 
 } // namespace mut
 
@@ -181,8 +190,9 @@ class Type {
     Type(Type&&) noexcept                = delete;
     auto operator=(Type&&) -> Type&      = delete;
 
-    MAKE_GETTER(kind, TypeKind)
+    MAKE_GETTER(key, const types::Key&)
     MAKE_OPTIONAL_UNPACKER(resolved, const Resolved&, resolved_, *)
+    [[nodiscard]] auto get_kind() const noexcept -> TypeKind { return key_.get_kind(); }
 
     // Unpacks T from the resolved type assuming the type has been resolved to T
     template <typename T, typename Self> [[nodiscard]] auto as(this Self&& self) -> auto& {
@@ -212,20 +222,30 @@ class Type {
         resolved_.emplace(Resolvee{std::forward<Args>(args)...});
     }
 
+    auto resolve(Resolved resolved) noexcept -> void { resolved_.emplace(std::move(resolved)); }
+
     // Returns the memory address of the Type for a Key's hash
     [[nodiscard]] constexpr auto hash() const noexcept -> u64 {
         return reinterpret_cast<u64>(this);
     }
 
     [[nodiscard]] constexpr auto is_poison() const noexcept -> bool {
-        return kind_ == TypeKind::POISON;
+        return key_.get_kind() == TypeKind::POISON;
+    }
+
+    [[nodiscard]] constexpr auto is_constant() const noexcept -> bool {
+        return static_cast<bool>(key_.get_mut() & types::mut::CONSTANT);
+    }
+
+    [[nodiscard]] constexpr auto is_volatile() const noexcept -> bool {
+        return static_cast<bool>(key_.get_mut() & types::mut::VOLATILE);
     }
 
   private:
-    explicit Type(TypeKind kind) noexcept : kind_{kind} {}
+    explicit Type(types::Key key) noexcept : key_{std::move(key)} {}
 
   private:
-    TypeKind              kind_;
+    types::Key            key_;
     opt::Index            symbol_table_idx_;
     opt::Option<Resolved> resolved_;
 
@@ -246,6 +266,9 @@ class TypePool {
     // Gets a type by its key or emplace's it into the internal cache
     [[nodiscard]] auto operator[](const types::Key& key) -> Type& { return get_or_emplace(key); }
     [[nodiscard]] auto get_opt(const types::Key& key) noexcept -> opt::Option<Type&>;
+
+    [[nodiscard]] auto strip_const(const Type& type) -> Type&;
+    [[nodiscard]] auto strip_volatile(const Type& type) -> Type&;
 
   private:
     auto get_or_emplace(const types::Key& key) -> Type&;

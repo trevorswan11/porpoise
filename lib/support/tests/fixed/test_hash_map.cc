@@ -230,7 +230,7 @@ TEST_CASE("HashMap ranges compatibility") {
     constexpr auto hm = fixed::make_hash_map(std::pair{-2, -1}, std::pair{1, -1}, std::pair{5, -1});
     i32            sum        = 0;
     usize          iter_count = 0;
-    std::ranges::for_each(hm, [&](auto pair) {
+    std::ranges::for_each(hm, [&sum, &iter_count](auto pair) {
         sum += pair.first;
         iter_count++;
     });

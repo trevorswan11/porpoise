@@ -14,6 +14,7 @@
 #include "option.hh"
 #include "result.hh"
 #include "types.hh"
+#include "enum.hh"
 
 namespace porpoise {
 
@@ -55,22 +56,7 @@ enum class DeclModifiers : u8 {
     STATIC    = 1 << 6,
 };
 
-constexpr auto operator|(DeclModifiers lhs, DeclModifiers rhs) -> DeclModifiers {
-    return static_cast<DeclModifiers>(std::to_underlying(lhs) | std::to_underlying(rhs));
-}
-
-constexpr auto operator&(DeclModifiers lhs, DeclModifiers rhs) -> DeclModifiers {
-    return static_cast<DeclModifiers>(std::to_underlying(lhs) & std::to_underlying(rhs));
-}
-
-constexpr auto operator^(DeclModifiers lhs, DeclModifiers rhs) -> DeclModifiers {
-    return static_cast<DeclModifiers>(std::to_underlying(lhs) ^ std::to_underlying(rhs));
-}
-
-constexpr auto operator|=(DeclModifiers& lhs, DeclModifiers rhs) -> DeclModifiers& {
-    lhs = lhs | rhs;
-    return lhs;
-}
+MAKE_ENUM_OPERATORS(DeclModifiers)
 
 struct DeclStatement {
     IdentifierHandle              ident;

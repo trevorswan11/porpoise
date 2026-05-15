@@ -33,7 +33,7 @@ TEST_CASE("Import aliases correctly used") {
         CHECK(symbol.get_kind() == sema::SymbolKind::MODULE);
         REQUIRE(symbol.has_type());
         CHECK(&symbol.get_type() ==
-              &pool[sema::types::Key{sema::TypeKind::MODULE, mut::IMMUTABLE, inner_idx}]);
+              &pool[sema::types::Key{sema::TypeKind::MODULE, mut::CONSTANT, inner_idx}]);
         REQUIRE(symbol.is_import_stmt());
         const auto& sym_imp = symbol.get_import_stmt();
         helpers::test_common_decl_collection(registry, *sym_imp.imported_mod, inner_idx);

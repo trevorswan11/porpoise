@@ -12,7 +12,7 @@
 namespace porpoise::sema {
 
 auto Context::get_poison() -> Type& {
-    auto& poison = pool[{TypeKind::POISON, types::Key::Mutability::IMMUTABLE}];
+    auto& poison = pool[{TypeKind::POISON, types::mut::CONSTANT}];
     if (!poison.has_resolved()) { poison.resolve<types::Poison>(); }
     return poison;
 }
@@ -21,7 +21,7 @@ namespace {
 
 auto inject_types(SymbolTable& prelude, TypePool& pool) -> void {
     const auto inject_type = [&](const syntax::Keyword& keyword, TypeKind kind) {
-        auto& type = pool[{kind, types::Key::Mutability::IMMUTABLE}];
+        auto& type = pool[{kind, types::mut::CONSTANT}];
         if (!type.has_resolved()) { type.resolve<types::BuiltinType>(); }
 
         prelude.insert_unchecked(keyword.name, VirtualSymbol{keyword});
@@ -61,7 +61,7 @@ auto inject_functions(SymbolTable& prelude, TypePool& pool) -> void {
             }
             ASSERT(return_type.has_resolved(), "Builtins must be fully resolved");
 
-            types::Key key{TypeKind::FUNCTION, types::Key::Mutability::IMMUTABLE};
+            types::Key key{TypeKind::FUNCTION, types::mut::CONSTANT};
             key.imprint(builtin);
             auto& type = pool[key];
             if (!type.has_resolved()) {
@@ -79,17 +79,16 @@ auto inject_functions(SymbolTable& prelude, TypePool& pool) -> void {
     using BP      = types::BuiltinParams;
 
     // Common types
-    auto& t_void     = pool[{TypeKind::VOID, types::Key::Mutability::IMMUTABLE}];
-    auto& t_type     = pool[{TypeKind::TYPE, types::Key::Mutability::IMMUTABLE}];
-    auto& t_usize    = pool[{TypeKind::USIZE, types::Key::Mutability::IMMUTABLE}];
-    auto& t_auto     = pool[{TypeKind::AUTO, types::Key::Mutability::IMMUTABLE}];
-    auto& t_noreturn = pool[{TypeKind::NORETURN, types::Key::Mutability::IMMUTABLE}];
+    auto& t_void     = pool[{TypeKind::VOID, types::mut::CONSTANT}];
+    auto& t_type     = pool[{TypeKind::TYPE, types::mut::CONSTANT}];
+    auto& t_usize    = pool[{TypeKind::USIZE, types::mut::CONSTANT}];
+    auto& t_auto     = pool[{TypeKind::AUTO, types::mut::CONSTANT}];
+    auto& t_noreturn = pool[{TypeKind::NORETURN, types::mut::CONSTANT}];
 
     // C-string
-    auto& t_c_str = pool[{TypeKind::SLICE, types::Key::Mutability::IMMUTABLE, true, TypeKind::U8}];
+    auto& t_c_str = pool[{TypeKind::SLICE, types::mut::CONSTANT, true, TypeKind::U8}];
     if (!t_c_str.has_resolved()) {
-        t_c_str.resolve<types::Slice>(pool[{TypeKind::U8, types::Key::Mutability::IMMUTABLE}],
-                                      true);
+        t_c_str.resolve<types::Slice>(pool[{TypeKind::U8, types::mut::CONSTANT}], true);
     }
 
     inject_function(bis::ALIGN_CAST, BP{t_type, t_auto}, t_auto);

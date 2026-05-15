@@ -3,15 +3,19 @@
 #include <string_view>
 #include <utility>
 
+#include "ast/statement.hh"
 #include "ast/traits.hh"
 #include "ast/visitor.hh"
+#include "module/error.hh"
 #include "module/module.hh"
 #include "sema/context.hh"
 #include "sema/symbol.hh"
 #include "sema/type.hh"
 
 #include "counter.hh"
+#include "memory.hh"
 #include "option.hh"
+#include "result.hh"
 #include "types.hh"
 
 namespace porpoise::sema {
@@ -31,14 +35,17 @@ class SymbolCollector {
   private:
     AST_VISITOR_DEF_GEN()
 
+    [[nodiscard]] auto collect_import_payload(const ast::ImportStatement& import_stmt)
+        -> std::pair<std::string_view, Result<mem::NonNull<mod::Module>, mod::Diagnostic>>;
+
     template <typename... IterPairs>
     [[nodiscard]] auto visit_scopes(TypeKind kind, IterPairs&&... pairs) -> usize {
         const auto  new_idx = ctx_.registry.create();
         const Scope s{table_stack_, new_idx, table_idx_};
-        (..., [&] {
+        (..., [&pairs] {
             for (const auto& item : pairs.iterable) { pairs.visitor(item); }
         }());
-        last_type_.emplace(ctx_.pool[{kind, types::Key::Mutability::IMMUTABLE, new_idx}]);
+        last_type_.emplace(ctx_.pool[{kind, types::mut::CONSTANT, new_idx}]);
         return new_idx;
     }
 

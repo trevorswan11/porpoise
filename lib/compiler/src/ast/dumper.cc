@@ -63,9 +63,9 @@ auto ASTDumper::visit(ast::NodeID, const CallExpression& call) -> void {
     {
         const Indent::Guard g{indent_, true};
         fmt::println(out_, "{}Arguments:", indent_.current_branch());
-        dump_container(call.arguments, [&](const CallExpression::Argument& arg) {
+        dump_container(call.arguments, [this](const CallExpression::Argument& arg) {
             fmt::print(out_, "{}", indent_.current_branch());
-            std::visit([&](const auto& arg_id) { dump(arg_id); }, arg);
+            std::visit([this](const auto& arg_id) { dump(arg_id); }, arg);
         });
     }
 }
@@ -99,20 +99,21 @@ auto ASTDumper::visit(ast::NodeID, const EnumExpression& enum_expr) -> void {
     {
         const Indent::Guard g{indent_, !has_members};
         fmt::println(out_, "{}Enumerations:", indent_.current_branch());
-        dump_container(enum_expr.enumerations, [&](const EnumExpression::Enumeration& enumeration) {
-            fmt::print(out_, "{}", indent_.current_branch());
-            {
-                fmt::print(out_, "Name: ");
-                const Indent::Guard g_name{indent_, !enumeration.second};
-                dump(enumeration.first);
-            }
+        dump_container(enum_expr.enumerations,
+                       [this](const EnumExpression::Enumeration& enumeration) {
+                           fmt::print(out_, "{}", indent_.current_branch());
+                           {
+                               fmt::print(out_, "Name: ");
+                               const Indent::Guard g_name{indent_, !enumeration.second};
+                               dump(enumeration.first);
+                           }
 
-            if (enumeration.second) {
-                const Indent::Guard g_val{indent_, true};
-                fmt::print(out_, "{}Default: ", indent_.current_branch());
-                dump(*enumeration.second);
-            }
-        });
+                           if (enumeration.second) {
+                               const Indent::Guard g_val{indent_, true};
+                               fmt::print(out_, "{}Default: ", indent_.current_branch());
+                               dump(*enumeration.second);
+                           }
+                       });
     }
 
     if (has_members) {
@@ -133,7 +134,7 @@ auto ASTDumper::visit(ast::NodeID, const ForLoopExpression& for_loop) -> void {
     {
         const Indent::Guard g{indent_, false};
         fmt::println(out_, "{}Captures:", indent_.current_branch());
-        dump_container(for_loop.captures, [&](const ForLoopExpression::Capture& capture) {
+        dump_container(for_loop.captures, [this](const ForLoopExpression::Capture& capture) {
             fmt::print(out_, "{}", indent_.current_branch());
             if (capture.payload.is<Unit>()) {
                 fmt::println(out_, "<discarded>");
@@ -171,7 +172,7 @@ auto ASTDumper::visit(ast::NodeID, const FunctionExpression& function) -> void {
     if (!function.parameters.empty()) {
         const Indent::Guard g{indent_, false};
         fmt::println(out_, "{}Parameters:", indent_.current_branch());
-        dump_container(function.parameters, [&](const FunctionExpression::Parameter& parameter) {
+        dump_container(function.parameters, [this](const FunctionExpression::Parameter& parameter) {
             fmt::println(out_, "{}Param:", indent_.current_branch());
             if (parameter.ident) {
                 const Indent::Guard g_name{indent_, false};
@@ -301,7 +302,7 @@ auto ASTDumper::visit(ast::NodeID, const InitializerExpression& init) -> void {
         const Indent::Guard g{indent_, true};
         fmt::println(out_, "{}Initializers:", indent_.current_branch());
         dump_container(init.initializers,
-                       [&](const InitializerExpression::Initializer& initializer) {
+                       [this](const InitializerExpression::Initializer& initializer) {
                            fmt::println(out_, "{}Initializer:", indent_.current_branch());
                            {
                                const Indent::Guard g_inner{indent_, false};
@@ -345,7 +346,7 @@ auto ASTDumper::visit(ast::NodeID, const MatchExpression& match) -> void {
     {
         const Indent::Guard g{indent_, !has_catch_all};
         fmt::println(out_, "{}Arms:", indent_.current_branch());
-        dump_container(match.arms, [&](const MatchExpression::Arm& arm) {
+        dump_container(match.arms, [this](const MatchExpression::Arm& arm) {
             fmt::println(out_, "{}Arm:", indent_.current_branch());
             {
                 const Indent::Guard g_inner{indent_, false};
@@ -508,7 +509,7 @@ auto ASTDumper::visit(ast::NodeID, const UnionExpression& union_expr) -> void {
     {
         const Indent::Guard g{indent_, !has_members};
         fmt::println(out_, "{}Fields:", indent_.current_branch());
-        dump_container(union_expr.fields, [&](const UnionExpression::Field& field) {
+        dump_container(union_expr.fields, [this](const UnionExpression::Field& field) {
             fmt::println(out_, "{}Field:", indent_.current_branch());
             {
                 const Indent::Guard g_pattern{indent_, false};

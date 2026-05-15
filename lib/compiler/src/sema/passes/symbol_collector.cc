@@ -83,7 +83,7 @@ auto SymbolCollector::visit(ast::NodeID, const ast::ArrayExpression& array) -> v
 auto SymbolCollector::visit(ast::NodeID, const ast::CallExpression& call) -> void {
     const auto g = in_expr_scope_.guard();
     for (const auto& arg : call.arguments) {
-        std::visit([&](const auto& handle) { collect(handle); }, arg);
+        std::visit([this](const auto& handle) { collect(handle); }, arg);
     }
 }
 
@@ -129,7 +129,7 @@ auto SymbolCollector::visit(ast::NodeID id, const ast::ForLoopExpression& for_ex
 
         const auto g_loop = in_loop_scope_.guard();
         for (const auto& capture : for_expr.captures) {
-            if (const auto& ident =
+            if (auto ident =
                     collecting_.ast.get_as_opt<ast::IdentifierExpression>(*capture.payload)) {
                 try_declare(ident->name, capture);
             }
@@ -139,7 +139,7 @@ auto SymbolCollector::visit(ast::NodeID id, const ast::ForLoopExpression& for_ex
     }
     if (for_expr.non_break) { collect(*for_expr.non_break); }
 
-    last_type_.emplace(ctx_.pool[{TypeKind::BLOCK, types::Key::Mutability::IMMUTABLE, new_idx}]);
+    last_type_.emplace(ctx_.pool[{TypeKind::BLOCK, types::mut::CONSTANT, new_idx}]);
     last_type_->set_symbol_table_idx(new_idx);
     collecting_.set_sema_type(id, *last_type_.take());
 }
@@ -165,7 +165,7 @@ auto SymbolCollector::visit(ast::NodeID id, const ast::FunctionExpression& fn) -
         for (const auto& stmt : block) { collect(stmt); }
     }
 
-    last_type_.emplace(ctx_.pool[{TypeKind::FUNCTION, types::Key::Mutability::IMMUTABLE, new_idx}]);
+    last_type_.emplace(ctx_.pool[{TypeKind::FUNCTION, types::mut::CONSTANT, new_idx}]);
     last_type_->set_symbol_table_idx(new_idx);
     collecting_.set_sema_type(id, *last_type_);
 }
@@ -221,7 +221,7 @@ auto SymbolCollector::visit(ast::NodeID id, const ast::LabelExpression& label) -
     }
     collect(label.body);
 
-    last_type_.emplace(ctx_.pool[{TypeKind::LABEL, types::Key::Mutability::IMMUTABLE, new_idx}]);
+    last_type_.emplace(ctx_.pool[{TypeKind::LABEL, types::mut::CONSTANT, new_idx}]);
     last_type_->set_symbol_table_idx(new_idx);
     collecting_.set_sema_type(id, *last_type_.take());
 }
@@ -240,8 +240,7 @@ auto SymbolCollector::visit(ast::NodeID, const ast::MatchExpression& match) -> v
         }
         collect(arm.dispatch);
 
-        last_type_.emplace(
-            ctx_.pool[{TypeKind::MATCH_ARM, types::Key::Mutability::IMMUTABLE, new_idx}]);
+        last_type_.emplace(ctx_.pool[{TypeKind::MATCH_ARM, types::mut::CONSTANT, new_idx}]);
         last_type_->set_symbol_table_idx(new_idx);
         collecting_.set_sema_type(arm.pattern, *last_type_.take());
     }
@@ -298,7 +297,7 @@ auto SymbolCollector::visit(ast::NodeID id, const ast::WhileLoopExpression& whil
     }
     if (while_expr.non_break) { collect(*while_expr.non_break); }
 
-    last_type_.emplace(ctx_.pool[{TypeKind::BLOCK, types::Key::Mutability::IMMUTABLE, new_idx}]);
+    last_type_.emplace(ctx_.pool[{TypeKind::BLOCK, types::mut::CONSTANT, new_idx}]);
     last_type_->set_symbol_table_idx(new_idx);
     collecting_.set_sema_type(id, *last_type_.take());
 }
@@ -391,27 +390,25 @@ auto SymbolCollector::visit(ast::NodeID, const ast::ExpressionStatement& expr) -
     collect(expr.expression);
 }
 
+auto SymbolCollector::collect_import_payload(const ast::ImportStatement& import_stmt)
+    -> std::pair<std::string_view, Result<mem::NonNull<mod::Module>, mod::Diagnostic>> {
+    if (auto string = collecting_.ast.get_as_opt<ast::StringExpression>(*import_stmt.payload)) {
+        ASSERT(import_stmt.alias, "File import without alias");
+        const auto& ident = collecting_.ast.get_as<ast::IdentifierExpression>(**import_stmt.alias);
+
+        return {ident.name,
+                ctx_.modules.try_get_file_module(string->value, collecting_.parent_path)};
+    }
+
+    const auto& payload = collecting_.ast.get_as<ast::IdentifierExpression>(*import_stmt.payload);
+    const auto& ident   = import_stmt.alias
+                              ? collecting_.ast.get_as<ast::IdentifierExpression>(**import_stmt.alias)
+                              : payload;
+    return {ident.name, ctx_.modules.try_get_library_module(payload.name)};
+}
+
 auto SymbolCollector::visit(ast::NodeID id, const ast::ImportStatement& import_stmt) -> void {
-    auto [alias, mod_result] =
-        [&] -> std::pair<std::string_view, Result<mem::NonNull<mod::Module>, mod::Diagnostic>> {
-        if (const auto& string =
-                collecting_.ast.get_as_opt<ast::StringExpression>(*import_stmt.payload)) {
-            ASSERT(import_stmt.alias, "File import without alias");
-            const auto& ident =
-                collecting_.ast.get_as<ast::IdentifierExpression>(**import_stmt.alias);
-
-            return {ident.name,
-                    ctx_.modules.try_get_file_module(string->value, collecting_.parent_path)};
-        }
-
-        const auto& payload =
-            collecting_.ast.get_as<ast::IdentifierExpression>(*import_stmt.payload);
-        const auto& ident =
-            import_stmt.alias
-                ? collecting_.ast.get_as<ast::IdentifierExpression>(**import_stmt.alias)
-                : payload;
-        return {ident.name, ctx_.modules.try_get_library_module(payload.name)};
-    }();
+    auto [alias, mod_result] = collect_import_payload(import_stmt);
 
     // Only set the table index if the module exists
     opt::Option<mod::Module&> imported_mod;
@@ -429,8 +426,8 @@ auto SymbolCollector::visit(ast::NodeID id, const ast::ImportStatement& import_s
     ctx_.try_result(ctx_.registry.insert_into<SymbolicImport>(
         table_idx_, collecting_, alias, ast::ImportHandle{id}, imported_mod));
     if (imported_mod) {
-        auto& type = ctx_.pool[{
-            TypeKind::MODULE, types::Key::Mutability::IMMUTABLE, *imported_mod->root_table_idx}];
+        auto& type =
+            ctx_.pool[{TypeKind::MODULE, types::mut::CONSTANT, *imported_mod->root_table_idx}];
         collecting_.set_sema_type(id, type);
         auto& symbol = ctx_.registry.get_from(table_idx_, alias);
         symbol.set_type(type);

@@ -29,7 +29,7 @@ auto test_user_type(std::string_view input, sema::TypeKind kind, usize expected_
     CHECK(symbol_a->get_kind() == sema::SymbolKind::TYPE);
 
     auto&       pool          = ctx.analyzer.get_pool();
-    const auto& expected_type = pool[{kind, mut::IMMUTABLE, 1}];
+    const auto& expected_type = pool[{kind, mut::CONSTANT, 1}];
     REQUIRE(symbol_a->has_type());
     CHECK(&symbol_a->get_type() == &expected_type);
     CHECK(expected_type.get_symbol_table_idx() == idx + 1);
