@@ -37,7 +37,8 @@ auto parse_primitive(syntax::Parser& parser) -> Result<ExpressionHandle, syntax:
     const auto value       = parse_primitive_value<value_type>(start_token.slice, start_token.type);
     if (value) { return parser.add_expr<Primitive>(start_token, *value); }
 
-    return make_syntax_err(std::is_same_v<value_type, f64>
+    return make_syntax_err("Overflow of literal",
+                           std::is_same_v<value_type, f64>
                                ? syntax::Error::DOUBLE_OVERFLOW
                                : (std::is_same_v<value_type, f32>
                                       ? syntax::Error::FLOAT_OVERFLOW

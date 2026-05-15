@@ -40,7 +40,9 @@ auto BreakStatement::parse(syntax::Parser& parser) -> Result<StatementHandle, sy
     }
 
     if (value && !label) {
-        return make_syntax_err(syntax::Error::VALUED_BREAK_MISSING_LABEL, start_token);
+        return make_syntax_err("Valued break statements must be labeled",
+                               syntax::Error::VALUED_BREAK_MISSING_LABEL,
+                               start_token);
     }
     TRY(parser.expect_peek(syntax::TokenType::SEMICOLON));
     return parser.add_stmt<BreakStatement>(start_token, label, value);
@@ -61,7 +63,9 @@ auto ContinueStatement::parse(syntax::Parser& parser)
     // Values can never be present in a continue
     if (!parser.peek_token_is(syntax::TokenType::END) &&
         !parser.peek_token_is(syntax::TokenType::SEMICOLON)) {
-        return make_syntax_err(syntax::Error::VALUED_CONTINUE, start_token);
+        return make_syntax_err("Continue statements may only contain labels",
+                               syntax::Error::VALUED_CONTINUE,
+                               start_token);
     }
 
     TRY(parser.expect_peek(syntax::TokenType::SEMICOLON));
@@ -84,21 +88,22 @@ constexpr auto LEGAL_MODIFIERS = [] {
     return modifiers;
 }();
 
-[[nodiscard]] constexpr auto validate_modifiers(DeclModifiers modifiers) noexcept -> bool {
-    // Exactly one mutability flag must be set
+[[nodiscard]] constexpr auto validate_modifiers(DeclModifiers modifiers) noexcept
+    -> opt::Option<std::string_view> {
     const auto valid_mut = std::popcount(std::to_underlying(
                                modifiers & (DeclModifiers::VARIABLE | DeclModifiers::CONSTANT |
                                             DeclModifiers::CONSTEXPR))) == 1;
+    if (!valid_mut) { return "Exactly one mutability modifier may be used"; }
 
-    // Comptime values cannot be known at link time, obviously
     const auto valid_constexpr =
         std::popcount(std::to_underlying(modifiers &
                                          (DeclModifiers::EXTERN | DeclModifiers::CONSTEXPR))) <= 1;
+    if (!valid_constexpr) { return "Extern values cannot be known at compile time"; }
 
-    // At most one ABI flag can be set
     const auto valid_abi = std::popcount(std::to_underlying(
                                modifiers & (DeclModifiers::EXTERN | DeclModifiers::EXPORT))) <= 1;
-    return valid_mut && valid_constexpr && valid_abi;
+    if (!valid_abi) { return "At most one ABI-related modifier may be used"; }
+    return opt::none;
 }
 
 } // namespace
@@ -111,14 +116,16 @@ auto DeclStatement::parse(syntax::Parser& parser) -> Result<StatementHandle, syn
     while ((current_modifier = LEGAL_MODIFIERS[parser.get_peek_token().type])) {
         parser.advance();
         if (modifiers_has(modifiers, *current_modifier)) {
-            return make_syntax_err(syntax::Error::DUPLICATE_DECL_MODIFIER,
+            return make_syntax_err("Declaration modifiers may only be used once in any order",
+                                   syntax::Error::DUPLICATE_DECL_MODIFIER,
                                    parser.get_current_token());
         }
         modifiers |= *current_modifier;
     }
 
-    if (!validate_modifiers(modifiers)) {
-        return make_syntax_err(syntax::Error::ILLEGAL_DECL_MODIFIERS, start_token);
+    if (const auto msg = validate_modifiers(modifiers)) {
+        return make_syntax_err(
+            std::string{*msg}, syntax::Error::ILLEGAL_DECL_MODIFIERS, start_token);
     }
 
     TRY(parser.expect_peek(syntax::TokenType::IDENT));
@@ -131,7 +138,9 @@ auto DeclStatement::parse(syntax::Parser& parser) -> Result<StatementHandle, syn
 
         // If there is a value, then there cannot be an extern due to a contradiction
         if (modifiers_has(modifiers, DeclModifiers::EXTERN)) {
-            return make_syntax_err(syntax::Error::EXTERN_VALUE_INITIALIZED, start_token);
+            return make_syntax_err("Extern declarations may not be value-initialized",
+                                   syntax::Error::EXTERN_VALUE_INITIALIZED,
+                                   start_token);
         }
 
         // Initialized decls with undefined requires a type for well-formed future use
@@ -145,7 +154,9 @@ auto DeclStatement::parse(syntax::Parser& parser) -> Result<StatementHandle, syn
                 !modifiers_has(modifiers, DeclModifiers::EXTERN)) ||
                modifiers_has(modifiers, DeclModifiers::CONSTEXPR)) {
         // Constant decls must be declared with a value unless they are extern
-        return make_syntax_err(syntax::Error::CONST_DECL_MISSING_VALUE, start_token);
+        return make_syntax_err("Constant non-extern declarations must have an associated value",
+                               syntax::Error::CONST_DECL_MISSING_VALUE,
+                               start_token);
     }
 
     if (!parser.current_token_is(syntax::TokenType::SEMICOLON)) {
@@ -158,14 +169,17 @@ auto DeferStatement::parse(syntax::Parser& parser) -> Result<StatementHandle, sy
     const auto start_token = parser.get_current_token();
     if (parser.peek_token_is(syntax::TokenType::END) ||
         parser.peek_token_is(syntax::TokenType::SEMICOLON)) {
-        return make_syntax_err(syntax::Error::DEFER_MISSING_DEFERREE, start_token);
+        return make_syntax_err("Defer statements require an statement to defer",
+                               syntax::Error::DEFER_MISSING_DEFERREE,
+                               start_token);
     }
     parser.advance();
     const auto stmt = TRY(parser.parse_statement(true));
 
     // The statement has different restrictions from expression alternates
     if (!stmt.any<ExpressionStatement, DiscardStatement, BlockStatement>()) {
-        return make_syntax_err(syntax::Error::ILLEGAL_DEFERRED_STATEMENT,
+        return make_syntax_err("Deferred statements must be expressions, discards, or blocks",
+                               syntax::Error::ILLEGAL_DEFERRED_STATEMENT,
                                parser.get_location_of(*stmt));
     }
     return parser.add_stmt<DeferStatement>(start_token, stmt);
@@ -178,7 +192,8 @@ auto DiscardStatement::parse(syntax::Parser& parser)
     TRY(parser.expect_peek(syntax::TokenType::ASSIGN));
     if (parser.peek_token_is(syntax::TokenType::END) ||
         parser.peek_token_is(syntax::TokenType::SEMICOLON)) {
-        return make_syntax_err(syntax::Error::DISCARD_MISSING_DISCARDEE,
+        return make_syntax_err("Discarded statements must have a statement to discard",
+                               syntax::Error::DISCARD_MISSING_DISCARDEE,
                                parser.get_current_token());
     }
 
@@ -218,13 +233,16 @@ namespace {
         const StringHandle string = TRY(StringExpression::parse(parser));
 
         if (parser.get_node<StringExpression>(*string).value.empty()) {
-            return make_syntax_err(syntax::Error::EMPTY_USER_IMPORT,
+            return make_syntax_err("File import names cannot be empty",
+                                   syntax::Error::EMPTY_FILE_IMPORT,
                                    parser.get_location_of(*string));
         }
         return string;
     }
 
-    return make_syntax_err(syntax::Error::ILLEGAL_IMPORT_TYPE, parser.get_peek_token());
+    return make_syntax_err("Imported payloads may only be filename strings or module identifiers",
+                           syntax::Error::ILLEGAL_IMPORT_TYPE,
+                           parser.get_peek_token());
 }
 
 } // namespace
@@ -242,7 +260,9 @@ auto ImportStatement::parse(syntax::Parser& parser) -> Result<StatementHandle, s
 
         imported_alias.emplace(TRY(IdentifierExpression::parse(parser)));
     } else if (imported_core->get_kind() == NodeKind::STRING_EXPRESSION) {
-        return make_syntax_err(syntax::Error::USER_IMPORT_MISSING_ALIAS, start_token);
+        return make_syntax_err("All file imports must be aliased to an identifier",
+                               syntax::Error::FILE_IMPORT_MISSING_ALIAS,
+                               start_token);
     }
 
     if (!parser.current_token_is(syntax::TokenType::SEMICOLON)) {
@@ -276,7 +296,8 @@ auto TestStatement::parse(syntax::Parser& parser) -> Result<StatementHandle, syn
 
         // Empty strings aren't supported since one should just use no description
         if (parser.get_node<StringExpression>(**description).value.empty()) {
-            return make_syntax_err(syntax::Error::EMPTY_TEST_DESCRIPTION,
+            return make_syntax_err("Test descriptions may not be empty when present",
+                                   syntax::Error::EMPTY_TEST_DESCRIPTION,
                                    parser.get_location_of(**description));
         }
     }

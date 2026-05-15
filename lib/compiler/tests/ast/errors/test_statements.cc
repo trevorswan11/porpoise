@@ -29,49 +29,67 @@ auto test_decl_fail(std::initializer_list<syntax::Keyword> modifiers,
 } // namespace
 
 TEST_CASE("Mutability restrictions") {
-    const std::array contending_mut{keywords::CONSTEXPR, keywords::VAR, keywords::CONSTANT};
+    const auto expected_diag = [] {
+        return syntax::Diagnostic{"Exactly one mutability modifier may be used",
+                                  syntax::Error::ILLEGAL_DECL_MODIFIERS,
+                                  std::pair{0uz, 0uz}};
+    };
+
+    constexpr std::array contending_mut{keywords::CONSTEXPR, keywords::VAR, keywords::CONSTANT};
     for (const auto& mut : helpers::combinations(contending_mut)) {
-        test_decl_fail({mut.first, mut.second},
-                       syntax::Diagnostic{syntax::Error::ILLEGAL_DECL_MODIFIERS, 0, 0});
+        test_decl_fail({mut.first, mut.second}, expected_diag());
     }
-    test_decl_fail({keywords::CONSTEXPR, keywords::VAR, keywords::CONSTANT},
-                   syntax::Diagnostic{syntax::Error::ILLEGAL_DECL_MODIFIERS, 0, 0});
+    test_decl_fail({keywords::CONSTEXPR, keywords::VAR, keywords::CONSTANT}, expected_diag());
 }
 
-TEST_CASE("CONSTEXPR restrictions") {
-    const std::array contending_mut{keywords::EXTERN, keywords::CONSTEXPR};
+TEST_CASE("Constexpr restrictions") {
+    const auto expected_diag = [] {
+        return syntax::Diagnostic{"Extern values cannot be known at compile time",
+                                  syntax::Error::ILLEGAL_DECL_MODIFIERS,
+                                  std::pair{0uz, 0uz}};
+    };
+
+    constexpr std::array contending_mut{keywords::EXTERN, keywords::CONSTEXPR};
     for (const auto& mut : helpers::combinations(contending_mut)) {
-        test_decl_fail({mut.first, mut.second},
-                       syntax::Diagnostic{syntax::Error::ILLEGAL_DECL_MODIFIERS, 0, 0});
+        test_decl_fail({mut.first, mut.second}, expected_diag());
     }
-    test_decl_fail({keywords::EXTERN, keywords::CONSTEXPR},
-                   syntax::Diagnostic{syntax::Error::ILLEGAL_DECL_MODIFIERS, 0, 0});
+    test_decl_fail({keywords::EXTERN, keywords::CONSTEXPR}, expected_diag());
 }
 
 TEST_CASE("ABI/Linkage restrictions") {
-    const std::array contending_mut{keywords::EXTERN, keywords::EXPORT};
+    const auto expected_diag = [] {
+        return syntax::Diagnostic{"Exactly one mutability modifier may be used",
+                                  syntax::Error::ILLEGAL_DECL_MODIFIERS,
+                                  std::pair{0uz, 0uz}};
+    };
+
+    constexpr std::array contending_mut{keywords::EXTERN, keywords::EXPORT};
     for (const auto& mut : helpers::combinations(contending_mut)) {
-        test_decl_fail({mut.first, mut.second},
-                       syntax::Diagnostic{syntax::Error::ILLEGAL_DECL_MODIFIERS, 0, 0});
+        test_decl_fail({mut.first, mut.second}, expected_diag());
     }
-    test_decl_fail({keywords::EXTERN, keywords::EXPORT},
-                   syntax::Diagnostic{syntax::Error::ILLEGAL_DECL_MODIFIERS, 0, 0});
+    test_decl_fail({keywords::EXTERN, keywords::EXPORT}, expected_diag());
 }
 
 TEST_CASE("Extern requirements") {
-    test_decl_fail({keywords::EXTERN, keywords::CONSTANT},
-                   syntax::Diagnostic{syntax::Error::EXTERN_VALUE_INITIALIZED, 0, 0});
-    test_decl_fail({keywords::EXTERN, keywords::VAR},
-                   syntax::Diagnostic{syntax::Error::EXTERN_VALUE_INITIALIZED, 0, 0});
+    const auto expected_diag = [] {
+        return syntax::Diagnostic{"Extern declarations may not be value-initialized",
+                                  syntax::Error::EXTERN_VALUE_INITIALIZED,
+                                  std::pair{0uz, 0uz}};
+    };
+
+    test_decl_fail({keywords::EXTERN, keywords::CONSTANT}, expected_diag());
+    test_decl_fail({keywords::EXTERN, keywords::VAR}, expected_diag());
 }
 
 TEST_CASE("Constant requirements") {
-    test_decl_fail({keywords::CONSTANT},
-                   syntax::Diagnostic{syntax::Error::CONST_DECL_MISSING_VALUE, 0, 0},
-                   "a: i32;");
-    test_decl_fail({keywords::CONSTEXPR},
-                   syntax::Diagnostic{syntax::Error::CONST_DECL_MISSING_VALUE, 0, 0},
-                   "a: i32;");
+    const auto expected_diag = [] {
+        return syntax::Diagnostic{"Constant non-extern declarations must have an associated value",
+                                  syntax::Error::CONST_DECL_MISSING_VALUE,
+                                  std::pair{0uz, 0uz}};
+    };
+
+    test_decl_fail({keywords::CONSTANT}, expected_diag(), "a: i32;");
+    test_decl_fail({keywords::CONSTEXPR}, expected_diag(), "a: i32;");
 }
 
 TEST_CASE("Non-terminated decls") {
@@ -82,8 +100,11 @@ TEST_CASE("Non-terminated decls") {
 }
 
 TEST_CASE("Duplicate declaration modifier") {
-    helpers::test_parser_fail("var var a: i32;",
-                              syntax::Diagnostic{syntax::Error::DUPLICATE_DECL_MODIFIER, 0, 4});
+    helpers::test_parser_fail(
+        "var var a: i32;",
+        syntax::Diagnostic{"Declaration modifiers may only be used once in any order",
+                           syntax::Error::DUPLICATE_DECL_MODIFIER,
+                           std::pair{0uz, 4uz}});
 }
 
 TEST_CASE("Undefined declaration without type") {
@@ -94,21 +115,27 @@ TEST_CASE("Undefined declaration without type") {
 }
 
 TEST_CASE("Illegal deferred statements") {
-    helpers::test_parser_fail("defer import std;",
-                              syntax::Diagnostic{syntax::Error::ILLEGAL_DEFERRED_STATEMENT, 0, 6});
-    helpers::test_parser_fail("defer return 3;",
-                              syntax::Diagnostic{syntax::Error::ILLEGAL_DEFERRED_STATEMENT, 0, 6});
-    helpers::test_parser_fail("defer var a: i32;",
-                              syntax::Diagnostic{syntax::Error::ILLEGAL_DEFERRED_STATEMENT, 0, 6});
-    helpers::test_parser_fail("defer using a = i32;",
-                              syntax::Diagnostic{syntax::Error::ILLEGAL_DEFERRED_STATEMENT, 0, 6});
+    const auto expected_diag = [] {
+        return syntax::Diagnostic{"Deferred statements must be expressions, discards, or blocks",
+                                  syntax::Error::ILLEGAL_DEFERRED_STATEMENT,
+                                  std::pair{0uz, 6uz}};
+    };
+
+    helpers::test_parser_fail("defer import std;", expected_diag());
+    helpers::test_parser_fail("defer return 3;", expected_diag());
+    helpers::test_parser_fail("defer var a: i32;", expected_diag());
+    helpers::test_parser_fail("defer using a = i32;", expected_diag());
 }
 
 TEST_CASE("Missing deferred statements") {
-    helpers::test_parser_fail("defer",
-                              syntax::Diagnostic{syntax::Error::DEFER_MISSING_DEFERREE, 0, 0});
-    helpers::test_parser_fail("defer;",
-                              syntax::Diagnostic{syntax::Error::DEFER_MISSING_DEFERREE, 0, 0});
+    const auto expected_diag = [] {
+        return syntax::Diagnostic{"Defer statements require an statement to defer",
+                                  syntax::Error::DEFER_MISSING_DEFERREE,
+                                  std::pair{0uz, 0uz}};
+    };
+
+    helpers::test_parser_fail("defer", expected_diag());
+    helpers::test_parser_fail("defer;", expected_diag());
 }
 
 TEST_CASE("Misplaced correct discardedstatement") {
@@ -128,19 +155,28 @@ TEST_CASE("Misplaced incorrect discarded statement") {
 }
 
 TEST_CASE("Missing discardee") {
-    helpers::test_parser_fail("_ = ",
-                              syntax::Diagnostic{syntax::Error::DISCARD_MISSING_DISCARDEE, 0, 2});
-    helpers::test_parser_fail("_ = ;",
-                              syntax::Diagnostic{syntax::Error::DISCARD_MISSING_DISCARDEE, 0, 2});
+    const auto expected_diag = [] {
+        return syntax::Diagnostic{"Discarded statements must have a statement to discard",
+                                  syntax::Error::DISCARD_MISSING_DISCARDEE,
+                                  std::pair{0uz, 2uz}};
+    };
+
+    helpers::test_parser_fail("_ = ", expected_diag());
+    helpers::test_parser_fail("_ = ;", expected_diag());
 }
 
 TEST_CASE("Incorrect library imports") {
-    helpers::test_parser_fail("import 2;",
-                              syntax::Diagnostic{syntax::Error::ILLEGAL_IMPORT_TYPE, 0, 7});
-    helpers::test_parser_fail("import as 2;",
-                              syntax::Diagnostic{syntax::Error::ILLEGAL_IMPORT_TYPE, 0, 7});
-    helpers::test_parser_fail("import 2 as 3;",
-                              syntax::Diagnostic{syntax::Error::ILLEGAL_IMPORT_TYPE, 0, 7});
+    const auto expected_diag = [] {
+        return syntax::Diagnostic{
+            "Imported payloads may only be filename strings or module identifiers",
+            syntax::Error::ILLEGAL_IMPORT_TYPE,
+            std::pair{0uz, 7uz}};
+    };
+
+    helpers::test_parser_fail("import 2;", expected_diag());
+    helpers::test_parser_fail("import as 2;", expected_diag());
+    helpers::test_parser_fail("import 2 as 3;", expected_diag());
+
     helpers::test_parser_fail(
         "import std as 2;",
         syntax::Diagnostic{
@@ -149,11 +185,21 @@ TEST_CASE("Incorrect library imports") {
 
 TEST_CASE("Incorrect file imports ") {
     helpers::test_parser_fail(R"(import "";)",
-                              syntax::Diagnostic{syntax::Error::EMPTY_USER_IMPORT, 0, 7});
+                              syntax::Diagnostic{"File import names cannot be empty",
+                                                 syntax::Error::EMPTY_FILE_IMPORT,
+                                                 std::pair{0uz, 7uz}});
+
     helpers::test_parser_fail(R"(import "" as e;)",
-                              syntax::Diagnostic{syntax::Error::EMPTY_USER_IMPORT, 0, 7});
-    helpers::test_parser_fail(R"(import "ast/node.p";)",
-                              syntax::Diagnostic{syntax::Error::USER_IMPORT_MISSING_ALIAS, 0, 0});
+                              syntax::Diagnostic{"File import names cannot be empty",
+                                                 syntax::Error::EMPTY_FILE_IMPORT,
+                                                 std::pair{0uz, 7uz}});
+
+    helpers::test_parser_fail(
+        R"(import "ast/node.p";)",
+        syntax::Diagnostic{"All file imports must be aliased to an identifier",
+                           syntax::Error::FILE_IMPORT_MISSING_ALIAS,
+                           std::pair{0uz, 0uz}});
+
     helpers::test_parser_fail(
         R"(import "ast/node.p" as 2;)",
         syntax::Diagnostic{
@@ -185,10 +231,14 @@ TEST_CASE("Incorrectly terminated jumps") {
 
 TEST_CASE("Illegal continue/break control flow") {
     helpers::test_parser_fail("continue 4;",
-                              syntax::Diagnostic{syntax::Error::VALUED_CONTINUE, 0, 0});
+                              syntax::Diagnostic{"Continue statements may only contain labels",
+                                                 syntax::Error::VALUED_CONTINUE,
+                                                 std::pair{0uz, 0uz}});
 
     helpers::test_parser_fail("break 4;",
-                              syntax::Diagnostic{syntax::Error::VALUED_BREAK_MISSING_LABEL, 0, 0});
+                              syntax::Diagnostic{"Valued break statements must be labeled",
+                                                 syntax::Error::VALUED_BREAK_MISSING_LABEL,
+                                                 std::pair{0uz, 0uz}});
 }
 
 TEST_CASE("Non-terminated test") {
@@ -200,7 +250,9 @@ TEST_CASE("Non-terminated test") {
 
 TEST_CASE("Empty test description") {
     helpers::test_parser_fail(R"(test "" {};)",
-                              syntax::Diagnostic{syntax::Error::EMPTY_TEST_DESCRIPTION, 0, 5});
+                              syntax::Diagnostic{"Test descriptions may not be empty when present",
+                                                 syntax::Error::EMPTY_TEST_DESCRIPTION,
+                                                 std::pair{0uz, 5uz}});
 }
 
 TEST_CASE("Missing alias") {

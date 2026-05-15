@@ -26,7 +26,8 @@ auto parse_function_type(syntax::Parser& parser) -> Result<ExpressionHandle, syn
             if (type.is<IdentifierExpression>()) {
                 // noreturn is not allowed for parameters
                 if (type.get_token_type() == syntax::TokenType::NORETURN) {
-                    return make_syntax_err(syntax::Error::FN_PARAMETER_IS_NORETURN,
+                    return make_syntax_err("Function parameter types may not be marked `noreturn`",
+                                           syntax::Error::FN_PARAMETER_IS_NORETURN,
                                            parser.get_location_of(type));
                 }
             }
@@ -43,7 +44,9 @@ auto parse_function_type(syntax::Parser& parser) -> Result<ExpressionHandle, syn
     TRY(parser.expect_peek(syntax::TokenType::COLON));
     const auto return_type = TRY(ExplicitType::parse(parser));
     if (parser.peek_token_is(syntax::TokenType::LBRACE)) {
-        return make_syntax_err(syntax::Error::EXPLICIT_FN_TYPE_HAS_BODY, start_token);
+        return make_syntax_err("Function types may not have a body",
+                               syntax::Error::EXPLICIT_FN_TYPE_HAS_BODY,
+                               start_token);
     }
 
     return parser.add_expr<FunctionExpression>(
@@ -96,11 +99,16 @@ auto ExplicitType::parse(syntax::Parser& parser) -> Result<ExplicitTypeID, synta
         if (!modifier.is_value()) {
             switch (peek_token.type) {
             case syntax::TokenType::TYPE_TYPE:
-                return make_syntax_err(syntax::Error::ILLEGAL_TYPE_TYPE_MODIFIER, modifier_token);
+                return make_syntax_err("Explicit `type` type cannot have a modifier",
+                                       syntax::Error::ILLEGAL_TYPE_TYPE_MODIFIER,
+                                       modifier_token);
             case syntax::TokenType::VOID_TYPE:
-                return make_syntax_err(syntax::Error::ILLEGAL_VOID_TYPE_MODIFIER, modifier_token);
+                return make_syntax_err("Explicit `void` type cannot have a modifier",
+                                       syntax::Error::ILLEGAL_VOID_TYPE_MODIFIER,
+                                       modifier_token);
             case syntax::TokenType::NORETURN:
-                return make_syntax_err(syntax::Error::ILLEGAL_NORETURN_TYPE_MODIFIER,
+                return make_syntax_err("Explicit `noreturn` type cannot have a modifier",
+                                       syntax::Error::ILLEGAL_NORETURN_TYPE_MODIFIER,
                                        modifier_token);
             default: break;
             }
@@ -134,7 +142,9 @@ auto ExplicitType::parse(syntax::Parser& parser) -> Result<ExplicitTypeID, synta
         parser.advance();
         const auto type_expr = TRY(parse_function_type(parser));
         if (!(modifier.is_value() || modifier.is_ptr())) {
-            return make_syntax_err(syntax::Error::ILLEGAL_FUNCTION_TYPE_MODIFIER, type_start);
+            return make_syntax_err("Functions types may only be values or pointers",
+                                   syntax::Error::ILLEGAL_FUNCTION_TYPE_MODIFIER,
+                                   type_start);
         }
 
         // Function types cannot have bodies

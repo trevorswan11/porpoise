@@ -6,7 +6,9 @@ namespace porpoise::tests {
 
 TEST_CASE("If without condition") {
     helpers::test_parser_fail("if () b;",
-                              syntax::Diagnostic{syntax::Error::IF_MISSING_CONDITION, 0, 0});
+                              syntax::Diagnostic{"If expressions must have a condition",
+                                                 syntax::Error::IF_MISSING_CONDITION,
+                                                 std::pair{0uz, 0uz}});
 }
 
 TEST_CASE("If with illegal consequence") {
@@ -21,7 +23,9 @@ TEST_CASE("If with illegal alternate") {
 
 TEST_CASE("Match without condition") {
     helpers::test_parser_fail("match () { b => c; };",
-                              syntax::Diagnostic{syntax::Error::MATCH_EXPR_MISSING_CONDITION, 0, 0},
+                              syntax::Diagnostic{"Match expressions must have a condition",
+                                                 syntax::Error::MATCH_EXPR_MISSING_CONDITION,
+                                                 std::pair{0uz, 0uz}},
                               syntax::Diagnostic{"No prefix parse function for RBRACE(}) found",
                                                  syntax::Error::MISSING_PREFIX_PARSER,
                                                  std::pair{0uz, 19uz}});
@@ -37,7 +41,9 @@ TEST_CASE("Match without condition") {
 
 TEST_CASE("Armless match expression") {
     helpers::test_parser_fail("match (a) {};",
-                              syntax::Diagnostic{syntax::Error::ARMLESS_MATCH_EXPR, 0, 0});
+                              syntax::Diagnostic{"Match expressions must have at least one arm",
+                                                 syntax::Error::ARMLESS_MATCH_EXPR,
+                                                 std::pair{0uz, 0uz}});
 }
 
 TEST_CASE("Malformed arm LHS") {

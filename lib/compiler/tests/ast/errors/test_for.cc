@@ -16,7 +16,9 @@ TEST_CASE("Non-terminated iterables") {
 
 TEST_CASE("Missing iterables") {
     helpers::test_parser_fail("for () |i| { a; } else return b;",
-                              syntax::Diagnostic{syntax::Error::FOR_MISSING_ITERABLES, 0, 0},
+                              syntax::Diagnostic{"For loops must contain at least one iterable",
+                                                 syntax::Error::FOR_MISSING_ITERABLES,
+                                                 std::pair{0uz, 0uz}},
                               syntax::Diagnostic{"No prefix parse function for RBRACE(}) found",
                                                  syntax::Error::MISSING_PREFIX_PARSER,
                                                  std::pair{0uz, 16uz}});
@@ -61,12 +63,17 @@ TEST_CASE("Illegal capture") {
 TEST_CASE("Iterable-capture mismatch") {
     helpers::test_parser_fail(
         "for (0..4) |i, j| { a; } else return b;",
-        syntax::Diagnostic{syntax::Error::FOR_ITERABLE_CAPTURE_MISMATCH, 0, 0});
+        syntax::Diagnostic{"The number of for loop captures must match the number of iterables",
+                           syntax::Error::FOR_ITERABLE_CAPTURE_MISMATCH,
+                           std::pair{0uz, 0uz}});
 }
 
 TEST_CASE("Empty for block") {
-    helpers::test_parser_fail("for (0..4) |i| {} else return b;",
-                              syntax::Diagnostic{syntax::Error::EMPTY_LOOP, 0, 15});
+    helpers::test_parser_fail(
+        "for (0..4) |i| {} else return b;",
+        syntax::Diagnostic{"For loops' bodies must contain at least one statement",
+                           syntax::Error::EMPTY_LOOP,
+                           std::pair{0uz, 15uz}});
 }
 
 TEST_CASE("Illegal for-else clause") {

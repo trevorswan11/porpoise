@@ -23,7 +23,10 @@ auto ArrayExpression::parse(syntax::Parser& parser)
         }
     } else {
         // There needs to be a token for the size for array literals
-        return make_syntax_err(syntax::Error::MISSING_ARRAY_SIZE_TOKEN, start_token);
+        return make_syntax_err(
+            "Array literals must be initialized with an implicit or explicit size",
+            syntax::Error::MISSING_ARRAY_SIZE_TOKEN,
+            start_token);
     }
 
     TRY(parser.expect_peek(syntax::TokenType::RBRACKET));
@@ -66,7 +69,8 @@ auto CallExpression::parse(syntax::Parser& parser, ExpressionHandle function)
     while (!parser.peek_token_is(syntax::TokenType::RPAREN) &&
            !parser.peek_token_is(syntax::TokenType::END)) {
         if (parser.peek_token_is(syntax::TokenType::COMMA)) {
-            return make_syntax_err(syntax::Error::COMMA_WITH_MISSING_CALL_ARGUMENT,
+            return make_syntax_err("A comma implies an argument but none were found",
+                                   syntax::Error::COMMA_WITH_MISSING_CALL_ARGUMENT,
                                    parser.get_peek_token());
         }
 
@@ -91,7 +95,9 @@ auto DoWhileLoopExpression::parse(syntax::Parser& parser)
     TRY(parser.expect_peek(syntax::TokenType::LPAREN));
 
     if (parser.peek_token_is(syntax::TokenType::RPAREN)) {
-        return make_syntax_err(syntax::Error::WHILE_MISSING_CONDITION, parser.get_current_token());
+        return make_syntax_err("While loops must have a condition",
+                               syntax::Error::WHILE_MISSING_CONDITION,
+                               parser.get_current_token());
     }
     parser.advance();
 
@@ -99,7 +105,9 @@ auto DoWhileLoopExpression::parse(syntax::Parser& parser)
     const auto condition = TRY(parser.parse_expression());
     TRY(parser.expect_peek(syntax::TokenType::RPAREN));
     if (parser.get_node<BlockStatement>(*block).empty()) {
-        return make_syntax_err(syntax::Error::EMPTY_LOOP, parser.get_location_of(*block));
+        return make_syntax_err("Do-while loops' bodies must contain at least one statement",
+                               syntax::Error::EMPTY_LOOP,
+                               parser.get_location_of(*block));
     }
 
     return parser.add_expr<DoWhileLoopExpression>(start_token, block, condition);
@@ -113,7 +121,10 @@ namespace {
     case NodeKind::DECL_STATEMENT:
     case NodeKind::USING_STATEMENT:
     case NodeKind::IMPORT_STATEMENT: return MemberHandle{member};
-    default:                         return make_syntax_err(syntax::Error::INVALID_MEMBER, parser.get_location_of(*member));
+    default:
+        return make_syntax_err("Members must be declarations, `using` aliases, or imports",
+                               syntax::Error::INVALID_MEMBER,
+                               parser.get_location_of(*member));
     }
 }
 
@@ -128,8 +139,9 @@ template <typename MemberValidator>
 
         // Downcast the parsed member into the specific member variant and check
         const auto member = TRY(deconstruct_member(parser, parsed_member));
-        if (!std::forward<MemberValidator>(validator)(member)) {
-            return make_syntax_err(syntax::Error::INVALID_MEMBER, parser.get_location_of(*member));
+        if (const auto msg = std::forward<MemberValidator>(validator)(member)) {
+            return make_syntax_err(
+                std::string{*msg}, syntax::Error::INVALID_MEMBER, parser.get_location_of(*member));
         }
         members.emplace_back(member);
     }
@@ -138,28 +150,33 @@ template <typename MemberValidator>
 
 // Returns an actual value only if a terminal condition was found
 [[nodiscard]] auto validate_common_member_decl(const DeclStatement& decl) noexcept
-    -> opt::Option<bool> {
+    -> opt::Option<std::string_view> {
     // Members that violate this wouldn't be usable with C
     if (decl.has_modifier(DeclModifiers::EXTERN) || decl.has_modifier(DeclModifiers::EXPORT)) {
-        return false;
+        return "Members may neither be marked extern nor export";
     }
-
-    if (decl.value && decl.value->is<FunctionExpression>()) { return true; }
     return opt::none;
 }
 
-[[nodiscard]] auto validate_struct_member_decl(const DeclStatement& decl) noexcept -> bool {
+[[nodiscard]] auto validate_struct_member_decl(const DeclStatement& decl) noexcept
+    -> opt::Option<std::string_view> {
     // A non-static member must always be a variable to simplify the mental model
-    if (const auto result = validate_common_member_decl(decl)) { return *result; }
-    if (!decl.has_modifier(DeclModifiers::STATIC)) {
-        return decl.has_modifier(DeclModifiers::VARIABLE);
+    if (const auto result = validate_common_member_decl(decl)) { return result; }
+    if (decl.value && decl.value->is<FunctionExpression>()) { return opt::none; }
+    if (!decl.has_modifier(DeclModifiers::STATIC) && !decl.has_modifier(DeclModifiers::VARIABLE)) {
+        return "Non-static non-mutable struct members are illegal";
     }
-    return true;
+    return opt::none;
 }
 
-[[nodiscard]] auto validate_non_struct_member_decl(const DeclStatement& decl) noexcept -> bool {
-    if (const auto result = validate_common_member_decl(decl)) { return *result; }
-    return decl.has_modifier(DeclModifiers::STATIC);
+[[nodiscard]] auto validate_non_struct_member_decl(const DeclStatement& decl) noexcept
+    -> opt::Option<std::string_view> {
+    if (const auto result = validate_common_member_decl(decl)) { return result; }
+    if (decl.value && decl.value->is<FunctionExpression>()) { return opt::none; }
+    if (!decl.has_modifier(DeclModifiers::STATIC)) {
+        return "All non-function members must be static in unions and enums";
+    }
+    return opt::none;
 }
 
 } // namespace
@@ -195,16 +212,20 @@ auto EnumExpression::parse(syntax::Parser& parser) -> Result<ExpressionHandle, s
     }
 
     auto members = TRY(parse_members(parser, [&](const MemberHandle& member) {
-        return std::visit(Overloaded{[](const DeclStatement& decl) {
-                                         return validate_non_struct_member_decl(decl);
-                                     },
-                                     [](const auto&) { return true; }},
-                          parser.get_ast()[*member]);
+        return std::visit(
+            Overloaded{
+                [](const DeclStatement& decl) { return validate_non_struct_member_decl(decl); },
+                [](const auto&) -> opt::Option<std::string_view> { return opt::none; }},
+            parser.get_ast()[*member]);
     }));
     TRY(parser.expect_peek(syntax::TokenType::RBRACE));
 
     // Validate here so that there aren't 3 errors spawning from an empty enum with decls
-    if (enumerations.empty()) { return make_syntax_err(syntax::Error::EMPTY_ENUM, start_token); }
+    if (enumerations.empty()) {
+        return make_syntax_err("Enums must be declared with at least one enumeration",
+                               syntax::Error::EMPTY_ENUM,
+                               start_token);
+    }
     return parser.add_expr<EnumExpression>(
         start_token, underlying, std::move(enumerations), std::move(members));
 }
@@ -216,7 +237,9 @@ auto ForLoopExpression::parse(syntax::Parser& parser)
     // Iterables have to be surrounded by parentheses
     TRY(parser.expect_peek(syntax::TokenType::LPAREN));
     if (parser.peek_token_is(syntax::TokenType::RPAREN)) {
-        return make_syntax_err(syntax::Error::FOR_MISSING_ITERABLES, start_token);
+        return make_syntax_err("For loops must contain at least one iterable",
+                               syntax::Error::FOR_MISSING_ITERABLES,
+                               start_token);
     }
 
     std::vector<ExpressionHandle> iterables;
@@ -267,11 +290,15 @@ auto ForLoopExpression::parse(syntax::Parser& parser)
 
     // The number of captures must align with the number of iterables
     if (captures.size() != iterables.size()) {
-        return make_syntax_err(syntax::Error::FOR_ITERABLE_CAPTURE_MISMATCH, start_token);
+        return make_syntax_err("The number of for loop captures must match the number of iterables",
+                               syntax::Error::FOR_ITERABLE_CAPTURE_MISMATCH,
+                               start_token);
     }
 
     if (parser.get_node<BlockStatement>(*block).empty()) {
-        return make_syntax_err(syntax::Error::EMPTY_LOOP, parser.get_location_of(*block));
+        return make_syntax_err("For loops' bodies must contain at least one statement",
+                               syntax::Error::EMPTY_LOOP,
+                               parser.get_location_of(*block));
     }
 
     return parser.add_expr<ForLoopExpression>(
@@ -344,7 +371,8 @@ auto FunctionExpression::parse(syntax::Parser& parser)
 
             // There are no default values for parameters, and they must be explicitly typed
             if (initialized || !type.explicit_type) {
-                return make_syntax_err(syntax::Error::FN_PARAMETER_HAS_DEFAULT_VALUE,
+                return make_syntax_err("Function parameters may not have default values",
+                                       syntax::Error::FN_PARAMETER_HAS_DEFAULT_VALUE,
                                        parser.get_location_of(*type_expr));
             }
 
@@ -352,7 +380,8 @@ auto FunctionExpression::parse(syntax::Parser& parser)
             if (explicit_type.is<IdentifierExpression>()) {
                 // noreturn is not allowed for parameters
                 if (explicit_type.get_token_type() == syntax::TokenType::NORETURN) {
-                    return make_syntax_err(syntax::Error::FN_PARAMETER_IS_NORETURN,
+                    return make_syntax_err("Function parameter types may not be marked `noreturn`",
+                                           syntax::Error::FN_PARAMETER_IS_NORETURN,
                                            parser.get_location_of(*type_expr));
                 }
             }
@@ -369,7 +398,9 @@ auto FunctionExpression::parse(syntax::Parser& parser)
     TRY(parser.expect_peek(syntax::TokenType::COLON));
     const auto return_type = TRY(ExplicitType::parse(parser));
     if (!parser.peek_token_is(syntax::TokenType::LBRACE)) {
-        return make_syntax_err(syntax::Error::FN_DECLARATION_WITHOUT_BODY, start_token);
+        return make_syntax_err("Function declarations must have a body",
+                               syntax::Error::FN_DECLARATION_WITHOUT_BODY,
+                               start_token);
     }
 
     // Otherwise there must be a well-formed block
@@ -410,7 +441,9 @@ auto IfExpression::parse(syntax::Parser& parser) -> Result<ExpressionHandle, syn
     TRY(parser.expect_peek(syntax::TokenType::LPAREN));
     parser.advance();
     if (parser.current_token_is(syntax::TokenType::RPAREN)) {
-        return make_syntax_err(syntax::Error::IF_MISSING_CONDITION, start_token);
+        return make_syntax_err("If expressions must have a condition",
+                               syntax::Error::IF_MISSING_CONDITION,
+                               start_token);
     }
 
     const auto condition = TRY(parser.parse_expression());
@@ -431,7 +464,9 @@ auto IndexExpression::parse(syntax::Parser& parser, ExpressionHandle array)
     -> Result<ExpressionHandle, syntax::Diagnostic> {
     const auto start_token = parser.get_current_token();
     if (parser.peek_token_is(syntax::TokenType::RBRACKET)) {
-        return make_syntax_err(syntax::Error::INDEX_MISSING_EXPRESSION, start_token);
+        return make_syntax_err("Cannot index into an array without an index expression",
+                               syntax::Error::INDEX_MISSING_EXPRESSION,
+                               start_token);
     }
     parser.advance();
 
@@ -447,7 +482,9 @@ auto InfiniteLoopExpression::parse(syntax::Parser& parser)
 
     const BlockHandle block = TRY(BlockStatement::parse(parser));
     if (parser.get_node<BlockStatement>(*block).empty()) {
-        return make_syntax_err(syntax::Error::EMPTY_LOOP, parser.get_location_of(*block));
+        return make_syntax_err("Infinite loops' bodies must contain at least one statement",
+                               syntax::Error::EMPTY_LOOP,
+                               parser.get_location_of(*block));
     }
     return parser.add_expr<InfiniteLoopExpression>(start_token, block);
 }
@@ -459,7 +496,9 @@ template <traits::ASTNode Expr>
     -> Result<ExpressionHandle, syntax::Diagnostic> {
     const auto op_token = parser.get_current_token();
     if (parser.peek_token_is(syntax::TokenType::END)) {
-        return make_syntax_err(syntax::Error::INFIX_MISSING_RHS, op_token);
+        return make_syntax_err("Infix expressions require a right-hand operand",
+                               syntax::Error::INFIX_MISSING_RHS,
+                               op_token);
     }
 
     auto [current_precedence, current_binding] = parser.get_current_precedence();
@@ -514,7 +553,8 @@ auto LabelExpression::parse(syntax::Parser& parser, ExpressionHandle name)
     -> Result<ExpressionHandle, syntax::Diagnostic> {
     const auto start_token = parser.get_current_token();
     if (!name.is<IdentifierExpression>()) {
-        return make_syntax_err(syntax::Error::ILLEGAL_LABEL, start_token);
+        return make_syntax_err(
+            "Labels may only be identifiers", syntax::Error::ILLEGAL_LABEL, start_token);
     }
     parser.advance();
 
@@ -538,13 +578,15 @@ auto LabelExpression::deconstruct_body(syntax::Parser& parser, StatementHandle r
         case NodeKind::MATCH_EXPRESSION:
         case NodeKind::WHILE_LOOP_EXPRESSION:    return expr_stmt.expression;
         default:
-            return make_syntax_err(syntax::Error::ILLEGAL_LABEL_EXPRESSION,
+            return make_syntax_err("Labeled expressions may only be conditionals or loops",
+                                   syntax::Error::ILLEGAL_LABEL_EXPRESSION,
                                    parser.get_location_of(*raw_stmt));
         }
     }
     case NodeKind::BLOCK_STATEMENT: return raw_stmt;
     default:
-        return make_syntax_err(syntax::Error::ILLEGAL_LABEL_STATEMENT,
+        return make_syntax_err("Labeled statements may only be blocks",
+                               syntax::Error::ILLEGAL_LABEL_STATEMENT,
                                parser.get_location_of(*raw_stmt));
     }
 }
@@ -557,7 +599,9 @@ auto MatchExpression::parse(syntax::Parser& parser)
     TRY(parser.expect_peek(syntax::TokenType::LPAREN));
     parser.advance();
     if (parser.current_token_is(syntax::TokenType::RPAREN)) {
-        return make_syntax_err(syntax::Error::MATCH_EXPR_MISSING_CONDITION, start_token);
+        return make_syntax_err("Match expressions must have a condition",
+                               syntax::Error::MATCH_EXPR_MISSING_CONDITION,
+                               start_token);
     }
 
     const auto matcher = TRY(parser.parse_expression());
@@ -566,7 +610,9 @@ auto MatchExpression::parse(syntax::Parser& parser)
     TRY(parser.expect_peek(syntax::TokenType::LBRACE));
     if (parser.peek_token_is(syntax::TokenType::RBRACE)) {
         parser.advance();
-        return make_syntax_err(syntax::Error::ARMLESS_MATCH_EXPR, start_token);
+        return make_syntax_err("Match expressions must have at least one arm",
+                               syntax::Error::ARMLESS_MATCH_EXPR,
+                               start_token);
     }
 
     std::vector<Arm> arms;
@@ -615,7 +661,9 @@ template <traits::ASTNode Expr>
     -> Result<ExpressionHandle, syntax::Diagnostic> {
     const auto prefix_token = parser.get_current_token();
     if (parser.peek_token_is(syntax::TokenType::END)) {
-        return make_syntax_err(syntax::Error::PREFIX_MISSING_OPERAND, prefix_token);
+        return make_syntax_err("Prefix expressions require an operand",
+                               syntax::Error::PREFIX_MISSING_OPERAND,
+                               prefix_token);
     }
     parser.advance();
 
@@ -645,13 +693,16 @@ auto ImplicitAccessExpression::parse(syntax::Parser& parser)
     // Otherwise it suffices to fall back to standard prefix parsing
     const auto prefix_token = parser.get_current_token();
     if (parser.peek_token_is(syntax::TokenType::END)) {
-        return make_syntax_err(syntax::Error::PREFIX_MISSING_OPERAND, prefix_token);
+        return make_syntax_err("Prefix expressions require an operand",
+                               syntax::Error::PREFIX_MISSING_OPERAND,
+                               prefix_token);
     }
 
     parser.advance();
     const auto operand = TRY(parser.parse_expression(syntax::Precedence::PREFIX));
     if (!operand.is<IdentifierExpression>()) {
-        return make_syntax_err(syntax::Error::ILLEGAL_IMPLICIT_ACCESS_OPERAND,
+        return make_syntax_err("Implicitly accessed names must be identifiers",
+                               syntax::Error::ILLEGAL_IMPLICIT_ACCESS_OPERAND,
                                parser.get_location_of(*operand));
     }
 
@@ -667,7 +718,8 @@ auto StringExpression::parse(syntax::Parser& parser)
 auto ScopeResolutionExpression::parse(syntax::Parser& parser, ExpressionHandle outer)
     -> Result<ExpressionHandle, syntax::Diagnostic> {
     if (!outer.any<IdentifierExpression, ScopeResolutionExpression>()) {
-        return make_syntax_err(syntax::Error::ILLEGAL_OUTER_SCOPE_TYPE,
+        return make_syntax_err("Scope resolution expressions must have outer scopes or identifiers",
+                               syntax::Error::ILLEGAL_OUTER_SCOPE_TYPE,
                                parser.get_location_of(*outer));
     }
 
@@ -684,7 +736,7 @@ auto StructExpression::parse(syntax::Parser& parser)
     auto members = TRY(parse_members(parser, [&](const MemberHandle& member) {
         return std::visit(
             Overloaded{[](const DeclStatement& decl) { return validate_struct_member_decl(decl); },
-                       [](const auto&) { return true; }},
+                       [](const auto&) -> opt::Option<std::string_view> { return opt::none; }},
             parser.get_ast()[*member]);
     }));
 
@@ -716,16 +768,20 @@ auto UnionExpression::parse(syntax::Parser& parser)
     }
 
     auto members = TRY(parse_members(parser, [&](const MemberHandle& member) {
-        return std::visit(Overloaded{[](const DeclStatement& decl) {
-                                         return validate_non_struct_member_decl(decl);
-                                     },
-                                     [](const auto&) { return true; }},
-                          parser.get_ast()[*member]);
+        return std::visit(
+            Overloaded{
+                [](const DeclStatement& decl) { return validate_non_struct_member_decl(decl); },
+                [](const auto&) -> opt::Option<std::string_view> { return opt::none; }},
+            parser.get_ast()[*member]);
     }));
     TRY(parser.expect_peek(syntax::TokenType::RBRACE));
 
     // Validate here so that there aren't 3 errors spawning from an empty union with decls
-    if (fields.empty()) { return make_syntax_err(syntax::Error::EMPTY_UNION, start_token); }
+    if (fields.empty()) {
+        return make_syntax_err("Unions must be declared with at least one field",
+                               syntax::Error::EMPTY_UNION,
+                               start_token);
+    }
     return parser.add_expr<UnionExpression>(start_token, std::move(fields), std::move(members));
 }
 
@@ -737,7 +793,9 @@ auto WhileLoopExpression::parse(syntax::Parser& parser)
     TRY(parser.expect_peek(syntax::TokenType::LPAREN));
     parser.advance();
     if (parser.current_token_is(syntax::TokenType::RPAREN)) {
-        return make_syntax_err(syntax::Error::WHILE_MISSING_CONDITION, start_token);
+        return make_syntax_err("While loops must have a corresponding condition",
+                               syntax::Error::WHILE_MISSING_CONDITION,
+                               start_token);
     }
 
     const auto condition = TRY(parser.parse_expression());
@@ -753,7 +811,9 @@ auto WhileLoopExpression::parse(syntax::Parser& parser)
         // Consume again to look at the actual expr start
         parser.advance();
         if (parser.current_token_is(syntax::TokenType::RPAREN)) {
-            return make_syntax_err(syntax::Error::EMPTY_WHILE_CONTINUATION, continuation_start);
+            return make_syntax_err("Continuation expression was expected but not found",
+                                   syntax::Error::EMPTY_WHILE_CONTINUATION,
+                                   continuation_start);
         }
 
         continuation.emplace(TRY(parser.parse_expression()));
@@ -768,7 +828,10 @@ auto WhileLoopExpression::parse(syntax::Parser& parser)
 
     // There needs to be at least a continuation or block
     if (!continuation && parser.get_node<BlockStatement>(*block).empty()) {
-        return make_syntax_err(syntax::Error::EMPTY_LOOP, parser.get_location_of(*block));
+        return make_syntax_err(
+            "While loops without continuation expressions require a statement in their body",
+            syntax::Error::EMPTY_LOOP,
+            parser.get_location_of(*block));
     }
 
     return parser.add_expr<WhileLoopExpression>(

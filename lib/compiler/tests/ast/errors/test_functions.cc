@@ -44,27 +44,39 @@ TEST_CASE("Out-of-place variadic parameter") {
 }
 
 TEST_CASE("Default function parameter") {
-    helpers::test_parser_fail(
-        "fn(a: A = 2): i32;",
-        syntax::Diagnostic{syntax::Error::FN_PARAMETER_HAS_DEFAULT_VALUE, 0, 4});
+    helpers::test_parser_fail("fn(a: A = 2): i32;",
+                              syntax::Diagnostic{"Function parameters may not have default values",
+                                                 syntax::Error::FN_PARAMETER_HAS_DEFAULT_VALUE,
+                                                 std::pair{0uz, 4uz}});
 }
 
 TEST_CASE("Noreturn function types") {
+    helpers::test_parser_fail("fn(a: &noreturn): i32;",
+                              syntax::Diagnostic{"Explicit `noreturn` type cannot have a modifier",
+                                                 syntax::Error::ILLEGAL_NORETURN_TYPE_MODIFIER,
+                                                 std::pair{0uz, 6uz}});
+
     helpers::test_parser_fail(
-        "fn(a: &noreturn): i32;",
-        syntax::Diagnostic{syntax::Error::ILLEGAL_NORETURN_TYPE_MODIFIER, 0, 6});
-    helpers::test_parser_fail("fn(a: noreturn): i32;",
-                              syntax::Diagnostic{syntax::Error::FN_PARAMETER_IS_NORETURN, 0, 4});
-    helpers::test_parser_fail(
-        "fn(a: A): &noreturn;",
-        syntax::Diagnostic{syntax::Error::ILLEGAL_NORETURN_TYPE_MODIFIER, 0, 10});
+        "fn(a: noreturn): i32;",
+        syntax::Diagnostic{"Function parameter types may not be marked `noreturn`",
+                           syntax::Error::FN_PARAMETER_IS_NORETURN,
+                           std::pair{0uz, 4uz}});
+
+    helpers::test_parser_fail("fn(a: A): &noreturn;",
+                              syntax::Diagnostic{"Explicit `noreturn` type cannot have a modifier",
+                                                 syntax::Error::ILLEGAL_NORETURN_TYPE_MODIFIER,
+                                                 std::pair{0uz, 10uz}});
 }
 
 TEST_CASE("Illegal type function types") {
-    helpers::test_parser_fail("fn(A: &type): i32;",
-                              syntax::Diagnostic{syntax::Error::ILLEGAL_TYPE_TYPE_MODIFIER, 0, 6});
-    helpers::test_parser_fail("fn(A: type): &type;",
-                              syntax::Diagnostic{syntax::Error::ILLEGAL_TYPE_TYPE_MODIFIER, 0, 13});
+    const auto expected_diag = [](usize col) {
+        return syntax::Diagnostic{"Explicit `type` type cannot have a modifier",
+                                  syntax::Error::ILLEGAL_TYPE_TYPE_MODIFIER,
+                                  std::pair{0uz, col}};
+    };
+
+    helpers::test_parser_fail("fn(A: &type): i32;", expected_diag(6));
+    helpers::test_parser_fail("fn(A: type): &type;", expected_diag(13));
 }
 
 TEST_CASE("Non-terminated parameter list") {

@@ -5,8 +5,14 @@
 namespace porpoise::tests {
 
 TEST_CASE("Empty enum") {
-    helpers::test_parser_fail("enum {};", syntax::Diagnostic{syntax::Error::EMPTY_ENUM, 0, 0});
-    helpers::test_parser_fail("enum : T {};", syntax::Diagnostic{syntax::Error::EMPTY_ENUM, 0, 0});
+    const auto expected_diag = [] {
+        return syntax::Diagnostic{"Enums must be declared with at least one enumeration",
+                                  syntax::Error::EMPTY_ENUM,
+                                  std::pair{0uz, 0uz}};
+    };
+
+    helpers::test_parser_fail("enum {};", expected_diag());
+    helpers::test_parser_fail("enum : T {};", expected_diag());
 }
 
 TEST_CASE("Illegal underlying type") {
@@ -17,8 +23,11 @@ TEST_CASE("Illegal underlying type") {
 }
 
 TEST_CASE("Empty enum with decl") {
-    helpers::test_parser_fail("enum : i64 { const b := fn(&self, a: A): C { c; }; };",
-                              syntax::Diagnostic{syntax::Error::EMPTY_ENUM, 0, 0});
+    helpers::test_parser_fail(
+        "enum : i64 { const b := fn(&self, a: A): C { c; }; };",
+        syntax::Diagnostic{"Enums must be declared with at least one enumeration",
+                           syntax::Error::EMPTY_ENUM,
+                           std::pair{0uz, 0uz}});
 }
 
 TEST_CASE("Out of order enum") {
@@ -29,22 +38,33 @@ TEST_CASE("Out of order enum") {
 }
 
 TEST_CASE("Non-static non-function enum decl") {
-    helpers::test_parser_fail("enum { A = i32{} const b := 2; };",
-                              syntax::Diagnostic{syntax::Error::INVALID_MEMBER, 0, 17});
+    helpers::test_parser_fail(
+        "enum { A = i32{} const b := 2; };",
+        syntax::Diagnostic{"All non-function members must be static in unions and enums",
+                           syntax::Error::INVALID_MEMBER,
+                           std::pair{0uz, 17uz}});
 }
 
 TEST_CASE("Illegal struct members") {
-    helpers::test_parser_fail("struct { const foo := bar; };",
-                              syntax::Diagnostic{syntax::Error::INVALID_MEMBER, 0, 9});
+    helpers::test_parser_fail(
+        "struct { const foo := bar; };",
+        syntax::Diagnostic{"Non-static non-mutable struct members are illegal",
+                           syntax::Error::INVALID_MEMBER,
+                           std::pair{0uz, 9uz}});
 
     helpers::test_parser_fail("struct { extern var foo: bar; };",
-                              syntax::Diagnostic{syntax::Error::INVALID_MEMBER, 0, 9});
+                              syntax::Diagnostic{"Members may neither be marked extern nor export",
+                                                 syntax::Error::INVALID_MEMBER,
+                                                 std::pair{0uz, 9uz}});
 
-    helpers::test_parser_fail("struct { defer {}; };",
-                              syntax::Diagnostic{syntax::Error::INVALID_MEMBER, 0, 9},
-                              syntax::Diagnostic{"No prefix parse function for RBRACE(}) found",
-                                                 syntax::Error::MISSING_PREFIX_PARSER,
-                                                 std::pair{0uz, 19uz}});
+    helpers::test_parser_fail(
+        "struct { defer {}; };",
+        syntax::Diagnostic{"Members must be declarations, `using` aliases, or imports",
+                           syntax::Error::INVALID_MEMBER,
+                           std::pair{0uz, 9uz}},
+        syntax::Diagnostic{"No prefix parse function for RBRACE(}) found",
+                           syntax::Error::MISSING_PREFIX_PARSER,
+                           std::pair{0uz, 19uz}});
 }
 
 TEST_CASE("Illegal union field name") {
@@ -60,12 +80,17 @@ TEST_CASE("Illegal union field type") {
 }
 
 TEST_CASE("Empty union") {
-    helpers::test_parser_fail("union { };", syntax::Diagnostic{syntax::Error::EMPTY_UNION, 0, 0});
+    helpers::test_parser_fail("union { };",
+                              syntax::Diagnostic{"Unions must be declared with at least one field",
+                                                 syntax::Error::EMPTY_UNION,
+                                                 std::pair{0uz, 0uz}});
 }
 
 TEST_CASE("Empty union with decl") {
     helpers::test_parser_fail("union { const b := fn(&self, a: A): C { c; }; };",
-                              syntax::Diagnostic{syntax::Error::EMPTY_UNION, 0, 0});
+                              syntax::Diagnostic{"Unions must be declared with at least one field",
+                                                 syntax::Error::EMPTY_UNION,
+                                                 std::pair{0uz, 0uz}});
 }
 
 TEST_CASE("Out of order union") {
@@ -76,8 +101,11 @@ TEST_CASE("Out of order union") {
 }
 
 TEST_CASE("Non-static non-function union decl") {
-    helpers::test_parser_fail("union { a: i32, const b := 2; };",
-                              syntax::Diagnostic{syntax::Error::INVALID_MEMBER, 0, 16});
+    helpers::test_parser_fail(
+        "union { a: i32, const b := 2; };",
+        syntax::Diagnostic{"All non-function members must be static in unions and enums",
+                           syntax::Error::INVALID_MEMBER,
+                           std::pair{0uz, 16uz}});
 }
 
 } // namespace porpoise::tests
