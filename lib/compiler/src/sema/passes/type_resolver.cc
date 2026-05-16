@@ -62,15 +62,19 @@ auto TypeResolver::visit(ast::NodeID id, const ast::ArrayExpression& array) -> v
     collecting_.set_sema_type(id, *last_type_);
 }
 
-auto TypeResolver::resolve_call_args(std::span<const ast::CallExpression::Argument> args) -> void {
+auto TypeResolver::resolve_call_args(std::span<const ast::CallExpression::Argument> args) -> bool {
+    bool any_poison = false;
     for (const auto& arg : args) {
-        std::visit(
+        any_poison |= std::visit(
             [this](const auto& handle) {
                 resolve(handle);
+                const auto is_poison = last_type_->is_poison();
                 collecting_.set_sema_type(handle, *last_type_.take());
+                return is_poison;
             },
             arg);
     }
+    return !any_poison;
 }
 
 auto TypeResolver::get_resolved_arg_type(const ast::CallExpression::Argument& arg)
@@ -119,14 +123,21 @@ auto TypeResolver::resolve_builtin_call(ast::NodeID                   id,
         result_type = get_resolved_arg_type(call.arguments[0]);
         break;
     }
-    case TokenType::BUILTIN_CONST_CAST: {
-        auto& expr_type = *get_resolved_arg_type(call.arguments[0]);
-        result_type     = ctx_.pool.strip_const(expr_type);
-        break;
-    }
+    case TokenType::BUILTIN_CONST_CAST:
     case TokenType::BUILTIN_VOLATILE_CAST: {
         auto& expr_type = *get_resolved_arg_type(call.arguments[0]);
-        result_type     = ctx_.pool.strip_volatile(expr_type);
+        if (expr_type.get_kind() != TypeKind::POINTER &&
+            expr_type.get_kind() != TypeKind::REFERENCE) {
+            return make_sema_err(fmt::format("Expected pointer or reference type, found {}",
+                                             display_name(expr_type.get_kind())),
+                                 Error::TYPE_MISMATCH,
+                                 collecting_.ast.location_of(id));
+        }
+
+        // Pointer/reference is checked since it is an invariant of the cast
+        result_type = builtin_id == TokenType::BUILTIN_CONST_CAST
+                          ? ctx_.pool.strip_const(expr_type)
+                          : ctx_.pool.strip_volatile(expr_type);
         break;
     }
     case TokenType::BUILTIN_INT_FROM_PTR:
@@ -164,9 +175,38 @@ auto TypeResolver::resolve_builtin_call(ast::NodeID                   id,
         }
         break;
     }
-    case TokenType::BUILTIN_SLICE_FROM_PTR: break;
-    case TokenType::BUILTIN_PTR_FROM_INT:   break;
-    case TokenType::BUILTIN_TAG_NAME:       {
+    case TokenType::BUILTIN_PTR_FROM_INT: {
+        auto& requested_output = *get_resolved_arg_type(call.arguments[0]);
+        if (requested_output.get_kind() != TypeKind::POINTER) {
+            return make_sema_err(fmt::format("Expected a pointer type, found {}",
+                                             display_name(requested_output.get_kind())),
+                                 Error::TYPE_MISMATCH,
+                                 collecting_.ast.location_of(id));
+        }
+        result_type = requested_output;
+        break;
+    }
+    case TokenType::BUILTIN_SLICE_FROM_PTR: {
+        auto& ptr_type = *get_resolved_arg_type(call.arguments[0]);
+        if (const auto& ptr_data = ptr_type.as_opt<types::Pointer>()) {
+            auto slice_key = ptr_type.get_key();
+            slice_key.set_kind(TypeKind::SLICE);
+
+            // The resulting slice isn't null terminated since the pointer gives no guarantee
+            auto& new_type = ctx_.pool[slice_key];
+            if (!new_type.has_resolved()) {
+                new_type.resolve<types::Slice>(ptr_data->underlying, false);
+            }
+            result_type = new_type;
+        } else {
+            return make_sema_err(
+                fmt::format("Expected a pointer type, found {}", display_name(ptr_type.get_kind())),
+                Error::TYPE_MISMATCH,
+                collecting_.ast.location_of(id));
+        }
+        break;
+    }
+    case TokenType::BUILTIN_TAG_NAME: {
         ASSERT(builtin.return_type.get_kind() == TypeKind::SLICE);
         result_type = builtin.return_type;
         break;
@@ -178,21 +218,35 @@ auto TypeResolver::resolve_builtin_call(ast::NodeID                   id,
         result_type = builtin.return_type;
         break;
     }
-    case TokenType::BUILTIN_MUL_ADD: break;
-    case TokenType::BUILTIN_DIV_MOD: break;
-    case TokenType::BUILTIN_SQRT:    break;
-    case TokenType::BUILTIN_SIN:     break;
-    case TokenType::BUILTIN_COS:     break;
-    case TokenType::BUILTIN_TAN:     break;
-    case TokenType::BUILTIN_EXP:     break;
-    case TokenType::BUILTIN_EXP2:    break;
-    case TokenType::BUILTIN_LOG:     break;
-    case TokenType::BUILTIN_LOG2:    break;
-    case TokenType::BUILTIN_LOG10:   break;
-    case TokenType::BUILTIN_ABS:     break;
-    case TokenType::BUILTIN_FLOOR:   break;
-    case TokenType::BUILTIN_CEIL:    break;
-    case TokenType::BUILTIN_PANIC:   {
+    // Many of these return @typeOf(expression) which is trivial
+    case TokenType::BUILTIN_MUL_ADD:
+    case TokenType::BUILTIN_SQRT:
+    case TokenType::BUILTIN_SIN:
+    case TokenType::BUILTIN_COS:
+    case TokenType::BUILTIN_TAN:
+    case TokenType::BUILTIN_EXP:
+    case TokenType::BUILTIN_EXP2:
+    case TokenType::BUILTIN_LOG:
+    case TokenType::BUILTIN_LOG2:
+    case TokenType::BUILTIN_LOG10:
+    case TokenType::BUILTIN_ABS:
+    case TokenType::BUILTIN_FLOOR:
+    case TokenType::BUILTIN_CEIL:    {
+        result_type = get_resolved_arg_type(call.arguments[0]);
+        break;
+    }
+    // @divMod(T: type, lhs: T, rhs: T): struct { var quotient: T; var modulo: T; }
+    case TokenType::BUILTIN_DIV_MOD: {
+        auto& member_type = *get_resolved_arg_type(call.arguments[0]);
+        auto  members     = ctx_.pool.get_many<2>(member_type.get_key());
+
+        // Structs might not be unique with the exact same calls
+        result_type =
+            ctx_.pool[{TypeKind::STRUCT, types::mut::CONSTANT, members.data(), members.size()}];
+        if (!result_type->has_resolved()) { result_type->resolve<types::Struct>(members); }
+        break;
+    }
+    case TokenType::BUILTIN_PANIC: {
         ASSERT(builtin.return_type.get_kind() == TypeKind::NORETURN);
         result_type = builtin.return_type;
         break;
@@ -216,10 +270,15 @@ auto TypeResolver::visit(ast::NodeID id, const ast::CallExpression& call) -> voi
     }
     collecting_.set_sema_type(call.function, *callee_type);
 
+    // There's no need to check any further if the arguments are poisoned
+    if (!resolve_call_args(call.arguments)) {
+        collecting_.set_sema_type(id, ctx_.get_poison());
+        return last_type_.emplace(ctx_.get_poison());
+    }
+
     // Verify that the type in the function is callable and store the return type
     if (auto function_type = callee_type->as_opt<types::Function>()) {
         // Check the arity of the function against params before resetting last type
-        resolve_call_args(call.arguments);
         const auto& params = function_type->params;
         if (call.arguments.size() != params.size()) {
             ctx_.diagnostics.emplace_back(fmt::format("Expected {} arguments but found {}",
@@ -229,27 +288,22 @@ auto TypeResolver::visit(ast::NodeID id, const ast::CallExpression& call) -> voi
                                           collecting_.ast.location_of(id));
         }
 
-        // TODO: Check argument-parameter type compat
-
+        // Only arity is checked since the type checker will handle the rest
         collecting_.set_sema_type(id, function_type->return_type);
         last_type_.emplace(function_type->return_type);
     } else if (auto builtin_type = callee_type->as_opt<types::BuiltinFunction>()) {
-        resolve_call_args(call.arguments);
-
-        // Poison the call if there's an error this early in sema
+        // Poison the call if there's an error early
         auto result = resolve_builtin_call(id, call, *builtin_type);
         if (!result) {
             ctx_.diagnostics.emplace_back(std::move(result.error()));
             collecting_.set_sema_type(id, ctx_.get_poison());
-            resolve_call_args(call.arguments);
-            return last_type_.emplace(ctx_.get_poison());
+            last_type_.emplace(ctx_.get_poison());
         }
     } else {
         ctx_.diagnostics.emplace_back("Expression is not callable",
                                       Error::NON_CALLABLE_EXPRESSION,
                                       collecting_.ast.location_of(id));
         collecting_.set_sema_type(id, ctx_.get_poison());
-        resolve_call_args(call.arguments);
         return last_type_.emplace(ctx_.get_poison());
     }
 }

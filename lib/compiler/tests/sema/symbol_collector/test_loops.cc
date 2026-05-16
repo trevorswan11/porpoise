@@ -16,7 +16,7 @@ namespace mut = sema::types::mut;
 
 namespace {
 
-[[nodiscard]] auto test_loop(std::string_view input, usize expected_reg_count)
+[[nodiscard]] auto test_loop(std::string_view input, usize expected_reg_count, usize loop_block_idx)
     -> helpers::SemaTestContext {
     auto [ctx, idx] = helpers::collect_and_check(input);
 
@@ -31,8 +31,9 @@ namespace {
 
     auto& pool = ctx.analyzer.get_pool();
     REQUIRE(ctx.root_mod->has_sema_type(**decl.value));
-    auto& expected_type = pool[{sema::TypeKind::BLOCK, mut::CONSTANT, 1}];
-    CHECK(&expected_type == &ctx.root_mod->get_sema_type(**decl.value));
+    auto&       expected_type = pool[{sema::TypeKind::BLOCK, mut::CONSTANT, loop_block_idx}];
+    const auto& actual_type   = ctx.root_mod->get_sema_type(**decl.value);
+    CHECK(&expected_type == &actual_type);
     return std::move(ctx);
 }
 
@@ -40,7 +41,7 @@ namespace {
 
 TEST_CASE("Do-while loop collection") {
     auto ctx =
-        test_loop("const a := do { const foo := bar; } while (blk: { const foo := bar; });", 4);
+        test_loop("const a := do { const foo := bar; } while (blk: { const foo := bar; });", 4, 1);
     ctx.test_common_decl_collection(1);
     ctx.test_common_decl_collection(3);
 }
@@ -48,7 +49,8 @@ TEST_CASE("Do-while loop collection") {
 TEST_CASE("For loop collection") {
     auto ctx = test_loop("const a := for (0..5, blk: { const foo := bar; }) |i, j| { const foo := "
                          "bar; } else { const foo := bar; };",
-                         5);
+                         5,
+                         3);
 
     const auto& loop_table = ctx.analyzer.get_table(3);
     REQUIRE(loop_table.has("i"));
@@ -62,17 +64,19 @@ TEST_CASE("For loop collection") {
 }
 
 TEST_CASE("Infinite loop collection") {
-    auto ctx = test_loop("const a := loop { const foo := bar; };", 2);
+    auto ctx = test_loop("const a := loop { const foo := bar; };", 2, 1);
     ctx.test_common_decl_collection(1);
 }
 
 TEST_CASE("While loop collection") {
-    auto ctx = test_loop("const a := while (blk: { const foo := bar; }) : (i += 1) { const foo := "
-                         "bar; } else { const foo := bar; };",
+    auto ctx = test_loop("const a := while (blk: { const foo := bar; }) : (i += blk: { const foo "
+                         ":= bar; }) { const foo := bar; } else { const foo := bar; };",
+                         7,
                          5);
     ctx.test_common_decl_collection(2);
-    ctx.test_common_decl_collection(3);
     ctx.test_common_decl_collection(4);
+    ctx.test_common_decl_collection(5);
+    ctx.test_common_decl_collection(6);
 }
 
 TEST_CASE("Well-placed loop control flow") {

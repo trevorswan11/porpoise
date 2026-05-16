@@ -145,11 +145,14 @@ class Key {
     [[nodiscard]] constexpr auto operator==(const Key&) const noexcept -> bool = default;
 
   private:
+    Key() noexcept = default;
+
+  private:
     TypeKind            kind_;
     MutabilityModifiers mut_;
     hash::Hasher        markers_;
 
-    friend class Type;
+    friend class sema::Type;
 };
 
 namespace mut {
@@ -247,6 +250,8 @@ class Type {
     }
 
   private:
+    // This should only be used when allocating an immediately-to-be-filled span
+    Type() noexcept = default;
     explicit Type(types::Key key) noexcept : key_{std::move(key)} {}
 
   private:
@@ -276,9 +281,19 @@ class TypePool {
     template <typename... Keys>
         requires(std::same_as<types::Key, std::remove_cvref_t<Keys>> && ...)
     [[nodiscard]] auto get_many(Keys&&... keys) noexcept -> std::span<mem::NonNull<Type>> {
-        auto  types = arena_.make_span<Type>(sizeof...(Keys));
+        auto  types = arena_.make_span<mem::NonNull<Type>>(sizeof...(Keys));
         usize i     = 0;
         (..., [&] { types[i++] = get_or_emplace(keys); }());
+        return types;
+    }
+
+    // Allocate a quasi-contiguous span of types with the same key types
+    template <usize Count>
+    [[nodiscard]] auto get_many(types::Key common_key) noexcept -> std::span<mem::NonNull<Type>> {
+        auto  types       = arena_.make_span<mem::NonNull<Type>>(Count);
+        auto& common_type = get_or_emplace(common_key);
+        for (usize i = 0; i < Count; ++i) { types[i] = common_type; }
+        return types;
     }
 
     [[nodiscard]] auto strip_const(const Type& type) -> Type&;

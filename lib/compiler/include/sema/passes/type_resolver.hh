@@ -41,7 +41,8 @@ class TypeResolver {
                                             const types::BuiltinFunction& builtin)
         -> Result<Unit, Diagnostic>;
 
-    auto resolve_call_args(std::span<const ast::CallExpression::Argument> args) -> void;
+    // Returns true if none of the arguments were poisoned
+    auto resolve_call_args(std::span<const ast::CallExpression::Argument> args) -> bool;
     [[nodiscard]] auto get_resolved_arg_type(const ast::CallExpression::Argument& arg)
         -> mem::NonNull<Type>;
 

@@ -182,7 +182,13 @@ class NonNull {
     constexpr bool operator==(const NonNull<T>&) const noexcept = default;
 
   private:
+    // This should seldom be called as it violates an invariant
+    NonNull() noexcept = default;
+
+  private:
     T* ptr_;
+
+    friend class Arena;
 };
 
 } // namespace mem

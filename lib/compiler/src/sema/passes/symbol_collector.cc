@@ -285,6 +285,7 @@ auto SymbolCollector::visit(ast::NodeID id, const ast::WhileLoopExpression& whil
     // The guard shouldn't enclose the else clause or condition
     const auto g_expr = in_expr_scope_.guard();
     collect(while_expr.condition);
+    if (while_expr.continuation) { collect(*while_expr.continuation); }
 
     usize new_idx;
     {
