@@ -146,7 +146,7 @@ class Hasher {
   public:
     // Hashes the provided value to use as the initial hashed value
     template <typename T> constexpr explicit Hasher(const T& initial) : hash_{hash(initial)} {}
-    constexpr Hasher() noexcept : hash_{0} {}
+    constexpr Hasher() noexcept : hash_{0x3722B877F74A5112ULL} {}
 
     // Hashes the provided value and mixes the result with the current hash
     template <typename T> constexpr auto combine(const T& value) noexcept -> void {

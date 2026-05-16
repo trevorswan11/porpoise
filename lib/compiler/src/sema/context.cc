@@ -22,7 +22,8 @@ namespace {
 auto inject_types(SymbolTable& prelude, TypePool& pool) -> void {
     const auto inject_type = [&](const syntax::Keyword& keyword, TypeKind kind) {
         auto& type = pool[{kind, types::mut::CONSTANT}];
-        if (!type.has_resolved()) { type.resolve<types::BuiltinType>(); }
+        ASSERT(!type.has_resolved(), "Builtin types should only be resolved once");
+        type.resolve<types::BuiltinType>();
 
         prelude.insert_unchecked(keyword.name, VirtualSymbol{keyword});
         auto& symbol = prelude.get(keyword.name);
@@ -64,9 +65,8 @@ auto inject_functions(SymbolTable& prelude, TypePool& pool) -> void {
             types::Key key{TypeKind::FUNCTION, types::mut::CONSTANT};
             key.imprint(builtin);
             auto& type = pool[key];
-            if (!type.has_resolved()) {
-                type.resolve<types::BuiltinFunction>(std::move(param_types), return_type);
-            }
+            ASSERT(!type.has_resolved(), "Builtin functions should only be resolved once");
+            type.resolve<types::BuiltinFunction>(std::move(param_types), return_type);
 
             prelude.insert_unchecked(builtin.name, VirtualSymbol{builtin});
             auto& symbol = prelude.get(builtin.name);

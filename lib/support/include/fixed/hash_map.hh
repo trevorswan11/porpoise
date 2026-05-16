@@ -428,10 +428,10 @@ template <traits::InsertablePair... Pairs>
 
     using std::get;
     HashMap<Key, Value, N> map;
-    (..., [&map](auto&& pair) {
-        map.emplace(get<0>(std::forward<decltype(pair)>(pair)),
-                    get<1>(std::forward<decltype(pair)>(pair)));
-    }(kv_pairs));
+    (..., [&] {
+        map.emplace(get<0>(std::forward<decltype(kv_pairs)>(kv_pairs)),
+                    get<1>(std::forward<decltype(kv_pairs)>(kv_pairs)));
+    }());
     return map;
 }
 

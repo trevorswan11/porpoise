@@ -21,6 +21,7 @@ enum class Error : u8 {
     NON_CALLABLE_EXPRESSION,
     ARITY_MISMATCH,
     UNDECLARED_IDENTIFIER,
+    TYPE_MISMATCH,
 };
 
 using Diagnostic  = Diagnostic<Error>;

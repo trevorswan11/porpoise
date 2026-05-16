@@ -85,8 +85,8 @@ template <BoundedEnum E> consteval auto enum_range() noexcept {
         return lhs;                                                                      \
     }                                                                                    \
                                                                                          \
-    constexpr auto operator~(EnumType op)->EnumType {                     \
-        return static_cast<EnumType>(~std::to_underlying(op)); \
+    constexpr auto operator~(EnumType op)->EnumType {                                    \
+        return static_cast<EnumType>(~std::to_underlying(op));                           \
     }
 
 } // namespace porpoise

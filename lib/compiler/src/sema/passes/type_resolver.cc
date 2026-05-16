@@ -20,6 +20,7 @@
 
 #include "assert.hh"
 #include "memory.hh"
+#include "result.hh"
 #include "variant.hh"
 
 namespace porpoise::sema {
@@ -86,7 +87,8 @@ auto TypeResolver::get_resolved_arg_type(const ast::CallExpression::Argument& ar
 // This is called after the call expression's arguments have all been resolved
 auto TypeResolver::resolve_builtin_call(ast::NodeID                   id,
                                         const ast::CallExpression&    call,
-                                        const types::BuiltinFunction& builtin) -> void {
+                                        const types::BuiltinFunction& builtin)
+    -> Result<Unit, Diagnostic> {
     ASSERT(call.function.is<ast::IdentifierExpression>(), "Builtin function must be a raw ident");
     const auto& params = builtin.params;
     if (call.arguments.size() != params.size()) {
@@ -96,7 +98,8 @@ auto TypeResolver::resolve_builtin_call(ast::NodeID                   id,
                                       Error::ARITY_MISMATCH,
                                       collecting_.ast.location_of(id));
         collecting_.set_sema_type(id, ctx_.get_poison());
-        return last_type_.emplace(ctx_.get_poison());
+        last_type_.emplace(ctx_.get_poison());
+        return Unit{};
     }
 
     // There must be an actual builtin present with a token id
@@ -118,52 +121,88 @@ auto TypeResolver::resolve_builtin_call(ast::NodeID                   id,
     }
     case TokenType::BUILTIN_CONST_CAST: {
         auto& expr_type = *get_resolved_arg_type(call.arguments[0]);
-        result_type = ctx_.pool.strip_const(expr_type);
+        result_type     = ctx_.pool.strip_const(expr_type);
         break;
     }
     case TokenType::BUILTIN_VOLATILE_CAST: {
         auto& expr_type = *get_resolved_arg_type(call.arguments[0]);
-        result_type = ctx_.pool.strip_volatile(expr_type);
+        result_type     = ctx_.pool.strip_volatile(expr_type);
         break;
     }
-    case TokenType::BUILTIN_INT_FROM_PTR:   break;
-    case TokenType::BUILTIN_PTR_FROM_INT:   break;
-    case TokenType::BUILTIN_PTR_FROM_ARRAY: break;
+    case TokenType::BUILTIN_INT_FROM_PTR:
+    case TokenType::BUILTIN_ALIGN_OF:
+    case TokenType::BUILTIN_SIZE_OF:
+    case TokenType::BUILTIN_CLZ:
+    case TokenType::BUILTIN_CTZ:
+    case TokenType::BUILTIN_POP_COUNT:    {
+        ASSERT(builtin.return_type.get_kind() == TypeKind::USIZE);
+        result_type = builtin.return_type;
+        break;
+    }
+    case TokenType::BUILTIN_TYPE_OF: {
+        ASSERT(builtin.return_type.get_kind() == TypeKind::TYPE);
+        result_type = builtin.return_type;
+        break;
+    }
+    case TokenType::BUILTIN_PTR_FROM_ARRAY: {
+        auto& array_type = *get_resolved_arg_type(call.arguments[0]);
+        if (const auto& array_data = array_type.as_opt<types::Array>()) {
+            auto array_key = array_type.get_key();
+            array_key.set_kind(TypeKind::POINTER);
+
+            // The new type uses the slightly modified key with the same underlying type
+            auto& new_type = ctx_.pool[array_key];
+            if (!new_type.has_resolved()) {
+                new_type.resolve<types::Pointer>(array_data->underlying);
+            }
+            result_type = new_type;
+        } else {
+            return make_sema_err(fmt::format("Expected an array type, found {}",
+                                             display_name(array_type.get_kind())),
+                                 Error::TYPE_MISMATCH,
+                                 collecting_.ast.location_of(id));
+        }
+        break;
+    }
     case TokenType::BUILTIN_SLICE_FROM_PTR: break;
-    case TokenType::BUILTIN_ALIGN_OF:       break;
-    case TokenType::BUILTIN_SIZE_OF:        break;
-    case TokenType::BUILTIN_TYPE_OF:        break;
-    case TokenType::BUILTIN_TAG_NAME:       break;
+    case TokenType::BUILTIN_PTR_FROM_INT:   break;
+    case TokenType::BUILTIN_TAG_NAME:       {
+        ASSERT(builtin.return_type.get_kind() == TypeKind::SLICE);
+        result_type = builtin.return_type;
+        break;
+    }
     case TokenType::BUILTIN_MEMCPY:
     case TokenType::BUILTIN_MEMSET:
-    case TokenType::BUILTIN_MEMMOVE:        {
+    case TokenType::BUILTIN_MEMMOVE: {
         ASSERT(builtin.return_type.get_kind() == TypeKind::VOID);
         result_type = builtin.return_type;
         break;
     }
-    case TokenType::BUILTIN_MUL_ADD:   break;
-    case TokenType::BUILTIN_CLZ:       break;
-    case TokenType::BUILTIN_CTZ:       break;
-    case TokenType::BUILTIN_DIV_MOD:   break;
-    case TokenType::BUILTIN_POP_COUNT: break;
-    case TokenType::BUILTIN_SQRT:      break;
-    case TokenType::BUILTIN_SIN:       break;
-    case TokenType::BUILTIN_COS:       break;
-    case TokenType::BUILTIN_TAN:       break;
-    case TokenType::BUILTIN_EXP:       break;
-    case TokenType::BUILTIN_EXP2:      break;
-    case TokenType::BUILTIN_LOG:       break;
-    case TokenType::BUILTIN_LOG2:      break;
-    case TokenType::BUILTIN_LOG10:     break;
-    case TokenType::BUILTIN_ABS:       break;
-    case TokenType::BUILTIN_FLOOR:     break;
-    case TokenType::BUILTIN_CEIL:      break;
-    case TokenType::BUILTIN_PANIC:     break;
-    default:                           ASSERT(false, "Unimplemented builtin type resolution"); break;
+    case TokenType::BUILTIN_MUL_ADD: break;
+    case TokenType::BUILTIN_DIV_MOD: break;
+    case TokenType::BUILTIN_SQRT:    break;
+    case TokenType::BUILTIN_SIN:     break;
+    case TokenType::BUILTIN_COS:     break;
+    case TokenType::BUILTIN_TAN:     break;
+    case TokenType::BUILTIN_EXP:     break;
+    case TokenType::BUILTIN_EXP2:    break;
+    case TokenType::BUILTIN_LOG:     break;
+    case TokenType::BUILTIN_LOG2:    break;
+    case TokenType::BUILTIN_LOG10:   break;
+    case TokenType::BUILTIN_ABS:     break;
+    case TokenType::BUILTIN_FLOOR:   break;
+    case TokenType::BUILTIN_CEIL:    break;
+    case TokenType::BUILTIN_PANIC:   {
+        ASSERT(builtin.return_type.get_kind() == TypeKind::NORETURN);
+        result_type = builtin.return_type;
+        break;
+    }
+    default: ASSERT(false, "Unimplemented builtin type resolution"); break;
     }
 
     collecting_.set_sema_type(id, *result_type);
     last_type_.emplace(*result_type);
+    return Unit{};
 }
 
 auto TypeResolver::visit(ast::NodeID id, const ast::CallExpression& call) -> void {
@@ -196,7 +235,15 @@ auto TypeResolver::visit(ast::NodeID id, const ast::CallExpression& call) -> voi
         last_type_.emplace(function_type->return_type);
     } else if (auto builtin_type = callee_type->as_opt<types::BuiltinFunction>()) {
         resolve_call_args(call.arguments);
-        resolve_builtin_call(id, call, *builtin_type);
+
+        // Poison the call if there's an error this early in sema
+        auto result = resolve_builtin_call(id, call, *builtin_type);
+        if (!result) {
+            ctx_.diagnostics.emplace_back(std::move(result.error()));
+            collecting_.set_sema_type(id, ctx_.get_poison());
+            resolve_call_args(call.arguments);
+            return last_type_.emplace(ctx_.get_poison());
+        }
     } else {
         ctx_.diagnostics.emplace_back("Expression is not callable",
                                       Error::NON_CALLABLE_EXPRESSION,

@@ -8,13 +8,16 @@
 #include "ast/visitor.hh"
 #include "module/module.hh"
 #include "sema/context.hh"
+#include "sema/error.hh"
 #include "sema/symbol.hh"
 #include "sema/type.hh"
 
 #include "assert.hh"
 #include "memory.hh"
 #include "option.hh"
+#include "result.hh"
 #include "types.hh"
+#include "variant.hh"
 
 namespace porpoise::sema {
 
@@ -33,9 +36,10 @@ class TypeResolver {
   private:
     AST_VISITOR_DEF_GEN()
 
-    auto resolve_builtin_call(ast::NodeID                   id,
-                              const ast::CallExpression&    call,
-                              const types::BuiltinFunction& builtin) -> void;
+    [[nodiscard]] auto resolve_builtin_call(ast::NodeID                   id,
+                                            const ast::CallExpression&    call,
+                                            const types::BuiltinFunction& builtin)
+        -> Result<Unit, Diagnostic>;
 
     auto resolve_call_args(std::span<const ast::CallExpression::Argument> args) -> void;
     [[nodiscard]] auto get_resolved_arg_type(const ast::CallExpression::Argument& arg)

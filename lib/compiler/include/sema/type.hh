@@ -1,6 +1,8 @@
 #pragma once
 
+#include <concepts>
 #include <span>
+#include <string_view>
 #include <type_traits>
 
 #include <ankerl/unordered_dense.h>
@@ -49,6 +51,8 @@ enum class TypeKind : u8 {
     OPAQUE,
     NORETURN,
 };
+
+[[nodiscard]] auto display_name(TypeKind kind) noexcept -> std::string_view;
 
 class Type;
 
@@ -122,6 +126,7 @@ class Key {
     MAKE_GETTER(kind, TypeKind)
     MAKE_GETTER(mut, MutabilityModifiers)
 
+    auto set_kind(TypeKind kind) noexcept -> void { kind_ = kind; }
     auto set_mut(MutabilityModifiers mut) noexcept -> void { mut_ = mut; }
 
     // This is a high quality hash for the purposes of `unordered_dense`
@@ -266,6 +271,15 @@ class TypePool {
     // Gets a type by its key or emplace's it into the internal cache
     [[nodiscard]] auto operator[](const types::Key& key) -> Type& { return get_or_emplace(key); }
     [[nodiscard]] auto get_opt(const types::Key& key) noexcept -> opt::Option<Type&>;
+
+    // Allocate a quasi-contiguous span of types with the provided keys
+    template <typename... Keys>
+        requires(std::same_as<types::Key, std::remove_cvref_t<Keys>> && ...)
+    [[nodiscard]] auto get_many(Keys&&... keys) noexcept -> std::span<mem::NonNull<Type>> {
+        auto  types = arena_.make_span<Type>(sizeof...(Keys));
+        usize i     = 0;
+        (..., [&] { types[i++] = get_or_emplace(keys); }());
+    }
 
     [[nodiscard]] auto strip_const(const Type& type) -> Type&;
     [[nodiscard]] auto strip_volatile(const Type& type) -> Type&;

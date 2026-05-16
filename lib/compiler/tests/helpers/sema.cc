@@ -7,9 +7,9 @@
 
 #include <catch2/catch_test_macros.hpp>
 
+#include "ast/statement.hh"
 #include "helpers/common.hh"
 #include "helpers/sema.hh"
-#include "ast/statement.hh"
 #include "module/memory_loader.hh"
 #include "module/module.hh"
 #include "sema/error.hh"

@@ -10,11 +10,11 @@
 #include "syntax/error.hh"
 #include "syntax/token_type.hh"
 
+#include "enum.hh"
 #include "iterator.hh"
 #include "option.hh"
 #include "result.hh"
 #include "types.hh"
-#include "enum.hh"
 
 namespace porpoise {
 

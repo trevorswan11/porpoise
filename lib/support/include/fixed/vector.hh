@@ -147,7 +147,7 @@ template <typename Item, usize Capacity> class Vector {
         // Manually destroy the moved-from object after moving it
         for (usize i = smaller_size; i < larger_size; ++i) {
             smaller.emplace_back(std::move(larger[i]));
-            larger.data()[i].~Item();
+            std::destroy_at(data() + i);
         }
 
         smaller.size_ = larger_size;
