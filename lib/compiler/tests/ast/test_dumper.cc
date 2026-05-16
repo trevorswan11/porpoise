@@ -63,6 +63,7 @@ constexpr std::string_view input{R"(
     fn(self): i32 {};
     '\n'; '\r'; '\t'; '\\'; '\''; '\0';
     var a: i32 = undefined;
+    0b00_11_00_11;
 )"};
 
 constexpr std::string_view expected{

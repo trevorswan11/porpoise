@@ -15,7 +15,8 @@ A WIP reference of the porpoise programming language
 - [unions](syntax/unions.md)
 
 ## Compiler Internals
-- [builtins](syntax/builtins.md)
+- [builtins](internals/builtins.md)
+- [literals](internals/literals.md)
 
 ## Standard Library
 WIP

@@ -181,6 +181,7 @@ auto Lexer::read_number() noexcept -> Token {
     }
 
     // Consume digits and handle dot/range rules
+    auto last_was_digit = false;
     while (true) {
         const auto c = current_byte_;
 
@@ -203,7 +204,7 @@ auto Lexer::read_number() noexcept -> Token {
 
             if (current_byte_ == '+' || current_byte_ == '-') { read_character(); }
             while (std::isdigit(current_byte_)) { read_character(); }
-
+            last_was_digit = true;
             continue;
         }
 
@@ -213,12 +214,27 @@ auto Lexer::read_number() noexcept -> Token {
             if (passed_decimal) { break; }
 
             passed_decimal = true;
+            last_was_digit = false;
             read_character();
+            continue;
+        }
+
+        // Underscore can only be in between digits
+        if (c == '_' && last_was_digit) {
+            read_character();
+            if (!digit_in_base(current_byte_, base)) {
+                return {TokenType::ILLEGAL,
+                        string::substr(input_, start, pos_ - start),
+                        start_line,
+                        start_col};
+            }
+            last_was_digit = false;
             continue;
         }
 
         // Normal digit
         if (digit_in_base(c, base)) {
+            last_was_digit = true;
             read_character();
             continue;
         }

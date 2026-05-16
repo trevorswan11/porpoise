@@ -201,6 +201,31 @@ TEST_CASE("Lexing int bit-width variants") {
                });
 }
 
+TEST_CASE("Lexing underscore-separated numbers") {
+    test_lexer("0_1 123_2 3.14_159 42.0_11f 0b11_00_11 0xEEEE_FFFFuz 0o7_233u",
+               {
+                   {TokenType::INT_10, "0_1"},
+                   {TokenType::INT_10, "123_2"},
+                   {TokenType::F64, "3.14_159"},
+                   {TokenType::F32, "42.0_11f"},
+                   {TokenType::INT_2, "0b11_00_11"},
+                   {TokenType::UZINT_16, "0xEEEE_FFFFuz"},
+                   {TokenType::UINT_8, "0o7_233u"},
+               });
+}
+
+TEST_CASE("Lexing illegal underscored numbers") {
+    test_lexer("1234_.1 121.3_ _12",
+               {
+                   {TokenType::ILLEGAL, "1234_"},
+                   {TokenType::DOT, "."},
+                   {TokenType::INT_10, "1"},
+                   {TokenType::ILLEGAL, "121.3_"},
+                   {TokenType::UNDERSCORE, "_"},
+                   {TokenType::INT_10, "12"},
+               });
+}
+
 TEST_CASE("Lexing keywords") {
     test_lexer("and or pub extern export volatile static "
                "i32 i64 isize u32 u64 usize f32 f64 u8 bool void type test",

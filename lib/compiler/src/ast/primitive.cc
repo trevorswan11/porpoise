@@ -11,6 +11,7 @@
 #include "syntax/token_type.hh"
 
 #include "assert.hh"
+#include "fixed/vector.hh"
 #include "option.hh"
 #include "result.hh"
 #include "types.hh"
@@ -19,13 +20,30 @@ namespace porpoise::ast {
 
 namespace {
 
+// A global buffer for storing underscore-cleaned numeric tokens for `std::from_chars`
+constinit fixed::Vector<byte, 1'024> numeric_buffer;
+
 // Parses the requested value from the string, asserting the from_chars result if requested
 template <typename ValueType>
 [[nodiscard]] auto parse_primitive_value(std::string_view slice, syntax::TokenType type) noexcept
     -> opt::Option<ValueType> {
-    const auto  base  = syntax::token_type::to_base(type);
-    const auto* first = slice.cbegin() + (!base || *base == syntax::Base::DECIMAL ? 0 : 2);
-    const auto* last  = slice.cend() - syntax::token_type::suffix_length(type);
+    const auto base = syntax::token_type::to_base(type);
+    {
+        // This is narrowly scoped to allow the first and last pointer names to be reused
+        const auto* first = slice.cbegin() + (!base || *base == syntax::Base::DECIMAL ? 0 : 2);
+        const auto* last  = slice.cend() - syntax::token_type::suffix_length(type);
+
+        // Strip out the underscores from the slice
+        ASSERT(static_cast<usize>(last - first) < numeric_buffer.capacity(), "Literal too long");
+        numeric_buffer.clear();
+        for (const auto* ptr = first; ptr != last; ++ptr) {
+            if (*ptr != '_') { numeric_buffer.emplace_back(*ptr); }
+        }
+    }
+
+    // The fixed buffer's end pointer is based on the current size, not underlying capacity
+    const auto* first = numeric_buffer.begin();
+    const auto* last  = numeric_buffer.end();
 
     ValueType              v;
     std::from_chars_result result;

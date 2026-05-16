@@ -470,4 +470,6 @@ DeclStatement (a)
 ├─ Type: ExplicitType (modifier: VALUE)
 │   └─ IdentifierExpression: i32 (primitive)
 └─ Value: UndefinedExpression
+ExpressionStatement
+└─ Expr: I32Expression: 51
 )"

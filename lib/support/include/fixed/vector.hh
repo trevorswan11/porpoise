@@ -120,6 +120,7 @@ template <typename Item, usize Capacity> class Vector {
 
     [[nodiscard]] constexpr auto empty() const noexcept -> bool { return size_ == 0; }
     [[nodiscard]] constexpr auto size() const noexcept -> usize { return size_; }
+    [[nodiscard]] constexpr auto capacity() const noexcept -> usize { return Capacity; }
 
     template <typename Self> [[nodiscard]] constexpr auto data(this Self&& self) noexcept -> auto* {
         return self.items_.data();
