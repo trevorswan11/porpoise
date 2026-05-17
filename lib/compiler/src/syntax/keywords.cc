@@ -2,7 +2,10 @@
 
 #include <string_view>
 
+#include "syntax/token_type.hh"
+
 #include "fixed/hash_map.hh"
+#include "option.hh"
 
 namespace porpoise::syntax {
 

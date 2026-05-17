@@ -6,6 +6,7 @@
 
 #include "fixed/enum_map.hh"
 #include "fixed/hash_map.hh"
+#include "option.hh"
 
 namespace porpoise::syntax {
 

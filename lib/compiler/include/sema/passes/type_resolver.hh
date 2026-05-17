@@ -13,6 +13,7 @@
 #include "sema/type.hh"
 
 #include "assert.hh"
+#include "diagnostic.hh"
 #include "memory.hh"
 #include "option.hh"
 #include "result.hh"
@@ -34,6 +35,9 @@ class TypeResolver {
     using Scope = SymbolTableStack::Stack;
 
   private:
+    // Poisons the node id and sets the `last_type_` pointer to be poisoned
+    auto poison_node(ast::NodeID id) -> void;
+
     AST_VISITOR_DEF_GEN()
 
     [[nodiscard]] auto resolve_builtin_call(ast::NodeID                   id,
@@ -43,8 +47,10 @@ class TypeResolver {
 
     // Returns true if none of the arguments were poisoned
     auto resolve_call_args(std::span<const ast::CallExpression::Argument> args) -> bool;
-    [[nodiscard]] auto get_resolved_arg_type(const ast::CallExpression::Argument& arg)
+    [[nodiscard]] auto get_resolved_call_arg_type(const ast::CallExpression::Argument& arg)
         -> mem::NonNull<Type>;
+    [[nodiscard]] auto get_call_arg_location(const ast::CallExpression::Argument& arg)
+        -> SourceLocation;
 
     TypeResolver(mod::Module& collecting, Context& ctx)
         : collecting_{collecting}, table_idx_{*collecting.root_table_idx}, ctx_{ctx} {

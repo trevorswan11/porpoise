@@ -52,7 +52,7 @@ enum class TypeKind : u8 {
     NORETURN,
 };
 
-[[nodiscard]] auto display_name(TypeKind kind) noexcept -> std::string_view;
+[[nodiscard]] auto type_kind_display_name(TypeKind kind) noexcept -> std::string_view;
 
 class Type;
 

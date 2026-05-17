@@ -31,7 +31,7 @@ auto CLIFmt::make_subcommands(const CLI::App* app, CLI::AppFormatMode) const -> 
                                       std::vector<const CLI::Option*> opts) const -> std::string {
     std::stringstream ss;
 
-    // THe group name is altered to clean up help output
+    // The group name is altered to clean up help output
     if (group == "OPTIONS") {
         fmt::print(ss, "\nGeneral Options:\n\n");
     } else {

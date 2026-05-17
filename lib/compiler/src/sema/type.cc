@@ -47,7 +47,9 @@ constexpr auto TYPE_KIND_NAMES = [] {
 
 } // namespace
 
-auto display_name(TypeKind kind) noexcept -> std::string_view { return TYPE_KIND_NAMES[kind]; }
+auto type_kind_display_name(TypeKind kind) noexcept -> std::string_view {
+    return TYPE_KIND_NAMES[kind];
+}
 
 auto TypePool::get_opt(const types::Key& key) noexcept -> opt::Option<Type&> {
     if (auto it = cache_.find(key); it != cache_.end()) { return *it->second; }
