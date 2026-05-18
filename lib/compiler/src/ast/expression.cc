@@ -325,8 +325,7 @@ auto ForLoopExpression::parse(syntax::Parser& parser)
 }
 
 // Variadic must be handled first and should break the enclosing loop
-auto FunctionExpression::try_parse_variadic(syntax::Parser& parser)
-    -> Result<bool, syntax::Diagnostic> {
+auto try_parse_variadic_fn(syntax::Parser& parser) -> Result<bool, syntax::Diagnostic> {
     bool is_variadic = false;
     if (parser.peek_token_is(syntax::TokenType::ELLIPSIS)) {
         parser.advance();
@@ -349,7 +348,7 @@ auto FunctionExpression::parse(syntax::Parser& parser)
     bool                       variadic = false;
     if (parser.peek_token_is(syntax::TokenType::RPAREN)) {
         parser.advance();
-    } else if ((variadic = TRY(try_parse_variadic(parser)))) {
+    } else if ((variadic = TRY(try_parse_variadic_fn(parser)))) {
         TRY(parser.expect_peek(syntax::TokenType::RPAREN));
     } else {
         // The 'self' parameter can be a value type, ref, or mutable ref
@@ -380,28 +379,27 @@ auto FunctionExpression::parse(syntax::Parser& parser)
         bool first = true;
         while (!parser.peek_token_is(syntax::TokenType::RPAREN) &&
                !parser.peek_token_is(syntax::TokenType::END)) {
-            if ((variadic = TRY(try_parse_variadic(parser)))) { break; }
+            if ((variadic = TRY(try_parse_variadic_fn(parser)))) { break; }
 
             // If there was no self parameter then we can't advance on the first pass
             if (!first || self) { parser.advance(); }
-            const IdentifierHandle name         = TRY(IdentifierExpression::parse(parser));
-            const auto [type_expr, initialized] = TRY(TypeExpression::parse(parser));
-            const auto& type                    = parser.get_node<TypeExpression>(*type_expr);
+            const IdentifierHandle name          = TRY(IdentifierExpression::parse(parser));
+            const auto [param_type, initialized] = TRY(ExplicitType::parse_opt_init(parser));
 
             // There are no default values for parameters, and they must be explicitly typed
-            if (initialized || !type.explicit_type) {
+            if (initialized || !param_type) {
                 return make_syntax_err("Function parameters may not have default values",
                                        syntax::Error::FN_PARAMETER_HAS_DEFAULT_VALUE,
-                                       parser.get_location_of(*type_expr));
+                                       parser.get_location_of(*param_type));
             }
 
-            const auto& explicit_type = *type.explicit_type;
+            const auto explicit_type = *param_type;
             if (explicit_type.is<IdentifierExpression>()) {
                 // noreturn is not allowed for parameters
                 if (explicit_type.get_token_type() == syntax::TokenType::NORETURN) {
                     return make_syntax_err("Function parameter types may not be marked `noreturn`",
                                            syntax::Error::FN_PARAMETER_IS_NORETURN,
-                                           parser.get_location_of(*type_expr));
+                                           parser.get_location_of(explicit_type));
                 }
             }
 
@@ -416,13 +414,14 @@ auto FunctionExpression::parse(syntax::Parser& parser)
 
     TRY(parser.expect_peek(syntax::TokenType::COLON));
     const auto return_type = TRY(ExplicitType::parse(parser));
+
+    // Function types are decoupled so a block is required here
     if (!parser.peek_token_is(syntax::TokenType::LBRACE)) {
         return make_syntax_err("Function declarations must have a body",
                                syntax::Error::FN_DECLARATION_WITHOUT_BODY,
                                start_token);
     }
 
-    // Otherwise there must be a well-formed block
     TRY(parser.expect_peek(syntax::TokenType::LBRACE));
     const BlockHandle body = TRY(BlockStatement::parse(parser));
     return parser.add_expr<FunctionExpression>(

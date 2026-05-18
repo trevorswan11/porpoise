@@ -7,6 +7,8 @@
 
 #include <ankerl/unordered_dense.h>
 
+#include "module/module.hh"
+
 #include "arena.hh"
 #include "enum.hh"
 #include "fixed/vector.hh"
@@ -100,6 +102,10 @@ struct Function {
     Type&                         return_type;
 };
 
+struct Module {
+    mod::Module& imported;
+};
+
 constexpr usize MAX_BUILTIN_PARAMS{4};
 using BuiltinParams = fixed::Vector<mem::NonNull<Type>, MAX_BUILTIN_PARAMS>;
 
@@ -186,7 +192,9 @@ class Type {
                                   types::Pointer,
                                   types::Reference,
                                   types::Enum,
+                                  types::Union,
                                   types::Struct,
+                                  types::Module,
                                   types::Function,
                                   types::BuiltinFunction>;
 

@@ -12,7 +12,6 @@
 #include "ast/kind.hh"
 #include "ast/primitive.hh"
 #include "ast/statement.hh"
-#include "ast/type.hh"
 #include "ast/visitor.hh"
 #include "module/error.hh"
 #include "module/module.hh"
@@ -48,25 +47,24 @@ auto SymbolCollector::collect_symbols(mod::Module& module, Context& ctx) -> mod:
 }
 
 // Many terminal expressions are skipped on this pass
-#define MAKE_COLLECTOR_NOOPS(X)  \
-    X(IdentifierExpression)      \
-    X(DotExpression)             \
-    X(ImplicitAccessExpression)  \
-    X(StringExpression)          \
-    X(I32Expression)             \
-    X(I64Expression)             \
-    X(ISizeExpression)           \
-    X(U32Expression)             \
-    X(U64Expression)             \
-    X(USizeExpression)           \
-    X(U8Expression)              \
-    X(F32Expression)             \
-    X(F64Expression)             \
-    X(BoolExpression)            \
-    X(VoidExpression)            \
-    X(UndefinedExpression)       \
-    X(ScopeResolutionExpression) \
-    X(TypeExpression)
+#define MAKE_COLLECTOR_NOOPS(X) \
+    X(IdentifierExpression)     \
+    X(DotExpression)            \
+    X(ImplicitAccessExpression) \
+    X(StringExpression)         \
+    X(I32Expression)            \
+    X(I64Expression)            \
+    X(ISizeExpression)          \
+    X(U32Expression)            \
+    X(U64Expression)            \
+    X(USizeExpression)          \
+    X(U8Expression)             \
+    X(F32Expression)            \
+    X(F64Expression)            \
+    X(BoolExpression)           \
+    X(VoidExpression)           \
+    X(UndefinedExpression)      \
+    X(ScopeResolutionExpression)
 
 #define COLLECTOR_NOOP_X(NodeType) AST_NODE_VISITOR_NOOP(SymbolCollector, NodeType)
 MAKE_COLLECTOR_NOOPS(COLLECTOR_NOOP_X)
@@ -156,14 +154,12 @@ auto SymbolCollector::visit(ast::NodeID id, const ast::FunctionExpression& fn) -
     }
 
     for (const auto& param : fn.parameters) {
-        const auto& ident = collecting_.ast.get_as<ast::IdentifierExpression>(**param.ident);
+        const auto& ident = collecting_.ast.get_as<ast::IdentifierExpression>(param.ident);
         try_declare(ident.name, param);
     }
 
-    if (fn.body) {
-        const auto& block = collecting_.ast.get_as<ast::BlockStatement>(**fn.body);
-        for (const auto& stmt : block) { collect(stmt); }
-    }
+    const auto& block = collecting_.ast.get_as<ast::BlockStatement>(*fn.body);
+    for (const auto& stmt : block) { collect(stmt); }
 
     last_type_.emplace(ctx_.pool[{TypeKind::FUNCTION, types::mut::CONSTANT, new_idx}]);
     last_type_->set_symbol_table_idx(new_idx);
@@ -343,22 +339,22 @@ auto SymbolCollector::visit(ast::NodeID id, const ast::DeclStatement& decl) -> v
 
     // Valued decls should be evaluated to get shallow types
     auto&      symbol = ctx_.registry.get_from(table_idx_, name);
-    const auto expr   = *decl.value;
-    if (expr.any<ast::EnumExpression, ast::UnionExpression, ast::StructExpression>()) {
+    const auto value  = *decl.value;
+    if (value.any<ast::EnumExpression, ast::UnionExpression, ast::StructExpression>()) {
         if (decl.has_modifier(ast::DeclModifiers::CONSTEXPR)) {
             ctx_.diagnostics.emplace_back(
-                fmt::format("All {}s are implicitly constexpr", expr->display_name()),
+                fmt::format("All {}s are implicitly constexpr", value->display_name()),
                 Error::REDUNDANT_CONSTEXPR,
                 collecting_.ast.location_of(id));
         } else if (!decl.has_modifier(ast::DeclModifiers::CONSTANT)) {
             ctx_.poison_symbol(symbol,
-                               fmt::format("All {}s must be marked const", expr->display_name()),
+                               fmt::format("All {}s must be marked const", value->display_name()),
                                Error::ILLEGAL_NON_CONST_STATEMENT,
                                collecting_.ast.location_of(id));
         } else {
             symbol.set_kind(SymbolKind::TYPE);
         }
-    } else if (expr.is<ast::FunctionExpression>()) {
+    } else if (value.is<ast::FunctionExpression>()) {
         if (!decl.has_modifier(ast::DeclModifiers::CONSTEXPR) &&
             !decl.has_modifier(ast::DeclModifiers::CONSTANT)) {
             ctx_.poison_symbol(symbol,
@@ -370,7 +366,7 @@ auto SymbolCollector::visit(ast::NodeID id, const ast::DeclStatement& decl) -> v
         }
     }
 
-    collect(expr);
+    collect(value);
     if (last_type_) { ctx_.registry.get_from(table_idx_, name).set_type(*last_type_.take()); }
 }
 
@@ -427,8 +423,11 @@ auto SymbolCollector::visit(ast::NodeID id, const ast::ImportStatement& import_s
     ctx_.try_result(ctx_.registry.insert_into<SymbolicImport>(
         table_idx_, collecting_, alias, ast::ImportHandle{id}, imported_mod));
     if (imported_mod) {
+        // Its much easier for other steps to get the enclosing module if we resolve now
         auto& type =
             ctx_.pool[{TypeKind::MODULE, types::mut::CONSTANT, *imported_mod->root_table_idx}];
+        type.resolve<types::Module>(*imported_mod);
+
         collecting_.set_sema_type(id, type);
         auto& symbol = ctx_.registry.get_from(table_idx_, alias);
         symbol.set_type(type);

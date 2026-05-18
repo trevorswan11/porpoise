@@ -100,14 +100,12 @@ using ExpressionHandle = Handle<NodeKind::ARRAY_EXPRESSION,
                                 NodeKind::RANGE_EXPRESSION,
                                 NodeKind::SCOPE_RESOLUTION_EXPRESSION,
                                 NodeKind::STRUCT_EXPRESSION,
-                                NodeKind::TYPE_EXPRESSION,
                                 NodeKind::UNION_EXPRESSION,
                                 NodeKind::WHILE_LOOP_EXPRESSION>;
 
 using IdentifierHandle       = Handle<NodeKind::IDENTIFIER_EXPRESSION>;
 using DiscardableIdentHandle = Handle<NodeKind::IDENTIFIER_EXPRESSION, NodeKind::DISCARDED>;
 using ImplicitAccessHandle   = Handle<NodeKind::IMPLICIT_ACCESS_EXPRESSION>;
-using TypeHandle             = Handle<NodeKind::TYPE_EXPRESSION>;
 using StringHandle           = Handle<NodeKind::STRING_EXPRESSION>;
 
 using StatementHandle = Handle<NodeKind::BLOCK_STATEMENT,

@@ -3,6 +3,7 @@
 #include <span>
 
 #include "ast/expression.hh"
+#include "ast/handle.hh"
 #include "ast/id.hh"
 #include "ast/traits.hh"
 #include "ast/visitor.hh"
@@ -34,6 +35,12 @@ class TypeResolver {
   private:
     using Scope = SymbolTableStack::Scope;
 
+    // A flag for helper functions to indicate if their resolution was poisoned
+    enum class ResolveResult : u8 {
+        OK,
+        POISONED,
+    };
+
   private:
     // Poisons the node id and sets the `last_type_` pointer to be poisoned
     auto poison_node(ast::NodeID id) -> void;
@@ -45,12 +52,14 @@ class TypeResolver {
                                             const types::BuiltinFunction& builtin)
         -> Result<Unit, Diagnostic>;
 
-    // Returns true if none of the arguments were poisoned
-    auto resolve_call_args(std::span<const ast::CallExpression::Argument> args) -> bool;
+    auto resolve_call_args(std::span<const ast::CallExpression::Argument> args) -> ResolveResult;
     [[nodiscard]] auto get_resolved_call_arg_type(const ast::CallExpression::Argument& arg)
         -> mem::NonNull<Type>;
     [[nodiscard]] auto get_call_arg_location(const ast::CallExpression::Argument& arg)
         -> SourceLocation;
+
+    [[nodiscard]] auto resolve_members(std::span<const ast::MemberHandle> members)
+        -> opt::Option<std::span<mem::NonNull<Type>>>;
 
     TypeResolver(mod::Module& collecting, Context& ctx)
         : collecting_{collecting}, table_idx_{*collecting.root_table_idx}, ctx_{ctx} {

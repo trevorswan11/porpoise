@@ -27,26 +27,23 @@ namespace {
     -> SourceLocation {
     return std::visit(
         Overloaded{
-            [&module](const SymbolicNode& node) { return module.ast.location_of(*node); },
+            [&module](const SymbolicNode& node) { return module.ast.location_of(node); },
             [](const VirtualSymbol&) { return SourceLocation{0, 0}; },
             [&module](const SymbolicUnionField& inner) {
-                return module.ast.location_of(*inner.ident);
+                return module.ast.location_of(inner.ident);
             },
             [&module](const SymbolicEnumeration& inner) {
-                return module.ast.location_of(*inner.name);
+                return module.ast.location_of(inner.name);
             },
             [&module](const SymbolicSelfParam& inner) {
-                return module.ast.location_of(*inner.ident);
+                return module.ast.location_of(inner.ident);
             },
-            [&module](const SymbolicParam& inner) {
-                if (inner.ident) { return module.ast.location_of(**inner.ident); }
-                return module.ast.location_of(inner.explicit_type);
-            },
+            [&module](const SymbolicParam& inner) { return module.ast.location_of(inner.ident); },
             [&module](const SymbolicCapture& inner) {
-                return module.ast.location_of(*inner.payload);
+                return module.ast.location_of(inner.payload);
             },
-            [&module](const SymbolicArm& inner) { return module.ast.location_of(*inner.pattern); },
-            [&module](const SymbolicImport& inner) { return module.ast.location_of(*inner.node); }},
+            [&module](const SymbolicArm& inner) { return module.ast.location_of(inner.pattern); },
+            [&module](const SymbolicImport& inner) { return module.ast.location_of(inner.node); }},
         payload);
 }
 

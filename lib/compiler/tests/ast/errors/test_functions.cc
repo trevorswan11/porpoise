@@ -52,7 +52,7 @@ TEST_CASE("Default function parameter") {
     helpers::test_parser_fail("fn(a: A = 2): i32;",
                               syntax::Diagnostic{"Function parameters may not have default values",
                                                  syntax::Error::FN_PARAMETER_HAS_DEFAULT_VALUE,
-                                                 std::pair{0uz, 4uz}});
+                                                 std::pair{0uz, 6uz}});
 }
 
 TEST_CASE("Noreturn function types") {
@@ -65,7 +65,7 @@ TEST_CASE("Noreturn function types") {
         "fn(a: noreturn): i32;",
         syntax::Diagnostic{"Function parameter types may not be marked `noreturn`",
                            syntax::Error::FN_PARAMETER_IS_NORETURN,
-                           std::pair{0uz, 4uz}});
+                           std::pair{0uz, 6uz}});
 
     helpers::test_parser_fail("fn(a: A): &noreturn;",
                               syntax::Diagnostic{"Explicit `noreturn` type cannot have a modifier",

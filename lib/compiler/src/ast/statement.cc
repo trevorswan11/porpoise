@@ -144,7 +144,7 @@ auto DeclStatement::parse(syntax::Parser& parser) -> Result<StatementHandle, syn
 
     TRY(parser.expect_peek(syntax::TokenType::IDENT));
     const IdentifierHandle decl_name          = TRY(IdentifierExpression::parse(parser));
-    const auto [decl_type, value_initialized] = TRY(TypeExpression::parse(parser));
+    const auto [decl_type, value_initialized] = TRY(ExplicitType::parse_opt_init(parser));
 
     opt::Option<ExpressionHandle> decl_value;
     if (value_initialized) {
@@ -158,8 +158,7 @@ auto DeclStatement::parse(syntax::Parser& parser) -> Result<StatementHandle, syn
         }
 
         // Initialized decls with undefined requires a type for well-formed future use
-        const auto& type_expr = parser.get_node<TypeExpression>(decl_type);
-        if (decl_value->is<UndefinedExpression>() && !type_expr.explicit_type) {
+        if (decl_value->is<UndefinedExpression>() && !decl_type) {
             return make_syntax_err("Undefined declarations require an explicit type",
                                    syntax::Error::UNDEFINED_DECL_MISSING_TYPE,
                                    start_token);

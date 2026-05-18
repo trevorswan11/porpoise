@@ -36,7 +36,7 @@ using NodeData = std::variant<FOREACH_AST_NODE(X) Unit>;
 using TypeData = std::variant<IdentifierExpression,
                               ScopeResolutionExpression,
                               CallExpression,
-                              FunctionExpression,
+                              ExplicitFunctionType,
                               ExplicitTypeID,
                               StructExpression,
                               EnumExpression,

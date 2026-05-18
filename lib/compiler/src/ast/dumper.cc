@@ -174,7 +174,7 @@ auto ASTDumper::visit(ast::NodeID, const FunctionExpression& function) -> void {
         fmt::println(out_, "{}Parameters:", indent_.current_branch());
         dump_container(function.parameters, [this](const FunctionExpression::Parameter& parameter) {
             fmt::println(out_, "{}Param:", indent_.current_branch());
-            if (parameter.ident) {
+            {
                 const Indent::Guard g_name{indent_, false};
                 fmt::print(out_, "{}Name: ", indent_.current_branch());
                 dump(*parameter.ident);
@@ -193,14 +193,13 @@ auto ASTDumper::visit(ast::NodeID, const FunctionExpression& function) -> void {
         fmt::println(out_, "{}Variadic: {}", indent_.current_branch(), function.variadic);
     }
 
-    const auto has_body = function.body.has_value();
     {
-        const Indent::Guard g{indent_, !has_body};
+        const Indent::Guard g{indent_, false};
         fmt::print(out_, "{}Returns: ", indent_.current_branch());
         dump(function.explicit_return_type);
     }
 
-    if (has_body) {
+    {
         const Indent::Guard g{indent_, true};
         fmt::print(out_, "{}Body: ", indent_.current_branch());
         dump(*function.body);
@@ -457,7 +456,33 @@ auto ASTDumper::visit(ExplicitTypeID id, const IdentifierExpression& ident) -> v
 
 MAKE_EXPLICIT_TYPE_DUMP(ScopeResolutionExpression)
 MAKE_EXPLICIT_TYPE_DUMP(CallExpression)
-MAKE_EXPLICIT_TYPE_DUMP(FunctionExpression)
+
+auto ASTDumper::visit(ExplicitTypeID, const ExplicitFunctionType& function) -> void {
+    fmt::println(out_, "{}FunctionExpression", indent_.current_branch());
+    if (!function.parameter_types.empty()) {
+        const Indent::Guard g{indent_, false};
+        fmt::println(out_, "{}Parameters:", indent_.current_branch());
+        dump_container(function.parameter_types, [this](ExplicitTypeID type) {
+            fmt::println(out_, "{}Param:", indent_.current_branch());
+            {
+                const Indent::Guard g_type{indent_, true};
+                fmt::print(out_, "{}Type: ", indent_.current_branch());
+                dump(type);
+            }
+        });
+    }
+
+    {
+        const Indent::Guard g{indent_, false};
+        fmt::println(out_, "{}Variadic: {}", indent_.current_branch(), function.variadic);
+    }
+
+    {
+        const Indent::Guard g{indent_, true};
+        fmt::print(out_, "{}Returns: ", indent_.current_branch());
+        dump(function.explicit_return_type);
+    }
+}
 
 auto ASTDumper::visit(ExplicitTypeID, const ExplicitTypeID& recursive) -> void {
     fmt::print(out_, "{}", indent_.current_branch());
@@ -490,14 +515,6 @@ auto ASTDumper::visit(ExplicitTypeID, const ExplicitArrayType& array) -> void {
         const Indent::Guard g{indent_, true};
         fmt::print(out_, "{}", indent_.current_branch());
         dump(array.inner_explicit_type);
-    }
-}
-
-auto ASTDumper::visit(ast::NodeID, const TypeExpression& node) -> void {
-    if (node.explicit_type) {
-        dump(*node.explicit_type);
-    } else {
-        fmt::println(out_, "(inferred)");
     }
 }
 
@@ -608,7 +625,11 @@ auto ASTDumper::visit(ast::NodeID, const DeclStatement& decl) -> void {
     {
         const Indent::Guard g{indent_, !has_value};
         fmt::print(out_, "{}Type: ", indent_.current_branch());
-        dump(decl.type);
+        if (decl.type) {
+            dump(*decl.type);
+        } else {
+            fmt::println(out_, "(inferred)");
+        }
     }
 
     if (has_value) {

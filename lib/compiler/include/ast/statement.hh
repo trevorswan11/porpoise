@@ -59,7 +59,7 @@ MAKE_ENUM_OPERATORS(DeclModifiers)
 
 struct DeclStatement {
     IdentifierHandle              ident;
-    TypeHandle                    type;
+    opt::Option<ExplicitTypeID>   type;
     opt::Option<ExpressionHandle> value;
     DeclModifiers                 modifiers;
 

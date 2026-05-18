@@ -46,7 +46,6 @@ enum class NodeKind : u8 {
     UNDEFINED_EXPRESSION,
     SCOPE_RESOLUTION_EXPRESSION,
     STRUCT_EXPRESSION,
-    TYPE_EXPRESSION,
     UNION_EXPRESSION,
     WHILE_LOOP_EXPRESSION,
 
@@ -102,7 +101,6 @@ enum class NodeKind : u8 {
     X(UndefinedExpression)       \
     X(ScopeResolutionExpression) \
     X(StructExpression)          \
-    X(TypeExpression)            \
     X(UnionExpression)           \
     X(WhileLoopExpression)
 
@@ -144,7 +142,7 @@ enum class ExplicitTypeKind : u8 {
     X(IdentifierExpression)      \
     X(ScopeResolutionExpression) \
     X(CallExpression)            \
-    X(FunctionExpression)        \
+    X(ExplicitFunctionType)      \
     X(ExplicitTypeID)            \
     X(StructExpression)          \
     X(EnumExpression)            \
@@ -153,6 +151,7 @@ enum class ExplicitTypeKind : u8 {
 
 class ExplicitTypeID;
 struct ExplicitArrayType;
+struct ExplicitFunctionType;
 
 namespace traits {
 
@@ -206,7 +205,6 @@ NODE_KIND_OF_TRAIT(VoidExpression, VOID_EXPRESSION)
 NODE_KIND_OF_TRAIT(UndefinedExpression, UNDEFINED_EXPRESSION)
 NODE_KIND_OF_TRAIT(ScopeResolutionExpression, SCOPE_RESOLUTION_EXPRESSION)
 NODE_KIND_OF_TRAIT(StructExpression, STRUCT_EXPRESSION)
-NODE_KIND_OF_TRAIT(TypeExpression, TYPE_EXPRESSION)
 NODE_KIND_OF_TRAIT(UnionExpression, UNION_EXPRESSION)
 NODE_KIND_OF_TRAIT(WhileLoopExpression, WHILE_LOOP_EXPRESSION)
 
@@ -243,7 +241,7 @@ concept ASTExplicitType = requires {
 KIND_OF_TRAIT(IdentifierExpression, IDENT)
 KIND_OF_TRAIT(ScopeResolutionExpression, SCOPE)
 KIND_OF_TRAIT(CallExpression, CALL)
-KIND_OF_TRAIT(FunctionExpression, FUNCTION)
+KIND_OF_TRAIT(ExplicitFunctionType, FUNCTION)
 KIND_OF_TRAIT(ExplicitTypeID, RECURSIVE)
 KIND_OF_TRAIT(StructExpression, STRUCT)
 KIND_OF_TRAIT(EnumExpression, ENUM)

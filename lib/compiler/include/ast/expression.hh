@@ -97,24 +97,24 @@ template <> struct Nullable<ast::SelfParameter> {
 
 namespace ast {
 
+[[nodiscard]] auto try_parse_variadic_fn(syntax::Parser& parser)
+    -> Result<bool, syntax::Diagnostic>;
+
 struct FunctionExpression {
     struct Parameter {
-        opt::Option<IdentifierHandle> ident;
-        ExplicitTypeID                explicit_type;
+        IdentifierHandle ident;
+        ExplicitTypeID   explicit_type;
     };
 
     opt::Option<SelfParameter> self;
     std::vector<Parameter>     parameters;
     bool                       variadic;
     ExplicitTypeID             explicit_return_type;
-    opt::Option<BlockHandle>   body;
+    BlockHandle                body;
 
     // Parse the function as a value. Meant for the parser LUT
     [[nodiscard]] static auto parse(syntax::Parser& parser)
         -> Result<ExpressionHandle, syntax::Diagnostic>;
-
-    [[nodiscard]] static auto try_parse_variadic(syntax::Parser& parser)
-        -> Result<bool, syntax::Diagnostic>;
 };
 
 struct GroupedExpression {
