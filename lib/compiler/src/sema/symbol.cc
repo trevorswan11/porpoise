@@ -33,7 +33,7 @@ namespace {
                 return module.ast.location_of(*inner.ident);
             },
             [&module](const SymbolicEnumeration& inner) {
-                return module.ast.location_of(*inner.first);
+                return module.ast.location_of(*inner.name);
             },
             [&module](const SymbolicSelfParam& inner) {
                 return module.ast.location_of(*inner.ident);

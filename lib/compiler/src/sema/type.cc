@@ -1,9 +1,12 @@
 #include "sema/type.hh"
 
+#include <span>
 #include <string_view>
 
 #include "fixed/enum_map.hh"
+#include "memory.hh"
 #include "option.hh"
+#include "types.hh"
 
 namespace porpoise::sema {
 
@@ -61,6 +64,18 @@ auto TypePool::get_or_emplace(const types::Key& key) -> Type& {
     auto* type = arena_.make<Type>(key).get();
     cache_.emplace(key, type);
     return *type;
+}
+
+auto TypePool::get_many_unsafe(usize count) noexcept -> std::span<mem::NonNull<Type>> {
+    return arena_.make_span<mem::NonNull<Type>>(count);
+}
+
+auto TypePool::get_many(usize count, types::Key common_key) noexcept
+    -> std::span<mem::NonNull<Type>> {
+    auto  types       = get_many_unsafe(count);
+    auto& common_type = get_or_emplace(common_key);
+    for (usize i = 0; i < count; ++i) { types[i] = common_type; }
+    return types;
 }
 
 namespace {

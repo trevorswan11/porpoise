@@ -145,4 +145,10 @@ auto Context::inject_prelude() -> void {
     inject_functions(prelude, pool);
 }
 
+auto Context::get_builtin_resolved_type(TypeKind kind) -> Type& {
+    auto& type = pool[{kind, types::mut::CONSTANT}];
+    ASSERT(type.has_resolved(), "Builtin type was not already resolved");
+    return type;
+}
+
 } // namespace porpoise::sema

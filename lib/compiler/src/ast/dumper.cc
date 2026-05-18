@@ -104,14 +104,14 @@ auto ASTDumper::visit(ast::NodeID, const EnumExpression& enum_expr) -> void {
                            fmt::print(out_, "{}", indent_.current_branch());
                            {
                                fmt::print(out_, "Name: ");
-                               const Indent::Guard g_name{indent_, !enumeration.second};
-                               dump(enumeration.first);
+                               const Indent::Guard g_name{indent_, !enumeration.value};
+                               dump(enumeration.name);
                            }
 
-                           if (enumeration.second) {
+                           if (enumeration.value) {
                                const Indent::Guard g_val{indent_, true};
                                fmt::print(out_, "{}Default: ", indent_.current_branch());
-                               dump(*enumeration.second);
+                               dump(*enumeration.value);
                            }
                        });
     }

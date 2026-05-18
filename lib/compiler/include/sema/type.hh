@@ -287,14 +287,14 @@ class TypePool {
         return types;
     }
 
+    // Allocates the requested number of types but does not initialize any data
+    //
+    // Violates an invariant of the NonNull class where the pointer is actually null
+    [[nodiscard]] auto get_many_unsafe(usize count) noexcept -> std::span<mem::NonNull<Type>>;
+
     // Allocate a quasi-contiguous span of types with the same key types
-    template <usize Count>
-    [[nodiscard]] auto get_many(types::Key common_key) noexcept -> std::span<mem::NonNull<Type>> {
-        auto  types       = arena_.make_span<mem::NonNull<Type>>(Count);
-        auto& common_type = get_or_emplace(common_key);
-        for (usize i = 0; i < Count; ++i) { types[i] = common_type; }
-        return types;
-    }
+    [[nodiscard]] auto get_many(usize count, types::Key common_key) noexcept
+        -> std::span<mem::NonNull<Type>>;
 
     [[nodiscard]] auto strip_const(const Type& type) -> Type&;
     [[nodiscard]] auto strip_volatile(const Type& type) -> Type&;

@@ -22,6 +22,7 @@
 #include "diagnostic.hh"
 #include "memory.hh"
 #include "result.hh"
+#include "types.hh"
 #include "variant.hh"
 
 namespace porpoise::sema {
@@ -246,7 +247,7 @@ auto TypeResolver::resolve_builtin_call(ast::NodeID                   id,
     // @divMod(T: type, lhs: T, rhs: T): struct { var quotient: T; var modulo: T; }
     case TokenType::BUILTIN_DIV_MOD: {
         auto& member_type = *get_resolved_call_arg_type(call.arguments[0]);
-        auto  members     = ctx_.pool.get_many<2>(member_type.get_key());
+        auto  members     = ctx_.pool.get_many(2, member_type.get_key());
 
         // Structs might not be unique with the exact same calls
         result_type =
@@ -311,14 +312,45 @@ auto TypeResolver::visit(ast::NodeID id, const ast::CallExpression& call) -> voi
     }
 }
 
-auto TypeResolver::visit(ast::NodeID id, const ast::DoWhileLoopExpression& do_while) -> void {
-    resolve(do_while.block);
-    if (last_type_->is_poison()) { return poison_node(id); }
-    resolve(do_while.condition);
-    if (last_type_->is_poison()) { return poison_node(id); }
-}
+auto TypeResolver::visit(ast::NodeID, const ast::DoWhileLoopExpression&) -> void {}
 
-auto TypeResolver::visit(ast::NodeID, const ast::EnumExpression&) -> void {}
+auto TypeResolver::visit(ast::NodeID id, const ast::EnumExpression& enum_expr) -> void {
+    if (enum_expr.underlying) { resolve(*enum_expr.underlying); }
+
+    auto&       type = collecting_.get_sema_type(id);
+    const Scope s{table_stack_, type.get_symbol_table_idx(), table_idx_};
+
+    for (const auto& [name, value] : enum_expr.enumerations) {
+        resolve(name);
+        if (last_type_->is_poison()) { return poison_node(id); }
+
+        // This is the first time the value is analyzed during sema
+        if (value) {
+            resolve(*value);
+            if (last_type_->is_poison()) { return poison_node(id); }
+        }
+    }
+
+    // The member types need to be preallocated and populated during resolution
+    const auto& members      = enum_expr.members;
+    auto        member_types = ctx_.pool.get_many_unsafe(members.size());
+
+    // Only poison the enum once all members are collected
+    bool member_poisoned = false;
+    for (usize i = 0; const auto& member : members) {
+        // The resolved statement type is in last_type_ unlike in the symbol collector
+        resolve(*member);
+        if (last_type_->is_poison()) { member_poisoned = true; }
+        member_types[i++] = last_type_.take();
+    }
+    if (member_poisoned) { return poison_node(id); }
+
+    // The underlying type defaults to an i32 as it would in C or C++
+    auto& underlying_type = enum_expr.underlying ? collecting_.get_sema_type(*enum_expr.underlying)
+                                                 : ctx_.get_builtin_resolved_type(TypeKind::I32);
+    type.resolve<types::Enum>(underlying_type, member_types);
+    last_type_.emplace(type);
+}
 
 auto TypeResolver::visit(ast::NodeID, const ast::ForLoopExpression&) -> void {}
 
@@ -375,7 +407,7 @@ auto TypeResolver::visit(ast::NodeID, const ast::StringExpression&) -> void {}
 
 #define MAKE_PRIMITIVE_RESOLVER(NodeType, kind)                                         \
     auto TypeResolver::visit(ast::NodeID id, const ast::NodeType&) -> void {            \
-        last_type_.emplace(ctx_.pool[{TypeKind::kind, types::mut::CONSTANT}]);          \
+        last_type_.emplace(ctx_.get_builtin_resolved_type(TypeKind::kind));             \
         if (!last_type_->has_resolved()) { last_type_->resolve<types::BuiltinType>(); } \
         collecting_.set_sema_type(id, *last_type_);                                     \
     }

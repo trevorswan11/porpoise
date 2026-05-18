@@ -1,7 +1,6 @@
 #pragma once
 
 #include <string_view>
-#include <utility>
 #include <variant>
 #include <vector>
 
@@ -47,7 +46,10 @@ struct DoWhileLoopExpression {
 };
 
 struct EnumExpression {
-    using Enumeration = std::pair<IdentifierHandle, opt::Option<ExpressionHandle>>;
+    struct Enumeration {
+        IdentifierHandle              name;
+        opt::Option<ExpressionHandle> value;
+    };
 
     opt::Option<IdentifierHandle> underlying;
     std::vector<Enumeration>      enumerations;

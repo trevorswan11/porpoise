@@ -1,6 +1,5 @@
 #pragma once
 
-#include <utility>
 #include <vector>
 
 #include <magic_enum/magic_enum.hpp>

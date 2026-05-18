@@ -32,7 +32,7 @@ class TypeResolver {
     }
 
   private:
-    using Scope = SymbolTableStack::Stack;
+    using Scope = SymbolTableStack::Scope;
 
   private:
     // Poisons the node id and sets the `last_type_` pointer to be poisoned

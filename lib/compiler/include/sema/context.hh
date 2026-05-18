@@ -82,6 +82,9 @@ struct Context {
 
     // Creates and injects the builtin/primitive prelude and sets the internal prelude index
     auto inject_prelude() -> void;
+
+    // Convenience function for retrieving constant builtin types
+    [[nodiscard]] auto get_builtin_resolved_type(TypeKind kind) -> Type&;
 };
 
 } // namespace porpoise::sema

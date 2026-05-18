@@ -109,7 +109,7 @@ auto SymbolCollector::visit(ast::NodeID id, const ast::EnumExpression& enum_expr
         IterPair{enum_expr.enumerations,
                  [this](const ast::EnumExpression::Enumeration& enumeration) {
                      const auto& ident =
-                         collecting_.ast.get_as<ast::IdentifierExpression>(*enumeration.first);
+                         collecting_.ast.get_as<ast::IdentifierExpression>(*enumeration.name);
                      try_declare(ident.name, enumeration);
                  }},
         IterPair{enum_expr.members, [this](const ast::MemberHandle& member) { collect(*member); }});
