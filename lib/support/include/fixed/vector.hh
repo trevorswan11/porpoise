@@ -9,9 +9,9 @@
 #include <utility>
 
 #include "assert.hh"
-#include "types.hh"
-
 #include "fixed/storage.hh"
+#include "type_traits.hh"
+#include "types.hh"
 
 namespace porpoise::fixed {
 
@@ -29,7 +29,7 @@ template <typename Item, usize Capacity> class Vector {
     Vector() = default;
     ~Vector() { clear(); }
     ~Vector()
-        requires(TriviallyDestructible<Item>)
+        requires(traits::TriviallyDestructible<Item>)
     = default;
 
     // Constructs the vector in place by emplacing each item into the buffer
@@ -39,11 +39,11 @@ template <typename Item, usize Capacity> class Vector {
     }
 
     constexpr Vector(const Vector&)
-        requires(TriviallyCopyable<Item>)
+        requires(traits::TriviallyCopyable<Item>)
     = default;
 
     constexpr Vector(const Vector& other) {
-        if constexpr (TriviallyCopyable<Item>) {
+        if constexpr (traits::TriviallyCopyable<Item>) {
             size_ = other.size_;
             std::copy(other.begin(), other.end(), data());
         } else {
@@ -52,7 +52,7 @@ template <typename Item, usize Capacity> class Vector {
     }
 
     constexpr auto operator=(const Vector&) -> Vector&
-        requires(TriviallyCopyable<Item>)
+        requires(traits::TriviallyCopyable<Item>)
     = default;
 
     constexpr auto operator=(const Vector& other) -> Vector& {
@@ -64,7 +64,7 @@ template <typename Item, usize Capacity> class Vector {
     }
 
     constexpr Vector(Vector&& other) noexcept {
-        if constexpr (TriviallyCopyable<Item>) {
+        if constexpr (traits::TriviallyCopyable<Item>) {
             size_ = other.size_;
             std::copy(other.begin(), other.end(), data());
         } else {
@@ -76,7 +76,7 @@ template <typename Item, usize Capacity> class Vector {
     constexpr auto operator=(Vector&& other) -> Vector& {
         if (this != &other) {
             clear();
-            if constexpr (TriviallyCopyable<Item>) {
+            if constexpr (traits::TriviallyCopyable<Item>) {
                 size_ = other.size_;
                 std::copy(other.begin(), other.end(), data());
             } else {
@@ -127,7 +127,7 @@ template <typename Item, usize Capacity> class Vector {
     }
 
     constexpr auto clear() noexcept -> void {
-        if constexpr (!TriviallyDestructible<Item>) {
+        if constexpr (!traits::TriviallyDestructible<Item>) {
             // The lion is now concerned with freeing non-trivial resources
             for (usize i = 0; i < size_; ++i) { std::destroy_at(data() + i); }
         }
@@ -137,7 +137,7 @@ template <typename Item, usize Capacity> class Vector {
   private:
     // https://en.cppreference.com/cpp/algorithm/swap
     constexpr auto swap(Vector& other) noexcept -> void {
-        static_assert(!TriviallyCopyable<Item>, "Trivial copies should be defaulted");
+        static_assert(!traits::TriviallyCopyable<Item>, "Trivial copies should be defaulted");
         auto& smaller = (size_ < other.size_) ? *this : other;
         auto& larger  = (size_ < other.size_) ? other : *this;
 

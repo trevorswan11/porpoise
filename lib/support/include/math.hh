@@ -1,11 +1,11 @@
 #pragma once
 
-#include "types.hh"
+#include "type_traits.hh"
 
 namespace porpoise {
 
 // Returns the rounded-up power of two given the unsigned value
-template <Unsigned U> [[nodiscard]] constexpr auto ceil_power_of_two(U val) noexcept -> U {
+template <traits::Unsigned U> [[nodiscard]] constexpr auto ceil_power_of_two(U val) noexcept -> U {
     // If it's already a power of two there's no need to round
     if (val == 0) {
         return 1;
@@ -25,7 +25,7 @@ template <Unsigned U> [[nodiscard]] constexpr auto ceil_power_of_two(U val) noex
     return ++val;
 }
 
-template <Unsigned U> [[nodiscard]] constexpr auto is_power_of_two(U val) noexcept -> bool {
+template <traits::Unsigned U> [[nodiscard]] constexpr auto is_power_of_two(U val) noexcept -> bool {
     return (val > 0) && ((val & (val - 1)) == 0);
 }
 

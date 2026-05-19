@@ -153,20 +153,22 @@ class ExplicitTypeID;
 struct ExplicitArrayType;
 struct ExplicitFunctionType;
 
+} // namespace ast
+
 namespace traits {
 
 template <typename T> struct NodeKindOf;
 
 template <typename T>
 concept ASTNode = requires {
-    { NodeKindOf<T>::value() } -> std::same_as<NodeKind>;
+    { NodeKindOf<T>::value() } -> std::same_as<ast::NodeKind>;
 };
 
-#define NODE_KIND_OF_TRAIT(Type, Kind)                                     \
-    template <> struct NodeKindOf<Type> {                                  \
-        [[nodiscard]] static constexpr auto value() noexcept -> NodeKind { \
-            return NodeKind::Kind;                                         \
-        }                                                                  \
+#define NODE_KIND_OF_TRAIT(Type, Kind)                                          \
+    template <> struct NodeKindOf<ast::Type> {                                  \
+        [[nodiscard]] static constexpr auto value() noexcept -> ast::NodeKind { \
+            return ast::NodeKind::Kind;                                         \
+        }                                                                       \
     };
 
 NODE_KIND_OF_TRAIT(ArrayExpression, ARRAY_EXPRESSION)
@@ -220,7 +222,9 @@ NODE_KIND_OF_TRAIT(ReturnStatement, RETURN_STATEMENT)
 NODE_KIND_OF_TRAIT(TestStatement, TEST_STATEMENT)
 NODE_KIND_OF_TRAIT(UsingStatement, USING_STATEMENT)
 
-NODE_KIND_OF_TRAIT(Unit, DISCARDED)
+template <> struct NodeKindOf<Unit> {
+    [[nodiscard]] static constexpr auto value() noexcept { return ast::NodeKind::DISCARDED; }
+};
 
 #undef KIND_OF_TRAIT
 
@@ -228,14 +232,14 @@ template <typename T> struct ExplicitTypeKindOf;
 
 template <typename T>
 concept ASTExplicitType = requires {
-    { ExplicitTypeKindOf<T>::value() } -> std::same_as<ExplicitTypeKind>;
+    { ExplicitTypeKindOf<T>::value() } -> std::same_as<ast::ExplicitTypeKind>;
 };
 
-#define KIND_OF_TRAIT(Type, Kind)                                                  \
-    template <> struct ExplicitTypeKindOf<Type> {                                  \
-        [[nodiscard]] static constexpr auto value() noexcept -> ExplicitTypeKind { \
-            return ExplicitTypeKind::Kind;                                         \
-        }                                                                          \
+#define KIND_OF_TRAIT(Type, Kind)                                                       \
+    template <> struct ExplicitTypeKindOf<ast::Type> {                                  \
+        [[nodiscard]] static constexpr auto value() noexcept -> ast::ExplicitTypeKind { \
+            return ast::ExplicitTypeKind::Kind;                                         \
+        }                                                                               \
     };
 
 KIND_OF_TRAIT(IdentifierExpression, IDENT)
@@ -251,7 +255,5 @@ KIND_OF_TRAIT(ExplicitArrayType, ARRAY)
 #undef KIND_OF_TRAIT
 
 } // namespace traits
-
-} // namespace ast
 
 } // namespace porpoise

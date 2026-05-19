@@ -1,13 +1,12 @@
 #pragma once
 
-#include <type_traits>
-
+#include "type_traits.hh"
 #include "types.hh"
 
 namespace porpoise {
 
 // A simple counter that with RAII-based up/down counting
-template <Integral Underlying> class Counter {
+template <traits::Integral Underlying> class Counter {
   public:
     class Guard {
       public:

@@ -24,7 +24,7 @@ template <> struct fmt::formatter<porpoise::ast::IdentifierExpression> {
     }
 };
 
-template <porpoise::ast::traits::ValuedPrimitiveNode P> struct fmt::formatter<P> {
+template <porpoise::traits::ValuedPrimitiveNode P> struct fmt::formatter<P> {
     static constexpr auto parse(format_parse_context& ctx) noexcept { return ctx.begin(); }
 
     template <typename F> static auto format(const P& p, F& ctx) {

@@ -36,19 +36,21 @@ DECLARE_PRIMITIVE_EXPRESSION(F64Expression, f64)
 
 #undef DECLARE_PRIMITIVE_EXPRESSION
 
+} // namespace ast
+
 namespace traits {
 
 template <typename T> struct is_valued_primitive : std::false_type {};
-template <> struct is_valued_primitive<StringExpression> : std::true_type {};
-template <> struct is_valued_primitive<I32Expression> : std::true_type {};
-template <> struct is_valued_primitive<I64Expression> : std::true_type {};
-template <> struct is_valued_primitive<ISizeExpression> : std::true_type {};
-template <> struct is_valued_primitive<U32Expression> : std::true_type {};
-template <> struct is_valued_primitive<U64Expression> : std::true_type {};
-template <> struct is_valued_primitive<USizeExpression> : std::true_type {};
-template <> struct is_valued_primitive<U8Expression> : std::true_type {};
-template <> struct is_valued_primitive<F32Expression> : std::true_type {};
-template <> struct is_valued_primitive<F64Expression> : std::true_type {};
+template <> struct is_valued_primitive<ast::StringExpression> : std::true_type {};
+template <> struct is_valued_primitive<ast::I32Expression> : std::true_type {};
+template <> struct is_valued_primitive<ast::I64Expression> : std::true_type {};
+template <> struct is_valued_primitive<ast::ISizeExpression> : std::true_type {};
+template <> struct is_valued_primitive<ast::U32Expression> : std::true_type {};
+template <> struct is_valued_primitive<ast::U64Expression> : std::true_type {};
+template <> struct is_valued_primitive<ast::USizeExpression> : std::true_type {};
+template <> struct is_valued_primitive<ast::U8Expression> : std::true_type {};
+template <> struct is_valued_primitive<ast::F32Expression> : std::true_type {};
+template <> struct is_valued_primitive<ast::F64Expression> : std::true_type {};
 template <typename T> constexpr auto is_primitive_v = is_valued_primitive<T>::value;
 
 // A primitive node with its value embedded in the data
@@ -56,6 +58,8 @@ template <typename T>
 concept ValuedPrimitiveNode = is_primitive_v<T>;
 
 } // namespace traits
+
+namespace ast {
 
 struct BoolExpression {
     [[nodiscard]] static auto parse(syntax::Parser& parser)
@@ -72,12 +76,14 @@ struct UndefinedExpression {
         -> Result<ExpressionHandle, syntax::Diagnostic>;
 };
 
+} // namespace ast
+
 namespace traits {
 
 template <typename T> struct is_light_primitive : std::false_type {};
-template <> struct is_light_primitive<BoolExpression> : std::true_type {};
-template <> struct is_light_primitive<VoidExpression> : std::true_type {};
-template <> struct is_light_primitive<UndefinedExpression> : std::true_type {};
+template <> struct is_light_primitive<ast::BoolExpression> : std::true_type {};
+template <> struct is_light_primitive<ast::VoidExpression> : std::true_type {};
+template <> struct is_light_primitive<ast::UndefinedExpression> : std::true_type {};
 template <typename T> constexpr auto is_light_primitive_v = is_light_primitive<T>::value;
 
 // A primitive node with its value embedded in its id
@@ -85,7 +91,5 @@ template <typename T>
 concept LightPrimitiveNode = is_light_primitive_v<T>;
 
 } // namespace traits
-
-} // namespace ast
 
 } // namespace porpoise

@@ -6,6 +6,7 @@
 #include <type_traits>
 
 #include "assert.hh"
+#include "type_traits.hh"
 #include "types.hh"
 
 namespace porpoise {
@@ -16,12 +17,12 @@ template <typename T> struct Nullable;
 
 // When true, allows the type to be used in a compact optional representation
 template <typename T>
-concept Compactable = !Reference<T> && requires(const T& t) {
+concept Compactable = !traits::Reference<T> && requires(const T& t) {
     { Nullable<T>::invalid() } -> std::same_as<T>;
     { Nullable<T>::is_valid(t) } -> std::same_as<bool>;
 };
 
-template <ScopedEnum E> struct Nullable<E> {
+template <traits::ScopedEnum E> struct Nullable<E> {
     [[nodiscard]] static constexpr auto invalid() noexcept -> E {
         return static_cast<E>(std::numeric_limits<std::underlying_type_t<E>>::max());
     }
@@ -121,7 +122,7 @@ template <typename T> class Ref {
 // Returns the Ref version of the optional type if required
 template <typename T>
 using TryDispatchRef =
-    std::conditional_t<Reference<T>, Ref<std::remove_reference_t<T>>, std::optional<T>>;
+    std::conditional_t<traits::Reference<T>, Ref<std::remove_reference_t<T>>, std::optional<T>>;
 
 // An efficient optional enum representation for enums with a sentinel value
 template <traits::Compactable T> class CompactOpt {
@@ -208,17 +209,12 @@ template <typename T> struct OptionImpl {
     using type = std::optional<T>;
 };
 
-template <Reference T> struct OptionImpl<T> {
+template <traits::Reference T> struct OptionImpl<T> {
     using type = Ref<std::remove_reference_t<T>>;
 };
 
 template <traits::Compactable T> struct OptionImpl<T> {
     using type = CompactOpt<T>;
-};
-
-template <typename Self, typename T> struct ConstRefDispatcher {
-    using type =
-        std::conditional_t<std::is_const_v<std::remove_reference_t<Self>>, Ref<const T>, Ref<T>>;
 };
 
 } // namespace detail
@@ -231,12 +227,6 @@ template <typename T> struct is_option<std::optional<T>> : std::true_type {};
 template <typename T> struct is_option<detail::Ref<T>> : std::true_type {};
 template <typename T> struct is_option<detail::CompactOpt<T>> : std::true_type {};
 template <typename T> constexpr bool is_option_v = is_option<T>::value;
-
-template <typename Self, typename T> using const_ref_dispatch = detail::ConstRefDispatcher<Self, T>;
-
-// Returns `opt::Option<const T&>` if Self is const, `opt::Option<T&>` otherwise
-template <typename Self, typename T>
-using const_ref_dispatch_t = typename const_ref_dispatch<Self, T>::type;
 
 // Compares two values, forwarding safety concerns to the comparator.
 template <typename T, typename Comparator>
@@ -326,7 +316,7 @@ class Index {
     constexpr Index(std::nullopt_t) noexcept {}
 
     // Any negative value is treated as a sentinel
-    template <Integral Int> constexpr Index(Int i) noexcept {
+    template <traits::Integral Int> constexpr Index(Int i) noexcept {
         if (i >= 0) { idx_ = static_cast<usize>(i); }
     }
 

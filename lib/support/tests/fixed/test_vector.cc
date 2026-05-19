@@ -14,8 +14,8 @@
 namespace porpoise::tests {
 
 TEST_CASE("StaticVector type checks") {
-    STATIC_REQUIRE(TriviallyDestructible<fixed::Vector<mem::NonNull<i32>, 4>>);
-    STATIC_REQUIRE_FALSE(TriviallyDestructible<fixed::Vector<mem::Box<i32>, 4>>);
+    STATIC_REQUIRE(traits::TriviallyDestructible<fixed::Vector<mem::NonNull<i32>, 4>>);
+    STATIC_REQUIRE_FALSE(traits::TriviallyDestructible<fixed::Vector<mem::Box<i32>, 4>>);
 }
 
 TEST_CASE("StaticVector basic usage") {

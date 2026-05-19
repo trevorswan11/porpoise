@@ -9,7 +9,7 @@
 #include "enum.hh"
 #include "iterator.hh"
 #include "option.hh"
-#include "types.hh"
+#include "type_traits.hh"
 
 namespace porpoise::fixed {
 
@@ -18,7 +18,7 @@ template <typename Enum>
 concept MappableEnum = BoundedEnum<Enum> && magic_enum::enum_count<Enum>() > 1;
 
 // An O(1) map that stores optional values for each enumeration
-template <MappableEnum E, TriviallyDestructible Value> class EnumMap {
+template <MappableEnum E, traits::TriviallyDestructible Value> class EnumMap {
   public:
     using Map = std::array<Value, magic_enum::enum_count<E>()>;
     MAKE_UNALIASED_ITERATOR(Map, map_)

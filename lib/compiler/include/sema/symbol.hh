@@ -20,6 +20,7 @@
 #include "iterator.hh"
 #include "option.hh"
 #include "result.hh"
+#include "type_traits.hh"
 #include "types.hh"
 #include "utility.hh"
 #include "variant.hh"
@@ -100,7 +101,7 @@ class Symbol {
 
     // Tries to unpack T, returning an empty option instead of throwing an exception
     template <typename T, typename Self> [[nodiscard]] auto as_opt(this Self&& self) noexcept {
-        using ReturnType = opt::const_ref_dispatch_t<Self, T>;
+        using ReturnType = opt::Option<traits::const_dispatch_t<Self, T>&>;
         if (!std::holds_alternative<T>(self.data_)) { return ReturnType{opt::none}; }
         return ReturnType{std::get<T>(self.data_)};
     }
@@ -171,7 +172,7 @@ class SymbolTable {
     template <typename Self>
     [[nodiscard]] auto get_opt(this Self&& self, std::string_view name) noexcept {
         auto it          = self.symbols_.find(name);
-        using ReturnType = opt::const_ref_dispatch_t<Self, Symbol>;
+        using ReturnType = opt::Option<traits::const_dispatch_t<Self, Symbol>&>;
         if (it == self.symbols_.end()) { return ReturnType{opt::none}; }
         return ReturnType{it->second};
     }
@@ -257,7 +258,7 @@ class SymbolTableRegistry {
     }
 
     template <typename Self> [[nodiscard]] auto get_opt(this Self&& self, usize idx) noexcept {
-        using ReturnType = opt::const_ref_dispatch_t<Self, SymbolTable>;
+        using ReturnType = opt::Option<traits::const_dispatch_t<Self, SymbolTable>&>;
         if (idx >= self.tables_.size()) { return ReturnType{opt::none}; }
         return ReturnType{self.tables_[idx]};
     }
@@ -269,7 +270,7 @@ class SymbolTableRegistry {
 
     template <typename Self>
     [[nodiscard]] auto get_from_opt(this Self&& self, usize idx, std::string_view name) noexcept {
-        using ReturnType = opt::const_ref_dispatch_t<Self, Symbol>;
+        using ReturnType = opt::Option<traits::const_dispatch_t<Self, Symbol>&>;
         if (idx >= self.tables_.size()) { return ReturnType{opt::none}; }
         return self.tables_[idx].get_opt(name);
     }
@@ -284,7 +285,7 @@ class SymbolTableRegistry {
     template <typename Self>
     [[nodiscard]] auto
     lookup(this Self&& self, const SymbolTableStack& stack, std::string_view name) noexcept {
-        using ReturnType = opt::const_ref_dispatch_t<Self, Symbol>;
+        using ReturnType = opt::Option<traits::const_dispatch_t<Self, Symbol>&>;
         for (const auto idx : std::views::reverse(stack)) {
             if (auto symbol = self.tables_[idx].get_opt(name)) { return symbol; }
         }

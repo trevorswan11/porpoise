@@ -31,7 +31,7 @@ class Arena {
     // cppcheck-suppress-begin [unreadVariable, internalAstError]
 
     // Asserts that the requested type is at most 64KB
-    template <TriviallyDestructible T, typename... Args>
+    template <traits::TriviallyDestructible T, typename... Args>
     [[nodiscard]] auto make(Args&&... args) -> mem::NonNull<T> {
         static_assert(sizeof(T) <= BLOCK_SIZE, "Block size cannot fit requested type");
         void* mem = alloc(sizeof(T), alignof(T));
@@ -39,7 +39,8 @@ class Arena {
     }
 
     // Asserts that the requested type-count product can fit in 64KB
-    template <TriviallyDestructible T> [[nodiscard]] auto make_span(usize count) -> std::span<T> {
+    template <traits::TriviallyDestructible T>
+    [[nodiscard]] auto make_span(usize count) -> std::span<T> {
         static_assert(sizeof(T) <= BLOCK_SIZE, "Block size cannot fit requested type");
         const auto size = sizeof(T) * count;
         ASSERT(size <= BLOCK_SIZE, "Block size cannot fit requested type count");

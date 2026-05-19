@@ -15,6 +15,7 @@
 #include "hash.hh"
 #include "memory.hh"
 #include "option.hh"
+#include "type_traits.hh"
 #include "types.hh"
 #include "utility.hh"
 #include "variant.hh"
@@ -217,7 +218,7 @@ class Type {
 
     // Tries to unpack T, returning an empty option instead of throwing an exception
     template <typename T, typename Self> [[nodiscard]] auto as_opt(this Self&& self) noexcept {
-        using ReturnType = opt::const_ref_dispatch_t<Self, T>;
+        using ReturnType = opt::Option<traits::const_dispatch_t<Self, T>&>;
         if (!self.resolved_ || !std::holds_alternative<T>(*self.resolved_)) {
             return ReturnType{opt::none};
         }
@@ -268,7 +269,7 @@ class Type {
     friend class mem::Arena;
 };
 
-static_assert(TriviallyDestructible<Type>);
+static_assert(traits::TriviallyDestructible<Type>);
 
 // All associated type lifetimes are tied to the pool
 class TypePool {

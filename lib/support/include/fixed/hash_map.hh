@@ -18,6 +18,7 @@
 #include "math.hh"
 #include "option.hh"
 #include "string.hh"
+#include "type_traits.hh"
 #include "types.hh"
 
 namespace porpoise::fixed {
@@ -91,9 +92,7 @@ class HashMapIterator {
     using value_type        = std::pair<const Key, Value>;
     using difference_type   = idiff;
     using pointer           = void;
-    using reference =
-        std::pair<const Key&,
-                  std::conditional_t<std::is_const_v<HashMapSelf>, const Value, Value>&>;
+    using reference         = std::pair<const Key&, traits::const_dispatch_t<HashMapSelf, Value>&>;
 
     // Facilitates `->` operator usage without violating memory safety
     struct Proxy {
@@ -166,11 +165,11 @@ class HashMap {
     constexpr HashMap() noexcept = default;
     constexpr ~HashMap() { clear(); }
     constexpr ~HashMap()
-        requires(TriviallyDestructible<Key> && TriviallyDestructible<Value>)
+        requires(traits::TriviallyDestructible<Key> && traits::TriviallyDestructible<Value>)
     = default;
 
     constexpr HashMap(const HashMap&)
-        requires(TriviallyCopyable<Key> && TriviallyCopyable<Value>)
+        requires(traits::TriviallyCopyable<Key> && traits::TriviallyCopyable<Value>)
     = default;
 
     constexpr HashMap(const HashMap& other) {
@@ -185,7 +184,7 @@ class HashMap {
     }
 
     constexpr auto operator=(const HashMap&) -> HashMap&
-        requires(TriviallyCopyable<Key> && TriviallyCopyable<Value>)
+        requires(traits::TriviallyCopyable<Key> && traits::TriviallyCopyable<Value>)
     = default;
 
     constexpr auto operator=(const HashMap& other) -> HashMap& {
@@ -278,7 +277,7 @@ class HashMap {
     // Returns a reference to the value at the key or none if the key is not present
     template <typename Self>
     [[nodiscard]] constexpr auto get_opt(this Self&& self, const Key& key) noexcept {
-        using ReturnType = opt::const_ref_dispatch_t<Self, Value>;
+        using ReturnType = opt::Option<traits::const_dispatch_t<Self, Value>&>;
         const auto idx   = self.index_of(key);
         return idx ? ReturnType{*(self.value_data() + *idx)} : ReturnType{};
     }
@@ -319,11 +318,14 @@ class HashMap {
 
     // Destroys all key-value pairs and resets the tracked size
     constexpr auto clear() noexcept -> void {
-        if constexpr (!TriviallyDestructible<Key> || !TriviallyDestructible<Value>) {
+        if constexpr (!traits::TriviallyDestructible<Key> ||
+                      !traits::TriviallyDestructible<Value>) {
             for (usize i = 0; i < Capacity; ++i) {
                 if (metadata_[i].is_used()) {
-                    if constexpr (!TriviallyDestructible<Key>) { std::destroy_at(key_data() + i); }
-                    if constexpr (!TriviallyDestructible<Value>) {
+                    if constexpr (!traits::TriviallyDestructible<Key>) {
+                        std::destroy_at(key_data() + i);
+                    }
+                    if constexpr (!traits::TriviallyDestructible<Value>) {
                         std::destroy_at(value_data() + i);
                     }
                 }

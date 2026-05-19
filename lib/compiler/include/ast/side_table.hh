@@ -6,12 +6,12 @@
 #include "ast/traits.hh"
 
 #include "assert.hh"
-#include "types.hh"
+#include "type_traits.hh"
 
 namespace porpoise::ast {
 
 // An ID-indexable side table containing attached data
-template <traits::IndexableID ID, DefaultConstructible T> struct SideTable {
+template <traits::IndexableID ID, traits::DefaultConstructible T> struct SideTable {
     std::vector<T> values;
 
     // Allows a handle wrapper of a node to be used for raw ID-based tables

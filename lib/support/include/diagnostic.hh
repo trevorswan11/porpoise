@@ -98,7 +98,7 @@ auto format_diagnostic(std::ostream&                   os,
 
 } // namespace detail
 
-template <ScopedEnum E> class Diagnostic {
+template <traits::ScopedEnum E> class Diagnostic {
   public:
     explicit Diagnostic(E err) noexcept : error_{err} {}
     Diagnostic(E err, usize line, usize column) noexcept : loc_{{line, column}}, error_{err} {}

@@ -21,7 +21,7 @@ class ASTDumper {
   public:
     explicit ASTDumper(const AST& ast, std::ostream& out) : out_{out}, ast_{ast} {}
 
-    template <ast::traits::IndexableNodeID ID> auto dump(ID id) -> void {
+    template <traits::IndexableNodeID ID> auto dump(ID id) -> void {
         ASSERT(id.is_valid(), "Attempt to dump invalid handle");
         std::visit([&](const auto& data) { this->visit(id, data); }, ast_[id]);
     }

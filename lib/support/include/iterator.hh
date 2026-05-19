@@ -3,6 +3,8 @@
 #include <tuple>
 #include <type_traits>
 
+#include "type_traits.hh"
+
 namespace porpoise {
 
 // Similar to a std::pair, but the Visitor may be a function pointer
@@ -13,9 +15,7 @@ template <typename Iterable, typename Visitor> struct IterPair {
 
 namespace traits {
 
-template <typename Self, typename T>
-using data_pointer_t =
-    std::conditional_t<std::is_const_v<std::remove_reference_t<Self>>, const T*, T*>;
+template <typename Self, typename T> using data_pointer_t = const_dispatch_t<Self, T>*;
 
 template <typename T>
 concept InsertablePair = requires {

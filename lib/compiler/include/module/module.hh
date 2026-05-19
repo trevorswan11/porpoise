@@ -105,9 +105,9 @@ struct Module {
                                   state == mod::ModuleState::POISONED_SYMBOL_COLLECTION);
     }
 
-    template <ast::traits::IndexableID ID>
+    template <traits::IndexableID ID>
     [[nodiscard]] constexpr auto has_sema_type(ID id) const noexcept -> bool {
-        if constexpr (ast::traits::IndexableNodeID<ID>) {
+        if constexpr (traits::IndexableNodeID<ID>) {
             return sema_side_tables.node_types[id].has_value();
         } else {
             return sema_side_tables.explicit_types[id].has_value();
@@ -116,9 +116,9 @@ struct Module {
 
     [[nodiscard]] auto has_sema_type(const ast::MatchExpression::Arm& arm) const noexcept -> bool;
 
-    template <ast::traits::IndexableID ID>
+    template <traits::IndexableID ID>
     [[nodiscard]] constexpr auto get_sema_type(ID id) noexcept -> sema::Type& {
-        if constexpr (ast::traits::IndexableNodeID<ID>) {
+        if constexpr (traits::IndexableNodeID<ID>) {
             return *sema_side_tables.node_types[id];
         } else {
             return *sema_side_tables.explicit_types[id];
@@ -127,9 +127,9 @@ struct Module {
 
     [[nodiscard]] auto get_sema_type(const ast::MatchExpression::Arm& arm) noexcept -> sema::Type&;
 
-    template <ast::traits::IndexableID ID>
+    template <traits::IndexableID ID>
     constexpr auto set_sema_type(ID id, sema::Type& type) noexcept -> void {
-        if constexpr (ast::traits::IndexableNodeID<ID>) {
+        if constexpr (traits::IndexableNodeID<ID>) {
             sema_side_tables.node_types[id].emplace(type);
         } else {
             sema_side_tables.explicit_types[id].emplace(type);

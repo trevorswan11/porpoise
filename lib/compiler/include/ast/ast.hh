@@ -28,7 +28,7 @@ template <traits::IndexableID ID, typename Data> struct DataPoolBase {
     constexpr auto emplace_back(const syntax::Token& start_token, Data&& data) -> u64 {
         const auto index = static_cast<u64>(pool.size());
         pool.emplace_back(std::forward<Data>(data));
-        locations.emplace_back(::porpoise::traits::SourceInfo<syntax::Token>::get(start_token));
+        locations.emplace_back(traits::SourceInfo<syntax::Token>::get(start_token));
         return index;
     }
 };

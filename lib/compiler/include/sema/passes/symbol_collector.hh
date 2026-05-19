@@ -25,7 +25,7 @@ class SymbolCollector {
   public:
     static auto collect_symbols(mod::Module& module, Context& ctx) -> mod::ModuleState;
 
-    template <ast::traits::IndexableID ID> auto collect(ID id) -> void {
+    template <traits::IndexableID ID> auto collect(ID id) -> void {
         std::visit([&](const auto& data) { visit(id, data); }, collecting_.ast[id]);
     }
 
