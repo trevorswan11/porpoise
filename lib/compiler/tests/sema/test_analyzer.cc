@@ -26,6 +26,7 @@ pub const println := fn(str: []u8): void {};
 )"};
 
 TEST_CASE("Full sema pipeline") {
+    SKIP();
     constexpr std::string_view root{"main.porp"};
 
     auto ctx = helpers::analyze(

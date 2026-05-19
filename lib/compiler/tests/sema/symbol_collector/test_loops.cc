@@ -24,10 +24,10 @@ namespace {
     REQUIRE(registry.size() == expected_reg_count);
     const auto& symbol_a = registry.get_from(0, "a");
     CHECK_FALSE(symbol_a.has_kind());
-    CHECK_FALSE(symbol_a.has_type());
 
-    REQUIRE(symbol_a.is_symbolic_node());
-    const auto& decl = ctx.root_mod->ast.get_as<ast::DeclStatement>(*symbol_a.get_symbolic_node());
+    const auto symbolic_node = symbol_a.as_opt<sema::symbols::Node>();
+    REQUIRE(symbolic_node);
+    const auto& decl = ctx.root_mod->ast.get_as<ast::DeclStatement>(*symbolic_node);
 
     auto& pool = ctx.analyzer.get_pool();
     REQUIRE(ctx.root_mod->has_sema_type(**decl.value));
@@ -54,9 +54,9 @@ TEST_CASE("For loop collection") {
 
     const auto& loop_table = ctx.analyzer.get_table(3);
     REQUIRE(loop_table.has("i"));
-    CHECK(loop_table.get("i").is_for_loop_capture());
+    CHECK(loop_table.get("i").as_opt<sema::symbols::ForLoopCapture>());
     REQUIRE(loop_table.has("j"));
-    CHECK(loop_table.get("j").is_for_loop_capture());
+    CHECK(loop_table.get("j").as_opt<sema::symbols::ForLoopCapture>());
 
     ctx.test_common_decl_collection(2);
     ctx.test_common_decl_collection(3);

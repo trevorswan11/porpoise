@@ -217,10 +217,7 @@ class Type {
 
     // Tries to unpack T, returning an empty option instead of throwing an exception
     template <typename T, typename Self> [[nodiscard]] auto as_opt(this Self&& self) noexcept {
-        using ReturnType = std::conditional_t<std::is_const_v<std::remove_reference_t<Self>>,
-                                              opt::Option<const T&>,
-                                              opt::Option<T&>>;
-
+        using ReturnType = opt::const_ref_dispatch_t<Self, T>;
         if (!self.resolved_ || !std::holds_alternative<T>(*self.resolved_)) {
             return ReturnType{opt::none};
         }

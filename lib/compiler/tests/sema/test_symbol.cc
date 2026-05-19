@@ -5,6 +5,7 @@
 #include <catch2/catch_test_macros.hpp>
 
 #include "ast/handle.hh"
+#include "ast/statement.hh"
 #include "helpers/sema.hh"
 #include "module/memory_loader.hh"
 #include "module/module.hh"
@@ -37,31 +38,32 @@ TEST_CASE("Basic table operations") {
 
     sema::SymbolTable table;
     CHECK(table.empty());
-    CHECK(table.insert<sema::SymbolicImport>("a", *module, import_handle, opt::none));
+    CHECK(table.insert<sema::symbols::Node>("a", *module, import_handle));
     CHECK(table.size() == 1);
     CHECK_FALSE(table.empty());
 
     CHECK(table.has("a"));
     const auto& retrieved = table.get_opt("a");
-    CHECK(retrieved);
+    REQUIRE(retrieved);
     CHECK(retrieved->get_name() == "a");
-    CHECK_FALSE(retrieved->has_type());
-    CHECK(retrieved->is_import_stmt());
+
+    const auto symbolic_node = retrieved->as_opt<sema::symbols::Node>();
+    REQUIRE(symbolic_node);
+    CHECK(symbolic_node->is<ast::ImportStatement>());
 }
 
 TEST_CASE("Duplicate table inserts") {
     const auto [module, import_handle, memory] = setup_basic_import();
     sema::SymbolTable table;
-    CHECK(table.insert<sema::SymbolicImport>("a", *module, import_handle, opt::none));
-    CHECK_FALSE(table.insert<sema::SymbolicImport>("a", *module, import_handle, opt::none));
+    CHECK(table.insert<sema::symbols::Node>("a", *module, import_handle));
+    CHECK_FALSE(table.insert<sema::symbols::Node>("a", *module, import_handle));
     CHECK(table.size() == 1);
 }
 
 TEST_CASE("Illegal registry insert") {
     const auto [module, import_handle, memory] = setup_basic_import();
     sema::SymbolTableRegistry registry;
-    const auto                result =
-        registry.insert_into<sema::SymbolicImport>(0, *module, "a", import_handle, opt::none);
+    const auto result = registry.insert_into<sema::symbols::Node>(0, *module, "a", import_handle);
 
     CHECK_FALSE(result);
     CHECK(result.error() == sema::Diagnostic{sema::Error::INVALID_TABLE_IDX});

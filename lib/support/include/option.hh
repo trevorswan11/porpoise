@@ -216,6 +216,11 @@ template <traits::Compactable T> struct OptionImpl<T> {
     using type = CompactOpt<T>;
 };
 
+template <typename Self, typename T> struct ConstRefDispatcher {
+    using type =
+        std::conditional_t<std::is_const_v<std::remove_reference_t<Self>>, Ref<const T>, Ref<T>>;
+};
+
 } // namespace detail
 
 // A safe, reference-allowable optional type dispatcher
@@ -226,6 +231,12 @@ template <typename T> struct is_option<std::optional<T>> : std::true_type {};
 template <typename T> struct is_option<detail::Ref<T>> : std::true_type {};
 template <typename T> struct is_option<detail::CompactOpt<T>> : std::true_type {};
 template <typename T> constexpr bool is_option_v = is_option<T>::value;
+
+template <typename Self, typename T> using const_ref_dispatch = detail::ConstRefDispatcher<Self, T>;
+
+// Returns `opt::Option<const T&>` if Self is const, `opt::Option<T&>` otherwise
+template <typename Self, typename T>
+using const_ref_dispatch_t = typename const_ref_dispatch<Self, T>::type;
 
 // Compares two values, forwarding safety concerns to the comparator.
 template <typename T, typename Comparator>

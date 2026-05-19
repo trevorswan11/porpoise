@@ -52,7 +52,7 @@ auto TypeResolver::resolve_types(mod::Module& module, Context& ctx) -> mod::Modu
 }
 
 auto TypeResolver::poison_node(ast::NodeID id) -> void {
-    ctx_.poison_node(collecting_, id);
+    ctx_.poison_node(resolving_, id);
     last_type_.emplace(ctx_.get_poison());
 }
 
@@ -67,7 +67,7 @@ auto TypeResolver::visit(ast::NodeID id, const ast::ArrayExpression& array) -> v
     for (const auto& item : array.items) { resolve(item); }
     resolve(array.item_explicit_type);
     mem::NonNull<Type> item_type = last_type_.take();
-    collecting_.set_sema_type(array.item_explicit_type, *item_type);
+    resolving_.set_sema_type(array.item_explicit_type, *item_type);
 
     const auto items_size      = array.items.size();
     const auto null_terminated = array.null_terminated;
@@ -76,7 +76,7 @@ auto TypeResolver::visit(ast::NodeID id, const ast::ArrayExpression& array) -> v
     if (!last_type_->has_resolved()) {
         last_type_->resolve<types::Array>(*item_type, items_size, null_terminated);
     }
-    collecting_.set_sema_type(id, *last_type_);
+    resolving_.set_sema_type(id, *last_type_);
 }
 
 auto TypeResolver::resolve_call_args(std::span<const ast::CallExpression::Argument> args)
@@ -87,7 +87,7 @@ auto TypeResolver::resolve_call_args(std::span<const ast::CallExpression::Argume
             [this](const auto& handle) {
                 resolve(handle);
                 const auto is_poison = last_type_->is_poison();
-                collecting_.set_sema_type(handle, *last_type_.take());
+                resolving_.set_sema_type(handle, *last_type_.take());
                 return is_poison;
             },
             arg);
@@ -99,7 +99,7 @@ auto TypeResolver::get_resolved_call_arg_type(const ast::CallExpression::Argumen
     -> mem::NonNull<Type> {
     return std::visit(
         [this](const auto& handle) -> auto& {
-            auto& type = collecting_.get_sema_type(handle);
+            auto& type = resolving_.get_sema_type(handle);
             ASSERT(type.has_resolved(), "Call argument was not already resolved");
             return type;
         },
@@ -108,7 +108,7 @@ auto TypeResolver::get_resolved_call_arg_type(const ast::CallExpression::Argumen
 
 auto TypeResolver::get_call_arg_location(const ast::CallExpression::Argument& arg)
     -> SourceLocation {
-    return std::visit([this](auto id) { return collecting_.ast.location_of(id); }, arg);
+    return std::visit([this](auto id) { return resolving_.ast.location_of(id); }, arg);
 }
 
 // This is called after the call expression's arguments have all been resolved
@@ -123,7 +123,7 @@ auto TypeResolver::resolve_builtin_call(ast::NodeID                   id,
                                          params.size(),
                                          call.arguments.size()),
                              Error::ARITY_MISMATCH,
-                             collecting_.ast.location_of(id));
+                             resolving_.ast.location_of(id));
     }
 
     // There must be an actual builtin present with a token id
@@ -274,7 +274,7 @@ auto TypeResolver::resolve_builtin_call(ast::NodeID                   id,
     default: ASSERT(false, "Unimplemented builtin type resolution"); break;
     }
 
-    collecting_.set_sema_type(id, *result_type);
+    resolving_.set_sema_type(id, *result_type);
     last_type_.emplace(*result_type);
     return Unit{};
 }
@@ -287,7 +287,7 @@ auto TypeResolver::visit(ast::NodeID id, const ast::CallExpression& call) -> voi
         resolve_call_args(call.arguments);
         return poison_node(id);
     }
-    collecting_.set_sema_type(call.function, *callee_type);
+    resolving_.set_sema_type(call.function, *callee_type);
 
     // There's no need to check any further if the arguments are poisoned
     if (resolve_call_args(call.arguments) == ResolveResult::POISONED) { return poison_node(id); }
@@ -301,12 +301,12 @@ auto TypeResolver::visit(ast::NodeID id, const ast::CallExpression& call) -> voi
                                                       params.size(),
                                                       call.arguments.size()),
                                           Error::ARITY_MISMATCH,
-                                          collecting_.ast.location_of(id));
+                                          resolving_.ast.location_of(id));
             return poison_node(id);
         }
 
         // Only arity is checked since the type checker will handle the rest
-        collecting_.set_sema_type(id, function_type->return_type);
+        resolving_.set_sema_type(id, function_type->return_type);
         last_type_.emplace(function_type->return_type);
     } else if (auto builtin_type = callee_type->as_opt<types::BuiltinFunction>()) {
         // Poison the call if there's an error early
@@ -318,17 +318,17 @@ auto TypeResolver::visit(ast::NodeID id, const ast::CallExpression& call) -> voi
     } else {
         ctx_.diagnostics.emplace_back("Expression is not callable",
                                       Error::NON_CALLABLE_EXPRESSION,
-                                      collecting_.ast.location_of(id));
+                                      resolving_.ast.location_of(id));
         return poison_node(id);
     }
 }
 
 auto TypeResolver::visit(ast::NodeID id, const ast::DoWhileLoopExpression& do_while) -> void {
     // The loop itself holds the block index, not the block
-    auto& loop_type = collecting_.get_sema_type(id);
+    auto& loop_type = resolving_.get_sema_type(id);
     {
         const Scope s{table_stack_, loop_type.get_symbol_table_idx(), table_idx_};
-        const auto& block = collecting_.ast.get_as<ast::BlockStatement>(do_while.block);
+        const auto& block = resolving_.ast.get_as<ast::BlockStatement>(do_while.block);
         for (const auto& stmt : block) { TRY_RESOLVE(stmt); }
     }
 
@@ -356,7 +356,7 @@ auto TypeResolver::resolve_members(std::span<const ast::MemberHandle> members)
 auto TypeResolver::visit(ast::NodeID id, const ast::EnumExpression& enum_expr) -> void {
     if (enum_expr.underlying) { resolve(*enum_expr.underlying); }
 
-    auto&       type = collecting_.get_sema_type(id);
+    auto&       type = resolving_.get_sema_type(id);
     const Scope s{table_stack_, type.get_symbol_table_idx(), table_idx_};
 
     for (const auto& [name, value] : enum_expr.enumerations) {
@@ -369,7 +369,7 @@ auto TypeResolver::visit(ast::NodeID id, const ast::EnumExpression& enum_expr) -
     if (!member_types) { return poison_node(id); }
 
     // The underlying type defaults to an i32 as it would in C or C++
-    auto& underlying_type = enum_expr.underlying ? collecting_.get_sema_type(*enum_expr.underlying)
+    auto& underlying_type = enum_expr.underlying ? resolving_.get_sema_type(*enum_expr.underlying)
                                                  : ctx_.get_builtin_resolved_type(TypeKind::I32);
     type.resolve<types::Enum>(underlying_type, *member_types);
     last_type_.emplace(type);
@@ -379,11 +379,11 @@ auto TypeResolver::visit(ast::NodeID id, const ast::ForLoopExpression& for_expr)
     for (const auto& iterable : for_expr.iterables) { TRY_RESOLVE(iterable); }
 
     // The loop itself holds the block index which houses captures, not the block
-    auto& loop_type = collecting_.get_sema_type(id);
+    auto& loop_type = resolving_.get_sema_type(id);
     {
         const Scope s{table_stack_, loop_type.get_symbol_table_idx(), table_idx_};
         for (const auto& capture : for_expr.captures) { TRY_RESOLVE(capture.payload); }
-        const auto& block = collecting_.ast.get_as<ast::BlockStatement>(for_expr.block);
+        const auto& block = resolving_.ast.get_as<ast::BlockStatement>(for_expr.block);
         for (const auto& stmt : block) { TRY_RESOLVE(stmt); }
     }
 
@@ -392,7 +392,7 @@ auto TypeResolver::visit(ast::NodeID id, const ast::ForLoopExpression& for_expr)
 }
 
 auto TypeResolver::visit(ast::NodeID id, const ast::FunctionExpression& fn) -> void {
-    auto&       fn_type = collecting_.get_sema_type(id);
+    auto&       fn_type = resolving_.get_sema_type(id);
     const Scope s{table_stack_, fn_type.get_symbol_table_idx(), table_idx_};
 
     // The entire function lives inside of its preallocated scope
@@ -403,7 +403,7 @@ auto TypeResolver::visit(ast::NodeID id, const ast::FunctionExpression& fn) -> v
     }
     TRY_RESOLVE(fn.explicit_return_type);
 
-    const auto& block = collecting_.ast.get_as<ast::BlockStatement>(*fn.body);
+    const auto& block = resolving_.ast.get_as<ast::BlockStatement>(*fn.body);
     for (const auto& stmt : block) { TRY_RESOLVE(stmt); }
     last_type_.emplace(fn_type);
 }
@@ -414,17 +414,13 @@ auto TypeResolver::visit(ast::NodeID id, const ast::IdentifierExpression& ident)
 
     // Check for an undeclared identifier and poison the ident
     if (!symbol) {
-        ctx_.poison_node(collecting_,
+        ctx_.poison_node(resolving_,
                          id,
                          fmt::format("Use of undeclared identifier '{}'", name),
                          Error::UNDECLARED_IDENTIFIER,
-                         collecting_.ast.location_of(id));
+                         resolving_.ast.location_of(id));
         return last_type_.emplace(ctx_.get_poison());
     }
-
-    // Identifiers can be anything that they're symbol is allowed to be
-    collecting_.set_sema_type(id, symbol->get_type());
-    last_type_.emplace(symbol->get_type());
 }
 
 auto TypeResolver::visit(ast::NodeID id, const ast::IfExpression& if_expr) -> void {
@@ -434,7 +430,7 @@ auto TypeResolver::visit(ast::NodeID id, const ast::IfExpression& if_expr) -> vo
     // There can only be a non-void type with an alternate but this is for pass 3
     auto& branch_type = *last_type_.take();
     if (if_expr.alternate) { TRY_RESOLVE(*if_expr.alternate); }
-    collecting_.set_sema_type(id, branch_type);
+    resolving_.set_sema_type(id, branch_type);
     last_type_.emplace(branch_type);
 }
 
@@ -442,14 +438,14 @@ auto TypeResolver::visit(ast::NodeID, const ast::IndexExpression&) -> void {}
 
 auto TypeResolver::visit(ast::NodeID id, const ast::InfiniteLoopExpression& loop) -> void {
     TRY_RESOLVE(loop.block);
-    last_type_.emplace(collecting_.get_sema_type(id));
+    last_type_.emplace(resolving_.get_sema_type(id));
 }
 
 #define MAKE_INFIX_RESOLVER(NodeType)                                             \
     auto TypeResolver::visit(ast::NodeID id, const ast::NodeType& node) -> void { \
         TRY_RESOLVE(node.lhs);                                                    \
         TRY_RESOLVE(node.rhs);                                                    \
-        collecting_.set_sema_type(id, *last_type_);                               \
+        resolving_.set_sema_type(id, *last_type_);                                \
     }
 
 MAKE_INFIX_RESOLVER(AssignmentExpression)
@@ -466,18 +462,18 @@ auto TypeResolver::visit(ast::NodeID id, const ast::InitializerExpression& init)
     // Resolve the object second so it can be tied to the expression's type
     if (init.object_type) {
         TRY_RESOLVE(*init.object_type);
-        collecting_.set_sema_type(id, collecting_.get_sema_type(*init.object_type));
-        last_type_.emplace(collecting_.get_sema_type(id));
+        resolving_.set_sema_type(id, resolving_.get_sema_type(*init.object_type));
+        last_type_.emplace(resolving_.get_sema_type(id));
     } else {
         // Without an object type it must be inferred from the LHS
         auto& auto_type = ctx_.get_builtin_resolved_type(TypeKind::AUTO);
-        collecting_.set_sema_type(id, auto_type);
+        resolving_.set_sema_type(id, auto_type);
         last_type_.emplace(auto_type);
     }
 }
 
 auto TypeResolver::visit(ast::NodeID id, const ast::LabelExpression& label) -> void {
-    auto&       label_type = collecting_.get_sema_type(id);
+    auto&       label_type = resolving_.get_sema_type(id);
     const Scope s{table_stack_, label_type.get_symbol_table_idx(), table_idx_};
 
     // Resolve the body but cache the label's type so the result can bind to the label
@@ -500,7 +496,7 @@ auto TypeResolver::visit(ast::NodeID id, const ast::MatchExpression& match) -> v
 
     // Each arm was assigned a new scope index on the first pass
     for (const auto& arm : match.arms) {
-        const auto& arm_type = collecting_.get_sema_type(arm.pattern);
+        const auto& arm_type = resolving_.get_sema_type(arm.pattern);
         const Scope s{table_stack_, arm_type.get_symbol_table_idx(), table_idx_};
 
         TRY_RESOLVE(arm.pattern);
@@ -516,7 +512,7 @@ auto TypeResolver::visit(ast::NodeID id, const ast::MatchExpression& match) -> v
 
     // In the rare case that a type could not be found we have to poison
     if (first_type) {
-        collecting_.set_sema_type(id, *first_type);
+        resolving_.set_sema_type(id, *first_type);
         last_type_.emplace(*first_type);
     } else {
         poison_node(id);
@@ -526,7 +522,7 @@ auto TypeResolver::visit(ast::NodeID id, const ast::MatchExpression& match) -> v
 #define MAKE_PREFIX_RESOLVER(NodeType)                                            \
     auto TypeResolver::visit(ast::NodeID id, const ast::NodeType& node) -> void { \
         TRY_RESOLVE(node.rhs);                                                    \
-        collecting_.set_sema_type(id, *last_type_);                               \
+        resolving_.set_sema_type(id, *last_type_);                                \
     }
 
 MAKE_PREFIX_RESOLVER(ReferenceExpression)
@@ -541,7 +537,7 @@ auto TypeResolver::visit(ast::NodeID id, const ast::StringExpression& string) ->
 
     // String literals with the same size will always have the same type
     type.resolve<types::Array>(ctx_.get_builtin_resolved_type(TypeKind::U8), size, false);
-    collecting_.set_sema_type(id, type);
+    resolving_.set_sema_type(id, type);
     last_type_.emplace(type);
 }
 
@@ -549,7 +545,7 @@ auto TypeResolver::visit(ast::NodeID id, const ast::StringExpression& string) ->
     auto TypeResolver::visit(ast::NodeID id, const ast::NodeType&) -> void {            \
         last_type_.emplace(ctx_.get_builtin_resolved_type(TypeKind::kind));             \
         if (!last_type_->has_resolved()) { last_type_->resolve<types::BuiltinType>(); } \
-        collecting_.set_sema_type(id, *last_type_);                                     \
+        resolving_.set_sema_type(id, *last_type_);                                      \
     }
 
 MAKE_PRIMITIVE_RESOLVER(I32Expression, I32)
@@ -571,7 +567,7 @@ auto TypeResolver::visit(ast::NodeID id, const ast::StructExpression& struct_exp
     auto member_types = resolve_members(struct_expr.members);
     if (!member_types) { return poison_node(id); }
 
-    auto& type = collecting_.get_sema_type(id);
+    auto& type = resolving_.get_sema_type(id);
     type.resolve<types::Struct>(*member_types);
     last_type_.emplace(type);
 }
@@ -595,7 +591,7 @@ auto TypeResolver::visit(ast::ExplicitTypeID, const ast::UnionExpression&) -> vo
 auto TypeResolver::visit(ast::ExplicitTypeID, const ast::ExplicitArrayType&) -> void {}
 
 auto TypeResolver::visit(ast::NodeID id, const ast::UnionExpression& union_expr) -> void {
-    auto& type = collecting_.get_sema_type(id);
+    auto& type = resolving_.get_sema_type(id);
 
     auto field_types    = ctx_.pool.get_many_unsafe(union_expr.fields.size());
     bool field_poisoned = false;
@@ -618,10 +614,10 @@ auto TypeResolver::visit(ast::NodeID id, const ast::WhileLoopExpression& while_l
     TRY_RESOLVE(while_loop.condition);
     if (while_loop.continuation) { TRY_RESOLVE(*while_loop.continuation); }
     // The loop itself holds the block index which houses captures, not the block
-    auto& loop_type = collecting_.get_sema_type(id);
+    auto& loop_type = resolving_.get_sema_type(id);
     {
         const Scope s{table_stack_, loop_type.get_symbol_table_idx(), table_idx_};
-        const auto& block = collecting_.ast.get_as<ast::BlockStatement>(while_loop.block);
+        const auto& block = resolving_.ast.get_as<ast::BlockStatement>(while_loop.block);
         for (const auto& stmt : block) { TRY_RESOLVE(stmt); }
     }
 
@@ -631,7 +627,7 @@ auto TypeResolver::visit(ast::NodeID id, const ast::WhileLoopExpression& while_l
 
 // DONT CALL ME FROM ANY LOOP/CONDITION/FN RESOLVER
 auto TypeResolver::visit(ast::NodeID id, const ast::BlockStatement& block) -> void {
-    auto&       block_type = collecting_.get_sema_type(id);
+    auto&       block_type = resolving_.get_sema_type(id);
     const Scope s{table_stack_, block_type.get_symbol_table_idx(), table_idx_};
 
     // Just an abridged loop handler
@@ -643,10 +639,10 @@ auto TypeResolver::visit(ast::NodeID id, const ast::BreakStatement& break_stmt) 
     if (break_stmt.expression) {
         // Don't do anything with the label's type since it may need peer type resolution in pass 3
         TRY_RESOLVE(*break_stmt.expression);
-        collecting_.set_sema_type(id, *last_type_.take());
+        resolving_.set_sema_type(id, *last_type_.take());
     } else {
         // No payload is semantically equivalent to breaking with void
-        collecting_.set_sema_type(id, ctx_.get_builtin_resolved_type(TypeKind::VOID));
+        resolving_.set_sema_type(id, ctx_.get_builtin_resolved_type(TypeKind::VOID));
     }
     last_type_.emplace(ctx_.get_builtin_resolved_type(TypeKind::NORETURN));
 }
@@ -657,19 +653,15 @@ auto TypeResolver::visit(ast::NodeID, const ast::ContinueStatement&) -> void {
 
 auto TypeResolver::visit(ast::NodeID id, const ast::DeclStatement& decl) -> void {
     if (decl.type) { TRY_RESOLVE(*decl.type); }
-    const auto& ident      = collecting_.ast.get_as<ast::IdentifierExpression>(*decl.ident);
-    auto        symbol_opt = ctx_.registry.lookup(table_stack_, ident.name);
-    ASSERT(symbol_opt, "Somehow the declaration's symbol was lost");
-
-    auto& symbol = *symbol_opt;
     if (decl.value) {
         TRY_RESOLVE(*decl.value);
 
         // There might have already been a symbol present, which should be equivalent
-        if (!symbol.has_type()) {
-            symbol.set_type(*last_type_.take());
+        if (!resolving_.has_sema_type(decl.ident)) {
+            resolving_.set_sema_type(decl.ident, *last_type_.take());
         } else {
-            ASSERT(&symbol.get_type() == &*last_type_, "Resolved type doesn't match collected");
+            ASSERT(&resolving_.get_sema_type(decl.ident) == &*last_type_,
+                   "Resolved type doesn't match collected");
         }
     }
 
@@ -688,7 +680,7 @@ MAKE_PAYLOAD_STMT_RESOLVER(ExpressionStatement, expression)
 
 auto TypeResolver::visit(ast::NodeID id, const ast::ImportStatement&) -> void {
     // Updating this type reflects on the symbol in the actual table as well
-    auto& import_type = collecting_.get_sema_type(id);
+    auto& import_type = resolving_.get_sema_type(id);
     ASSERT(import_type.has_resolved(), "Import types should be resolved on pass 1");
     auto& module = import_type.as<types::Module>();
 
@@ -704,10 +696,10 @@ auto TypeResolver::visit(ast::NodeID id, const ast::ReturnStatement& return_stmt
 }
 
 auto TypeResolver::visit(ast::NodeID id, const ast::TestStatement& test) -> void {
-    auto&       test_type = collecting_.get_sema_type(id);
+    auto&       test_type = resolving_.get_sema_type(id);
     const Scope s{table_stack_, test_type.get_symbol_table_idx(), table_idx_};
 
-    const auto& block = collecting_.ast.get_as<ast::BlockStatement>(test.block);
+    const auto& block = resolving_.ast.get_as<ast::BlockStatement>(test.block);
     for (const auto& stmt : block) { TRY_RESOLVE(stmt); }
     last_type_.emplace(ctx_.get_builtin_resolved_type(TypeKind::VOID));
 }
@@ -716,8 +708,7 @@ auto TypeResolver::visit(ast::NodeID id, const ast::UsingStatement& using_stmt) 
     TRY_RESOLVE(using_stmt.explicit_type);
 
     // Bind the resolved type to the symbol now that its been collected
-    const auto& ident = collecting_.ast.get_as<ast::IdentifierExpression>(*using_stmt.alias);
-    ctx_.registry.get_from(table_idx_, ident.name).set_type(*last_type_.take());
+    resolving_.set_sema_type(using_stmt.alias, *last_type_.take());
     last_type_.emplace(ctx_.get_builtin_resolved_type(TypeKind::VOID));
 }
 

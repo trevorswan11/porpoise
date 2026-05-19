@@ -740,11 +740,12 @@ auto ScopeResolutionExpression::parse(syntax::Parser& parser, ExpressionHandle o
                                syntax::Error::ILLEGAL_OUTER_SCOPE_TYPE,
                                parser.get_location_of(*outer));
     }
+    const OuterScopeHandle narrow_outer{outer};
 
     const auto start_token = parser.get_current_token();
     TRY(parser.expect_peek(syntax::TokenType::IDENT));
     const IdentifierHandle inner = TRY(IdentifierExpression::parse(parser));
-    return parser.add_expr<ScopeResolutionExpression>(start_token, outer, inner);
+    return parser.add_expr<ScopeResolutionExpression>(start_token, narrow_outer, inner);
 }
 
 auto StructExpression::parse(syntax::Parser& parser)

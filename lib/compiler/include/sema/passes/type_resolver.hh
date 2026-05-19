@@ -29,7 +29,7 @@ class TypeResolver {
     static auto resolve_types(mod::Module& module, Context& ctx) -> mod::ModuleState;
 
     template <ast::traits::IndexableID ID> auto resolve(ID id) -> void {
-        std::visit([&](const auto& data) { visit(id, data); }, collecting_.ast[id]);
+        std::visit([&](const auto& data) { visit(id, data); }, resolving_.ast[id]);
     }
 
   private:
@@ -61,15 +61,15 @@ class TypeResolver {
     [[nodiscard]] auto resolve_members(std::span<const ast::MemberHandle> members)
         -> opt::Option<std::span<mem::NonNull<Type>>>;
 
-    TypeResolver(mod::Module& collecting, Context& ctx)
-        : collecting_{collecting}, table_idx_{*collecting.root_table_idx}, ctx_{ctx} {
+    TypeResolver(mod::Module& resolving, Context& ctx)
+        : resolving_{resolving}, table_idx_{*resolving.root_table_idx}, ctx_{ctx} {
         ASSERT(ctx.prelude_index, "TypeResolver must be used post prelude-injection");
         table_stack_.push(*ctx_.prelude_index);
         table_stack_.push(table_idx_);
     }
 
   private:
-    mod::Module&       collecting_;
+    mod::Module&       resolving_;
     usize              table_idx_;
     SymbolTableStack   table_stack_;
     Context&           ctx_;

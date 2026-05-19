@@ -25,11 +25,10 @@ auto inject_types(SymbolTable& prelude, TypePool& pool) -> void {
         ASSERT(!type.has_resolved(), "Builtin types should only be resolved once");
         type.resolve<types::BuiltinType>();
 
-        prelude.insert_unchecked(keyword.name, VirtualSymbol{keyword});
+        prelude.insert_unchecked(keyword.name, symbols::Builtin{keyword, type});
         auto& symbol = prelude.get(keyword.name);
-        symbol.set_type(type);
         symbol.set_kind(SymbolKind::TYPE);
-        symbol.set_status(ResolveStatus::RESOLVED);
+        symbol.set_status(SymbolStatus::RESOLVED);
     };
 
     namespace kws = syntax::keywords;
@@ -68,11 +67,10 @@ auto inject_functions(SymbolTable& prelude, TypePool& pool) -> void {
             ASSERT(!type.has_resolved(), "Builtin functions should only be resolved once");
             type.resolve<types::BuiltinFunction>(std::move(param_types), return_type);
 
-            prelude.insert_unchecked(builtin.name, VirtualSymbol{builtin});
+            prelude.insert_unchecked(builtin.name, symbols::Builtin{builtin, type});
             auto& symbol = prelude.get(builtin.name);
-            symbol.set_type(type);
             symbol.set_kind(SymbolKind::CALLABLE);
-            symbol.set_status(ResolveStatus::RESOLVED);
+            symbol.set_status(SymbolStatus::RESOLVED);
         };
 
     namespace bis = syntax::builtins;

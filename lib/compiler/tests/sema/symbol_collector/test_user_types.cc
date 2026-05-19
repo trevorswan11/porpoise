@@ -30,13 +30,15 @@ auto test_user_type(std::string_view input, sema::TypeKind kind, usize expected_
 
     auto&       pool          = ctx.analyzer.get_pool();
     const auto& expected_type = pool[{kind, mut::CONSTANT, 1}];
-    REQUIRE(symbol_a->has_type());
-    CHECK(&symbol_a->get_type() == &expected_type);
+
+    const auto symbolic_node = symbol_a->as_opt<sema::symbols::Node>();
+    REQUIRE(symbolic_node);
     CHECK(expected_type.get_symbol_table_idx() == idx + 1);
 
-    REQUIRE(symbol_a->is_symbolic_node());
-    const auto& a_decl =
-        ctx.root_mod->ast.get_as<ast::DeclStatement>(*symbol_a->get_symbolic_node());
+    const auto& a_decl      = ctx.root_mod->ast.get_as<ast::DeclStatement>(*symbolic_node);
+    auto&       actual_type = ctx.root_mod->get_sema_type(a_decl.ident);
+    CHECK(&actual_type == &expected_type);
+
     REQUIRE(ctx.root_mod->has_sema_type(**a_decl.value));
     CHECK(&expected_type == &ctx.root_mod->get_sema_type(**a_decl.value));
 
@@ -55,7 +57,7 @@ TEST_CASE("Enum hollow types") {
         test_user_type("const a := enum {b, static const foo := bar; };", sema::TypeKind::ENUM, 2);
     const auto& enum_table  = ctx.analyzer.get_table(1);
     const auto& enumeration = enum_table.get_opt("b");
-    REQUIRE(enumeration->is_enumeration());
+    REQUIRE(enumeration->as_opt<sema::symbols::Enumeration>());
     ctx.test_common_decl_collection(1);
 }
 
@@ -64,7 +66,7 @@ TEST_CASE("Union hollow types") {
         "const a := union { b: i32, static const foo := bar; };", sema::TypeKind::UNION, 2);
     const auto& union_table = ctx.analyzer.get_table(1);
     const auto& field       = union_table.get_opt("b");
-    REQUIRE(field->is_union_field());
+    REQUIRE(field->as_opt<sema::symbols::UnionField>());
     ctx.test_common_decl_collection(1);
 }
 

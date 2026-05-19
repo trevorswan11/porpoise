@@ -278,11 +278,8 @@ class HashMap {
     // Returns a reference to the value at the key or none if the key is not present
     template <typename Self>
     [[nodiscard]] constexpr auto get_opt(this Self&& self, const Key& key) noexcept {
-        using ReturnType = std::conditional_t<std::is_const_v<std::remove_reference_t<Self>>,
-                                              opt::Option<const Value&>,
-                                              opt::Option<Value&>>;
-
-        const auto idx = self.index_of(key);
+        using ReturnType = opt::const_ref_dispatch_t<Self, Value>;
+        const auto idx   = self.index_of(key);
         return idx ? ReturnType{*(self.value_data() + *idx)} : ReturnType{};
     }
 

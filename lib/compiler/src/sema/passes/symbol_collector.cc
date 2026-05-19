@@ -108,7 +108,7 @@ auto SymbolCollector::visit(ast::NodeID id, const ast::EnumExpression& enum_expr
                  [this](const ast::EnumExpression::Enumeration& enumeration) {
                      const auto& ident =
                          collecting_.ast.get_as<ast::IdentifierExpression>(*enumeration.name);
-                     try_declare(ident.name, enumeration);
+                     try_declare<symbols::Enumeration>(ident.name, enumeration);
                  }},
         IterPair{enum_expr.members, [this](const ast::MemberHandle& member) { collect(*member); }});
     last_type_->set_symbol_table_idx(scope_idx);
@@ -127,9 +127,9 @@ auto SymbolCollector::visit(ast::NodeID id, const ast::ForLoopExpression& for_ex
 
         const auto g_loop = in_loop_scope_.guard();
         for (const auto& capture : for_expr.captures) {
-            if (auto ident =
+            if (const auto ident =
                     collecting_.ast.get_as_opt<ast::IdentifierExpression>(*capture.payload)) {
-                try_declare(ident->name, capture);
+                try_declare<symbols::ForLoopCapture>(ident->name, capture);
             }
         }
         const auto& block = collecting_.ast.get_as<ast::BlockStatement>(*for_expr.block);
@@ -150,12 +150,12 @@ auto SymbolCollector::visit(ast::NodeID id, const ast::FunctionExpression& fn) -
     // Parameters belong to the parent scope
     if (fn.self) {
         const auto& ident = collecting_.ast.get_as<ast::IdentifierExpression>(*fn.self->ident);
-        try_declare(ident.name, fn.self.get());
+        try_declare<symbols::SelfParameter>(ident.name, fn.self.get());
     }
 
     for (const auto& param : fn.parameters) {
         const auto& ident = collecting_.ast.get_as<ast::IdentifierExpression>(param.ident);
-        try_declare(ident.name, param);
+        try_declare<symbols::Parameter>(ident.name, param);
     }
 
     const auto& block = collecting_.ast.get_as<ast::BlockStatement>(*fn.body);
@@ -188,16 +188,16 @@ auto SymbolCollector::visit(ast::NodeID id, const ast::InfiniteLoopExpression& l
     collecting_.set_sema_type(id, *last_type_.take());
 }
 
-#define MAKE_INFIX_COLLECTOR(NodeType)                                       \
-    auto SymbolCollector::visit(ast::NodeID, const NodeType& node) -> void { \
-        const auto g = in_expr_scope_.guard();                               \
-        collect(node.lhs);                                                   \
-        collect(node.rhs);                                                   \
+#define MAKE_INFIX_COLLECTOR(NodeType)                                            \
+    auto SymbolCollector::visit(ast::NodeID, const ast::NodeType& node) -> void { \
+        const auto g = in_expr_scope_.guard();                                    \
+        collect(node.lhs);                                                        \
+        collect(node.rhs);                                                        \
     }
 
-MAKE_INFIX_COLLECTOR(ast::RangeExpression)
-MAKE_INFIX_COLLECTOR(ast::AssignmentExpression)
-MAKE_INFIX_COLLECTOR(ast::BinaryExpression)
+MAKE_INFIX_COLLECTOR(RangeExpression)
+MAKE_INFIX_COLLECTOR(AssignmentExpression)
+MAKE_INFIX_COLLECTOR(BinaryExpression)
 
 auto SymbolCollector::visit(ast::NodeID, const ast::InitializerExpression& init) -> void {
     const auto g = in_expr_scope_.guard();
@@ -211,7 +211,7 @@ auto SymbolCollector::visit(ast::NodeID id, const ast::LabelExpression& label) -
     // Labels and their associated nodes live in their own scope
     const auto  new_idx = ctx_.registry.create();
     const Scope s{table_stack_, new_idx, table_idx_};
-    if (try_declare(ident.name, SymbolicNode{id})) {
+    if (try_declare<symbols::Node>(ident.name, id)) {
         auto& symbol = ctx_.registry.get_from(table_idx_, ident.name);
         symbol.set_kind(SymbolKind::LABEL);
     }
@@ -230,28 +230,28 @@ auto SymbolCollector::visit(ast::NodeID, const ast::MatchExpression& match) -> v
         const Scope s{table_stack_, new_idx, table_idx_};
 
         collect(arm.pattern);
-        if (arm.capture && (**arm.capture).get_kind() == ast::NodeKind::IDENTIFIER_EXPRESSION) {
+        if (arm.capture && (*arm.capture)->get_kind() == ast::NodeKind::IDENTIFIER_EXPRESSION) {
             const auto& ident = collecting_.ast.get_as<ast::IdentifierExpression>(**arm.capture);
-            try_declare(ident.name, arm);
+            try_declare<symbols::Node>(ident.name, *arm.capture);
         }
         collect(arm.dispatch);
 
         last_type_.emplace(ctx_.pool[{TypeKind::MATCH_ARM, types::mut::CONSTANT, new_idx}]);
         last_type_->set_symbol_table_idx(new_idx);
-        collecting_.set_sema_type(arm.pattern, *last_type_.take());
+        collecting_.set_sema_type(arm, *last_type_.take());
     }
     if (match.catch_all) { collect(*match.catch_all); }
 }
 
-#define MAKE_PREFIX_COLLECTOR(NodeType)                                      \
-    auto SymbolCollector::visit(ast::NodeID, const NodeType& node) -> void { \
-        const auto g = in_expr_scope_.guard();                               \
-        collect(node.rhs);                                                   \
+#define MAKE_PREFIX_COLLECTOR(NodeType)                                           \
+    auto SymbolCollector::visit(ast::NodeID, const ast::NodeType& node) -> void { \
+        const auto g = in_expr_scope_.guard();                                    \
+        collect(node.rhs);                                                        \
     }
 
-MAKE_PREFIX_COLLECTOR(ast::ReferenceExpression)
-MAKE_PREFIX_COLLECTOR(ast::DereferenceExpression)
-MAKE_PREFIX_COLLECTOR(ast::UnaryExpression)
+MAKE_PREFIX_COLLECTOR(ReferenceExpression)
+MAKE_PREFIX_COLLECTOR(DereferenceExpression)
+MAKE_PREFIX_COLLECTOR(UnaryExpression)
 
 auto SymbolCollector::visit(ast::NodeID id, const ast::StructExpression& struct_expr) -> void {
     const auto scope_idx =
@@ -269,7 +269,7 @@ auto SymbolCollector::visit(ast::NodeID id, const ast::UnionExpression& union_ex
                  [this](const ast::UnionExpression::Field& field) {
                      const auto& ident =
                          collecting_.ast.get_as<ast::IdentifierExpression>(*field.ident);
-                     try_declare(ident.name, field);
+                     try_declare<symbols::UnionField>(ident.name, field);
                  }},
         IterPair{union_expr.members,
                  [this](const ast::MemberHandle& member) { collect(*member); }});
@@ -334,7 +334,7 @@ auto SymbolCollector::visit(ast::NodeID id, const ast::DeclStatement& decl) -> v
     // We can stop analyzing early if there's no value
     const auto& ident = collecting_.ast.get_as<ast::IdentifierExpression>(*decl.ident);
     const auto  name  = ident.name;
-    if (!try_declare(name, SymbolicNode{id})) { return; };
+    if (!try_declare<symbols::Node>(name, id)) { return; };
     if (!decl.value) { return; }
 
     // Valued decls should be evaluated to get shallow types
@@ -367,7 +367,7 @@ auto SymbolCollector::visit(ast::NodeID id, const ast::DeclStatement& decl) -> v
     }
 
     collect(value);
-    if (last_type_) { ctx_.registry.get_from(table_idx_, name).set_type(*last_type_.take()); }
+    if (last_type_) { collecting_.set_sema_type(decl.ident, *last_type_.take()); }
 }
 
 auto SymbolCollector::visit(ast::NodeID id, const ast::DeferStatement& defer) -> void {
@@ -389,7 +389,8 @@ auto SymbolCollector::visit(ast::NodeID, const ast::ExpressionStatement& expr) -
 
 auto SymbolCollector::collect_import_payload(const ast::ImportStatement& import_stmt)
     -> std::pair<std::string_view, Result<mem::NonNull<mod::Module>, mod::Diagnostic>> {
-    if (auto string = collecting_.ast.get_as_opt<ast::StringExpression>(*import_stmt.payload)) {
+    if (const auto string =
+            collecting_.ast.get_as_opt<ast::StringExpression>(*import_stmt.payload)) {
         ASSERT(import_stmt.alias, "File import without alias");
         const auto& ident = collecting_.ast.get_as<ast::IdentifierExpression>(**import_stmt.alias);
 
@@ -420,8 +421,7 @@ auto SymbolCollector::visit(ast::NodeID id, const ast::ImportStatement& import_s
         collect_symbols(*imported_mod, new_ctx);
     }
 
-    ctx_.try_result(ctx_.registry.insert_into<SymbolicImport>(
-        table_idx_, collecting_, alias, ast::ImportHandle{id}, imported_mod));
+    ctx_.try_result(ctx_.registry.insert_into<symbols::Node>(table_idx_, collecting_, alias, id));
     if (imported_mod) {
         // Its much easier for other steps to get the enclosing module if we resolve now
         auto& type =
@@ -430,7 +430,7 @@ auto SymbolCollector::visit(ast::NodeID id, const ast::ImportStatement& import_s
 
         collecting_.set_sema_type(id, type);
         auto& symbol = ctx_.registry.get_from(table_idx_, alias);
-        symbol.set_type(type);
+        symbol.set_status(SymbolStatus::RESOLVED);
         symbol.set_kind(SymbolKind::MODULE);
     } else {
         ctx_.poison_symbol(ctx_.registry.get_from(table_idx_, alias));
@@ -464,7 +464,7 @@ auto SymbolCollector::visit(ast::NodeID id, const ast::TestStatement& test) -> v
 
 auto SymbolCollector::visit(ast::NodeID id, const ast::UsingStatement& using_stmt) -> void {
     const auto& ident = collecting_.ast.get_as<ast::IdentifierExpression>(*using_stmt.alias);
-    try_declare(ident.name, SymbolicNode{id});
+    try_declare<symbols::Node>(ident.name, id);
     ctx_.registry.get_from(table_idx_, ident.name).set_kind(SymbolKind::TYPE);
 }
 

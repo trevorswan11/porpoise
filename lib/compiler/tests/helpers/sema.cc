@@ -26,11 +26,11 @@ auto test_common_decl_collection(const sema::SymbolTableRegistry& registry,
                                  std::string_view                 name) -> void {
     const auto& symbol = registry.get_from_opt(idx, name);
     REQUIRE(symbol);
-    REQUIRE(symbol->is_symbolic_node());
-    CHECK_FALSE(symbol->is_public(module));
 
-    const auto& node = symbol->get_symbolic_node();
-    CHECK(node.is<ast::DeclStatement>());
+    const auto& node = symbol->as_opt<sema::symbols::Node>();
+    REQUIRE(node);
+    CHECK_FALSE(symbol->is_public(module));
+    CHECK(node->is<ast::DeclStatement>());
 }
 
 SemaTestContext::SemaTestContext(const std::vector<MockFile>& imports,

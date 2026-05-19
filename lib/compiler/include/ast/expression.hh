@@ -238,7 +238,7 @@ DECLARE_PREFIX_EXPRESSION(ImplicitAccessExpression)
 #undef DECLARE_PREFIX_EXPRESSION
 
 struct ScopeResolutionExpression {
-    ExpressionHandle outer;
+    OuterScopeHandle outer;
     IdentifierHandle inner;
 
     [[nodiscard]] static auto parse(syntax::Parser& parser, ExpressionHandle outer)

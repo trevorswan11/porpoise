@@ -21,21 +21,19 @@ TEST_CASE("Function hollow types") {
     REQUIRE(symbol_a.has_kind());
     CHECK(symbol_a.get_kind() == sema::SymbolKind::CALLABLE);
 
-    REQUIRE(symbol_a.is_symbolic_node());
-    const auto& decl_a =
-        ctx.root_mod->ast.get_as<ast::DeclStatement>(*symbol_a.get_symbolic_node());
+    const auto symbolic_node = symbol_a.as_opt<sema::symbols::Node>();
+    REQUIRE(symbolic_node);
+    const auto& decl_a = ctx.root_mod->ast.get_as<ast::DeclStatement>(*symbolic_node);
     REQUIRE(ctx.root_mod->has_sema_type(**decl_a.value));
     const auto& fn_type = ctx.root_mod->get_sema_type(**decl_a.value);
 
     auto& pool = ctx.analyzer.get_pool();
-    REQUIRE(symbol_a.has_type());
-    CHECK(&symbol_a.get_type() == &pool[{sema::TypeKind::FUNCTION, mut::CONSTANT, 1}]);
-    CHECK(&symbol_a.get_type() == &fn_type);
+    CHECK(&fn_type == &pool[{sema::TypeKind::FUNCTION, mut::CONSTANT, 1}]);
 
     const auto& self_param = registry.get_from(1, "self");
-    REQUIRE(self_param.is_self_param());
+    REQUIRE(self_param.as_opt<sema::symbols::SelfParameter>());
     const auto& c_param = registry.get_from(1, "c");
-    REQUIRE(c_param.is_basic_param());
+    REQUIRE(c_param.as_opt<sema::symbols::Parameter>());
     ctx.test_common_decl_collection(1);
 }
 

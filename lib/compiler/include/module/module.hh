@@ -11,6 +11,7 @@
 #include <ankerl/unordered_dense.h>
 
 #include "ast/ast.hh"
+#include "ast/expression.hh"
 #include "ast/traits.hh"
 #include "module/error.hh"
 #include "module/source_loader.hh"
@@ -113,6 +114,8 @@ struct Module {
         }
     }
 
+    [[nodiscard]] auto has_sema_type(const ast::MatchExpression::Arm& arm) const noexcept -> bool;
+
     template <ast::traits::IndexableID ID>
     [[nodiscard]] constexpr auto get_sema_type(ID id) noexcept -> sema::Type& {
         if constexpr (ast::traits::IndexableNodeID<ID>) {
@@ -122,6 +125,8 @@ struct Module {
         }
     }
 
+    [[nodiscard]] auto get_sema_type(const ast::MatchExpression::Arm& arm) noexcept -> sema::Type&;
+
     template <ast::traits::IndexableID ID>
     constexpr auto set_sema_type(ID id, sema::Type& type) noexcept -> void {
         if constexpr (ast::traits::IndexableNodeID<ID>) {
@@ -130,6 +135,8 @@ struct Module {
             sema_side_tables.explicit_types[id].emplace(type);
         }
     }
+
+    auto set_sema_type(const ast::MatchExpression::Arm& arm, sema::Type& type) noexcept -> void;
 };
 
 #undef MAKE_MODULE_DIAGNOSTIC_UNPACKER

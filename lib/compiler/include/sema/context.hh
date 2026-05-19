@@ -67,8 +67,8 @@ struct Context {
         if constexpr (sizeof...(args) != 0) {
             diagnostics.emplace_back(std::forward<Args>(args)...);
         }
-        symbol.set_type(get_poison());
-        symbol.set_status(ResolveStatus::RESOLVED);
+        symbol.set_kind(SymbolKind::POISONED);
+        symbol.set_status(SymbolStatus::RESOLVED);
     }
 
     // Poisons the node and constructs an associated diagnostic to insert into the list

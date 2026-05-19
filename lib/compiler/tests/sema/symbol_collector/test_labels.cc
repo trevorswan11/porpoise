@@ -32,9 +32,10 @@ auto collect_and_validate_label(std::string_view input, usize expected_size) -> 
     REQUIRE(label_table.has("blk"));
     const auto& blk_symbol = label_table.get("blk");
     CHECK(blk_symbol.get_kind() == sema::SymbolKind::LABEL);
-    REQUIRE(blk_symbol.is_symbolic_node());
+    const auto symbolic_node = blk_symbol.as_opt<sema::symbols::Node>();
+    REQUIRE(symbolic_node);
 
-    const auto& label_type = ctx.root_mod->get_sema_type(*blk_symbol.get_symbolic_node());
+    const auto& label_type = ctx.root_mod->get_sema_type(*symbolic_node);
     CHECK(label_type.get_symbol_table_idx() == blk_idx);
     CHECK(&label_type == &ctx.analyzer.get_pool()[{sema::TypeKind::LABEL, mut::CONSTANT, blk_idx}]);
 }

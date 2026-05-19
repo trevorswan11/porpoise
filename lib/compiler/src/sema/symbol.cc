@@ -22,59 +22,55 @@ namespace porpoise::sema {
 
 namespace {
 
-[[nodiscard]] auto symbol_location_of(const mod::Module&         module,
-                                      const SymbolicNodeVariant& payload) noexcept
+[[nodiscard]] auto symbol_location_of(const mod::Module& module, const Symbol::Data& data) noexcept
     -> SourceLocation {
     return std::visit(
-        Overloaded{
-            [&module](const SymbolicNode& node) { return module.ast.location_of(node); },
-            [](const VirtualSymbol&) { return SourceLocation{0, 0}; },
-            [&module](const SymbolicUnionField& inner) {
-                return module.ast.location_of(inner.ident);
-            },
-            [&module](const SymbolicEnumeration& inner) {
-                return module.ast.location_of(inner.name);
-            },
-            [&module](const SymbolicSelfParam& inner) {
-                return module.ast.location_of(inner.ident);
-            },
-            [&module](const SymbolicParam& inner) { return module.ast.location_of(inner.ident); },
-            [&module](const SymbolicCapture& inner) {
-                return module.ast.location_of(inner.payload);
-            },
-            [&module](const SymbolicArm& inner) { return module.ast.location_of(inner.pattern); },
-            [&module](const SymbolicImport& inner) { return module.ast.location_of(inner.node); }},
-        payload);
+        Overloaded{[&module](const symbols::Node& node) { return module.ast.location_of(node); },
+                   [](const symbols::Builtin&) { return SourceLocation{0, 0}; },
+                   [&module](const symbols::UnionField& inner) {
+                       return module.ast.location_of(inner.ident);
+                   },
+                   [&module](const symbols::Enumeration& inner) {
+                       return module.ast.location_of(inner.name);
+                   },
+                   [&module](const symbols::SelfParameter& inner) {
+                       return module.ast.location_of(inner.ident);
+                   },
+                   [&module](const symbols::Parameter& inner) {
+                       return module.ast.location_of(inner.ident);
+                   },
+                   [&module](const symbols::ForLoopCapture& inner) {
+                       return module.ast.location_of(inner.payload);
+                   }},
+        data);
 }
 
 } // namespace
 
 auto Symbol::get_symbol_location(const mod::Module& module) const noexcept -> SourceLocation {
-    return symbol_location_of(module, node_);
+    return symbol_location_of(module, data_);
 }
 
 auto Symbol::is_public(const mod::Module& module) const noexcept -> bool {
     return match(
-        Overloaded{[&module](const SymbolicNode& node) {
+        Overloaded{[&module](const symbols::Node& node) {
                        switch (node->get_kind()) {
                        case ast::NodeKind::DECL_STATEMENT:
                            return module.ast.get_as<ast::DeclStatement>(*node).has_modifier(
                                ast::DeclModifiers::PUBLIC);
                        case ast::NodeKind::USING_STATEMENT:
+                       case ast::NodeKind::IMPORT_STATEMENT:
                            return node->get_token_type() == syntax::TokenType::PUBLIC;
                        default: return false;
                        }
                    },
-                   [](const SymbolicImport& import_stmt) {
-                       return import_stmt.node->get_token_type() == syntax::TokenType::PUBLIC;
-                   },
                    [](const auto&) { return false; }});
 }
 
-auto SymbolTable::insert(std::string_view name, const mod::Module& module, SymbolicNodeVariant node)
+auto SymbolTable::insert(std::string_view name, const mod::Module& module, const Symbol::Data& data)
     -> Result<Unit, Diagnostic> {
     // Reserved identifier use is impossible due to a parser invariant
-    auto [it, inserted] = symbols_.try_emplace(name, name, node);
+    auto [it, inserted] = symbols_.try_emplace(name, name, data);
 
     // Check for redeclaration since there's no shadowing
     if (!inserted) {
@@ -83,38 +79,38 @@ auto SymbolTable::insert(std::string_view name, const mod::Module& module, Symbo
                         name,
                         it->second.get_symbol_location(module)),
             Error::IDENTIFIER_REDECLARATION,
-            symbol_location_of(module, node));
+            symbol_location_of(module, data));
     }
     return Unit{};
 }
 
-auto SymbolTable::insert_unchecked(std::string_view name, SymbolicNodeVariant node) -> void {
+auto SymbolTable::insert_unchecked(std::string_view name, const Symbol::Data& data) -> void {
     // Reserved identifier use is impossible due to a parser invariant
-    auto [_, inserted] = symbols_.try_emplace(name, name, node);
+    auto [_, inserted] = symbols_.try_emplace(name, name, data);
     ASSERT(inserted, "Duplicate symbol injected");
 }
 
 auto SymbolTableRegistry::insert_into(usize               table_idx,
                                       const mod::Module&  module,
                                       std::string_view    name,
-                                      SymbolicNodeVariant node) -> Result<Unit, Diagnostic> {
-    if (auto table = get_opt(table_idx)) { return table->insert(name, module, node); }
+                                      const Symbol::Data& data) -> Result<Unit, Diagnostic> {
+    if (auto table = get_opt(table_idx)) { return table->insert(name, module, data); }
     return make_sema_err(Error::INVALID_TABLE_IDX);
 }
 
 [[nodiscard]] auto SymbolTableRegistry::is_shadowing(const SymbolTableStack& stack,
                                                      const mod::Module&      module,
                                                      std::string_view        name,
-                                                     SymbolicNodeVariant     node) noexcept
+                                                     const Symbol::Data&     data) noexcept
     -> Result<Unit, Diagnostic> {
     for (const auto idx : stack | std::views::take(stack.size() - 1)) {
         if (const auto symbol = get(idx).get_opt(name)) {
             return make_sema_err(
                 fmt::format("Attempt to shadow identifier '{}'. Previous declaration here: {}",
                             name,
-                            symbol_location_of(module, symbol->get_node())),
+                            symbol_location_of(module, symbol->get_data())),
                 Error::SHADOWING_DECLARATION,
-                symbol_location_of(module, node));
+                symbol_location_of(module, data));
         }
     }
     return Unit{};

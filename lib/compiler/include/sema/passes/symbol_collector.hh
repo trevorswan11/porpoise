@@ -49,8 +49,9 @@ class SymbolCollector {
         return new_idx;
     }
 
-    template <typename SymbolicVariant>
-    auto try_declare(std::string_view name, SymbolicVariant node) -> bool {
+    template <typename SymbolicVariant, typename... Args>
+    auto try_declare(std::string_view name, Args&&... args) -> bool {
+        const SymbolicVariant node{std::forward<Args>(args)...};
         return ctx_.try_result(ctx_.registry.is_shadowing(table_stack_, collecting_, name, node)) &&
                ctx_.try_result(ctx_.registry.insert_into(table_idx_, collecting_, name, node));
     }

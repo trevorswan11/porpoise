@@ -9,7 +9,9 @@
 #include <fmt/format.h>
 #include <fmt/ostream.h>
 
+#include "ast/expression.hh"
 #include "module/error.hh"
+#include "sema/attachments.hh"
 #include "source_file.hh"
 #include "syntax/parser.hh"
 
@@ -54,6 +56,19 @@ auto Module::print_diagnostics(std::ostream& os) const -> void {
                          }
                      },
                      [](const Unit&) { std::unreachable(); }});
+}
+
+auto Module::has_sema_type(const ast::MatchExpression::Arm& arm) const noexcept -> bool {
+    return sema_side_tables.match_arm_types[arm.pattern].has_value();
+}
+
+auto Module::get_sema_type(const ast::MatchExpression::Arm& arm) noexcept -> sema::Type& {
+    return *sema_side_tables.match_arm_types[arm.pattern];
+}
+
+auto Module::set_sema_type(const ast::MatchExpression::Arm& arm, sema::Type& type) noexcept
+    -> void {
+    sema_side_tables.match_arm_types[arm.pattern].emplace(type);
 }
 
 auto ModuleManager::try_get_file_module(const std::filesystem::path& path,
