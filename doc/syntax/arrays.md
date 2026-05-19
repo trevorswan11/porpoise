@@ -34,7 +34,7 @@
 var a: &[S]&*mut T; // Normal array type
 var a: &[]&*mut T; // Analogous slice type
 ```
-- Arrays do not implicitly 'decay' to slices
+- Arrays do not implicitly 'decay' to slices or pointers
     - To pass an array to a function that expects a slice, you should use the respective reference operator (`&` or `&mut`) depending on the context. This is similar to Zig's array/slice syntax
 
 ## Indexing
@@ -48,6 +48,8 @@ var a: &[]&*mut T; // Analogous slice type
     - This can be used to chain array indexing as: `const val := matrix[0uz][1uz];`
 - Indexing an array with a range returns a slice that is exactly the size specified by said range
 - An attempt to index outside of the bounds of an array results in a crash
+- Indexing must be done on an array or slice
+    - It is not permitted to index through a pointer or reference
 
 ## Memory layout
 - Arrays and slices of bytes are not implicitly null terminated

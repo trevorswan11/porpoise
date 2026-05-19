@@ -22,6 +22,7 @@ enum class Error : u8 {
     ARITY_MISMATCH,
     UNDECLARED_IDENTIFIER,
     TYPE_MISMATCH,
+    OUTER_SCOPE_NOT_FOUND,
 };
 
 using Diagnostic  = Diagnostic<Error>;

@@ -11,6 +11,7 @@
     - You can also use this to match over an union, capturing the active fields value with a capture clause
 - The inner types of a union are not restricted to any subset or superset of the language (i.e. you are not restricted to only primitive types nor are you prohibited from using user-defined types)
 - Initializing a union is done through the exact same mechanism as structs, using the `Name{.field = value}` syntax (shorthand `.{.field = value}`)
+- To access a union's members, the `.` operator is used
 ```porpoise
 const Hand := union {
     card: bool,

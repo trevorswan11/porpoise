@@ -13,7 +13,7 @@ const Colors := enum { red, blue = 3, green };
 const Shapes := enum : u64 { circle, square };
 ```
 - Enum variants are namespaced, meaning they do not leak into their outer scope as they would in C
-- To access an enum's variant, the `.` operator is used
+- To access an enum's variants and members, the `.` operator is used
 ```porpoise
 const a := Colors.red;
 const a: Colors = .red; // Equivalent

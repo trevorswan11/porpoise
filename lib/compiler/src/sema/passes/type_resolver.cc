@@ -16,6 +16,7 @@
 #include "module/module.hh"
 #include "sema/context.hh"
 #include "sema/error.hh"
+#include "sema/symbol.hh"
 #include "sema/type.hh"
 #include "syntax/builtins.hh"
 #include "syntax/token_type.hh"
@@ -66,15 +67,15 @@ auto TypeResolver::poison_node(ast::NodeID id) -> void {
 auto TypeResolver::visit(ast::NodeID id, const ast::ArrayExpression& array) -> void {
     for (const auto& item : array.items) { resolve(item); }
     resolve(array.item_explicit_type);
-    mem::NonNull<Type> item_type = last_type_.take();
-    resolving_.set_sema_type(array.item_explicit_type, *item_type);
+    auto& item_type = *last_type_.take();
+    resolving_.set_sema_type(array.item_explicit_type, item_type);
 
     const auto items_size      = array.items.size();
     const auto null_terminated = array.null_terminated;
-    last_type_.emplace(ctx_.pool[{
-        TypeKind::ARRAY, types::mut::CONSTANT, null_terminated, items_size, *item_type}]);
+    last_type_.emplace(
+        ctx_.pool[{TypeKind::ARRAY, types::mut::CONSTANT, null_terminated, items_size, item_type}]);
     if (!last_type_->has_resolved()) {
-        last_type_->resolve<types::Array>(*item_type, items_size, null_terminated);
+        last_type_->resolve<types::Array>(item_type, items_size, null_terminated);
     }
     resolving_.set_sema_type(id, *last_type_);
 }
@@ -282,18 +283,18 @@ auto TypeResolver::resolve_builtin_call(ast::NodeID                   id,
 auto TypeResolver::visit(ast::NodeID id, const ast::CallExpression& call) -> void {
     // The call can only yield a non-poison type if the function is valid
     resolve(call.function);
-    mem::NonNull<Type> callee_type = last_type_.take();
-    if (!callee_type->has_resolved() || callee_type->is_poison()) {
+    auto& callee_type = *last_type_.take();
+    if (!callee_type.has_resolved() || callee_type.is_poison()) {
         resolve_call_args(call.arguments);
         return poison_node(id);
     }
-    resolving_.set_sema_type(call.function, *callee_type);
+    resolving_.set_sema_type(call.function, callee_type);
 
     // There's no need to check any further if the arguments are poisoned
     if (resolve_call_args(call.arguments) == ResolveResult::POISONED) { return poison_node(id); }
 
     // Verify that the type in the function is callable and store the return type
-    if (auto function_type = callee_type->as_opt<types::Function>()) {
+    if (auto function_type = callee_type.as_opt<types::Function>()) {
         // Check the arity of the function against params before resetting last type
         const auto& params = function_type->params;
         if (call.arguments.size() != params.size()) {
@@ -308,7 +309,7 @@ auto TypeResolver::visit(ast::NodeID id, const ast::CallExpression& call) -> voi
         // Only arity is checked since the type checker will handle the rest
         resolving_.set_sema_type(id, function_type->return_type);
         last_type_.emplace(function_type->return_type);
-    } else if (auto builtin_type = callee_type->as_opt<types::BuiltinFunction>()) {
+    } else if (auto builtin_type = callee_type.as_opt<types::BuiltinFunction>()) {
         // Poison the call if there's an error early
         auto result = resolve_builtin_call(id, call, *builtin_type);
         if (!result) {
@@ -403,7 +404,7 @@ auto TypeResolver::visit(ast::NodeID id, const ast::FunctionExpression& fn) -> v
     }
     TRY_RESOLVE(fn.explicit_return_type);
 
-    const auto& block = resolving_.ast.get_as<ast::BlockStatement>(*fn.body);
+    const auto& block = resolving_.ast.get_as<ast::BlockStatement>(fn.body);
     for (const auto& stmt : block) { TRY_RESOLVE(stmt); }
     last_type_.emplace(fn_type);
 }
@@ -434,7 +435,28 @@ auto TypeResolver::visit(ast::NodeID id, const ast::IfExpression& if_expr) -> vo
     last_type_.emplace(branch_type);
 }
 
-auto TypeResolver::visit(ast::NodeID, const ast::IndexExpression&) -> void {}
+auto TypeResolver::visit(ast::NodeID id, const ast::IndexExpression& index) -> void {
+    TRY_RESOLVE(index.array);
+    auto& array_type = *last_type_.take();
+
+    if (const auto slice = array_type.as_opt<types::Slice>()) {
+        last_type_.emplace(slice->underlying);
+    } else if (const auto array = array_type.as_opt<types::Array>()) {
+        last_type_.emplace(array->underlying);
+    } else {
+        ctx_.diagnostics.emplace_back(fmt::format("Can only index slices and arrays, found {}",
+                                                  type_kind_display_name(array_type.get_kind())),
+                                      Error::TYPE_MISMATCH,
+                                      resolving_.ast.location_of(id));
+        return poison_node(id);
+    }
+
+    auto& single_item_type = *last_type_.take();
+    TRY_RESOLVE(index.index);
+
+    resolving_.set_sema_type(id, single_item_type);
+    last_type_.emplace(single_item_type);
+}
 
 auto TypeResolver::visit(ast::NodeID id, const ast::InfiniteLoopExpression& loop) -> void {
     TRY_RESOLVE(loop.block);
@@ -526,7 +548,25 @@ auto TypeResolver::visit(ast::NodeID id, const ast::MatchExpression& match) -> v
     }
 
 MAKE_PREFIX_RESOLVER(ReferenceExpression)
-MAKE_PREFIX_RESOLVER(DereferenceExpression)
+
+auto TypeResolver::visit(ast::NodeID id, const ast::DereferenceExpression& deref) -> void {
+    TRY_RESOLVE(deref.rhs);
+    auto& inner_type = *last_type_.take();
+
+    // Check for a pointer and update to the underlying type to enforce dereference semantics
+    if (const auto pointer = inner_type.as_opt<types::Pointer>()) {
+        last_type_.emplace(pointer->underlying);
+    } else {
+        ctx_.diagnostics.emplace_back(
+            fmt::format("Cannot dereference non-pointer expression, found {}",
+                        type_kind_display_name(inner_type.get_kind())),
+            Error::TYPE_MISMATCH,
+            resolving_.ast.location_of(id));
+        return poison_node(id);
+    }
+    resolving_.set_sema_type(id, *last_type_);
+}
+
 MAKE_PREFIX_RESOLVER(UnaryExpression)
 MAKE_PREFIX_RESOLVER(ImplicitAccessExpression)
 
