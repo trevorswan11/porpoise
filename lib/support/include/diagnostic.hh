@@ -17,6 +17,7 @@
 #include "iterator.hh"
 #include "option.hh"
 #include "style.hh"
+#include "type_traits.hh"
 #include "types.hh"
 #include "utility.hh"
 
@@ -152,6 +153,8 @@ template <traits::ScopedEnum E> class Diagnostic {
     opt::Option<DiagnosticLevel> level_{DiagnosticLevel::ERROR};
 };
 
+namespace traits {
+
 template <typename T> struct is_diagnostic : std::false_type {};
 template <typename T> struct is_diagnostic<Diagnostic<T>> : std::true_type {};
 template <typename T> constexpr bool is_diagnostic_v = is_diagnostic<T>::value;
@@ -159,7 +162,9 @@ template <typename T> constexpr bool is_diagnostic_v = is_diagnostic<T>::value;
 template <typename T>
 concept DiagnosticType = is_diagnostic_v<T>;
 
-template <DiagnosticType D> class DiagnosticList {
+} // namespace traits
+
+template <traits::DiagnosticType D> class DiagnosticList {
   public:
     MAKE_ITERATOR(Diagnostics, std::vector<D>, diagnostics_) // cppcheck-suppress syntaxError
 

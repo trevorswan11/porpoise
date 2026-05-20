@@ -45,9 +45,8 @@ SemaTestContext::SemaTestContext(const std::vector<MockFile>& imports,
               if (mock.name) { REQUIRE(manager.add_library_module(*mock.name, mock.path)); }
           }
 
-          auto test_mod_result = manager.try_get_file_module(root_path);
-          REQUIRE(test_mod_result);
-          return *test_mod_result;
+          auto test_mod_result = helpers::unwrap(manager.try_get_file_module(root_path));
+          return test_mod_result;
       }()} {}
 
 auto SemaTestContext::test_common_decl_collection(usize idx, std::string_view name) -> void {

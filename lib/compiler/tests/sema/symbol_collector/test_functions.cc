@@ -3,6 +3,7 @@
 #include <catch2/catch_test_macros.hpp>
 
 #include "ast/statement.hh"
+#include "helpers/common.hh"
 #include "helpers/sema.hh"
 #include "sema/error.hh"
 #include "sema/symbol.hh"
@@ -17,22 +18,21 @@ TEST_CASE("Function hollow types") {
         helpers::collect_and_check("const a := fn(&self, c: type): void { const foo := bar; };");
     const auto& registry = ctx.analyzer.get_registry();
     REQUIRE(registry.size() == 2);
-    const auto& symbol_a = registry.get_from(idx, "a");
+    const auto& symbol_a = helpers::unwrap(registry.get_from_opt(idx, "a"));
     REQUIRE(symbol_a.has_kind());
     CHECK(symbol_a.get_kind() == sema::SymbolKind::CALLABLE);
 
-    const auto symbolic_node = symbol_a.as_opt<sema::symbols::Node>();
-    REQUIRE(symbolic_node);
-    const auto& decl_a = ctx.root_mod->ast.get_as<ast::DeclStatement>(*symbolic_node);
-    REQUIRE(ctx.root_mod->has_sema_type(**decl_a.value));
-    const auto& fn_type = ctx.root_mod->get_sema_type(**decl_a.value);
+    const auto  symbolic_node = helpers::unwrap(symbol_a.as_opt<sema::symbols::Node>());
+    const auto& decl_a =
+        helpers::unwrap(ctx.root_mod->ast.get_as_opt<ast::DeclStatement>(symbolic_node));
+    const auto& fn_type = helpers::unwrap(ctx.root_mod->get_sema_type_opt(*decl_a.value));
 
     auto& pool = ctx.analyzer.get_pool();
     CHECK(&fn_type == &pool[{sema::TypeKind::FUNCTION, mut::CONSTANT, 1}]);
 
-    const auto& self_param = registry.get_from(1, "self");
+    const auto& self_param = helpers::unwrap(registry.get_from_opt(1, "self"));
     REQUIRE(self_param.as_opt<sema::symbols::SelfParameter>());
-    const auto& c_param = registry.get_from(1, "c");
+    const auto& c_param = helpers::unwrap(registry.get_from_opt(1, "c"));
     REQUIRE(c_param.as_opt<sema::symbols::Parameter>());
     ctx.test_common_decl_collection(1);
 }

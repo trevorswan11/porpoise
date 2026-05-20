@@ -4,6 +4,7 @@
 #include <array>
 #include <span>
 #include <string_view>
+#include <type_traits>
 #include <utility>
 #include <vector>
 
@@ -11,6 +12,8 @@
 #include <fmt/format.h>
 #include <fmt/ranges.h>
 
+#include "option.hh"
+#include "result.hh"
 #include "string.hh"
 #include "types.hh"
 
@@ -64,6 +67,26 @@ template <typename T, usize N> constexpr auto combinations(std::array<T, N> inpu
         for (usize j = i + 1; j < input.size(); ++j) { results[idx++] = {input[i], input[j]}; }
     }
     return results;
+}
+
+template <typename T>
+concept Unwrappable =
+    traits::Option<std::remove_cvref_t<T>> || traits::Result<std::remove_cvref_t<T>>;
+
+// Unpacks the value in the option or result and returns its value if present
+template <Unwrappable U> [[nodiscard]] auto unwrap(U&& u) -> decltype(auto) {
+    REQUIRE(u);
+    return *u;
+}
+
+template <Unwrappable U> [[nodiscard]] auto unwrap_err(U&& u) -> decltype(auto) {
+    using T = std::remove_cvref_t<U>;
+    if constexpr (traits::is_option_v<T>) {
+        REQUIRE_FALSE(u);
+    } else if constexpr (traits::is_result_v<T>) {
+        REQUIRE_FALSE(u);
+        return u.error();
+    }
 }
 
 } // namespace porpoise::tests::helpers

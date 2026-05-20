@@ -37,10 +37,6 @@ template <typename T, typename P>
     return std::unique_ptr<T>{static_cast<T*>(ptr.release())};
 }
 
-template <typename T> struct is_nullable_box : std::false_type {};
-template <typename T, typename D> struct is_nullable_box<NullableBox<T, D>> : std::true_type {};
-template <typename T> constexpr bool is_nullable_box_v = is_nullable_box<T>::value;
-
 #define MAKE_NULLABLE_BOX_UNPACKER(name, ReturnType, member, deref)                              \
     [[nodiscard]] auto get_##name() const noexcept -> const ReturnType& { return deref member; } \
     [[nodiscard]] auto has_##name() const noexcept -> bool { return member.operator bool(); }
@@ -113,10 +109,6 @@ template <typename T, typename P> [[nodiscard]] constexpr auto box_from(P* ptr) 
 template <typename T, typename P> [[nodiscard]] constexpr auto box_into(Box<P>&& ptr) -> Box<T> {
     return Box<T>{ptr.release()};
 }
-
-template <typename T> struct is_box : std::false_type {};
-template <typename T, typename D> struct is_box<Box<T, D>> : std::true_type {};
-template <typename T> constexpr bool is_box_v = is_box<T>::value;
 
 // Makes a new nullable box from an existing box
 template <typename T>
@@ -192,6 +184,19 @@ class NonNull {
 };
 
 } // namespace mem
+
+namespace traits {
+
+template <typename T> struct is_nullable_box : std::false_type {};
+template <typename T, typename D>
+struct is_nullable_box<mem::NullableBox<T, D>> : std::true_type {};
+template <typename T> constexpr bool is_nullable_box_v = is_nullable_box<T>::value;
+
+template <typename T> struct is_box : std::false_type {};
+template <typename T, typename D> struct is_box<mem::Box<T, D>> : std::true_type {};
+template <typename T> constexpr bool is_box_v = is_box<T>::value;
+
+} // namespace traits
 
 template <typename T, typename D> class opt::detail::Ref<mem::Box<T, D>&> {
     static_assert(false, "Use a NullableBox<T, D> to accomplish this!");

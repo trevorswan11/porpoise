@@ -29,9 +29,9 @@ enum class TestEnum {
     MAD,
 };
 
-TEST_CASE("Diagnostic type checkers") {
-    STATIC_CHECK(is_diagnostic_v<Diagnostic<TestEnum>>);
-    STATIC_CHECK_FALSE(is_diagnostic_v<TestEnum>);
+TEST_CASE("Diagnostic traits") {
+    STATIC_CHECK(traits::is_diagnostic_v<Diagnostic<TestEnum>>);
+    STATIC_CHECK_FALSE(traits::is_diagnostic_v<TestEnum>);
 }
 
 TEST_CASE("Location and error only") {

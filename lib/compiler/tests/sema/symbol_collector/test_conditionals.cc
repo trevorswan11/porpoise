@@ -3,6 +3,7 @@
 
 #include <catch2/catch_test_macros.hpp>
 
+#include "helpers/common.hh"
 #include "helpers/sema.hh"
 #include "sema/error.hh"
 
@@ -14,8 +15,9 @@ namespace {
 
 // Checks that the scope has the foo-bar decl
 auto test_conditional_scope(helpers::SemaTestContext& ctx, usize idx) {
-    auto& registry = ctx.analyzer.get_registry();
-    CHECK(registry.get(idx).size() == 1);
+    auto&       registry = ctx.analyzer.get_registry();
+    const auto& table    = helpers::unwrap(registry.get_opt(idx));
+    CHECK(table.size() == 1);
     ctx.test_common_decl_collection(idx);
 }
 
@@ -27,12 +29,9 @@ TEST_CASE("If expression collection") {
 
     auto& analyzer = ctx.analyzer;
     CHECK(analyzer.get_registry().size() == 3);
-    const auto& actual = analyzer.get_table(idx);
+    const auto& actual = helpers::unwrap(analyzer.get_table_opt(idx));
     CHECK(actual.size() == 1);
-
-    const std::string_view name = "a";
-    const auto             opt  = actual.get_opt(name);
-    REQUIRE(opt);
+    REQUIRE(actual.get_opt("a"));
 
     test_conditional_scope(ctx, 1);
     test_conditional_scope(ctx, 2);
@@ -47,12 +46,9 @@ TEST_CASE("Match expression collection") {
 
     auto& analyzer = ctx.analyzer;
     CHECK(analyzer.get_registry().size() == 6);
-    const auto& actual = analyzer.get_table(idx);
+    const auto& actual = helpers::unwrap(analyzer.get_table_opt(idx));
     CHECK(actual.size() == 1);
-
-    const std::string_view name = "a";
-    const auto             opt  = actual.get_opt(name);
-    REQUIRE(opt);
+    REQUIRE(actual.get_opt("a"));
 
     test_conditional_scope(ctx, 2);
     test_conditional_scope(ctx, 4);

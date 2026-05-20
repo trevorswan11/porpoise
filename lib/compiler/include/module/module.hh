@@ -114,18 +114,32 @@ struct Module {
         }
     }
 
-    [[nodiscard]] auto has_sema_type(const ast::MatchExpression::Arm& arm) const noexcept -> bool;
+    [[nodiscard]] auto has_sema_type(const ast::MatchExpression::Arm& arm) const noexcept -> bool {
+        return sema_side_tables.match_arm_types[arm.pattern].has_value();
+    }
 
     template <traits::IndexableID ID>
-    [[nodiscard]] constexpr auto get_sema_type(ID id) noexcept -> sema::Type& {
+    [[nodiscard]] constexpr auto get_sema_type_opt(ID id) noexcept -> opt::Option<sema::Type&> {
         if constexpr (traits::IndexableNodeID<ID>) {
-            return *sema_side_tables.node_types[id];
+            return sema_side_tables.node_types[id];
         } else {
-            return *sema_side_tables.explicit_types[id];
+            return sema_side_tables.explicit_types[id];
         }
     }
 
-    [[nodiscard]] auto get_sema_type(const ast::MatchExpression::Arm& arm) noexcept -> sema::Type&;
+    template <traits::IndexableID ID>
+    [[nodiscard]] constexpr auto get_sema_type(ID id) noexcept -> sema::Type& {
+        return *get_sema_type_opt(id);
+    }
+
+    [[nodiscard]] auto get_sema_type_opt(const ast::MatchExpression::Arm& arm) noexcept
+        -> opt::Option<sema::Type&> {
+        return sema_side_tables.match_arm_types[arm.pattern];
+    }
+
+    [[nodiscard]] auto get_sema_type(const ast::MatchExpression::Arm& arm) noexcept -> sema::Type& {
+        return *get_sema_type_opt(arm);
+    }
 
     template <traits::IndexableID ID>
     constexpr auto set_sema_type(ID id, sema::Type& type) noexcept -> void {
@@ -136,7 +150,9 @@ struct Module {
         }
     }
 
-    auto set_sema_type(const ast::MatchExpression::Arm& arm, sema::Type& type) noexcept -> void;
+    auto set_sema_type(const ast::MatchExpression::Arm& arm, sema::Type& type) noexcept -> void {
+        sema_side_tables.match_arm_types[arm.pattern].emplace(type);
+    }
 };
 
 #undef MAKE_MODULE_DIAGNOSTIC_UNPACKER

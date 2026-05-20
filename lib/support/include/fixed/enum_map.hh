@@ -42,7 +42,7 @@ template <MappableEnum E, traits::TriviallyDestructible Value> class EnumMap {
     //
     // Contextually convertible Values are pointers and optional types
     [[nodiscard]] constexpr auto get_opt(E key) const noexcept {
-        if constexpr (opt::is_option_v<Value>) {
+        if constexpr (traits::is_option_v<Value>) {
             return operator[](key);
         } else if constexpr (std::is_pointer_v<Value>) {
             const auto value = operator[](key);

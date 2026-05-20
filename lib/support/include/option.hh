@@ -4,6 +4,7 @@
 #include <limits>
 #include <optional>
 #include <type_traits>
+#include <utility>
 
 #include "assert.hh"
 #include "type_traits.hh"
@@ -222,12 +223,6 @@ template <traits::Compactable T> struct OptionImpl<T> {
 // A safe, reference-allowable optional type dispatcher
 template <typename T> using Option = typename detail::OptionImpl<T>::type;
 
-template <typename T> struct is_option : std::false_type {};
-template <typename T> struct is_option<std::optional<T>> : std::true_type {};
-template <typename T> struct is_option<detail::Ref<T>> : std::true_type {};
-template <typename T> struct is_option<detail::CompactOpt<T>> : std::true_type {};
-template <typename T> constexpr bool is_option_v = is_option<T>::value;
-
 // Compares two values, forwarding safety concerns to the comparator.
 template <typename T, typename Comparator>
 constexpr auto safe_eq(const Option<T>& a, const Option<T>& b, Comparator cmp) noexcept -> bool {
@@ -351,6 +346,9 @@ class Index {
         return has_value() ? std::optional<usize>{idx_} : opt::none;
     }
 
+    [[nodiscard]] friend auto operator==(const Index& lhs, const Index& rhs) noexcept
+        -> bool = default;
+
   private:
     static constexpr usize NO_VALUE = std::numeric_limits<usize>::max();
 
@@ -359,5 +357,18 @@ class Index {
 };
 
 } // namespace opt
+
+namespace traits {
+
+template <typename T> struct is_option : std::false_type {};
+template <typename T> struct is_option<std::optional<T>> : std::true_type {};
+template <typename T> struct is_option<opt::detail::Ref<T>> : std::true_type {};
+template <typename T> struct is_option<opt::detail::CompactOpt<T>> : std::true_type {};
+template <typename T> constexpr bool is_option_v = is_option<T>::value;
+
+template <typename T>
+concept Option = is_option_v<T>;
+
+} // namespace traits
 
 } // namespace porpoise

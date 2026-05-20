@@ -154,9 +154,8 @@ class HashMapIterator {
 // Heavily inspired by Zig's hash map implementation and trevor's C version:
 // https://github.com/trevorswan11/porpoise/blob/4577f3279f5ab09e32a13b8cacb044da686e64bd/src/util/containers/hash_map.c
 template <typename Key, typename Value, usize Capacity, typename Hash, typename Equal>
+    requires(is_power_of_two(Capacity))
 class HashMap {
-    static_assert(is_power_of_two(Capacity), "HashMap capacity must be a power of two");
-
   public:
     using iterator       = HashMapIterator<HashMap, Key, Value, Capacity>;
     using const_iterator = HashMapIterator<std::add_const_t<HashMap>, Key, Value, Capacity>;

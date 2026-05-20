@@ -28,19 +28,16 @@ TEST_CASE("Import aliases correctly used") {
     ctx.test_common_decl_collection(idx);
 
     const auto test_import_inner = [&](std::string_view import_name, usize inner_idx) {
-        const auto& symbol = registry.get_from(idx, import_name);
-        REQUIRE(symbol.has_kind());
-        CHECK(symbol.get_kind() == sema::SymbolKind::MODULE);
+        const auto& symbol = helpers::unwrap(registry.get_from_opt(idx, import_name));
+        CHECK(symbol.get_kind_opt() == sema::SymbolKind::MODULE);
 
-        const auto symbolic_node = symbol.as_opt<sema::symbols::Node>();
-        REQUIRE(symbolic_node);
-        auto& import_type = ctx.root_mod->get_sema_type(*symbolic_node);
+        const auto symbolic_node = helpers::unwrap(symbol.as_opt<sema::symbols::Node>());
+        auto&      import_type   = helpers::unwrap(ctx.root_mod->get_sema_type_opt(*symbolic_node));
         CHECK(&import_type ==
               &pool[sema::types::Key{sema::TypeKind::MODULE, mut::CONSTANT, inner_idx}]);
 
-        const auto import_inner = import_type.as_opt<sema::types::Module>();
-        REQUIRE(import_inner);
-        helpers::test_common_decl_collection(registry, import_inner->imported, inner_idx);
+        const auto import_inner = helpers::unwrap(import_type.as_opt<sema::types::Module>());
+        helpers::test_common_decl_collection(registry, import_inner.imported, inner_idx);
     };
 
     test_import_inner("A", 1);
@@ -52,10 +49,9 @@ TEST_CASE("Public import query") {
         "pub import std;",
         helpers::make_vector<MockFile>(MockFile{"std.porp", "var a: i32;", "std"}));
 
-    auto&       table      = ctx.analyzer.get_table(idx);
-    const auto& std_import = table.get_opt("std");
-    REQUIRE(std_import);
-    CHECK(std_import->is_public(*ctx.root_mod));
+    auto&       table      = helpers::unwrap(ctx.analyzer.get_table_opt(idx));
+    const auto& std_import = helpers::unwrap(table.get_opt("std"));
+    CHECK(std_import.is_public(*ctx.root_mod));
 }
 
 constexpr std::string_view a_porp{R"(pub import "b.porp" as b;)"};

@@ -119,7 +119,8 @@ class Symbol {
     auto               set_status(SymbolStatus status) noexcept -> void { status_ = status; }
 
     [[nodiscard]] auto has_kind() const noexcept -> bool { return kind_.has_value(); }
-    [[nodiscard]] auto get_kind() const noexcept -> SymbolKind { return *kind_; }
+    [[nodiscard]] auto get_kind_opt() const noexcept -> opt::Option<SymbolKind> { return kind_; }
+    [[nodiscard]] auto get_kind() const noexcept -> SymbolKind { return *get_kind_opt(); }
     auto               set_kind(SymbolKind kind) noexcept -> void { kind_ = kind; }
 
   private:

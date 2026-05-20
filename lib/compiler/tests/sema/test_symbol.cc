@@ -6,13 +6,12 @@
 
 #include "ast/handle.hh"
 #include "ast/statement.hh"
+#include "helpers/common.hh"
 #include "helpers/sema.hh"
 #include "module/memory_loader.hh"
 #include "module/module.hh"
 #include "sema/error.hh"
 #include "sema/symbol.hh"
-
-#include "option.hh"
 
 namespace porpoise::tests {
 
@@ -43,12 +42,10 @@ TEST_CASE("Basic table operations") {
     CHECK_FALSE(table.empty());
 
     CHECK(table.has("a"));
-    const auto& retrieved = table.get_opt("a");
-    REQUIRE(retrieved);
-    CHECK(retrieved->get_name() == "a");
+    const auto& retrieved = helpers::unwrap(table.get_opt("a"));
+    CHECK(retrieved.get_name() == "a");
 
-    const auto symbolic_node = retrieved->as_opt<sema::symbols::Node>();
-    REQUIRE(symbolic_node);
+    const auto symbolic_node = helpers::unwrap(retrieved.as_opt<sema::symbols::Node>());
     CHECK(symbolic_node->is<ast::ImportStatement>());
 }
 
@@ -63,10 +60,9 @@ TEST_CASE("Duplicate table inserts") {
 TEST_CASE("Illegal registry insert") {
     const auto [module, import_handle, memory] = setup_basic_import();
     sema::SymbolTableRegistry registry;
-    const auto result = registry.insert_into<sema::symbols::Node>(0, *module, "a", import_handle);
-
-    CHECK_FALSE(result);
-    CHECK(result.error() == sema::Diagnostic{sema::Error::INVALID_TABLE_IDX});
+    const auto                actual = helpers::unwrap_err(
+        registry.insert_into<sema::symbols::Node>(0, *module, "a", import_handle));
+    CHECK(actual == sema::Diagnostic{sema::Error::INVALID_TABLE_IDX});
 }
 
 TEST_CASE("Safety checked registry operations") {

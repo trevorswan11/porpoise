@@ -8,6 +8,7 @@
 
 #include "helpers/inheritance.hh"
 #include "option.hh"
+#include "type_traits.hh"
 #include "types.hh"
 
 namespace porpoise::tests {
@@ -23,12 +24,13 @@ TEST_CASE("Option template specialization") {
     STATIC_CHECK(std::is_same_v<opt::Option<i32>, std::optional<i32>>);
 }
 
-TEST_CASE("Option template checks") {
-    STATIC_CHECK(opt::is_option<opt::Option<int>>::value);
-    STATIC_CHECK(opt::is_option<opt::Option<int&>>::value);
-    STATIC_CHECK(opt::is_option_v<opt::Option<int>>);
-    STATIC_CHECK(opt::is_option_v<opt::Option<int&>>);
-    STATIC_CHECK_FALSE(opt::is_option_v<int>);
+TEST_CASE("Option traits") {
+    STATIC_CHECK(traits::is_option<opt::Option<i32>>::value);
+    STATIC_CHECK(traits::is_option<opt::Option<i32&>>::value);
+    STATIC_CHECK(traits::is_option_v<opt::Option<i32>>);
+    STATIC_CHECK(traits::is_option_v<opt::Option<i32&>>);
+    STATIC_CHECK_FALSE(traits::is_option_v<i32>);
+    STATIC_CHECK(traits::Option<opt::Option<i32&>>);
 }
 
 TEST_CASE("Ref basic construction") {

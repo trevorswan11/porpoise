@@ -211,6 +211,7 @@ class Type {
 
     MAKE_GETTER(key, const types::Key&)
     MAKE_OPTIONAL_UNPACKER(resolved, const Resolved&, resolved_, *)
+    [[nodiscard]] auto get_resolved_opt() const noexcept { return resolved_; }
     [[nodiscard]] auto get_kind() const noexcept -> TypeKind { return key_.get_kind(); }
 
     // Unpacks T from the resolved type assuming the type has been resolved to T
@@ -233,6 +234,7 @@ class Type {
     }
 
     MAKE_OPTIONAL_UNPACKER(symbol_table_idx, usize, symbol_table_idx_, *)
+    [[nodiscard]] auto get_symbol_table_idx_opt() const noexcept { return symbol_table_idx_; }
 
     template <typename Resolvee, typename... Args> auto resolve(Args&&... args) noexcept -> void {
         resolved_.emplace(Resolvee{std::forward<Args>(args)...});

@@ -9,6 +9,7 @@
 #include "helpers/inheritance.hh"
 #include "memory.hh"
 #include "option.hh"
+#include "type_traits.hh"
 #include "types.hh"
 
 namespace porpoise::tests {
@@ -17,11 +18,11 @@ using OkNullableBox     = mem::NullableBox<bool>;
 using NotNullableBox    = bool;
 using CustomNullableBox = mem::NullableBox<bool, void (*)(bool*)>;
 
-TEST_CASE("Nullable box template checks") {
-    STATIC_CHECK(mem::is_nullable_box<std::unique_ptr<bool>>::value);
-    STATIC_CHECK(mem::is_nullable_box_v<OkNullableBox>);
-    STATIC_CHECK_FALSE(mem::is_nullable_box_v<NotNullableBox>);
-    STATIC_CHECK(mem::is_nullable_box_v<CustomNullableBox>);
+TEST_CASE("Nullable box traits") {
+    STATIC_CHECK(traits::is_nullable_box<std::unique_ptr<bool>>::value);
+    STATIC_CHECK(traits::is_nullable_box_v<OkNullableBox>);
+    STATIC_CHECK_FALSE(traits::is_nullable_box_v<NotNullableBox>);
+    STATIC_CHECK(traits::is_nullable_box_v<CustomNullableBox>);
 }
 
 TEST_CASE("Safe nullable box default equality") {
@@ -77,12 +78,12 @@ TEST_CASE("Box release") {
     delete raw;
 }
 
-TEST_CASE("Box template checks") {
+TEST_CASE("Box traits") {
     STATIC_CHECK(sizeof(mem::Box<int>) == 8);
-    STATIC_CHECK_FALSE(mem::is_box<std::unique_ptr<bool>>::value);
-    STATIC_CHECK(mem::is_box_v<OkBox>);
-    STATIC_CHECK_FALSE(mem::is_box_v<NotBox>);
-    STATIC_CHECK(mem::is_box_v<CustomBox>);
+    STATIC_CHECK_FALSE(traits::is_box<std::unique_ptr<bool>>::value);
+    STATIC_CHECK(traits::is_box_v<OkBox>);
+    STATIC_CHECK_FALSE(traits::is_box_v<NotBox>);
+    STATIC_CHECK(traits::is_box_v<CustomBox>);
 }
 
 TEST_CASE("NonNull construction checks") {

@@ -37,7 +37,7 @@ class Analyzer {
     }
 
     template <typename Self>
-    [[nodiscard]] auto get_table_opt(this Self&& self, usize idx) noexcept -> auto& {
+    [[nodiscard]] auto get_table_opt(this Self&& self, usize idx) noexcept {
         return self.registry_.get_opt(idx);
     }
 
