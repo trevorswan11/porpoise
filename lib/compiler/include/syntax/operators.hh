@@ -27,6 +27,7 @@ constexpr Operator PERCENT_ASSIGN{"%=", TokenType::PERCENT_ASSIGN};
 constexpr Operator BANG{"!", TokenType::BANG};
 constexpr Operator AND_MUT{"&mut", TokenType::AND_MUT};
 constexpr Operator STAR_MUT{"*mut", TokenType::STAR_MUT};
+constexpr Operator CARET_MUT{"^mut", TokenType::CARET_MUT};
 
 constexpr Operator BW_AND{"&", TokenType::BW_AND};
 constexpr Operator BW_AND_ASSIGN{"&=", TokenType::BW_AND_ASSIGN};
@@ -38,7 +39,7 @@ constexpr Operator SHR{">>", TokenType::SHR};
 constexpr Operator SHR_ASSIGN{">>=", TokenType::SHR_ASSIGN};
 constexpr Operator NOT{"~", TokenType::NOT};
 constexpr Operator NOT_ASSIGN{"~=", TokenType::NOT_ASSIGN};
-constexpr Operator XOR{"^", TokenType::XOR};
+constexpr Operator CARET{"^", TokenType::CARET};
 constexpr Operator XOR_ASSIGN{"^=", TokenType::XOR_ASSIGN};
 
 constexpr Operator BOOLEAN_AND{"and", TokenType::BOOLEAN_AND};

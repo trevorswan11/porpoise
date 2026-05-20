@@ -699,6 +699,7 @@ template <traits::ASTNode Expr>
 MAKE_PREFIX_PARSER(UnaryExpression)
 MAKE_PREFIX_PARSER(ReferenceExpression)
 MAKE_PREFIX_PARSER(DereferenceExpression)
+MAKE_PREFIX_PARSER(AddressOfExpression)
 
 auto ImplicitAccessExpression::parse(syntax::Parser& parser)
     -> Result<ExpressionHandle, syntax::Diagnostic> {

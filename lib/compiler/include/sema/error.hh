@@ -23,6 +23,7 @@ enum class Error : u8 {
     UNDECLARED_IDENTIFIER,
     TYPE_MISMATCH,
     OUTER_SCOPE_NOT_FOUND,
+    CYCLIC_DEPENDENCY,
 };
 
 using Diagnostic  = Diagnostic<Error>;

@@ -58,6 +58,12 @@ var a: *A = ...;
 a.b;   // Syntactic sugar
 (*a).b; // Equivalent expression
 ```
+- You can get a pointer to an object using the `^` prefix operator
+    - `^`: Returns a constant pointer to the object
+    - `^mut`: Returns a constant pointer to the object
+- You can get a reference to an object using the `&` prefix operator
+    - `&`: Returns a constant reference to the object
+    - `&mut`: Returns a constant reference to the object
 
 ## Type Introspection
 - You can get the type of a value by using the `@typeOf` builtin

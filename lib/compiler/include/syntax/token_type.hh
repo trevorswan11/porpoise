@@ -63,7 +63,7 @@ enum class TokenType : u8 {
     SHL,
     SHR,
     NOT,
-    XOR,
+    CARET,
 
     PLUS_ASSIGN,
     MINUS_ASSIGN,
@@ -111,6 +111,7 @@ enum class TokenType : u8 {
     USING,
     AND_MUT,
     STAR_MUT,
+    CARET_MUT,
 
     FUNCTION,
     VAR,

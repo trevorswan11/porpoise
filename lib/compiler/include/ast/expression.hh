@@ -233,6 +233,7 @@ struct MatchExpression {
 DECLARE_PREFIX_EXPRESSION(UnaryExpression)
 DECLARE_PREFIX_EXPRESSION(ReferenceExpression)
 DECLARE_PREFIX_EXPRESSION(DereferenceExpression)
+DECLARE_PREFIX_EXPRESSION(AddressOfExpression)
 DECLARE_PREFIX_EXPRESSION(ImplicitAccessExpression)
 
 #undef DECLARE_PREFIX_EXPRESSION

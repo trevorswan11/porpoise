@@ -472,4 +472,10 @@ DeclStatement (a)
 └─ Value: UndefinedExpression
 ExpressionStatement
 └─ Expr: I32Expression: 51
+ExpressionStatement
+└─ Expr: AddressOfExpression (CARET_MUT)
+    └─ Operand: IdentifierExpression: a
+ExpressionStatement
+└─ Expr: AddressOfExpression (CARET)
+    └─ Operand: IdentifierExpression: a
 )"

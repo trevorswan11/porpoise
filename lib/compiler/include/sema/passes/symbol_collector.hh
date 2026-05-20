@@ -3,9 +3,13 @@
 #include <string_view>
 #include <utility>
 
+#include "ast/expression.hh"
+#include "ast/handle.hh"
+#include "ast/id.hh"
+#include "ast/primitive.hh"
 #include "ast/statement.hh"
 #include "ast/traits.hh"
-#include "ast/visitor.hh"
+#include "ast/type.hh"
 #include "module/error.hh"
 #include "module/module.hh"
 #include "sema/context.hh"
@@ -13,10 +17,12 @@
 #include "sema/type.hh"
 
 #include "counter.hh"
+#include "iterator.hh"
 #include "memory.hh"
 #include "option.hh"
 #include "result.hh"
 #include "types.hh"
+#include "variant.hh"
 
 namespace porpoise::sema {
 
@@ -33,10 +39,114 @@ class SymbolCollector {
     using Scope = SymbolTableStack::Scope;
 
   private:
-    AST_VISITOR_DEF_GEN()
+    auto visit(ast::NodeID, const ast::ArrayExpression&) -> void;
+    auto visit(ast::NodeID, const ast::CallExpression&) -> void;
+    auto visit(ast::NodeID, const ast::DoWhileLoopExpression&) -> void;
+    auto visit(ast::NodeID, const ast::ForLoopExpression&) -> void;
+    auto visit(ast::NodeID, const ast::FunctionExpression&) -> void;
+    auto visit(ast::NodeID, const ast::IdentifierExpression&) -> void;
+    auto visit(ast::NodeID, const ast::IfExpression&) -> void;
+    auto visit(ast::NodeID, const ast::IndexExpression&) -> void;
+    auto visit(ast::NodeID, const ast::InfiniteLoopExpression&) -> void;
+    auto visit(ast::NodeID, const ast::AssignmentExpression&) -> void;
+    auto visit(ast::NodeID, const ast::BinaryExpression&) -> void;
+    auto visit(ast::NodeID, const ast::DotExpression&) -> void;
+    auto visit(ast::NodeID, const ast::RangeExpression&) -> void;
+    auto visit(ast::NodeID, const ast::InitializerExpression&) -> void;
+    auto visit(ast::NodeID, const ast::LabelExpression&) -> void;
+    auto visit(ast::NodeID, const ast::MatchExpression&) -> void;
+    auto visit(ast::NodeID, const ast::ReferenceExpression&) -> void;
+    auto visit(ast::NodeID, const ast::AddressOfExpression&) -> void;
+    auto visit(ast::NodeID, const ast::DereferenceExpression&) -> void;
+    auto visit(ast::NodeID, const ast::UnaryExpression&) -> void;
+    auto visit(ast::NodeID, const ast::ImplicitAccessExpression&) -> void;
+    auto visit(ast::NodeID, const ast::StringExpression&) -> void;
+    auto visit(ast::NodeID, const ast::I32Expression&) -> void;
+    auto visit(ast::NodeID, const ast::I64Expression&) -> void;
+    auto visit(ast::NodeID, const ast::ISizeExpression&) -> void;
+    auto visit(ast::NodeID, const ast::U32Expression&) -> void;
+    auto visit(ast::NodeID, const ast::U64Expression&) -> void;
+    auto visit(ast::NodeID, const ast::USizeExpression&) -> void;
+    auto visit(ast::NodeID, const ast::U8Expression&) -> void;
+    auto visit(ast::NodeID, const ast::F32Expression&) -> void;
+    auto visit(ast::NodeID, const ast::F64Expression&) -> void;
+    auto visit(ast::NodeID, const ast::BoolExpression&) -> void;
+    auto visit(ast::NodeID, const ast::VoidExpression&) -> void;
+    auto visit(ast::NodeID, const ast::UndefinedExpression&) -> void;
+    auto visit(ast::NodeID, const ast::ScopeResolutionExpression&) -> void;
+    auto visit(ast::NodeID, const ast::WhileLoopExpression&) -> void;
+    auto visit(ast::NodeID, const Unit&) noexcept -> void {}
+
+    auto visit(ast::NodeID, const ast::BlockStatement&) -> void;
+    auto visit(ast::NodeID, const ast::BreakStatement&) -> void;
+    auto visit(ast::NodeID, const ast::ContinueStatement&) -> void;
+    auto visit(ast::NodeID, const ast::DeclStatement&) -> void;
+    auto visit(ast::NodeID, const ast::DeferStatement&) -> void;
+    auto visit(ast::NodeID, const ast::DiscardStatement&) -> void;
+    auto visit(ast::NodeID, const ast::ExpressionStatement&) -> void;
 
     [[nodiscard]] auto collect_import_payload(const ast::ImportStatement& import_stmt)
         -> std::pair<std::string_view, Result<mem::NonNull<mod::Module>, mod::Diagnostic>>;
+
+    auto visit(ast::NodeID, const ast::ImportStatement&) -> void;
+    auto visit(ast::NodeID, const ast::ReturnStatement&) -> void;
+    auto visit(ast::NodeID, const ast::TestStatement&) -> void;
+    auto visit(ast::NodeID, const ast::UsingStatement&) -> void;
+
+    auto visit(ast::ExplicitTypeID, const ast::IdentifierExpression&) -> void;
+    auto visit(ast::ExplicitTypeID, const ast::ScopeResolutionExpression&) -> void;
+    auto visit(ast::ExplicitTypeID, const ast::CallExpression&) -> void;
+    auto visit(ast::ExplicitTypeID, const ast::ExplicitFunctionType&) -> void;
+    auto visit(ast::ExplicitTypeID, ast::ExplicitTypeID id) -> void { collect(id); }
+    auto visit(ast::ExplicitTypeID, const ast::ExplicitArrayType&) -> void;
+
+    template <traits::IndexableID ID>
+    auto visit(ID id, const ast::EnumExpression& enum_expr) -> void {
+        const auto scope_idx = visit_scopes(
+            TypeKind::ENUM,
+            IterPair{enum_expr.enumerations,
+                     [this](const ast::EnumExpression::Enumeration& enumeration) {
+                         if (enumeration.value) { collect(*enumeration.value); }
+
+                         // Resolve the ident second to prevent self-referential values
+                         const auto& ident =
+                             collecting_.ast.get_as<ast::IdentifierExpression>(enumeration.name);
+                         try_declare<symbols::Enumeration>(ident.name, enumeration);
+                     }},
+            IterPair{enum_expr.members,
+                     [this](const ast::MemberHandle& member) { collect(*member); }});
+        last_type_->set_symbol_table_idx(scope_idx);
+        collecting_.set_sema_type(id, *last_type_);
+    }
+
+    template <traits::IndexableID ID>
+    auto visit(ID id, const ast::StructExpression& struct_expr) -> void {
+        const auto scope_idx =
+            visit_scopes(TypeKind::STRUCT,
+                         IterPair{struct_expr.members,
+                                  [this](const ast::MemberHandle& member) { collect(*member); }});
+        last_type_->set_symbol_table_idx(scope_idx);
+        collecting_.set_sema_type(id, *last_type_);
+    }
+
+    template <traits::IndexableID ID>
+    auto visit(ID id, const ast::UnionExpression& union_expr) -> void {
+        const auto scope_idx = visit_scopes(
+            TypeKind::UNION,
+            IterPair{union_expr.fields,
+                     [this](const ast::UnionExpression::Field& field) {
+                         // Resolve the ident second to prevent self-referential values
+                         collect(field.explicit_type);
+
+                         const auto& ident =
+                             collecting_.ast.get_as<ast::IdentifierExpression>(field.ident);
+                         try_declare<symbols::UnionField>(ident.name, field);
+                     }},
+            IterPair{union_expr.members,
+                     [this](const ast::MemberHandle& member) { collect(*member); }});
+        last_type_->set_symbol_table_idx(scope_idx);
+        collecting_.set_sema_type(id, *last_type_);
+    }
 
     template <typename... IterPairs>
     [[nodiscard]] auto visit_scopes(TypeKind kind, IterPairs&&... pairs) -> usize {

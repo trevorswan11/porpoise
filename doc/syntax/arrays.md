@@ -48,8 +48,8 @@ var a: &[]&*mut T; // Analogous slice type
     - This can be used to chain array indexing as: `const val := matrix[0uz][1uz];`
 - Indexing an array with a range returns a slice that is exactly the size specified by said range
 - An attempt to index outside of the bounds of an array results in a crash
-- Indexing must be done on an array or slice
-    - It is not permitted to index through a pointer or reference
+- Indexing may be done on an array, slice, or raw pointer
+    - It is not permitted to index through a reference
 
 ## Memory layout
 - Arrays and slices of bytes are not implicitly null terminated

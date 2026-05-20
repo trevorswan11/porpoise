@@ -3,7 +3,7 @@
 #include <ostream>
 #include <utility>
 
-#include "ast/id.hh"
+#include "ast/traits.hh"
 #include "module/module.hh"
 #include "sema/error.hh"
 #include "sema/symbol.hh"
@@ -72,12 +72,17 @@ struct Context {
     }
 
     // Poisons the node and constructs an associated diagnostic to insert into the list
-    template <typename... Args>
-    auto poison_node(mod::Module& module, ast::NodeID id, Args&&... args) -> void {
+    //
+    // Returns the poison type for optional non-lookup usage
+    template <traits::IndexableID ID, typename... Args>
+    auto poison_node(mod::Module& module, ID id, Args&&... args) -> Type& {
         if constexpr (sizeof...(args) != 0) {
             diagnostics.emplace_back(std::forward<Args>(args)...);
         }
-        module.set_sema_type(id, get_poison());
+
+        auto& poison = get_poison();
+        module.set_sema_type(id, poison);
+        return poison;
     }
 
     // Creates and injects the builtin/primitive prelude and sets the internal prelude index

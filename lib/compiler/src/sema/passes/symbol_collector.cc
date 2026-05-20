@@ -70,16 +70,16 @@ auto SymbolCollector::collect_symbols(mod::Module& module, Context& ctx) -> mod:
 MAKE_COLLECTOR_NOOPS(COLLECTOR_NOOP_X)
 #undef COLLECTOR_NOOP_X
 
-#define COLLECTOR_NOOP_X(NodeType) AST_TYPE_VISITOR_NOOP(SymbolCollector, NodeType)
-FOREACH_AST_TYPE(COLLECTOR_NOOP_X)
-
 auto SymbolCollector::visit(ast::NodeID, const ast::ArrayExpression& array) -> void {
     const auto g = in_expr_scope_.guard();
+    if (array.size) { collect(*array.size); }
+    collect(array.item_explicit_type);
     for (const auto& item : array.items) { collect(*item); }
 }
 
 auto SymbolCollector::visit(ast::NodeID, const ast::CallExpression& call) -> void {
     const auto g = in_expr_scope_.guard();
+    collect(call.function);
     for (const auto& arg : call.arguments) {
         std::visit([this](const auto& handle) { collect(handle); }, arg);
     }
@@ -99,20 +99,6 @@ auto SymbolCollector::visit(ast::NodeID id, const ast::DoWhileLoopExpression& do
         const auto g_cond = in_expr_scope_.guard();
         collect(do_while.condition);
     }
-}
-
-auto SymbolCollector::visit(ast::NodeID id, const ast::EnumExpression& enum_expr) -> void {
-    const auto scope_idx = visit_scopes(
-        TypeKind::ENUM,
-        IterPair{enum_expr.enumerations,
-                 [this](const ast::EnumExpression::Enumeration& enumeration) {
-                     const auto& ident =
-                         collecting_.ast.get_as<ast::IdentifierExpression>(enumeration.name);
-                     try_declare<symbols::Enumeration>(ident.name, enumeration);
-                 }},
-        IterPair{enum_expr.members, [this](const ast::MemberHandle& member) { collect(*member); }});
-    last_type_->set_symbol_table_idx(scope_idx);
-    collecting_.set_sema_type(id, *last_type_);
 }
 
 auto SymbolCollector::visit(ast::NodeID id, const ast::ForLoopExpression& for_expr) -> void {
@@ -153,10 +139,13 @@ auto SymbolCollector::visit(ast::NodeID id, const ast::FunctionExpression& fn) -
         try_declare<symbols::SelfParameter>(ident.name, fn.self.get());
     }
 
+    // The parameter's type should be collected first to prevent self-referential types
     for (const auto& param : fn.parameters) {
+        collect(param.explicit_type);
         const auto& ident = collecting_.ast.get_as<ast::IdentifierExpression>(param.ident);
         try_declare<symbols::Parameter>(ident.name, param);
     }
+    collect(fn.explicit_return_type);
 
     const auto& block = collecting_.ast.get_as<ast::BlockStatement>(fn.body);
     for (const auto& stmt : block) { collect(stmt); }
@@ -250,32 +239,9 @@ auto SymbolCollector::visit(ast::NodeID, const ast::MatchExpression& match) -> v
     }
 
 MAKE_PREFIX_COLLECTOR(ReferenceExpression)
+MAKE_PREFIX_COLLECTOR(AddressOfExpression)
 MAKE_PREFIX_COLLECTOR(DereferenceExpression)
 MAKE_PREFIX_COLLECTOR(UnaryExpression)
-
-auto SymbolCollector::visit(ast::NodeID id, const ast::StructExpression& struct_expr) -> void {
-    const auto scope_idx =
-        visit_scopes(TypeKind::STRUCT,
-                     IterPair{struct_expr.members,
-                              [this](const ast::MemberHandle& member) { collect(*member); }});
-    last_type_->set_symbol_table_idx(scope_idx);
-    collecting_.set_sema_type(id, *last_type_);
-}
-
-auto SymbolCollector::visit(ast::NodeID id, const ast::UnionExpression& union_expr) -> void {
-    const auto scope_idx = visit_scopes(
-        TypeKind::UNION,
-        IterPair{union_expr.fields,
-                 [this](const ast::UnionExpression::Field& field) {
-                     const auto& ident =
-                         collecting_.ast.get_as<ast::IdentifierExpression>(field.ident);
-                     try_declare<symbols::UnionField>(ident.name, field);
-                 }},
-        IterPair{union_expr.members,
-                 [this](const ast::MemberHandle& member) { collect(*member); }});
-    last_type_->set_symbol_table_idx(scope_idx);
-    collecting_.set_sema_type(id, *last_type_);
-}
 
 auto SymbolCollector::visit(ast::NodeID id, const ast::WhileLoopExpression& while_expr) -> void {
     // The guard shouldn't enclose the else clause or condition
@@ -367,7 +333,11 @@ auto SymbolCollector::visit(ast::NodeID id, const ast::DeclStatement& decl) -> v
     }
 
     collect(value);
-    if (last_type_) { collecting_.set_sema_type(decl.ident, *last_type_.take()); }
+    if (last_type_) {
+        auto& type = *last_type_.take();
+        if (!decl.explicit_type) { collecting_.set_sema_type(decl.ident, type); }
+        collecting_.set_sema_type(value, type);
+    }
 }
 
 auto SymbolCollector::visit(ast::NodeID id, const ast::DeferStatement& defer) -> void {
@@ -421,7 +391,7 @@ auto SymbolCollector::visit(ast::NodeID id, const ast::ImportStatement& import_s
         collect_symbols(*imported_mod, new_ctx);
     }
 
-    ctx_.try_result(ctx_.registry.insert_into<symbols::Node>(table_idx_, collecting_, alias, id));
+    try_declare<symbols::Node>(alias, id);
     if (imported_mod) {
         // Its much easier for other steps to get the enclosing module if we resolve now
         auto& type =
@@ -463,11 +433,28 @@ auto SymbolCollector::visit(ast::NodeID id, const ast::TestStatement& test) -> v
 }
 
 auto SymbolCollector::visit(ast::NodeID id, const ast::UsingStatement& using_stmt) -> void {
+    collect(using_stmt.explicit_type);
     const auto& ident = collecting_.ast.get_as<ast::IdentifierExpression>(using_stmt.alias);
     try_declare<symbols::Node>(ident.name, id);
     ctx_.registry.get_from(table_idx_, ident.name).set_kind(SymbolKind::TYPE);
 }
 
-auto SymbolCollector::visit(ast::NodeID, const Unit&) -> void {}
+AST_TYPE_VISITOR_NOOP(SymbolCollector, IdentifierExpression)
+AST_TYPE_VISITOR_NOOP(SymbolCollector, ScopeResolutionExpression)
+
+auto SymbolCollector::visit(ast::ExplicitTypeID, const ast::CallExpression& call) -> void {
+    visit(ast::NodeID::make_invalid(), call);
+}
+
+auto SymbolCollector::visit(ast::ExplicitTypeID, const ast::ExplicitFunctionType& fn) -> void {
+    for (const auto& param : fn.parameter_types) { collect(param); }
+    collect(fn.explicit_return_type);
+}
+
+auto SymbolCollector::visit(ast::ExplicitTypeID, const ast::ExplicitArrayType& array) -> void {
+    const auto g = in_expr_scope_.guard();
+    if (array.dimension) { collect(*array.dimension); }
+    collect(array.inner_explicit_type);
+}
 
 } // namespace porpoise::sema

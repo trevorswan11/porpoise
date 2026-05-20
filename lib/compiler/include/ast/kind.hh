@@ -29,6 +29,7 @@ enum class NodeKind : u8 {
     MATCH_EXPRESSION,
     UNARY_EXPRESSION,
     REFERENCE_EXPRESSION,
+    ADDRESS_OF_EXPRESSION,
     DEREFERENCE_EXPRESSION,
     IMPLICIT_ACCESS_EXPRESSION,
     STRING_EXPRESSION,
@@ -83,6 +84,7 @@ enum class NodeKind : u8 {
     X(LabelExpression)           \
     X(MatchExpression)           \
     X(ReferenceExpression)       \
+    X(AddressOfExpression)       \
     X(DereferenceExpression)     \
     X(UnaryExpression)           \
     X(ImplicitAccessExpression)  \
@@ -191,6 +193,7 @@ NODE_KIND_OF_TRAIT(MatchExpression, MATCH_EXPRESSION)
 NODE_KIND_OF_TRAIT(UnaryExpression, UNARY_EXPRESSION)
 NODE_KIND_OF_TRAIT(ReferenceExpression, REFERENCE_EXPRESSION)
 NODE_KIND_OF_TRAIT(DereferenceExpression, DEREFERENCE_EXPRESSION)
+NODE_KIND_OF_TRAIT(AddressOfExpression, ADDRESS_OF_EXPRESSION)
 NODE_KIND_OF_TRAIT(ImplicitAccessExpression, IMPLICIT_ACCESS_EXPRESSION)
 NODE_KIND_OF_TRAIT(StringExpression, STRING_EXPRESSION)
 NODE_KIND_OF_TRAIT(I32Expression, I32_EXPRESSION)

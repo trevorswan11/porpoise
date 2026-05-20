@@ -96,7 +96,7 @@ class Symbol {
 
     // Unpacks T from the resolved type assuming the type has been resolved to T
     template <typename T, typename Self> [[nodiscard]] auto as(this Self&& self) -> auto& {
-        return std::get<T>(self.data_.value());
+        return std::get<T>(self.data_);
     }
 
     // Tries to unpack T, returning an empty option instead of throwing an exception
