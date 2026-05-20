@@ -86,4 +86,12 @@ pub using MyPublicBool = bool; // Publically accessible via namespacig when impo
     - Since function calls prioritize expressions over types, so an attempt to pass `&mut P` will always be parsed as a mutable reference to an object P
     - Declaring the type using `using T = &mut P;` allows you to then pass the identifier to the function
     - This is more explicit than having to go to the function definition to see what is being expected at the call site
-- Note that these statements are allowed in any scope and are always private unless in a file that has been declared as a module
+- Note that these statements are private by default and can be prefixed with `pub` to unrestrict visibility
+- You may declare types such as unions, enums, and structs with this declaration, though they must be bare types without modifiers
+    - This restriction is in place as it would be impossible to instantiate the underlying type
+```porpoise
+using S = &struct { ... };          // Illegal
+using S = *union { ... };           // Illegal
+using S = volatile enum { ... };    // Illegal
+using S = enum { ... };             // Legal
+```

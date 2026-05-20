@@ -39,11 +39,12 @@ using ModifierMapping    = std::pair<syntax::TokenType, Modifier>;
 constexpr auto MODIFIERS = [] {
     using TokenType = syntax::TokenType;
     fixed::EnumMap<TokenType, Modifier> modifiers{Modifier::VALUE};
-    modifiers[TokenType::BW_AND]   = Modifier::REF;
-    modifiers[TokenType::AND_MUT]  = Modifier::MUT_REF;
-    modifiers[TokenType::STAR]     = Modifier::PTR;
-    modifiers[TokenType::STAR_MUT] = Modifier::MUT_PTR;
-    modifiers[TokenType::VOLATILE] = Modifier::VOLATILE;
+    modifiers[TokenType::BW_AND]       = Modifier::REF;
+    modifiers[TokenType::AND_MUT]      = Modifier::MUT_REF;
+    modifiers[TokenType::STAR]         = Modifier::PTR;
+    modifiers[TokenType::STAR_MUT]     = Modifier::MUT_PTR;
+    modifiers[TokenType::VOLATILE]     = Modifier::VOLATILE;
+    modifiers[TokenType::MUT_VOLATILE] = Modifier::MUT_VOLATILE;
     return modifiers;
 }();
 

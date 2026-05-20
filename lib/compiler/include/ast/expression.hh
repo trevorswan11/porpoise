@@ -168,8 +168,13 @@ DECLARE_INFIX_EXPRESSION(AssignmentExpression)
 // The operator is stored in the nodes id
 DECLARE_INFIX_EXPRESSION(BinaryExpression)
 
-// The operator is stored in the nodes id
-DECLARE_INFIX_EXPRESSION(DotExpression)
+struct DotExpression {
+    OuterAccessHandle object;
+    IdentifierHandle  member;
+
+    [[nodiscard]] static auto parse(syntax::Parser& parser, ExpressionHandle outer)
+        -> Result<ExpressionHandle, syntax::Diagnostic>;
+};
 
 // The operator is stored in the nodes id
 DECLARE_INFIX_EXPRESSION(RangeExpression)
@@ -239,8 +244,8 @@ DECLARE_PREFIX_EXPRESSION(ImplicitAccessExpression)
 #undef DECLARE_PREFIX_EXPRESSION
 
 struct ScopeResolutionExpression {
-    OuterScopeHandle outer;
-    IdentifierHandle inner;
+    OuterAccessHandle outer;
+    IdentifierHandle  inner;
 
     [[nodiscard]] static auto parse(syntax::Parser& parser, ExpressionHandle outer)
         -> Result<ExpressionHandle, syntax::Diagnostic>;

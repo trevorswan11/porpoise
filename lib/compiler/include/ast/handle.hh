@@ -108,8 +108,9 @@ using IdentifierHandle       = Handle<NodeKind::IDENTIFIER_EXPRESSION>;
 using DiscardableIdentHandle = Handle<NodeKind::IDENTIFIER_EXPRESSION, NodeKind::DISCARDED>;
 using ImplicitAccessHandle   = Handle<NodeKind::IMPLICIT_ACCESS_EXPRESSION>;
 using StringHandle           = Handle<NodeKind::STRING_EXPRESSION>;
-using OuterScopeHandle =
-    Handle<NodeKind::IDENTIFIER_EXPRESSION, NodeKind::SCOPE_RESOLUTION_EXPRESSION>;
+using OuterAccessHandle      = Handle<NodeKind::IDENTIFIER_EXPRESSION,
+                                      NodeKind::SCOPE_RESOLUTION_EXPRESSION,
+                                      NodeKind::DOT_EXPRESSION>;
 
 using StatementHandle = Handle<NodeKind::BLOCK_STATEMENT,
                                NodeKind::DECL_STATEMENT,

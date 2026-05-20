@@ -147,25 +147,47 @@ TEST_CASE("Prefix without operand") {
                                                  std::pair{0uz, 1uz}});
 }
 
-TEST_CASE("Missing inner scope") {
+TEST_CASE("Missing inner scope of resolution expression") {
     helpers::test_parser_fail(
         "A:: ;",
         syntax::Diagnostic{
             "Expected token IDENT, found SEMICOLON", syntax::Error::UNEXPECTED_TOKEN, 0, 4});
 }
 
-TEST_CASE("Illegal inner scope") {
+TEST_CASE("Illegal inner scope of resolution expression") {
     helpers::test_parser_fail(
         "A::2;",
         syntax::Diagnostic{
             "Expected token IDENT, found INT_10", syntax::Error::UNEXPECTED_TOKEN, 0, 3});
 }
 
-TEST_CASE("Illegal outer scope") {
+TEST_CASE("Illegal outer scope of resolution expression") {
     helpers::test_parser_fail(
         "2::A;",
-        syntax::Diagnostic{"Scope resolution expressions must have outer scopes or identifiers",
-                           syntax::Error::ILLEGAL_OUTER_SCOPE_TYPE,
+        syntax::Diagnostic{"Scope resolution expressions must have outer accessors or identifiers",
+                           syntax::Error::ILLEGAL_OUTER_ACCESSOR_TYPE,
+                           std::pair{0uz, 0uz}});
+}
+
+TEST_CASE("Missing inner member of dot expression") {
+    helpers::test_parser_fail(
+        "A. ;",
+        syntax::Diagnostic{
+            "Expected token IDENT, found SEMICOLON", syntax::Error::UNEXPECTED_TOKEN, 0, 3});
+}
+
+TEST_CASE("Illegal inner member of dot expression") {
+    helpers::test_parser_fail(
+        "A.2;",
+        syntax::Diagnostic{
+            "Expected token IDENT, found INT_10", syntax::Error::UNEXPECTED_TOKEN, 0, 2});
+}
+
+TEST_CASE("Illegal outer object of dot expression") {
+    helpers::test_parser_fail(
+        "fn():i32{}.a;",
+        syntax::Diagnostic{"Dot expressions must have outer accessors or identifiers",
+                           syntax::Error::ILLEGAL_OUTER_ACCESSOR_TYPE,
                            std::pair{0uz, 0uz}});
 }
 

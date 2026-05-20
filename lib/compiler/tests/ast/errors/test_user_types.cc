@@ -111,4 +111,17 @@ TEST_CASE("Non-static non-function union decl") {
                            std::pair{0uz, 16uz}});
 }
 
+TEST_CASE("Illegal type aliasing/definition") {
+    const auto expected_diag = [] {
+        return syntax::Diagnostic{
+            "User-defined types can only be defined with non-modified aliases",
+            syntax::Error::ILLEGAL_USING_ALIAS_WITH_MODIFIERS,
+            std::pair{0uz, 10uz}};
+    };
+
+    helpers::test_parser_fail("using U = &union { a: i32 };", expected_diag());
+    helpers::test_parser_fail("using S = *struct { pub var foo := bar; };", expected_diag());
+    helpers::test_parser_fail("using E = *enum { a };", expected_diag());
+}
+
 } // namespace porpoise::tests

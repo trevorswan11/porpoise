@@ -166,17 +166,31 @@ auto ExplicitType::parse(syntax::Parser& parser) -> Result<ExplicitTypeID, synta
         return make_syntax_err(syntax::Error::MISSING_EXPLICIT_TYPE, type_start);
     }
 
+    opt::Option<ExplicitTypeID> id;
     switch (const auto user = TRY(parser.parse_expression()); user->get_kind()) {
     case NodeKind::STRUCT_EXPRESSION:
-        return parser.add_type<StructExpression>(
-            modifier_token, modifier, parser.get_node<StructExpression>(*user));
+        id.emplace(parser.add_type<StructExpression>(
+            modifier_token, modifier, parser.get_node<StructExpression>(*user)));
+        break;
     case NodeKind::ENUM_EXPRESSION:
-        return parser.add_type<EnumExpression>(
-            modifier_token, modifier, parser.get_node<EnumExpression>(*user));
+        id.emplace(parser.add_type<EnumExpression>(
+            modifier_token, modifier, parser.get_node<EnumExpression>(*user)));
+        break;
     case NodeKind::UNION_EXPRESSION:
-        return parser.add_type<UnionExpression>(
-            modifier_token, modifier, parser.get_node<UnionExpression>(*user));
+        id.emplace(parser.add_type<UnionExpression>(
+            modifier_token, modifier, parser.get_node<UnionExpression>(*user)));
+        break;
     default: break;
+    }
+
+    if (id) {
+        if (!modifier.is_value()) {
+            return make_syntax_err(
+                "User-defined types can only be defined with non-modified aliases",
+                syntax::Error::ILLEGAL_USING_ALIAS_WITH_MODIFIERS,
+                type_start);
+        }
+        return *id;
     }
     return make_syntax_err(syntax::Error::ILLEGAL_EXPLICIT_TYPE, type_start);
 }

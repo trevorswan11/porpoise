@@ -281,7 +281,21 @@ auto ASTDumper::visit(ast::NodeID, const InfiniteLoopExpression& loop) -> void {
 
 MAKE_INFIX_DUMP(AssignmentExpression, Assignee, Value)
 MAKE_INFIX_DUMP(BinaryExpression, LHS, RHS)
-MAKE_INFIX_DUMP(DotExpression, Object, Member)
+
+auto ASTDumper::visit(ast::NodeID id, const DotExpression& node) -> void {
+    fmt::println(out_, "DotExpression ({})", magic_enum::enum_name(id.get_token_type()));
+    {
+        const Indent::Guard g{indent_, false};
+        fmt ::print(out_, "{}Object: ", indent_.current_branch());
+        dump(node.object);
+    }
+    {
+        const Indent ::Guard g{indent_, true};
+        fmt ::print(out_, "{}Member: ", indent_.current_branch());
+        dump(node.member);
+    }
+}
+
 MAKE_INFIX_DUMP(RangeExpression, Lower, Upper)
 
 auto ASTDumper::visit(ast::NodeID, const InitializerExpression& init) -> void {

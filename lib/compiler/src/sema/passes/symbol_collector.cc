@@ -404,6 +404,7 @@ auto SymbolCollector::visit(ast::NodeID id, const ast::ImportStatement& import_s
         symbol.set_kind(SymbolKind::MODULE);
     } else {
         ctx_.poison_symbol(ctx_.registry.get_from(table_idx_, alias));
+        ctx_.poison_node(collecting_, id);
     }
 }
 

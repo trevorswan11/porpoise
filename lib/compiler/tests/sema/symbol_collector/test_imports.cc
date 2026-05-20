@@ -106,7 +106,6 @@ TEST_CASE("Self import") {
 }
 
 TEST_CASE("Unknown file module") {
-    SKIP();
     std::stringstream ss;
     auto ctx = helpers::analyze_unchecked(helpers::TEST_FILENAME, ss, R"(import "a.porp" as a;)");
     REQUIRE(ctx.root_mod->has_sema_diagnostics());

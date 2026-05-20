@@ -540,7 +540,21 @@ template <traits::ASTNode Expr>
 
 MAKE_INFIX_PARSER(AssignmentExpression)
 MAKE_INFIX_PARSER(BinaryExpression)
-MAKE_INFIX_PARSER(DotExpression)
+
+auto DotExpression::parse(syntax::Parser& parser, ExpressionHandle outer)
+    -> Result<ExpressionHandle, syntax::Diagnostic> {
+    if (!outer.any<IdentifierExpression, ScopeResolutionExpression, DotExpression>()) {
+        return make_syntax_err("Dot expressions must have outer accessors or identifiers",
+                               syntax::Error::ILLEGAL_OUTER_ACCESSOR_TYPE,
+                               parser.get_location_of(*outer));
+    }
+
+    const auto start_token = parser.get_current_token();
+    TRY(parser.expect_peek(syntax::TokenType::IDENT));
+    const IdentifierHandle inner = TRY(IdentifierExpression::parse(parser));
+    return parser.add_expr<DotExpression>(start_token, outer, inner);
+}
+
 MAKE_INFIX_PARSER(RangeExpression)
 
 auto InitializerExpression::parse(syntax::Parser& parser, opt::Option<ExpressionHandle> object)
@@ -736,17 +750,17 @@ auto StringExpression::parse(syntax::Parser& parser)
 
 auto ScopeResolutionExpression::parse(syntax::Parser& parser, ExpressionHandle outer)
     -> Result<ExpressionHandle, syntax::Diagnostic> {
-    if (!outer.any<IdentifierExpression, ScopeResolutionExpression>()) {
-        return make_syntax_err("Scope resolution expressions must have outer scopes or identifiers",
-                               syntax::Error::ILLEGAL_OUTER_SCOPE_TYPE,
-                               parser.get_location_of(*outer));
+    if (!outer.any<IdentifierExpression, ScopeResolutionExpression, DotExpression>()) {
+        return make_syntax_err(
+            "Scope resolution expressions must have outer accessors or identifiers",
+            syntax::Error::ILLEGAL_OUTER_ACCESSOR_TYPE,
+            parser.get_location_of(*outer));
     }
-    const OuterScopeHandle narrow_outer{outer};
 
     const auto start_token = parser.get_current_token();
     TRY(parser.expect_peek(syntax::TokenType::IDENT));
     const IdentifierHandle inner = TRY(IdentifierExpression::parse(parser));
-    return parser.add_expr<ScopeResolutionExpression>(start_token, narrow_outer, inner);
+    return parser.add_expr<ScopeResolutionExpression>(start_token, outer, inner);
 }
 
 auto StructExpression::parse(syntax::Parser& parser)

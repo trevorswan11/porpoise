@@ -50,7 +50,7 @@ constexpr std::string_view input{R"(
     .{.a = 3};
     TT{.adfasf = a};
     .{};
-    union { a: *struct { var b: Foo = bar; }, const b := fn(&self, a: A): C { c; }; };
+    union { a: struct { var b: Foo = bar; }, const b := fn(&self, a: A): C { c; }; };
     enum : i64 { A = 2l, const b := fn(&self, a: A): C { c; }; };
     const a := {};
     test "dump" { import other; std::testing::expect(a == true); }

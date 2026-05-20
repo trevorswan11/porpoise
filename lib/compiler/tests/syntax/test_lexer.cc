@@ -227,19 +227,30 @@ TEST_CASE("Lexing illegal underscored numbers") {
 }
 
 TEST_CASE("Lexing keywords") {
-    test_lexer("and or pub extern export volatile static "
+    test_lexer("and or pub extern export volatile mut_volatile static "
                "i32 i64 isize u32 u64 usize f32 f64 u8 bool void type test",
                {
-                   {TokenType::BOOLEAN_AND, "and"},  {TokenType::BOOLEAN_OR, "or"},
-                   {TokenType::PUBLIC, "pub"},       {TokenType::EXTERN, "extern"},
-                   {TokenType::EXPORT, "export"},    {TokenType::VOLATILE, "volatile"},
-                   {TokenType::STATIC, "static"},    {TokenType::I32_TYPE, "i32"},
-                   {TokenType::I64_TYPE, "i64"},     {TokenType::ISIZE_TYPE, "isize"},
-                   {TokenType::U32_TYPE, "u32"},     {TokenType::U64_TYPE, "u64"},
-                   {TokenType::USIZE_TYPE, "usize"}, {TokenType::F32_TYPE, "f32"},
-                   {TokenType::F64_TYPE, "f64"},     {TokenType::U8_TYPE, "u8"},
-                   {TokenType::BOOL_TYPE, "bool"},   {TokenType::VOID_TYPE, "void"},
-                   {TokenType::TYPE_TYPE, "type"},   {TokenType::TEST, "test"},
+                   {TokenType::BOOLEAN_AND, "and"},
+                   {TokenType::BOOLEAN_OR, "or"},
+                   {TokenType::PUBLIC, "pub"},
+                   {TokenType::EXTERN, "extern"},
+                   {TokenType::EXPORT, "export"},
+                   {TokenType::VOLATILE, "volatile"},
+                   {TokenType::MUT_VOLATILE, "mut_volatile"},
+                   {TokenType::STATIC, "static"},
+                   {TokenType::I32_TYPE, "i32"},
+                   {TokenType::I64_TYPE, "i64"},
+                   {TokenType::ISIZE_TYPE, "isize"},
+                   {TokenType::U32_TYPE, "u32"},
+                   {TokenType::U64_TYPE, "u64"},
+                   {TokenType::USIZE_TYPE, "usize"},
+                   {TokenType::F32_TYPE, "f32"},
+                   {TokenType::F64_TYPE, "f64"},
+                   {TokenType::U8_TYPE, "u8"},
+                   {TokenType::BOOL_TYPE, "bool"},
+                   {TokenType::VOID_TYPE, "void"},
+                   {TokenType::TYPE_TYPE, "type"},
+                   {TokenType::TEST, "test"},
                });
 }
 

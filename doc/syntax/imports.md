@@ -5,7 +5,7 @@
 - The standard file extension for porpoise files is `.porp`
 - Both file and library imports allow an identifier alias using the `as` keyword, with this being required for user imports
 - An import can be marked public in order to expose it to the outside world when the enclosing file is imported
-- An imports publicly available symbols are namespaced behind its name or alias (if applicable), and can be accessed using the `::` operator
+- Note that these statements are private by default and can be prefixed with `pub` to unrestrict visibility
 ```porpoise
 import std; // Library import
 import std as stud; // Library import with alias

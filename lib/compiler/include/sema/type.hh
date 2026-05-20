@@ -164,9 +164,11 @@ class Key {
 
 namespace mut {
 
-using enum types::MutabilityModifiers;
+using types::MutabilityModifiers;
 
 constexpr auto MUTABLE           = static_cast<types::MutabilityModifiers>(0);
+constexpr auto CONSTANT          = MutabilityModifiers::CONSTANT;
+constexpr auto VOLATILE          = MutabilityModifiers::VOLATILE;
 constexpr auto CONSTANT_VOLATILE = CONSTANT | VOLATILE;
 
 } // namespace mut

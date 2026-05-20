@@ -112,6 +112,7 @@ class TypeModifier {
         PTR,
         MUT_PTR,
         VOLATILE,
+        MUT_VOLATILE,
     };
 
   public:
@@ -119,6 +120,8 @@ class TypeModifier {
     constexpr explicit TypeModifier(Modifier underlying) noexcept : underlying_{underlying} {}
     constexpr explicit TypeModifier(u64 raw) noexcept : underlying_{static_cast<Modifier>(raw)} {}
     explicit TypeModifier(const syntax::Token& tok) noexcept;
+
+    [[nodiscard]] constexpr auto get_raw() const noexcept -> Modifier { return underlying_; }
 
     // Whether or not the type is a 'value' type (no modifier), mutually exclusive result.
     [[nodiscard]] constexpr auto is_value() const noexcept -> bool {
@@ -137,7 +140,11 @@ class TypeModifier {
         return is_mutable_ptr() || is_const_ptr();
     }
 
-    MAKE_MUTUALLY_EXCLUSIVE_TYPE_QUERY(volatile, Modifier::VOLATILE)
+    MAKE_MUTUALLY_EXCLUSIVE_TYPE_QUERY(mutable_volatile, Modifier::MUT_VOLATILE)
+    MAKE_MUTUALLY_EXCLUSIVE_TYPE_QUERY(const_volatile, Modifier::VOLATILE)
+    [[nodiscard]] constexpr auto is_volatile() const noexcept -> bool {
+        return is_mutable_volatile() || is_const_volatile();
+    }
 
     constexpr friend auto operator==(const TypeModifier& lhs, const TypeModifier& rhs) noexcept
         -> bool {

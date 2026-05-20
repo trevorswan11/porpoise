@@ -340,7 +340,7 @@ ExpressionStatement
     ├─ Fields:
     │   └─ Field:
     │       ├─ Tag: IdentifierExpression: a
-    │       └─ Type: ExplicitType (modifier: PTR)
+    │       └─ Type: ExplicitType (modifier: VALUE)
     │           └─ StructExpression
     │               └─ DeclStatement (b)
     │                   ├─ Modifiers: VARIABLE

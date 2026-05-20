@@ -159,6 +159,7 @@ enum class TokenType : u8 {
     EXTERN,
     EXPORT,
     VOLATILE,
+    MUT_VOLATILE,
     STATIC,
     NORETURN,
     NULLPTR,
