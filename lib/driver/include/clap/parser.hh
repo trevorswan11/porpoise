@@ -1,10 +1,13 @@
 #pragma once
 
+#include <iostream>
+#include <ostream>
+
 #include <CLI/App.hpp>
 
-#include <config.h>
-
 #include "cmd/debug.hh"
+
+#include <config.h>
 
 #if PLATFORM_WINDOWS
 #    include "platform/win32.hh"
@@ -16,18 +19,19 @@
 
 namespace porpoise::clap {
 
-using Parsed = std::variant<cmd::Debug>;
+using Parsed = std::variant<Unit, cmd::Debug>;
 
 class Parser {
   public:
-    Parser(i32 argc, byte** argv) noexcept;
+    Parser(i32 argc, byte** argv, std::ostream& os = std::cerr) noexcept;
 
     auto               parse() -> Result<Unit, i32>;
     [[nodiscard]] auto get_parsed() noexcept -> Parsed& { return parsed_; }
 
   private:
-    i32    argc_;
-    byte** argv_;
+    i32           argc_;
+    byte**        argv_;
+    std::ostream& os_;
 
     CLI::App app_;
     Parsed   parsed_;

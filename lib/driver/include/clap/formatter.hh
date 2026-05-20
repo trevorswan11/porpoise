@@ -8,9 +8,9 @@
 
 namespace porpoise::clap {
 
-class CLIFmt : public CLI::Formatter {
+class Fmt : public CLI::Formatter {
   public:
-    CLIFmt() noexcept = default;
+    Fmt() noexcept = default;
 
     [[nodiscard]] auto make_subcommands(const CLI::App* app, CLI::AppFormatMode) const
         -> std::string override;

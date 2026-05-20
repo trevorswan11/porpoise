@@ -11,6 +11,7 @@ class Debug;
 class Dispatcher {
   public:
     static auto operator()(Debug& dump) -> Result<Unit, i32>;
+    static auto operator()(Unit u) noexcept -> Result<Unit, i32> { return u; }
 };
 
 } // namespace porpoise::cmd

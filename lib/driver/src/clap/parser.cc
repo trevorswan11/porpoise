@@ -20,8 +20,8 @@
 
 namespace porpoise::clap {
 
-Parser::Parser(i32 argc, byte** argv) noexcept : argc_{argc} {
-    app_.formatter(mem::make_rc<CLIFmt>());
+Parser::Parser(i32 argc, byte** argv, std::ostream& os) noexcept : argc_{argc}, os_{os} {
+    app_.formatter(mem::make_rc<Fmt>());
     argv_ = app_.ensure_utf8(argv);
 }
 
@@ -34,9 +34,9 @@ auto Parser::parse() -> Result<Unit, i32> {
 
     // No arguments should be handled by printing help an exiting
     if (argc_ == 1) {
-        fmt::println(std::cerr, "{}", app_.help());
-        fmt::print(style::RED_BOLD, "error");
-        fmt::println(std::cerr, ": expected command argument");
+        fmt::println(os_, "{}", app_.help());
+        os_ << fmt::format(style::RED_BOLD, "error");
+        fmt::println(os_, ": expected command argument");
         return Err{1};
     }
 

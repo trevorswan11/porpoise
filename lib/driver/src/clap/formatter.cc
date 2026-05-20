@@ -13,7 +13,7 @@
 
 namespace porpoise::clap {
 
-auto CLIFmt::make_subcommands(const CLI::App* app, CLI::AppFormatMode) const -> std::string {
+auto Fmt::make_subcommands(const CLI::App* app, CLI::AppFormatMode) const -> std::string {
     auto subcmds = app->get_subcommands({});
     if (subcmds.empty()) { return ""; }
 
@@ -26,9 +26,9 @@ auto CLIFmt::make_subcommands(const CLI::App* app, CLI::AppFormatMode) const -> 
     return ss.str();
 }
 
-[[nodiscard]] auto CLIFmt::make_group(std::string                     group,
-                                      bool                            is_positional,
-                                      std::vector<const CLI::Option*> opts) const -> std::string {
+[[nodiscard]] auto Fmt::make_group(std::string                     group,
+                                   bool                            is_positional,
+                                   std::vector<const CLI::Option*> opts) const -> std::string {
     std::stringstream ss;
 
     // The group name is altered to clean up help output
@@ -42,7 +42,7 @@ auto CLIFmt::make_subcommands(const CLI::App* app, CLI::AppFormatMode) const -> 
     return ss.str();
 }
 
-auto CLIFmt::make_help(const CLI::App* app, std::string name, CLI::AppFormatMode mode) const
+auto Fmt::make_help(const CLI::App* app, std::string name, CLI::AppFormatMode mode) const
     -> std::string {
     std::stringstream ss;
 
