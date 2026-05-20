@@ -24,6 +24,7 @@ enum class Error : u8 {
     TYPE_MISMATCH,
     OUTER_SCOPE_NOT_FOUND,
     CYCLIC_DEPENDENCY,
+    ILLEGAL_SELF_PARAMETER,
 };
 
 using Diagnostic  = Diagnostic<Error>;

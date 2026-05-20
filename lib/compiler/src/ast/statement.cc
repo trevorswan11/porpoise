@@ -5,6 +5,7 @@
 #include <string_view>
 #include <utility>
 
+#include "ast/ast.hh"
 #include "ast/expression.hh"
 #include "ast/handle.hh"
 #include "ast/kind.hh"
@@ -14,6 +15,7 @@
 #include "syntax/parser.hh"
 #include "syntax/token_type.hh"
 
+#include "assert.hh"
 #include "fixed/enum_map.hh"
 #include "option.hh"
 #include "result.hh"
@@ -283,6 +285,17 @@ auto ImportStatement::parse(syntax::Parser& parser) -> Result<StatementHandle, s
     }
 
     return parser.add_stmt<ImportStatement>(start_token, imported_core, imported_alias);
+}
+
+auto ImportStatement::get_name(const AST& tree) const noexcept -> std::string_view {
+    if (alias) {
+        const auto& ident = tree.get_as<ast::IdentifierExpression>(*alias);
+        return ident.name;
+    }
+
+    // This must be an ident as all strings have an alias
+    const auto& ident = tree.get_as<ast::IdentifierExpression>(payload);
+    return ident.name;
 }
 
 auto ReturnStatement::parse(syntax::Parser& parser) -> Result<StatementHandle, syntax::Diagnostic> {

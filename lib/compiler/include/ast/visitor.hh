@@ -35,6 +35,7 @@ using NodeData = std::variant<FOREACH_AST_NODE(X) Unit>;
 
 using TypeData = std::variant<IdentifierExpression,
                               ScopeResolutionExpression,
+                              DotExpression,
                               CallExpression,
                               ExplicitFunctionType,
                               ExplicitTypeID,
@@ -46,5 +47,12 @@ using TypeData = std::variant<IdentifierExpression,
 #define AST_VISITOR_DEF_GEN()  \
     AST_NODE_VISITOR_DEF_GEN() \
     AST_TYPE_VISITOR_DEF_GEN()
+
+// Creates the template instantiation for a ID-templated, Node/ExplicitType ID visitor
+#define VISITOR_TEMPLATE_INIT(ClassName, fn_name, NodeType)             \
+    template auto ClassName::fn_name<porpoise::ast::NodeID>(            \
+        porpoise::ast::NodeID, const porpoise::ast::NodeType&) -> void; \
+    template auto ClassName::fn_name<porpoise::ast::ExplicitTypeID>(    \
+        porpoise::ast::ExplicitTypeID, const porpoise::ast::NodeType&) -> void;
 
 } // namespace porpoise::ast

@@ -12,6 +12,7 @@
 #include "ast/kind.hh"
 #include "ast/primitive.hh"
 #include "ast/statement.hh"
+#include "ast/traits.hh"
 #include "ast/visitor.hh"
 #include "module/error.hh"
 #include "module/module.hh"
@@ -100,6 +101,26 @@ auto SymbolCollector::visit(ast::NodeID id, const ast::DoWhileLoopExpression& do
         collect(do_while.condition);
     }
 }
+
+template <traits::IndexableID ID>
+auto SymbolCollector::visit(ID id, const ast::EnumExpression& enum_expr) -> void {
+    const auto scope_idx = visit_scopes(
+        TypeKind::ENUM,
+        IterPair{enum_expr.enumerations,
+                 [this](const ast::EnumExpression::Enumeration& enumeration) {
+                     if (enumeration.value) { collect(*enumeration.value); }
+
+                     // Resolve the ident second to prevent self-referential values
+                     const auto& ident =
+                         collecting_.ast.get_as<ast::IdentifierExpression>(enumeration.name);
+                     try_declare<symbols::Enumeration>(ident.name, enumeration);
+                 }},
+        IterPair{enum_expr.members, [this](const ast::MemberHandle& member) { collect(*member); }});
+    last_type_->set_symbol_table_idx(scope_idx);
+    collecting_.set_sema_type(id, *last_type_);
+}
+
+VISITOR_TEMPLATE_INIT(SymbolCollector, visit, EnumExpression)
 
 auto SymbolCollector::visit(ast::NodeID id, const ast::ForLoopExpression& for_expr) -> void {
     // The guard shouldn't enclose the else clause
@@ -221,7 +242,7 @@ auto SymbolCollector::visit(ast::NodeID, const ast::MatchExpression& match) -> v
         collect(arm.pattern);
         if (arm.capture && (*arm.capture)->get_kind() == ast::NodeKind::IDENTIFIER_EXPRESSION) {
             const auto& ident = collecting_.ast.get_as<ast::IdentifierExpression>(*arm.capture);
-            try_declare<symbols::Node>(ident.name, *arm.capture);
+            try_declare<symbols::MatchCapture>(ident.name, *arm.capture);
         }
         collect(arm.dispatch);
 
@@ -242,6 +263,39 @@ MAKE_PREFIX_COLLECTOR(ReferenceExpression)
 MAKE_PREFIX_COLLECTOR(AddressOfExpression)
 MAKE_PREFIX_COLLECTOR(DereferenceExpression)
 MAKE_PREFIX_COLLECTOR(UnaryExpression)
+
+template <traits::IndexableID ID>
+auto SymbolCollector::visit(ID id, const ast::StructExpression& struct_expr) -> void {
+    const auto scope_idx =
+        visit_scopes(TypeKind::STRUCT,
+                     IterPair{struct_expr.members,
+                              [this](const ast::MemberHandle& member) { collect(*member); }});
+    last_type_->set_symbol_table_idx(scope_idx);
+    collecting_.set_sema_type(id, *last_type_);
+}
+
+VISITOR_TEMPLATE_INIT(SymbolCollector, visit, StructExpression)
+
+template <traits::IndexableID ID>
+auto SymbolCollector::visit(ID id, const ast::UnionExpression& union_expr) -> void {
+    const auto scope_idx = visit_scopes(
+        TypeKind::UNION,
+        IterPair{union_expr.fields,
+                 [this](const ast::UnionExpression::Field& field) {
+                     // Resolve the ident second to prevent self-referential values
+                     collect(field.explicit_type);
+
+                     const auto& ident =
+                         collecting_.ast.get_as<ast::IdentifierExpression>(field.ident);
+                     try_declare<symbols::UnionField>(ident.name, field);
+                 }},
+        IterPair{union_expr.members,
+                 [this](const ast::MemberHandle& member) { collect(*member); }});
+    last_type_->set_symbol_table_idx(scope_idx);
+    collecting_.set_sema_type(id, *last_type_);
+}
+
+VISITOR_TEMPLATE_INIT(SymbolCollector, visit, UnionExpression)
 
 auto SymbolCollector::visit(ast::NodeID id, const ast::WhileLoopExpression& while_expr) -> void {
     // The guard shouldn't enclose the else clause or condition
@@ -359,20 +413,15 @@ auto SymbolCollector::visit(ast::NodeID, const ast::ExpressionStatement& expr) -
 
 auto SymbolCollector::collect_import_payload(const ast::ImportStatement& import_stmt)
     -> std::pair<std::string_view, Result<mem::NonNull<mod::Module>, mod::Diagnostic>> {
+    const auto name = import_stmt.get_name(collecting_.ast);
     if (const auto string =
             collecting_.ast.get_as_opt<ast::StringExpression>(import_stmt.payload)) {
         ASSERT(import_stmt.alias, "File import without alias");
-        const auto& ident = collecting_.ast.get_as<ast::IdentifierExpression>(*import_stmt.alias);
-
-        return {ident.name,
-                ctx_.modules.try_get_file_module(string->value, collecting_.parent_path)};
+        return {name, ctx_.modules.try_get_file_module(string->value, collecting_.parent_path)};
     }
 
     const auto& payload = collecting_.ast.get_as<ast::IdentifierExpression>(import_stmt.payload);
-    const auto& ident   = import_stmt.alias
-                              ? collecting_.ast.get_as<ast::IdentifierExpression>(*import_stmt.alias)
-                              : payload;
-    return {ident.name, ctx_.modules.try_get_library_module(payload.name)};
+    return {name, ctx_.modules.try_get_library_module(payload.name)};
 }
 
 auto SymbolCollector::visit(ast::NodeID id, const ast::ImportStatement& import_stmt) -> void {
@@ -442,6 +491,7 @@ auto SymbolCollector::visit(ast::NodeID id, const ast::UsingStatement& using_stm
 
 AST_TYPE_VISITOR_NOOP(SymbolCollector, IdentifierExpression)
 AST_TYPE_VISITOR_NOOP(SymbolCollector, ScopeResolutionExpression)
+AST_TYPE_VISITOR_NOOP(SymbolCollector, DotExpression)
 
 auto SymbolCollector::visit(ast::ExplicitTypeID, const ast::CallExpression& call) -> void {
     visit(ast::NodeID::make_invalid(), call);

@@ -1,5 +1,7 @@
 #pragma once
 
+// IWYU pragma: begin_exports
+
 #include <fmt/base.h>
 #include <fmt/format.h>
 #include <magic_enum/magic_enum.hpp>
@@ -31,3 +33,5 @@ template <porpoise::traits::ValuedPrimitiveNode P> struct fmt::formatter<P> {
         return fmt::format_to(ctx.out(), "{}", p.value);
     }
 };
+
+// IWYU pragma: end_exports

@@ -25,8 +25,8 @@ namespace {
 [[nodiscard]] auto symbol_location_of(const mod::Module& module, const Symbol::Data& data) noexcept
     -> SourceLocation {
     return std::visit(
-        Overloaded{[&module](const symbols::Node& node) { return module.ast.location_of(node); },
-                   [](const symbols::Builtin&) { return SourceLocation{0, 0}; },
+        Overloaded{[](const symbols::Builtin&) { return SourceLocation{0, 0}; },
+                   [&module](const auto& handle) { return module.ast.location_of(handle); },
                    [&module](const symbols::UnionField& inner) {
                        return module.ast.location_of(inner.ident);
                    },

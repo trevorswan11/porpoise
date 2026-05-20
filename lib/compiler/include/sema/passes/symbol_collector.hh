@@ -17,7 +17,6 @@
 #include "sema/type.hh"
 
 #include "counter.hh"
-#include "iterator.hh"
 #include "memory.hh"
 #include "option.hh"
 #include "result.hh"
@@ -42,6 +41,7 @@ class SymbolCollector {
     auto visit(ast::NodeID, const ast::ArrayExpression&) -> void;
     auto visit(ast::NodeID, const ast::CallExpression&) -> void;
     auto visit(ast::NodeID, const ast::DoWhileLoopExpression&) -> void;
+    template <traits::IndexableID ID> auto visit(ID, const ast::EnumExpression&) -> void;
     auto visit(ast::NodeID, const ast::ForLoopExpression&) -> void;
     auto visit(ast::NodeID, const ast::FunctionExpression&) -> void;
     auto visit(ast::NodeID, const ast::IdentifierExpression&) -> void;
@@ -74,6 +74,8 @@ class SymbolCollector {
     auto visit(ast::NodeID, const ast::VoidExpression&) -> void;
     auto visit(ast::NodeID, const ast::UndefinedExpression&) -> void;
     auto visit(ast::NodeID, const ast::ScopeResolutionExpression&) -> void;
+    template <traits::IndexableID ID> auto visit(ID, const ast::StructExpression&) -> void;
+    template <traits::IndexableID ID> auto visit(ID, const ast::UnionExpression&) -> void;
     auto visit(ast::NodeID, const ast::WhileLoopExpression&) -> void;
     auto visit(ast::NodeID, const Unit&) noexcept -> void {}
 
@@ -95,58 +97,11 @@ class SymbolCollector {
 
     auto visit(ast::ExplicitTypeID, const ast::IdentifierExpression&) -> void;
     auto visit(ast::ExplicitTypeID, const ast::ScopeResolutionExpression&) -> void;
+    auto visit(ast::ExplicitTypeID, const ast::DotExpression&) -> void;
     auto visit(ast::ExplicitTypeID, const ast::CallExpression&) -> void;
     auto visit(ast::ExplicitTypeID, const ast::ExplicitFunctionType&) -> void;
     auto visit(ast::ExplicitTypeID, ast::ExplicitTypeID id) -> void { collect(id); }
     auto visit(ast::ExplicitTypeID, const ast::ExplicitArrayType&) -> void;
-
-    template <traits::IndexableID ID>
-    auto visit(ID id, const ast::EnumExpression& enum_expr) -> void {
-        const auto scope_idx = visit_scopes(
-            TypeKind::ENUM,
-            IterPair{enum_expr.enumerations,
-                     [this](const ast::EnumExpression::Enumeration& enumeration) {
-                         if (enumeration.value) { collect(*enumeration.value); }
-
-                         // Resolve the ident second to prevent self-referential values
-                         const auto& ident =
-                             collecting_.ast.get_as<ast::IdentifierExpression>(enumeration.name);
-                         try_declare<symbols::Enumeration>(ident.name, enumeration);
-                     }},
-            IterPair{enum_expr.members,
-                     [this](const ast::MemberHandle& member) { collect(*member); }});
-        last_type_->set_symbol_table_idx(scope_idx);
-        collecting_.set_sema_type(id, *last_type_);
-    }
-
-    template <traits::IndexableID ID>
-    auto visit(ID id, const ast::StructExpression& struct_expr) -> void {
-        const auto scope_idx =
-            visit_scopes(TypeKind::STRUCT,
-                         IterPair{struct_expr.members,
-                                  [this](const ast::MemberHandle& member) { collect(*member); }});
-        last_type_->set_symbol_table_idx(scope_idx);
-        collecting_.set_sema_type(id, *last_type_);
-    }
-
-    template <traits::IndexableID ID>
-    auto visit(ID id, const ast::UnionExpression& union_expr) -> void {
-        const auto scope_idx = visit_scopes(
-            TypeKind::UNION,
-            IterPair{union_expr.fields,
-                     [this](const ast::UnionExpression::Field& field) {
-                         // Resolve the ident second to prevent self-referential values
-                         collect(field.explicit_type);
-
-                         const auto& ident =
-                             collecting_.ast.get_as<ast::IdentifierExpression>(field.ident);
-                         try_declare<symbols::UnionField>(ident.name, field);
-                     }},
-            IterPair{union_expr.members,
-                     [this](const ast::MemberHandle& member) { collect(*member); }});
-        last_type_->set_symbol_table_idx(scope_idx);
-        collecting_.set_sema_type(id, *last_type_);
-    }
 
     template <typename... IterPairs>
     [[nodiscard]] auto visit_scopes(TypeKind kind, IterPairs&&... pairs) -> usize {

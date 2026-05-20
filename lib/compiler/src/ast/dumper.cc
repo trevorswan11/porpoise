@@ -673,6 +673,7 @@ auto ASTDumper::visit(ExplicitTypeID id, const IdentifierExpression& ident) -> v
 }
 
 MAKE_EXPLICIT_TYPE_DUMP(ScopeResolutionExpression)
+MAKE_EXPLICIT_TYPE_DUMP(DotExpression)
 MAKE_EXPLICIT_TYPE_DUMP(CallExpression)
 
 auto ASTDumper::visit(ExplicitTypeID, const ExplicitFunctionType& function) -> void {

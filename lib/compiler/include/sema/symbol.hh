@@ -65,8 +65,8 @@ class Builtin {
 using Node           = ast::Handle<ast::NodeKind::DECL_STATEMENT,
                                    ast::NodeKind::USING_STATEMENT,
                                    ast::NodeKind::LABEL_EXPRESSION,
-                                   ast::NodeKind::IDENTIFIER_EXPRESSION,
                                    ast::NodeKind::IMPORT_STATEMENT>;
+using MatchCapture   = ast::IdentifierHandle;
 using UnionField     = ast::UnionExpression::Field;
 using Enumeration    = ast::EnumExpression::Enumeration;
 using SelfParameter  = ast::SelfParameter;
@@ -79,6 +79,7 @@ class Symbol {
   public:
     using Data = std::variant<symbols::Builtin,
                               symbols::Node,
+                              symbols::MatchCapture,
                               symbols::UnionField,
                               symbols::Enumeration,
                               symbols::SelfParameter,
@@ -289,6 +290,14 @@ class SymbolTableRegistry {
         for (const auto idx : std::views::reverse(stack)) {
             if (auto symbol = self.tables_[idx].get_opt(name)) { return symbol; }
         }
+        return ReturnType{opt::none};
+    }
+
+    // Looks up at the specific index for the queried name
+    template <typename Self>
+    [[nodiscard]] auto lookup_at(this Self&& self, usize idx, std::string_view name) noexcept {
+        using ReturnType = opt::Option<traits::const_dispatch_t<Self, Symbol>&>;
+        if (auto symbol = self.tables_[idx].get_opt(name)) { return symbol; }
         return ReturnType{opt::none};
     }
 

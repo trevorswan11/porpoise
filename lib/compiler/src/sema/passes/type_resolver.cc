@@ -3,22 +3,27 @@
 #include <ranges>
 #include <span>
 #include <string_view>
+#include <type_traits>
 #include <utility>
 #include <variant>
 
 #include <fmt/format.h>
 
 #include "ast/expression.hh"
+#include "ast/format.hh"
 #include "ast/handle.hh"
 #include "ast/id.hh"
 #include "ast/primitive.hh"
 #include "ast/statement.hh"
+#include "ast/traits.hh"
 #include "ast/type.hh"
+#include "ast/visitor.hh"
 #include "module/module.hh"
 #include "sema/context.hh"
 #include "sema/error.hh"
 #include "sema/symbol.hh"
 #include "sema/type.hh"
+#include "syntax/builtins.hh"
 #include "syntax/token_type.hh"
 
 #include "assert.hh"
@@ -26,6 +31,7 @@
 #include "memory.hh"
 #include "option.hh"
 #include "types.hh"
+#include "utility.hh"
 #include "variant.hh"
 
 namespace porpoise::sema {
@@ -73,6 +79,183 @@ auto TypeResolver::visit(ast::NodeID id, const ast::ArrayExpression& array) -> v
     resolving_.set_sema_type(id, *last_type_);
 }
 
+template <traits::IndexableID ID>
+[[nodiscard]] auto TypeResolver::resolve_builtin_call(ID                            id,
+                                                      const ast::CallExpression&    call,
+                                                      const types::BuiltinFunction& builtin)
+    -> Result<Unit, Diagnostic> {
+    ASSERT(call.function.is<ast::IdentifierExpression>(), "Builtin function must be a raw ident");
+    const auto& params = builtin.params;
+    if (call.arguments.size() != params.size()) {
+        return make_sema_err(fmt::format("Builtin expects {} arguments, found {}",
+                                         params.size(),
+                                         call.arguments.size()),
+                             Error::ARITY_MISMATCH,
+                             resolving_.ast.location_of(id));
+    }
+
+    // There must be an actual builtin present with a token id
+    const auto builtin_id = call.function->get_token_type();
+    ASSERT(syntax::get_builtin_opt(builtin_id), "Cannot resolve non-builtin function");
+
+    using syntax::TokenType;
+    mem::NonNull<Type> return_type = ctx_.get_poison();
+
+    // Indexing can be done freely as arity is already validated
+    switch (builtin_id) {
+    case TokenType::BUILTIN_ALIGN_CAST:
+    case TokenType::BUILTIN_PTR_CAST:
+    case TokenType::BUILTIN_BIT_CAST:
+    case TokenType::BUILTIN_AS:         {
+        // These builtins take in a resulting type to cast to
+        return_type = get_resolved_call_arg_type(call.arguments[0]);
+        break;
+    }
+    case TokenType::BUILTIN_CONST_CAST:
+    case TokenType::BUILTIN_VOLATILE_CAST: {
+        auto& expr_type = *get_resolved_call_arg_type(call.arguments[0]);
+        if (expr_type.get_kind() != TypeKind::POINTER &&
+            expr_type.get_kind() != TypeKind::REFERENCE) {
+            return make_sema_err(fmt::format("Expected pointer or reference type; found '{}'",
+                                             type_kind_display_name(expr_type.get_kind())),
+                                 Error::TYPE_MISMATCH,
+                                 get_call_arg_location(call.arguments[0]));
+        }
+
+        // Pointer/reference is checked since it is an invariant of the cast
+        return_type = builtin_id == TokenType::BUILTIN_CONST_CAST
+                          ? ctx_.pool.strip_const(expr_type)
+                          : ctx_.pool.strip_volatile(expr_type);
+        break;
+    }
+    case TokenType::BUILTIN_INT_FROM_PTR:
+    case TokenType::BUILTIN_ALIGN_OF:
+    case TokenType::BUILTIN_SIZE_OF:
+    case TokenType::BUILTIN_CLZ:
+    case TokenType::BUILTIN_CTZ:
+    case TokenType::BUILTIN_POP_COUNT:    {
+        ASSERT(builtin.return_type.get_kind() == TypeKind::USIZE);
+        return_type = builtin.return_type;
+        break;
+    }
+    case TokenType::BUILTIN_TYPE_OF: {
+        ASSERT(builtin.return_type.get_kind() == TypeKind::TYPE);
+        return_type = builtin.return_type;
+        break;
+    }
+    case TokenType::BUILTIN_PTR_FROM_ARRAY: {
+        auto& array_type = *get_resolved_call_arg_type(call.arguments[0]);
+        if (const auto& array_data = array_type.as_opt<types::Array>()) {
+            auto array_key = array_type.get_key();
+            array_key.set_kind(TypeKind::POINTER);
+
+            // The new type uses the slightly modified key with the same underlying type
+            auto& new_type = ctx_.pool[array_key];
+            if (!new_type.has_resolved()) {
+                new_type.resolve<types::Pointer>(array_data->underlying);
+            }
+            return_type = new_type;
+        } else {
+            return make_sema_err(fmt::format("Expected an array type; found '{}'",
+                                             type_kind_display_name(array_type.get_kind())),
+                                 Error::TYPE_MISMATCH,
+                                 get_call_arg_location(call.arguments[0]));
+        }
+        break;
+    }
+    case TokenType::BUILTIN_PTR_FROM_INT: {
+        auto& requested_output = *get_resolved_call_arg_type(call.arguments[0]);
+        if (requested_output.get_kind() != TypeKind::POINTER) {
+            return make_sema_err(fmt::format("Expected a pointer type; found '{}'",
+                                             type_kind_display_name(requested_output.get_kind())),
+                                 Error::TYPE_MISMATCH,
+                                 get_call_arg_location(call.arguments[0]));
+        }
+        return_type = requested_output;
+        break;
+    }
+    case TokenType::BUILTIN_SLICE_FROM_PTR: {
+        auto& ptr_type = *get_resolved_call_arg_type(call.arguments[0]);
+        if (const auto& ptr_data = ptr_type.as_opt<types::Pointer>()) {
+            auto slice_key = ptr_type.get_key();
+            slice_key.set_kind(TypeKind::SLICE);
+
+            // The resulting slice isn't null terminated since the pointer gives no guarantee
+            auto& new_type = ctx_.pool[slice_key];
+            if (!new_type.has_resolved()) {
+                new_type.resolve<types::Slice>(ptr_data->underlying, false);
+            }
+            return_type = new_type;
+        } else {
+            return make_sema_err(fmt::format("Expected a pointer type; found '{}'",
+                                             type_kind_display_name(ptr_type.get_kind())),
+                                 Error::TYPE_MISMATCH,
+                                 get_call_arg_location(call.arguments[0]));
+        }
+        break;
+    }
+    case TokenType::BUILTIN_TAG_NAME: {
+        ASSERT(builtin.return_type.get_kind() == TypeKind::SLICE);
+        return_type = builtin.return_type;
+        break;
+    }
+    case TokenType::BUILTIN_MEMCPY:
+    case TokenType::BUILTIN_MEMSET:
+    case TokenType::BUILTIN_MEMMOVE: {
+        ASSERT(builtin.return_type.get_kind() == TypeKind::VOID);
+        return_type = builtin.return_type;
+        break;
+    }
+    // Many of these return @typeOf(expression) which is trivial
+    case TokenType::BUILTIN_MUL_ADD:
+    case TokenType::BUILTIN_SQRT:
+    case TokenType::BUILTIN_SIN:
+    case TokenType::BUILTIN_COS:
+    case TokenType::BUILTIN_TAN:
+    case TokenType::BUILTIN_EXP:
+    case TokenType::BUILTIN_EXP2:
+    case TokenType::BUILTIN_LOG:
+    case TokenType::BUILTIN_LOG2:
+    case TokenType::BUILTIN_LOG10:
+    case TokenType::BUILTIN_ABS:
+    case TokenType::BUILTIN_FLOOR:
+    case TokenType::BUILTIN_CEIL:    {
+        return_type = get_resolved_call_arg_type(call.arguments[0]);
+        break;
+    }
+    // @divMod(T: type, lhs: T, rhs: T): struct { var quotient: T; var modulo: T; }
+    case TokenType::BUILTIN_DIV_MOD: {
+        auto& member_type = *get_resolved_call_arg_type(call.arguments[0]);
+        auto  members     = ctx_.pool.get_many(2, member_type.get_key());
+
+        // Structs might not be unique with the exact same calls
+        return_type =
+            ctx_.pool[{TypeKind::STRUCT, types::mut::CONSTANT, members.data(), members.size()}];
+        if (!return_type->has_resolved()) { return_type->resolve<types::Struct>(members); }
+        break;
+    }
+    case TokenType::BUILTIN_PANIC: {
+        ASSERT(builtin.return_type.get_kind() == TypeKind::NORETURN);
+        return_type = builtin.return_type;
+        break;
+    }
+    default: ASSERT(false, "Unimplemented builtin type resolution"); break;
+    }
+
+    resolving_.set_sema_type(id, *return_type);
+    last_type_.emplace(*return_type);
+    return Unit{};
+}
+
+template auto TypeResolver::resolve_builtin_call<ast::NodeID>(ast::NodeID,
+                                                              const ast::CallExpression&,
+                                                              const types::BuiltinFunction&)
+    -> Result<Unit, Diagnostic>;
+template auto TypeResolver::resolve_builtin_call<ast::ExplicitTypeID>(ast::ExplicitTypeID,
+                                                                      const ast::CallExpression&,
+                                                                      const types::BuiltinFunction&)
+    -> Result<Unit, Diagnostic>;
+
 auto TypeResolver::resolve_call_args(std::span<const ast::CallExpression::Argument> args)
     -> ResolveResult {
     bool any_poison = false;
@@ -105,6 +288,60 @@ auto TypeResolver::get_call_arg_location(const ast::CallExpression::Argument& ar
     return std::visit([this](auto id) { return resolving_.ast.location_of(id); }, arg);
 }
 
+template <traits::IndexableID ID>
+auto TypeResolver::resolve_call(ID id, const ast::CallExpression& call) -> void {
+    // The call can only yield a non-poison type if the function is valid
+    resolve(call.function);
+    auto& callee_type = *last_type_.take();
+    if (!callee_type.has_resolved() || callee_type.is_poison()) {
+        resolve_call_args(call.arguments);
+        return last_type_.emplace(ctx_.poison_node(resolving_, id));
+    }
+    resolving_.set_sema_type(call.function, callee_type);
+
+    // There's no need to check any further if the arguments are poisoned
+    if (resolve_call_args(call.arguments) == ResolveResult::POISONED) {
+        return last_type_.emplace(ctx_.poison_node(resolving_, id));
+    }
+
+    // Verify that the type in the function is callable and store the return type
+    if (auto function_type = callee_type.as_opt<types::Function>()) {
+        // Check the arity of the function against params before resetting last type
+        const auto& params = function_type->params;
+        if (call.arguments.size() != params.size()) {
+            return last_type_.emplace(ctx_.poison_node(
+                resolving_,
+                id,
+                fmt::format(
+                    "Expected {} arguments, found {}", params.size(), call.arguments.size()),
+                Error::ARITY_MISMATCH,
+                resolving_.ast.location_of(id)));
+        }
+
+        // Only arity is checked since the type checker will handle the rest
+        resolving_.set_sema_type(id, function_type->return_type);
+        last_type_.emplace(function_type->return_type);
+    } else if (auto builtin_type = callee_type.as_opt<types::BuiltinFunction>()) {
+        // Poison the call if there's an error early
+        auto result = resolve_builtin_call(id, call, *builtin_type);
+        if (!result) {
+            return last_type_.emplace(ctx_.poison_node(resolving_, id, std::move(result.error())));
+        }
+    } else {
+        return last_type_.emplace(ctx_.poison_node(resolving_,
+                                                   id,
+                                                   "Expression is not callable",
+                                                   Error::NON_CALLABLE_EXPRESSION,
+                                                   resolving_.ast.location_of(id)));
+    }
+}
+
+VISITOR_TEMPLATE_INIT(TypeResolver, resolve_call, CallExpression)
+
+auto TypeResolver::visit(ast::NodeID id, const ast::CallExpression& call) -> void {
+    resolve_call(id, call);
+}
+
 auto TypeResolver::visit(ast::NodeID id, const ast::DoWhileLoopExpression& do_while) -> void {
     // The loop itself holds the block index, not the block
     auto& loop_type = resolving_.get_sema_type(id);
@@ -128,12 +365,62 @@ auto TypeResolver::resolve_members(std::span<const ast::MemberHandle> members)
     for (usize i = 0; const auto& member : members) {
         // The resolved statement type is in last_type_ unlike in the symbol collector
         resolve(*member);
-        if (last_type_->is_poison()) { member_poisoned = true; }
-        member_types[i++] = last_type_.take();
+        auto& member_type = resolving_.get_sema_type(member);
+        if (member_type.is_poison()) { member_poisoned = true; }
+        member_types[i++] = member_type;
     }
     if (member_poisoned) { return opt::none; }
     return member_types;
 }
+
+#define CHECK_STRUCTURED_EXPLICIT_TYPE_ID()                                   \
+    if constexpr (std::is_same_v<ID, ast::ExplicitTypeID>) {                  \
+        ASSERT(id.get_modifier().is_value(), "Structured type has modifier"); \
+    }
+
+template <traits::IndexableID ID>
+auto TypeResolver::visit(ID id, const ast::EnumExpression& enum_expr) -> void {
+    CHECK_STRUCTURED_EXPLICIT_TYPE_ID();
+    if (enum_expr.underlying) { resolve(*enum_expr.underlying); }
+
+    auto&                      enum_type = resolving_.get_sema_type(id);
+    const Scope                s{table_stack_, enum_type.get_symbol_table_idx(), table_idx_};
+    const UserTypeStack::Guard g{user_type_stack_, enum_type};
+
+    // The underlying type defaults to an i32 as it would in C or C++
+    auto& underlying_type = enum_expr.underlying ? resolving_.get_sema_type(*enum_expr.underlying)
+                                                 : ctx_.get_builtin_resolved_type(TypeKind::I32);
+
+    bool enumeration_poisoned = false;
+    for (const auto& [name, value] : enum_expr.enumerations) {
+        const auto& ident  = resolving_.ast.get_as<ast::IdentifierExpression>(name);
+        auto&       symbol = ctx_.registry.get_from(table_idx_, ident.name);
+
+        // The field may have been independently resolved already
+        if (symbol.get_status() == SymbolStatus::RESOLVED) {
+            auto& enumeration_type = resolving_.get_sema_type(name);
+            if (enumeration_type.is_poison()) { enumeration_poisoned = true; }
+        } else {
+            // This is the first time the value is analyzed during sema
+            if (value) {
+                resolve(*value);
+                if (last_type_->is_poison()) { enumeration_poisoned = true; }
+            }
+            resolving_.set_sema_type(name, underlying_type);
+            symbol.set_kind(SymbolKind::VALUE);
+            symbol.set_status(SymbolStatus::RESOLVED);
+        }
+    }
+    if (enumeration_poisoned) { return resolving_.set_sema_type(id, *last_type_); }
+
+    auto member_types = resolve_members(enum_expr.members);
+    if (!member_types) { return last_type_.emplace(ctx_.poison_node(resolving_, id)); }
+
+    enum_type.template resolve<types::Enum>(underlying_type, *member_types);
+    last_type_.emplace(enum_type);
+}
+
+VISITOR_TEMPLATE_INIT(TypeResolver, visit, EnumExpression)
 
 auto TypeResolver::visit(ast::NodeID id, const ast::ForLoopExpression& for_expr) -> void {
     for (const auto& iterable : for_expr.iterables) { TRY_RESOLVE(iterable); }
@@ -155,13 +442,13 @@ auto TypeResolver::visit(ast::NodeID id, const ast::ForLoopExpression& for_expr)
             } else if (const auto slice = iterable_type.as_opt<types::Slice>()) {
                 resolving_.set_sema_type(capture.payload, slice->underlying);
             } else {
-                return last_type_.emplace(
-                    ctx_.poison_node(resolving_,
-                                     id,
-                                     fmt::format("Iterables may only be arrays or slices, found {}",
-                                                 type_kind_display_name(iterable_type.get_kind())),
-                                     Error::TYPE_MISMATCH,
-                                     resolving_.ast.location_of(iterable)));
+                return last_type_.emplace(ctx_.poison_node(
+                    resolving_,
+                    id,
+                    fmt::format("Iterables may only be arrays or slices; found '{}'",
+                                type_kind_display_name(iterable_type.get_kind())),
+                    Error::TYPE_MISMATCH,
+                    resolving_.ast.location_of(iterable)));
             }
 
             if (capture.payload.is<ast::IdentifierExpression>()) {
@@ -176,12 +463,71 @@ auto TypeResolver::visit(ast::NodeID id, const ast::ForLoopExpression& for_expr)
     last_type_.emplace(loop_type);
 }
 
+namespace {
+
+[[nodiscard]] auto mutability_from_type_modifier(ast::TypeModifier modifier) noexcept
+    -> opt::Option<types::MutabilityModifiers> {
+    using Modifier = ast::TypeModifier::Modifier;
+    switch (modifier.get_raw()) {
+    case Modifier::VALUE:        return opt::none;
+    case Modifier::REF:          return types::mut::CONSTANT;
+    case Modifier::MUT_REF:      return types::mut::MUTABLE;
+    case Modifier::PTR:          return types::mut::CONSTANT;
+    case Modifier::MUT_PTR:      return types::mut::MUTABLE;
+    case Modifier::VOLATILE:     return types::mut::CONSTANT_VOLATILE;
+    case Modifier::MUT_VOLATILE: return types::mut::VOLATILE;
+    }
+}
+
+} // namespace
+
 auto TypeResolver::visit(ast::NodeID id, const ast::FunctionExpression& fn) -> void {
     // The entire function lives inside of its preallocated scope
     auto&       fn_type = resolving_.get_sema_type(id);
     const Scope s{table_stack_, fn_type.get_symbol_table_idx(), table_idx_};
     if (fn.self) {
-        // TODO: Set current user type being analyzed to set self and verify usage
+        // If self is valid here, then follow a similar tune to the type resolvers
+        if (const auto user_type = user_type_stack_.peek()) {
+            const auto modifier   = fn.self->modifier;
+            const auto mutability = mutability_from_type_modifier(modifier);
+            if (user_type->is_poison()) {
+                return last_type_.emplace(ctx_.poison_node(resolving_, id));
+            } else if (!mutability) {
+                resolving_.set_sema_type(fn.self->ident, *user_type);
+            } else {
+                auto new_key = user_type->get_key();
+                new_key.set_mut(*mutability);
+
+                if (modifier.is_ptr()) {
+                    auto& new_ptr_type = ctx_.pool[new_key];
+                    if (!new_ptr_type.has_resolved()) {
+                        new_ptr_type.resolve<types::Pointer>(*user_type);
+                    }
+                    resolving_.set_sema_type(fn.self->ident, new_ptr_type);
+                } else if (modifier.is_ref()) {
+                    auto& new_ref_type = ctx_.pool[new_key];
+                    if (!new_ref_type.has_resolved()) {
+                        new_ref_type.resolve<types::Reference>(*user_type);
+                    }
+                    resolving_.set_sema_type(fn.self->ident, new_ref_type);
+                } else {
+                    return last_type_.emplace(ctx_.poison_node(
+                        resolving_,
+                        id,
+                        fmt::format("Illegal self parameter modifier: {}", modifier),
+                        Error::ILLEGAL_SELF_PARAMETER,
+                        resolving_.ast.location_of(fn.self->ident)));
+                }
+            }
+        } else {
+            return last_type_.emplace(
+                ctx_.poison_node(resolving_,
+                                 id,
+                                 "Self parameters may only be used inside member functions",
+                                 Error::ILLEGAL_SELF_PARAMETER,
+                                 resolving_.ast.location_of(fn.self->ident)));
+        }
+
         resolve_symbol_info(fn.self->ident, SymbolKind::VALUE);
     }
 
@@ -203,7 +549,7 @@ auto TypeResolver::visit(ast::NodeID id, const ast::FunctionExpression& fn) -> v
     TRY_RESOLVE(fn.explicit_return_type);
     auto& return_type = *last_type_.take();
 
-    ASSERT(fn_type.has_resolved(), "Valued function must not be resolved");
+    ASSERT(!fn_type.has_resolved(), "Valued function must not be resolved");
     fn_type.resolve<types::Function>(param_types, return_type);
 
     const auto& block = resolving_.ast.get_as<ast::BlockStatement>(fn.body);
@@ -217,6 +563,73 @@ auto TypeResolver::resolve_symbol_info(ast::IdentifierHandle handle, opt::Option
     auto&       symbol = ctx_.registry.get_from(table_idx_, ident.name);
     if (kind) { symbol.set_kind(*kind); }
     symbol.set_status(SymbolStatus::RESOLVED);
+}
+
+template <traits::IndexableID ID>
+auto TypeResolver::resolve_ident(ID id, const ast::IdentifierExpression& ident) -> void {
+    const auto name       = ident.name;
+    auto       symbol_opt = ctx_.registry.lookup(table_stack_, name);
+
+    // Check for an undeclared identifier and poison the ident
+    if (!symbol_opt) {
+        return last_type_.emplace(
+            ctx_.poison_node(resolving_,
+                             id,
+                             fmt::format("Use of undeclared identifier '{}'", name),
+                             Error::UNDECLARED_IDENTIFIER,
+                             resolving_.ast.location_of(id)));
+    }
+    auto& symbol = *symbol_opt;
+
+    switch (symbol.get_status()) {
+    case SymbolStatus::RESOLVED:
+        // Forward the resolved symbol type to the ident due to out of order possibility
+        if (!resolving_.has_sema_type(id)) {
+            symbol.match(Overloaded{
+                [&](symbols::Node node) {
+                    ASSERT(resolving_.has_sema_type(node), "Resolved node has no type");
+                    resolving_.set_sema_type(id, resolving_.get_sema_type(node));
+                },
+                [&](symbols::Builtin& builtin) {
+                    resolving_.set_sema_type(id, builtin.get_type());
+                },
+                [&](auto&) {
+                    ASSERT(false, "Symbol should've been resolved before inspecting the ident");
+                }});
+        }
+        break;
+    case SymbolStatus::RESOLVING:
+        symbol.set_status(SymbolStatus::RESOLVED);
+        symbol.set_kind(SymbolKind::POISONED);
+        return last_type_.emplace(
+            ctx_.poison_node(resolving_,
+                             id,
+                             fmt::format("Cycle: '{}' is used during its own resolution", name),
+                             Error::CYCLIC_DEPENDENCY,
+                             resolving_.ast.location_of(id)));
+    case SymbolStatus::UNRESOLVED: {
+        symbol.set_status(SymbolStatus::RESOLVING);
+
+        // All other symbol data kinds are independently resolved
+        const auto node = symbol.as_opt<symbols::Node>();
+        ASSERT(node, "Unresolved symbol is not AST-associated");
+        resolve(*node);
+        resolving_.set_sema_type(id, *last_type_.take());
+        break;
+    }
+    default: std::unreachable();
+    }
+
+    if (symbol.get_kind() == SymbolKind::POISONED) {
+        return last_type_.emplace(ctx_.poison_node(resolving_, id));
+    }
+    last_type_.emplace(resolving_.get_sema_type(id));
+}
+
+VISITOR_TEMPLATE_INIT(TypeResolver, resolve_ident, IdentifierExpression)
+
+auto TypeResolver::visit(ast::NodeID id, const ast::IdentifierExpression& ident) -> void {
+    resolve_ident(id, ident);
 }
 
 auto TypeResolver::visit(ast::NodeID id, const ast::IfExpression& if_expr) -> void {
@@ -244,7 +657,7 @@ auto TypeResolver::visit(ast::NodeID id, const ast::IndexExpression& index) -> v
         return last_type_.emplace(
             ctx_.poison_node(resolving_,
                              id,
-                             fmt::format("Can only index slices, arrays, and pointers, found {}",
+                             fmt::format("Can only index slices, arrays, and pointers; found '{}'",
                                          type_kind_display_name(array_type.get_kind())),
                              Error::TYPE_MISMATCH,
                              resolving_.ast.location_of(id)));
@@ -276,7 +689,167 @@ auto TypeResolver::visit(ast::NodeID id, const ast::BinaryExpression& binary) ->
     resolving_.set_sema_type(id, *last_type_);
 }
 
-auto TypeResolver::visit(ast::NodeID id, const ast::DotExpression& dot) -> void { TODO(id, dot); }
+auto TypeResolver::get_outer_access_inner_name(ast::OuterAccessHandle handle) noexcept
+    -> std::string_view {
+    auto current = handle;
+    while (true) {
+        if (const auto ident = resolving_.ast.get_as_opt<ast::IdentifierExpression>(current)) {
+            return ident->name;
+        } else if (const auto scope =
+                       resolving_.ast.get_as_opt<ast::ScopeResolutionExpression>(current)) {
+            current = scope->outer;
+            continue;
+        } else if (const auto dot = resolving_.ast.get_as_opt<ast::DotExpression>(current)) {
+            current = dot->object;
+            continue;
+        }
+        std::unreachable();
+    }
+}
+
+template <traits::IndexableID ID>
+auto TypeResolver::resolve_dot(ID id, const ast::DotExpression& dot) -> void {
+    resolve(dot.object);
+    if (last_type_->is_poison()) { return resolving_.set_sema_type(id, *last_type_); }
+    auto&      object_type = *last_type_.take();
+    const auto table_idx   = object_type.get_symbol_table_idx();
+
+    const auto& member_ident = resolving_.ast.get_as<ast::IdentifierExpression>(dot.member);
+    if (const auto enum_data = object_type.as_opt<types::Enum>()) {
+        const Scope s{table_stack_, table_idx, table_idx_};
+        auto        member_symbol = ctx_.registry.lookup_at(table_idx, member_ident.name);
+
+        if (!member_symbol) {
+            const auto object_name = get_outer_access_inner_name(dot.object);
+            return last_type_.emplace(ctx_.poison_node(
+                resolving_,
+                id,
+                fmt::format(
+                    "Enum '{}' has no field or member named '{}'", object_name, member_ident.name),
+                Error::UNDECLARED_IDENTIFIER,
+                resolving_.ast.location_of(dot.member)));
+        }
+
+        if (member_symbol->get_status() != SymbolStatus::RESOLVED) {
+            if (member_symbol->get_status() == SymbolStatus::RESOLVING) {
+                return last_type_.emplace(ctx_.poison_node(resolving_,
+                                                           id,
+                                                           "Cyclic dependency detected",
+                                                           Error::CYCLIC_DEPENDENCY,
+                                                           resolving_.ast.location_of(dot.member)));
+            }
+
+            // The enumeration must be independently resolved with the actual enum
+            if (const auto node = member_symbol->as_opt<symbols::Node>()) {
+                resolve(*node);
+                if (last_type_->is_poison()) {
+                    return last_type_.emplace(ctx_.poison_node(resolving_, id));
+                }
+            }
+        }
+
+        if (member_symbol->get_kind() == SymbolKind::POISONED) {
+            return last_type_.emplace(ctx_.poison_node(resolving_, id));
+        }
+
+        member_symbol->set_kind(SymbolKind::VALUE);
+        resolving_.set_sema_type(dot.member, object_type);
+        resolving_.set_sema_type(id, object_type);
+        return last_type_.emplace(object_type);
+    } else if (const auto struct_data = object_type.as_opt<types::Struct>()) {
+        const Scope s{table_stack_, table_idx, table_idx_};
+        auto        member_symbol = ctx_.registry.lookup_at(table_idx, member_ident.name);
+
+        if (!member_symbol) {
+            const auto object_name = get_outer_access_inner_name(dot.object);
+            return last_type_.emplace(ctx_.poison_node(
+                resolving_,
+                id,
+                fmt::format("Struct '{}' has no member named '{}'", object_name, member_ident.name),
+                Error::UNDECLARED_IDENTIFIER,
+                resolving_.ast.location_of(dot.member)));
+        }
+
+        if (member_symbol->get_status() != SymbolStatus::RESOLVED) {
+            if (member_symbol->get_status() == SymbolStatus::RESOLVING) {
+                return last_type_.emplace(ctx_.poison_node(resolving_,
+                                                           id,
+                                                           "Cyclic dependency detected",
+                                                           Error::CYCLIC_DEPENDENCY,
+                                                           resolving_.ast.location_of(dot.member)));
+            }
+            if (const auto node = member_symbol->as_opt<symbols::Node>()) { resolve(*node); }
+        }
+
+        if (member_symbol->get_kind() == SymbolKind::POISONED) {
+            return last_type_.emplace(ctx_.poison_node(resolving_, id));
+        }
+
+        auto& member_type = resolving_.get_sema_type(member_symbol->as<symbols::Node>());
+        resolving_.set_sema_type(dot.member, member_type);
+        resolving_.set_sema_type(id, member_type);
+        return last_type_.emplace(member_type);
+    } else if (const auto union_data = object_type.as_opt<types::Union>()) {
+        const Scope s{table_stack_, table_idx, table_idx_};
+        auto        member_symbol = ctx_.registry.lookup_at(table_idx, member_ident.name);
+
+        if (!member_symbol) {
+            const auto object_name = get_outer_access_inner_name(dot.object);
+            return last_type_.emplace(ctx_.poison_node(
+                resolving_,
+                id,
+                fmt::format(
+                    "Union '{}' has no field or member named '{}'", object_name, member_ident.name),
+                Error::UNDECLARED_IDENTIFIER,
+                resolving_.ast.location_of(dot.member)));
+        }
+
+        if (member_symbol->get_status() != SymbolStatus::RESOLVED) {
+            if (member_symbol->get_status() == SymbolStatus::RESOLVING) {
+                return last_type_.emplace(ctx_.poison_node(resolving_,
+                                                           id,
+                                                           "Cyclic dependency detected",
+                                                           Error::CYCLIC_DEPENDENCY,
+                                                           resolving_.ast.location_of(dot.member)));
+            }
+
+            if (const auto node = member_symbol->as_opt<symbols::Node>()) {
+                resolve(*node);
+                if (last_type_->is_poison()) {
+                    return last_type_.emplace(ctx_.poison_node(resolving_, id));
+                }
+            } else if (const auto field = member_symbol->as_opt<symbols::UnionField>()) {
+                auto& field_type = resolve_union_field(*field);
+                if (field_type.is_poison()) {
+                    return last_type_.emplace(ctx_.poison_node(resolving_, id));
+                }
+            }
+        }
+
+        if (member_symbol->get_kind() == SymbolKind::POISONED) {
+            return last_type_.emplace(ctx_.poison_node(resolving_, id));
+        }
+
+        member_symbol->set_kind(SymbolKind::VALUE);
+        resolving_.set_sema_type(dot.member, object_type);
+        resolving_.set_sema_type(id, object_type);
+        return last_type_.emplace(object_type);
+    }
+
+    return last_type_.emplace(ctx_.poison_node(
+        resolving_,
+        id,
+        fmt::format("Dot operator '.' can only be applied to structs, unions, or enums; found '{}'",
+                    type_kind_display_name(object_type.get_kind())),
+        Error::TYPE_MISMATCH,
+        resolving_.ast.location_of(dot.object)));
+}
+
+VISITOR_TEMPLATE_INIT(TypeResolver, resolve_dot, DotExpression)
+
+auto TypeResolver::visit(ast::NodeID id, const ast::DotExpression& dot) -> void {
+    resolve_dot(id, dot);
+}
 
 auto TypeResolver::visit(ast::NodeID id, const ast::RangeExpression& range) -> void {
     TRY_RESOLVE(range.lhs);
@@ -340,8 +913,8 @@ auto TypeResolver::visit(ast::NodeID id, const ast::MatchExpression& match) -> v
         const Scope s{table_stack_, arm_type.get_symbol_table_idx(), table_idx_};
 
         if (arm.capture && arm.capture->is<ast::IdentifierExpression>()) {
-            resolve_symbol_info(*arm.capture, opt::none);
             resolving_.set_sema_type(*arm.capture, matcher_type);
+            resolve_symbol_info(*arm.capture, SymbolKind::VALUE);
         }
 
         TRY_RESOLVE(arm.pattern);
@@ -413,7 +986,7 @@ auto TypeResolver::visit(ast::NodeID id, const ast::DereferenceExpression& deref
         return last_type_.emplace(
             ctx_.poison_node(resolving_,
                              id,
-                             fmt::format("Cannot dereference non-pointer expression, found {}",
+                             fmt::format("Cannot dereference non-pointer expression; found '{}'",
                                          type_kind_display_name(inner_type.get_kind())),
                              Error::TYPE_MISMATCH,
                              resolving_.ast.location_of(id)));
@@ -461,6 +1034,142 @@ MAKE_PRIMITIVE_RESOLVER(VoidExpression, VOID)
 MAKE_PRIMITIVE_RESOLVER(UndefinedExpression, UNDEFINED)
 MAKE_PRIMITIVE_RESOLVER(F32Expression, F32)
 MAKE_PRIMITIVE_RESOLVER(F64Expression, F64)
+
+template <traits::IndexableID ID>
+auto TypeResolver::resolve_scope(ID id, const ast::ScopeResolutionExpression& scope) -> void {
+    // Resolving the right hand side recurses down to the identifier level
+    resolve(scope.outer);
+    if (last_type_->is_poison()) { return resolving_.set_sema_type(id, *last_type_); }
+    auto& outer_type = *last_type_.take();
+
+    // User types use the dot operator so this is trivial to verify
+    if (const auto module = outer_type.as_opt<types::Module>()) {
+        // The module may not have been resolved yet due to order independence
+        auto& inner_mod = module->imported;
+        if (inner_mod.is_resolvable()) {
+            Context new_ctx = ctx_;
+            resolve_types(inner_mod, new_ctx);
+            if (inner_mod.is_poisoned()) {
+                return last_type_.emplace(ctx_.poison_node(resolving_, id));
+            }
+        }
+
+        // Step into the module's scope for lookup
+        const auto& inner_ident = resolving_.ast.get_as<ast::IdentifierExpression>(scope.inner);
+        auto        symbol = ctx_.registry.lookup_at(*inner_mod.root_table_idx, inner_ident.name);
+        if (!symbol) {
+            return last_type_.emplace(
+                ctx_.poison_node(resolving_,
+                                 id,
+                                 fmt::format("Module '{}' has no member named '{}'",
+                                             get_outer_access_inner_name(scope.outer),
+                                             inner_ident.name),
+                                 Error::UNDECLARED_IDENTIFIER,
+                                 resolving_.ast.location_of(scope.inner)));
+        }
+
+        if (symbol->get_status() == SymbolStatus::RESOLVING) {
+            return last_type_.emplace(ctx_.poison_node(resolving_,
+                                                       id,
+                                                       "Cyclic dependency detected across modules",
+                                                       Error::CYCLIC_DEPENDENCY,
+                                                       resolving_.ast.location_of(scope.inner)));
+        }
+
+        if (symbol->get_kind() == SymbolKind::POISONED || !inner_mod.has_sema_type(scope.inner)) {
+            return last_type_.emplace(ctx_.poison_node(resolving_, id));
+        }
+
+        auto& ident_type = inner_mod.get_sema_type(scope.inner);
+        resolving_.set_sema_type(scope.inner, ident_type);
+        resolving_.set_sema_type(id, ident_type);
+        return last_type_.emplace(ident_type);
+    } else if (outer_type.as_opt<types::Struct>() || outer_type.as_opt<types::Enum>() ||
+               outer_type.as_opt<types::Union>()) {
+        return last_type_.emplace(ctx_.poison_node(
+            resolving_,
+            id,
+            fmt::format(
+                "Use the dot operator '.' to access {} members, found scope resolution '::'",
+                type_kind_display_name(outer_type.get_kind())),
+            Error::TYPE_MISMATCH,
+            resolving_.ast.location_of(scope.outer)));
+    }
+
+    return last_type_.emplace(ctx_.poison_node(
+        resolving_,
+        id,
+        fmt::format("Scope resolution operator '::' can only be applied to modules; found '{}'",
+                    type_kind_display_name(outer_type.get_kind())),
+        Error::TYPE_MISMATCH,
+        resolving_.ast.location_of(scope.outer)));
+}
+
+VISITOR_TEMPLATE_INIT(TypeResolver, resolve_scope, ScopeResolutionExpression)
+
+auto TypeResolver::visit(ast::NodeID id, const ast::ScopeResolutionExpression& scope) -> void {
+    resolve_scope(id, scope);
+}
+
+template <traits::IndexableID ID>
+auto TypeResolver::visit(ID id, const ast::StructExpression& struct_expr) -> void {
+    CHECK_STRUCTURED_EXPLICIT_TYPE_ID();
+    auto&                      struct_type = resolving_.get_sema_type(id);
+    const UserTypeStack::Guard g{user_type_stack_, struct_type};
+
+    auto member_types = resolve_members(struct_expr.members);
+    if (!member_types) { return last_type_.emplace(ctx_.poison_node(resolving_, id)); }
+
+    struct_type.template resolve<types::Struct>(*member_types);
+    last_type_.emplace(struct_type);
+}
+
+VISITOR_TEMPLATE_INIT(TypeResolver, visit, StructExpression)
+
+auto TypeResolver::resolve_union_field(const ast::UnionExpression::Field& field) -> Type& {
+    const auto& ident  = resolving_.ast.get_as<ast::IdentifierExpression>(field.ident);
+    auto&       symbol = ctx_.registry.get_from(table_idx_, ident.name);
+
+    // The field may have been independently resolved already
+    if (symbol.get_status() == SymbolStatus::RESOLVED) {
+        return resolving_.get_sema_type(field.ident);
+    }
+
+    resolve(field.explicit_type);
+    if (last_type_->is_poison()) { return *last_type_.take(); }
+    auto& field_type = *last_type_.take();
+
+    // The field's name is able to be used as a value
+    resolving_.set_sema_type(field.ident, field_type);
+    symbol.set_kind(SymbolKind::VALUE);
+    symbol.set_status(SymbolStatus::RESOLVED);
+    return field_type;
+}
+
+template <traits::IndexableID ID>
+auto TypeResolver::visit(ID id, const ast::UnionExpression& union_expr) -> void {
+    CHECK_STRUCTURED_EXPLICIT_TYPE_ID();
+    auto&                      union_type = resolving_.get_sema_type(id);
+    const UserTypeStack::Guard g{user_type_stack_, union_type};
+
+    auto field_types    = ctx_.pool.get_many_unsafe(union_expr.fields.size());
+    bool field_poisoned = false;
+
+    for (usize i = 0; const auto& field : union_expr.fields) {
+        auto& field_type = resolve_union_field(field);
+        if (field_type.is_poison()) { field_poisoned = true; }
+        field_types[i++] = field_type;
+    }
+    if (field_poisoned) { return last_type_.emplace(ctx_.poison_node(resolving_, id)); }
+
+    auto member_types = resolve_members(union_expr.members);
+    if (!member_types) { return last_type_.emplace(ctx_.poison_node(resolving_, id)); }
+
+    union_type.template resolve<types::Union>(field_types, *member_types);
+    last_type_.emplace(union_type);
+}
+
+VISITOR_TEMPLATE_INIT(TypeResolver, visit, UnionExpression)
 
 auto TypeResolver::visit(ast::NodeID id, const ast::WhileLoopExpression& while_loop) -> void {
     TRY_RESOLVE(while_loop.condition);
@@ -510,7 +1219,7 @@ auto TypeResolver::visit(ast::NodeID id, const ast::BreakStatement& break_stmt) 
     if (!resolve_control_flow_label(id, break_stmt.label, "break")) { return; }
 
     if (break_stmt.expression) {
-        // Don't do anything with the label's type since it may need peer type resolution in pass 3
+        // Label's type may need peer type resolution in pass 3
         TRY_RESOLVE(*break_stmt.expression);
         resolving_.set_sema_type(id, *last_type_.take());
     } else {
@@ -536,6 +1245,7 @@ auto TypeResolver::visit(ast::NodeID id, const ast::DeclStatement& decl) -> void
 
     // Breaking out early is possible due to out of order semantics
     if (symbol.get_status() == SymbolStatus::RESOLVED) {
+        ASSERT(resolving_.has_sema_type(id), "Resolved decl has no type");
         return last_type_.emplace(ctx_.get_builtin_resolved_type(TypeKind::VOID));
     }
     symbol.set_status(SymbolStatus::RESOLVING);
@@ -543,22 +1253,37 @@ auto TypeResolver::visit(ast::NodeID id, const ast::DeclStatement& decl) -> void
     // With an explicit type, the ident should always adopt that exact type
     if (decl.explicit_type) {
         TRY_RESOLVE(*decl.explicit_type);
-        resolving_.set_sema_type(decl.ident, *last_type_.take());
+        resolving_.set_sema_type(id, *last_type_.take());
     }
 
+    // Only update the decl value type if it hasn't been set
     if (decl.value) {
         TRY_RESOLVE(*decl.value);
+        if (!resolving_.has_sema_type(id)) { resolving_.set_sema_type(id, *last_type_.take()); }
+    }
 
-        // The ident will not be typed if pass 1 didn't find a block type
-        if (!resolving_.has_sema_type(decl.ident)) {
-            ASSERT(!decl.explicit_type, "An invariant was violated in the declaration");
-            resolving_.set_sema_type(decl.ident, *last_type_.take());
+    // The symbol's kind can be fully resolved with knowledge of the declarations type
+    auto& resolved_type = resolving_.get_sema_type(id);
+    if (resolved_type.is_poison()) {
+        symbol.set_kind(SymbolKind::POISONED);
+    } else if (!symbol.has_kind()) {
+        if (resolved_type.as_opt<types::BuiltinFunction>() ||
+            resolved_type.as_opt<types::Function>()) {
+            symbol.set_kind(SymbolKind::CALLABLE);
+        } else if (resolved_type.as_opt<types::Enum>() || resolved_type.as_opt<types::Struct>() ||
+                   resolved_type.as_opt<types::Union>()) {
+            symbol.set_kind(SymbolKind::CALLABLE);
+        } else if (resolved_type.as_opt<types::Module>()) {
+            symbol.set_kind(SymbolKind::MODULE);
+        } else if (resolved_type.as_opt<types::BuiltinType>()) {
+            symbol.set_kind(SymbolKind::TYPE);
         } else {
-            ASSERT(&resolving_.get_sema_type(*decl.value) == &*last_type_,
-                   "Resolved type doesn't match collected");
+            symbol.set_kind(SymbolKind::VALUE);
         }
     }
 
+    // The identifier's type will be set once it is inspected next due to binding
+    symbol.set_status(SymbolStatus::RESOLVED);
     last_type_.emplace(ctx_.get_builtin_resolved_type(TypeKind::VOID));
 }
 
@@ -578,16 +1303,20 @@ auto TypeResolver::visit(ast::NodeID id, const ast::ExpressionStatement& expr) -
     last_type_.emplace(ctx_.get_builtin_resolved_type(TypeKind::VOID));
 }
 
-auto TypeResolver::visit(ast::NodeID id, const ast::ImportStatement&) -> void {
+auto TypeResolver::visit(ast::NodeID id, const ast::ImportStatement& import_stmt) -> void {
+    const auto name   = import_stmt.get_name(resolving_.ast);
+    auto&      symbol = ctx_.registry.get_from(table_idx_, name);
+
     // Updating this type reflects on the symbol in the actual table as well
     auto& import_type = resolving_.get_sema_type(id);
-    if (import_type.is_poison()) { return; }
+    if (import_type.is_poison()) { return symbol.set_kind(SymbolKind::POISONED); }
     ASSERT(import_type.has_resolved(), "Import types should be resolved on pass 1");
     auto& module = import_type.as<types::Module>();
 
-    // There's no need to poison the import since it would lose all of the module information
+    // There's no need to poison the import type since it would lose all of the module information
     Context new_ctx = ctx_;
     resolve_types(module.imported, new_ctx);
+    if (module.imported.is_poisoned()) { return symbol.set_kind(SymbolKind::POISONED); }
     last_type_.emplace(ctx_.get_builtin_resolved_type(TypeKind::VOID));
 }
 
@@ -606,30 +1335,26 @@ auto TypeResolver::visit(ast::NodeID id, const ast::TestStatement& test) -> void
 }
 
 auto TypeResolver::visit(ast::NodeID id, const ast::UsingStatement& using_stmt) -> void {
-    TRY_RESOLVE(using_stmt.explicit_type);
+    const auto& ident  = resolving_.ast.get_as<ast::IdentifierExpression>(using_stmt.alias);
+    auto&       symbol = ctx_.registry.get_from(table_idx_, ident.name);
+    if (symbol.get_status() == SymbolStatus::RESOLVED) {
+        ASSERT(resolving_.has_sema_type(id), "Resolved alias has no type");
+        return last_type_.emplace(ctx_.get_builtin_resolved_type(TypeKind::VOID));
+    }
 
     // Bind the resolved type to the symbol now that its been collected
-    resolving_.set_sema_type(using_stmt.alias, *last_type_.take());
+    symbol.set_status(SymbolStatus::RESOLVING);
+    resolve(using_stmt.explicit_type);
+    if (last_type_->is_poison()) {
+        symbol.set_kind(SymbolKind::POISONED);
+        return resolving_.set_sema_type(id, *last_type_);
+    }
+    resolving_.set_sema_type(id, *last_type_.take());
+
+    symbol.set_status(SymbolStatus::RESOLVED);
+    TRY_RESOLVE(using_stmt.alias);
     last_type_.emplace(ctx_.get_builtin_resolved_type(TypeKind::VOID));
 }
-
-namespace {
-
-[[nodiscard]] auto mutability_from_type_modifier(ast::TypeModifier modifier) noexcept
-    -> opt::Option<types::MutabilityModifiers> {
-    using Modifier = ast::TypeModifier::Modifier;
-    switch (modifier.get_raw()) {
-    case Modifier::VALUE:        return opt::none;
-    case Modifier::REF:          return types::mut::CONSTANT;
-    case Modifier::MUT_REF:      return types::mut::MUTABLE;
-    case Modifier::PTR:          return types::mut::CONSTANT;
-    case Modifier::MUT_PTR:      return types::mut::MUTABLE;
-    case Modifier::VOLATILE:     return types::mut::CONSTANT_VOLATILE;
-    case Modifier::MUT_VOLATILE: return types::mut::VOLATILE;
-    }
-}
-
-} // namespace
 
 // Without a modifier or with poison the result should be the same as the node
 auto TypeResolver::apply_explicit_modifiers(ast::ExplicitTypeID id, Type& inner_type) -> Type& {
@@ -657,29 +1382,18 @@ auto TypeResolver::apply_explicit_modifiers(ast::ExplicitTypeID id, Type& inner_
     std::unreachable();
 }
 
-auto TypeResolver::visit(ast::ExplicitTypeID id, const ast::IdentifierExpression& ident) -> void {
-    resolve_ident(id, ident);
-    auto& resolved = apply_explicit_modifiers(id, *last_type_.take());
-    resolving_.set_sema_type(id, resolved);
-    last_type_.emplace(resolved);
-}
+#define MAKE_MODIFIED_RESOLVER(NodeType, resolver)                                        \
+    auto TypeResolver::visit(ast::ExplicitTypeID id, const ast::NodeType& node) -> void { \
+        resolver(id, node);                                                               \
+        auto& resolved = apply_explicit_modifiers(id, *last_type_.take());                \
+        resolving_.set_sema_type(id, resolved);                                           \
+        last_type_.emplace(resolved);                                                     \
+    }
 
-auto TypeResolver::visit(ast::ExplicitTypeID id, const ast::ScopeResolutionExpression& scope)
-    -> void {
-    resolve_scope(id, scope);
-    auto& resolved = apply_explicit_modifiers(id, *last_type_.take());
-    resolving_.set_sema_type(id, resolved);
-    last_type_.emplace(resolved);
-}
-
-auto TypeResolver::visit(ast::ExplicitTypeID id, const ast::CallExpression& call) -> void {
-    resolve_call(id, call);
-
-    // The last type is guaranteed to be the return type or poison
-    auto& resolved = apply_explicit_modifiers(id, *last_type_.take());
-    resolving_.set_sema_type(id, resolved);
-    last_type_.emplace(resolved);
-}
+MAKE_MODIFIED_RESOLVER(IdentifierExpression, resolve_ident)
+MAKE_MODIFIED_RESOLVER(ScopeResolutionExpression, resolve_scope)
+MAKE_MODIFIED_RESOLVER(DotExpression, resolve_dot)
+MAKE_MODIFIED_RESOLVER(CallExpression, resolve_call)
 
 auto TypeResolver::visit(ast::ExplicitTypeID id, const ast::ExplicitFunctionType& fn) -> void {
     auto param_types    = ctx_.pool.get_many_unsafe(fn.parameter_types.size());
@@ -711,7 +1425,7 @@ auto TypeResolver::visit(ast::ExplicitTypeID id, const ast::ExplicitFunctionType
 }
 
 auto TypeResolver::visit(ast::ExplicitTypeID id, ast::ExplicitTypeID nested) -> void {
-    TRY_RESOLVE(nested);
+    resolve(nested);
     auto& resolved = apply_explicit_modifiers(id, *last_type_.take());
     resolving_.set_sema_type(id, resolved);
     last_type_.emplace(resolved);

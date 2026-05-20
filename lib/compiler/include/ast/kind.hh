@@ -131,6 +131,7 @@ FOREACH_AST_NODE(FWD_DECLARE_NODE_X)
 enum class ExplicitTypeKind : u8 {
     IDENT,
     SCOPE,
+    DOT,
     CALL,
     FUNCTION,
     RECURSIVE,
@@ -143,6 +144,7 @@ enum class ExplicitTypeKind : u8 {
 #define FOREACH_AST_TYPE(X)      \
     X(IdentifierExpression)      \
     X(ScopeResolutionExpression) \
+    X(DotExpression)             \
     X(CallExpression)            \
     X(ExplicitFunctionType)      \
     X(ExplicitTypeID)            \
@@ -247,6 +249,7 @@ concept ASTExplicitType = requires {
 
 KIND_OF_TRAIT(IdentifierExpression, IDENT)
 KIND_OF_TRAIT(ScopeResolutionExpression, SCOPE)
+KIND_OF_TRAIT(DotExpression, DOT)
 KIND_OF_TRAIT(CallExpression, CALL)
 KIND_OF_TRAIT(ExplicitFunctionType, FUNCTION)
 KIND_OF_TRAIT(ExplicitTypeID, RECURSIVE)

@@ -6,7 +6,7 @@
 #include <fmt/ostream.h>
 
 #include "ast/ast.hh"
-#include "ast/format.hh" // IWYU pragma: keep
+#include "ast/format.hh"
 #include "ast/handle.hh"
 #include "ast/id.hh"
 #include "ast/traits.hh"

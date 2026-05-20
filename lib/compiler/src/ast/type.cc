@@ -131,6 +131,9 @@ auto ExplicitType::parse(syntax::Parser& parser) -> Result<ExplicitTypeID, synta
             if (parsed.is<ScopeResolutionExpression>()) {
                 return parser.add_type<ScopeResolutionExpression>(
                     modifier_token, modifier, parser.get_node<ScopeResolutionExpression>(*parsed));
+            } else if (parsed.is<DotExpression>()) {
+                return parser.add_type<DotExpression>(
+                    modifier_token, modifier, parser.get_node<DotExpression>(*parsed));
             } else if (parsed.is<CallExpression>()) {
                 return parser.add_type<CallExpression>(
                     modifier_token, modifier, parser.get_node<CallExpression>(*parsed));
