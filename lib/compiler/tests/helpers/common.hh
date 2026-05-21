@@ -79,7 +79,7 @@ template <Unwrappable U> [[nodiscard]] auto unwrap(U&& u) -> decltype(auto) {
     return *u;
 }
 
-template <Unwrappable U> [[nodiscard]] auto unwrap_err(U&& u) -> decltype(auto) {
+template <Unwrappable U> auto unwrap_err(U&& u) -> decltype(auto) {
     using T = std::remove_cvref_t<U>;
     if constexpr (traits::is_option_v<T>) {
         REQUIRE_FALSE(u);

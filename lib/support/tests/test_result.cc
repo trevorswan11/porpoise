@@ -17,7 +17,7 @@ TEST_CASE("Result traits") {
     STATIC_CHECK(traits::Result<Result<i32, i64>>);
 }
 
-TEST_CASE("TRy macro usage") {
+TEST_CASE("Try macro usage") {
     Result<i32, std::string_view> res;
     const auto                    unwrap = [&] -> opt::Option<Err<std::string_view>> {
         const auto val = TRY(res);

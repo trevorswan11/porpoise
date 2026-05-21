@@ -60,7 +60,7 @@ Development speed is _not_ and _will never be_ a core principle of porpoise.
 ```porpoise
 import std;
 
-pub const main := fn(args: [][:0]u8): i32 {
+pub const main := fn(args: [][:0]u8): void {
     const message := "Hello, world!";
     std::io::println(message);
 };

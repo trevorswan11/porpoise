@@ -41,14 +41,9 @@ struct Context {
           diagnostics{other.diagnostics.create_new()}, error_stream{other.error_stream},
           prelude_index{other.prelude_index} {}
 
-    // Creates a copy with identical data but a new diagnostic list
-    auto operator=(const Context& other) -> Context& {
-        diagnostics = other.diagnostics.create_new();
-        return *this;
-    }
-
-    Context(Context&&) noexcept           = default;
-    auto operator=(Context&&) -> Context& = delete;
+    auto operator=(const Context& other) -> Context& = delete;
+    Context(Context&&) noexcept                      = default;
+    auto operator=(Context&&) -> Context&            = delete;
 
     // Returns false if the passed result was an error type, which is forwarded to the diagnostics
     template <typename T = Unit> auto try_result(Result<T, Diagnostic>&& result) -> bool {

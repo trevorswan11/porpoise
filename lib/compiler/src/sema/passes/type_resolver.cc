@@ -1006,8 +1006,9 @@ auto TypeResolver::visit(ast::NodeID id, const ast::ImplicitAccessExpression& no
 
 // String literals are just constant arrays of bytes
 auto TypeResolver::visit(ast::NodeID id, const ast::StringExpression& string) -> void {
-    const auto size = string.value.size();
-    auto&      type = ctx_.pool[{TypeKind::ARRAY, types::mut::CONSTANT, false, TypeKind::U8, size}];
+    const auto  size    = string.value.size();
+    const auto& u8_type = ctx_.get_builtin_resolved_type(TypeKind::U8);
+    auto&       type    = ctx_.pool[{TypeKind::ARRAY, types::mut::CONSTANT, false, size, u8_type}];
 
     // String literals with the same size will always have the same type
     type.resolve<types::Array>(ctx_.get_builtin_resolved_type(TypeKind::U8), size, false);
@@ -1076,11 +1077,13 @@ auto TypeResolver::resolve_scope(ID id, const ast::ScopeResolutionExpression& sc
                                                        resolving_.ast.location_of(scope.inner)));
         }
 
-        if (symbol->get_kind() == SymbolKind::POISONED || !inner_mod.has_sema_type(scope.inner)) {
+        const auto symbol_node = symbol->as_opt<symbols::Node>();
+        if (!symbol_node) { return last_type_.emplace(ctx_.poison_node(resolving_, id)); }
+        if (symbol->get_kind() == SymbolKind::POISONED || !inner_mod.has_sema_type(*symbol_node)) {
             return last_type_.emplace(ctx_.poison_node(resolving_, id));
         }
 
-        auto& ident_type = inner_mod.get_sema_type(scope.inner);
+        auto& ident_type = inner_mod.get_sema_type(*symbol_node);
         resolving_.set_sema_type(scope.inner, ident_type);
         resolving_.set_sema_type(id, ident_type);
         return last_type_.emplace(ident_type);
@@ -1304,8 +1307,8 @@ auto TypeResolver::visit(ast::NodeID id, const ast::ExpressionStatement& expr) -
 }
 
 auto TypeResolver::visit(ast::NodeID id, const ast::ImportStatement& import_stmt) -> void {
-    const auto name   = import_stmt.get_name(resolving_.ast);
-    auto&      symbol = ctx_.registry.get_from(table_idx_, name);
+    const auto [_, name] = import_stmt.get_name(resolving_.ast);
+    auto& symbol         = ctx_.registry.get_from(table_idx_, name);
 
     // Updating this type reflects on the symbol in the actual table as well
     auto& import_type = resolving_.get_sema_type(id);

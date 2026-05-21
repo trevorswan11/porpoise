@@ -109,6 +109,13 @@ template <typename T> class Ref {
         return Ret{};
     }
 
+    template <typename Self, typename Or>
+    [[nodiscard]] constexpr auto value_or(this Self&& self, Or& or_value) -> T& {
+        static_assert(
+            requires(T& t) { static_cast<Or&>(t); }, "value_or: Or& must be convertible to T&");
+        return self.has_value() ? self.get() : static_cast<T&>(or_value);
+    }
+
     // Creates a copy of the underlying data and forwards it to the standard optional
     [[nodiscard]] constexpr auto materialize() const noexcept
         requires(std::is_copy_constructible_v<T>)
