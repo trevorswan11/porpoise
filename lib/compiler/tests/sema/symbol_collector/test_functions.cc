@@ -16,7 +16,7 @@ namespace mut = sema::types::mut;
 TEST_CASE("Function hollow types") {
     auto [ctx, idx] =
         helpers::collect_and_check("const a := fn(&self, c: type): void { const foo := bar; };");
-    const auto& registry = ctx.analyzer.get_registry();
+    const auto& registry = ctx->analyzer.get_registry();
     REQUIRE(registry.size() == 2);
     const auto& symbol_a = helpers::unwrap(registry.get_from_opt(idx, "a"));
     REQUIRE(symbol_a.has_kind());
@@ -24,17 +24,17 @@ TEST_CASE("Function hollow types") {
 
     const auto  symbolic_node = helpers::unwrap(symbol_a.as_opt<sema::symbols::Node>());
     const auto& decl_a =
-        helpers::unwrap(ctx.root_mod->ast.get_as_opt<ast::DeclStatement>(symbolic_node));
-    const auto& fn_type = helpers::unwrap(ctx.root_mod->get_sema_type_opt(*decl_a.value));
+        helpers::unwrap(ctx->root_mod->ast.get_as_opt<ast::DeclStatement>(symbolic_node));
+    const auto& fn_type = helpers::unwrap(ctx->root_mod->get_sema_type_opt(*decl_a.value));
 
-    auto& pool = ctx.analyzer.get_pool();
+    auto& pool = ctx->analyzer.get_pool();
     CHECK(&fn_type == &pool[{sema::TypeKind::FUNCTION, mut::CONSTANT, 1}]);
 
     const auto& self_param = helpers::unwrap(registry.get_from_opt(1, "self"));
     REQUIRE(self_param.as_opt<sema::symbols::SelfParameter>());
     const auto& c_param = helpers::unwrap(registry.get_from_opt(1, "c"));
     REQUIRE(c_param.as_opt<sema::symbols::Parameter>());
-    ctx.test_common_decl_collection(1);
+    ctx->test_common_decl_collection(1);
 }
 
 TEST_CASE("Well-placed function control-flow statements") {

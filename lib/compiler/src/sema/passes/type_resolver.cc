@@ -672,9 +672,21 @@ auto TypeResolver::visit(ast::NodeID id, const ast::IndexExpression& index) -> v
 
     auto& single_item_type = *last_type_.take();
     TRY_RESOLVE(index.index);
+    auto& access_type = *last_type_.take();
 
-    resolving_.set_sema_type(id, single_item_type);
-    last_type_.emplace(single_item_type);
+    // There may be a slice accessor which results in a slice type
+    if (access_type.as_opt<types::Slice>()) {
+        auto& new_slice_type =
+            ctx_.pool[{TypeKind::SLICE, types::mut::CONSTANT, false, single_item_type}];
+        new_slice_type.resolve<types::Slice>(single_item_type, false);
+        last_type_.emplace(new_slice_type);
+    } else {
+        last_type_.emplace(single_item_type);
+    }
+
+    auto& result_type = *last_type_.take();
+    resolving_.set_sema_type(id, result_type);
+    last_type_.emplace(result_type);
 }
 
 auto TypeResolver::visit(ast::NodeID id, const ast::InfiniteLoopExpression& loop) -> void {
@@ -865,10 +877,11 @@ auto TypeResolver::visit(ast::NodeID id, const ast::RangeExpression& range) -> v
     auto& rhs_type = *last_type_.take();
 
     // Due to deferred type checking just use one type
-    auto& slice_type = ctx_.pool[{TypeKind::SLICE, types::mut::CONSTANT, lhs_type, rhs_type}];
+    auto& slice_type =
+        ctx_.pool[{TypeKind::SLICE, types::mut::CONSTANT, false, lhs_type, rhs_type}];
     slice_type.resolve<types::Slice>(rhs_type, false);
+    resolving_.set_sema_type(id, slice_type);
     last_type_.emplace(slice_type);
-    resolving_.set_sema_type(id, *last_type_);
 }
 
 auto TypeResolver::visit(ast::NodeID id, const ast::InitializerExpression& init) -> void {

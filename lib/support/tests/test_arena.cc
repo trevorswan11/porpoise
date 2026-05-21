@@ -19,12 +19,14 @@ TEST_CASE("Arena pointer stability") {
     mem::Arena        arena;
     std::vector<Foo*> foos;
 
-    SECTION("First use") {
+    // First use
+    {
         for (usize i = 0; i < 100; ++i) { foos.emplace_back(arena.make<Foo>().get()); }
         for (const auto& foo : foos) { CHECK(foo->marker == MARKER); }
     }
 
-    SECTION("Reset and reuse") {
+    // Reset and reuse
+    {
         arena.reset();
         foos.clear();
         for (usize i = 0; i < 100; ++i) { foos.emplace_back(arena.make<Foo>().get()); }

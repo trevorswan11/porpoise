@@ -22,7 +22,7 @@ namespace porpoise::tests::helpers {
 // Checks if the error list is empty, dumping the list's contents otherwise.
 template <typename E> auto check_errors(std::span<const E> errors) {
     if (!errors.empty()) { fmt::println("{}", errors); }
-    CHECK(errors.empty());
+    REQUIRE(errors.empty());
 }
 
 // Checks if the error list is matches the expected, dumping the list's contents otherwise.
@@ -43,10 +43,6 @@ auto check_errors_against(std::span<const E> errors, Es&&... expected_errors) {
         if (!ranges_eq) { fmt::println("{}", errors); }
         CHECK(ranges_eq);
     }
-}
-
-constexpr auto trim_semicolons(std::string_view str) -> std::string_view {
-    return string::trim_right(str, [](byte b) { return b == ';'; });
 }
 
 template <typename T, typename... Ts> auto make_vector(Ts&&... es) -> std::vector<T> {

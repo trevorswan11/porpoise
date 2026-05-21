@@ -27,14 +27,14 @@ TEST_CASE("If expression collection") {
     auto [ctx, idx] = helpers::collect_and_check(
         "const a := if (b) { const foo := bar; } else { const foo := bar; };");
 
-    auto& analyzer = ctx.analyzer;
+    auto& analyzer = ctx->analyzer;
     CHECK(analyzer.get_registry().size() == 3);
     const auto& actual = helpers::unwrap(analyzer.get_table_opt(idx));
     CHECK(actual.size() == 1);
     REQUIRE(actual.get_opt("a"));
 
-    test_conditional_scope(ctx, 1);
-    test_conditional_scope(ctx, 2);
+    test_conditional_scope(*ctx, 1);
+    test_conditional_scope(*ctx, 2);
 }
 
 TEST_CASE("Flat if collection") { helpers::collect_and_check("const a := if (b > 4) c; else d;"); }
@@ -44,15 +44,15 @@ TEST_CASE("Match expression collection") {
         helpers::collect_and_check("const a := match (b) { c => |d| { const foo := bar; } e => "
                                    "|_| { const foo := bar; } } else { const foo := bar; };");
 
-    auto& analyzer = ctx.analyzer;
+    auto& analyzer = ctx->analyzer;
     CHECK(analyzer.get_registry().size() == 6);
     const auto& actual = helpers::unwrap(analyzer.get_table_opt(idx));
     CHECK(actual.size() == 1);
     REQUIRE(actual.get_opt("a"));
 
-    test_conditional_scope(ctx, 2);
-    test_conditional_scope(ctx, 4);
-    test_conditional_scope(ctx, 5);
+    test_conditional_scope(*ctx, 2);
+    test_conditional_scope(*ctx, 4);
+    test_conditional_scope(*ctx, 5);
 }
 
 TEST_CASE("Flat match collection") {

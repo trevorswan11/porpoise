@@ -20,7 +20,7 @@ namespace {
 auto collect_and_validate_label(std::string_view input, usize expected_size) -> void {
     auto [ctx, idx] = helpers::collect_and_check(input);
 
-    auto&       analyzer = ctx.analyzer;
+    auto&       analyzer = ctx->analyzer;
     const auto& registry = analyzer.get_registry();
     REQUIRE(registry.size() == expected_size);
 
@@ -34,9 +34,10 @@ auto collect_and_validate_label(std::string_view input, usize expected_size) -> 
     CHECK(blk_symbol.get_kind_opt() == sema::SymbolKind::LABEL);
     const auto symbolic_node = helpers::unwrap(blk_symbol.as_opt<sema::symbols::Node>());
 
-    const auto& label_type = helpers::unwrap(ctx.root_mod->get_sema_type_opt(*symbolic_node));
+    const auto& label_type = helpers::unwrap(ctx->root_mod->get_sema_type_opt(*symbolic_node));
     CHECK(label_type.get_symbol_table_idx_opt() == blk_idx);
-    CHECK(&label_type == &ctx.analyzer.get_pool()[{sema::TypeKind::LABEL, mut::CONSTANT, blk_idx}]);
+    CHECK(&label_type ==
+          &ctx->analyzer.get_pool()[{sema::TypeKind::LABEL, mut::CONSTANT, blk_idx}]);
 }
 
 } // namespace

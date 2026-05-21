@@ -9,6 +9,7 @@
 #include "sema/error.hh"
 #include "sema/type.hh"
 
+#include "memory.hh"
 #include "types.hh"
 
 namespace porpoise::tests {
@@ -18,20 +19,20 @@ namespace mut = sema::types::mut;
 namespace {
 
 [[nodiscard]] auto test_loop(std::string_view input, usize expected_reg_count, usize loop_block_idx)
-    -> helpers::SemaTestContext {
+    -> mem::Box<helpers::SemaTestContext> {
     auto [ctx, idx] = helpers::collect_and_check(input);
 
-    const auto& registry = ctx.analyzer.get_registry();
+    const auto& registry = ctx->analyzer.get_registry();
     REQUIRE(registry.size() == expected_reg_count);
     const auto& symbol_a = helpers::unwrap(registry.get_from_opt(0, "a"));
     CHECK_FALSE(symbol_a.has_kind());
 
     const auto  symbolic_node = helpers::unwrap(symbol_a.as_opt<sema::symbols::Node>());
     const auto& decl =
-        helpers::unwrap(ctx.root_mod->ast.get_as_opt<ast::DeclStatement>(symbolic_node));
+        helpers::unwrap(ctx->root_mod->ast.get_as_opt<ast::DeclStatement>(symbolic_node));
 
-    auto&       pool        = ctx.analyzer.get_pool();
-    const auto& actual_type = helpers::unwrap(ctx.root_mod->get_sema_type_opt(*decl.value));
+    auto&       pool        = ctx->analyzer.get_pool();
+    const auto& actual_type = helpers::unwrap(ctx->root_mod->get_sema_type_opt(*decl.value));
     CHECK(&actual_type == &pool[{sema::TypeKind::BLOCK, mut::CONSTANT, loop_block_idx}]);
     return std::move(ctx);
 }
@@ -41,8 +42,8 @@ namespace {
 TEST_CASE("Do-while loop collection") {
     auto ctx =
         test_loop("const a := do { const foo := bar; } while (blk: { const foo := bar; });", 4, 1);
-    ctx.test_common_decl_collection(1);
-    ctx.test_common_decl_collection(3);
+    ctx->test_common_decl_collection(1);
+    ctx->test_common_decl_collection(3);
 }
 
 TEST_CASE("For loop collection") {
@@ -51,20 +52,20 @@ TEST_CASE("For loop collection") {
                          5,
                          3);
 
-    const auto& loop_table = ctx.analyzer.get_table(3);
+    const auto& loop_table = ctx->analyzer.get_table(3);
     const auto& i_symbol   = helpers::unwrap(loop_table.get_opt("i"));
     CHECK(i_symbol.as_opt<sema::symbols::ForLoopCapture>());
     const auto& j_symbol = helpers::unwrap(loop_table.get_opt("i"));
     CHECK(j_symbol.as_opt<sema::symbols::ForLoopCapture>());
 
-    ctx.test_common_decl_collection(2);
-    ctx.test_common_decl_collection(3);
-    ctx.test_common_decl_collection(4);
+    ctx->test_common_decl_collection(2);
+    ctx->test_common_decl_collection(3);
+    ctx->test_common_decl_collection(4);
 }
 
 TEST_CASE("Infinite loop collection") {
     auto ctx = test_loop("const a := loop { const foo := bar; };", 2, 1);
-    ctx.test_common_decl_collection(1);
+    ctx->test_common_decl_collection(1);
 }
 
 TEST_CASE("While loop collection") {
@@ -72,10 +73,10 @@ TEST_CASE("While loop collection") {
                          ":= bar; }) { const foo := bar; } else { const foo := bar; };",
                          7,
                          5);
-    ctx.test_common_decl_collection(2);
-    ctx.test_common_decl_collection(4);
-    ctx.test_common_decl_collection(5);
-    ctx.test_common_decl_collection(6);
+    ctx->test_common_decl_collection(2);
+    ctx->test_common_decl_collection(4);
+    ctx->test_common_decl_collection(5);
+    ctx->test_common_decl_collection(6);
 }
 
 TEST_CASE("Well-placed loop control flow") {

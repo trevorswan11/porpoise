@@ -24,13 +24,10 @@ auto test_common_decl_collection(const sema::SymbolTableRegistry& registry,
                                  const mod::Module&               module,
                                  usize                            idx,
                                  std::string_view                 name) -> void {
-    const auto& symbol = registry.get_from_opt(idx, name);
-    REQUIRE(symbol);
-
-    const auto& node = symbol->as_opt<sema::symbols::Node>();
-    REQUIRE(node);
-    CHECK_FALSE(symbol->is_public(module));
-    CHECK(node->is<ast::DeclStatement>());
+    const auto& symbol = helpers::unwrap(registry.get_from_opt(idx, name));
+    const auto& node   = helpers::unwrap(symbol.as_opt<sema::symbols::Node>());
+    CHECK_FALSE(symbol.is_public(module));
+    CHECK(node.is<ast::DeclStatement>());
 }
 
 SemaTestContext::SemaTestContext(const std::vector<MockFile>& imports,
@@ -45,8 +42,7 @@ SemaTestContext::SemaTestContext(const std::vector<MockFile>& imports,
               if (mock.name) { REQUIRE(manager.add_library_module(*mock.name, mock.path)); }
           }
 
-          auto test_mod_result = helpers::unwrap(manager.try_get_file_module(root_path));
-          return test_mod_result;
+          return helpers::unwrap(manager.try_get_file_module(root_path));
       }()} {}
 
 auto SemaTestContext::test_common_decl_collection(usize idx, std::string_view name) -> void {
@@ -55,20 +51,48 @@ auto SemaTestContext::test_common_decl_collection(usize idx, std::string_view na
 }
 
 auto collect(std::string_view input, const std::vector<MockFile>& imports)
-    -> std::pair<SemaTestContext, usize> {
-    SemaTestContext ctx{imports, TEST_FILENAME, input};
-    auto            test_mod = ctx.root_mod;
-    REQUIRE_FALSE(test_mod->has_parser_diagnostics());
-    ctx.analyzer.collect_symbols(*test_mod);
+    -> std::pair<mem::Box<SemaTestContext>, usize> {
+    auto ctx = mem::make_box<SemaTestContext>(imports, TEST_FILENAME, input);
+    REQUIRE_FALSE(ctx->root_mod->has_parser_diagnostics());
+    ctx->analyzer.collect_symbols(*ctx->root_mod);
 
-    return {std::move(ctx), *test_mod->root_table_idx};
+    REQUIRE(ctx->root_mod->root_table_idx);
+    usize idx = *ctx->root_mod->root_table_idx;
+    return {std::move(ctx), idx};
 }
 
 auto collect_and_check(std::string_view input, const std::vector<MockFile>& imports)
-    -> std::pair<SemaTestContext, usize> {
+    -> std::pair<mem::Box<SemaTestContext>, usize> {
     auto [ctx, idx] = collect(input, imports);
-    if (ctx.root_mod->has_sema_diagnostics()) {
-        check_errors<sema::Diagnostic>(ctx.root_mod->get_sema_diagnostics());
+    if (ctx->root_mod->has_sema_diagnostics()) {
+        check_errors<sema::Diagnostic>(ctx->root_mod->get_sema_diagnostics());
+    }
+    return {std::move(ctx), idx};
+}
+
+auto resolve(std::string_view input, const std::vector<MockFile>& imports)
+    -> std::pair<mem::Box<SemaTestContext>, usize> {
+    auto [ctx, idx] = collect(input, imports);
+    ctx->analyzer.resolve_types(*ctx->root_mod);
+    return {std::move(ctx), idx};
+}
+
+auto resolve_and_check(std::string_view input, const std::vector<MockFile>& imports)
+    -> std::pair<mem::Box<SemaTestContext>, usize> {
+    auto [ctx, idx] = resolve(input, imports);
+    if (ctx->root_mod->has_sema_diagnostics()) {
+        check_errors<sema::Diagnostic>(ctx->root_mod->get_sema_diagnostics());
+    }
+
+    // A successful resolution should resolve every single symbol
+    for (usize i = 0; const auto& table : ctx->analyzer.get_registry()) {
+        for (const auto& [name, symbol] : table) {
+            CHECK(symbol.get_status() == sema::SymbolStatus::RESOLVED);
+            if (symbol.get_status() != sema::SymbolStatus::RESOLVED) {
+                FAIL(name << "  was not resolved in table " << i);
+            }
+        }
+        i++;
     }
     return {std::move(ctx), idx};
 }

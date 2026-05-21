@@ -22,17 +22,17 @@ TEST_CASE("Import aliases correctly used") {
         helpers::make_vector<MockFile>(MockFile{"foo.porp", "const foo := bar;", "foo"},
                                        MockFile{"f.porp", "const foo := bar;"}));
 
-    const auto& registry = ctx.analyzer.get_registry();
+    const auto& registry = ctx->analyzer.get_registry();
     REQUIRE(registry.size() == 3);
-    auto& pool = ctx.analyzer.get_pool();
-    ctx.test_common_decl_collection(idx);
+    auto& pool = ctx->analyzer.get_pool();
+    ctx->test_common_decl_collection(idx);
 
     const auto test_import_inner = [&](std::string_view import_name, usize inner_idx) {
         const auto& symbol = helpers::unwrap(registry.get_from_opt(idx, import_name));
         CHECK(symbol.get_kind_opt() == sema::SymbolKind::MODULE);
 
         const auto symbolic_node = helpers::unwrap(symbol.as_opt<sema::symbols::Node>());
-        auto&      import_type   = helpers::unwrap(ctx.root_mod->get_sema_type_opt(*symbolic_node));
+        auto&      import_type = helpers::unwrap(ctx->root_mod->get_sema_type_opt(*symbolic_node));
         CHECK(&import_type ==
               &pool[sema::types::Key{sema::TypeKind::MODULE, mut::CONSTANT, inner_idx}]);
 
@@ -49,9 +49,9 @@ TEST_CASE("Public import query") {
         "pub import std;",
         helpers::make_vector<MockFile>(MockFile{"std.porp", "var a: i32;", "std"}));
 
-    auto&       table      = helpers::unwrap(ctx.analyzer.get_table_opt(idx));
+    auto&       table      = helpers::unwrap(ctx->analyzer.get_table_opt(idx));
     const auto& std_import = helpers::unwrap(table.get_opt("std"));
-    CHECK(std_import.is_public(*ctx.root_mod));
+    CHECK(std_import.is_public(*ctx->root_mod));
 }
 
 constexpr std::string_view a_porp{R"(pub import "b.porp" as b;)"};
@@ -60,7 +60,7 @@ constexpr std::string_view b_porp{R"(pub import "a.porp" as a;)"};
 TEST_CASE("Circular imports") {
     auto [ctx, _] = helpers::collect_and_check(
         a_porp, helpers::make_vector<MockFile>(MockFile{"b.porp", b_porp}));
-    const auto& registry = ctx.analyzer.get_registry();
+    const auto& registry = ctx->analyzer.get_registry();
     REQUIRE(registry.size() == 2);
 
     CHECK(registry.get_from_opt(0, "b"));
@@ -81,7 +81,7 @@ TEST_CASE("Diamond dependencies") {
         helpers::make_vector<MockFile>(MockFile{"a.porp", diamond},
                                        MockFile{"b.porp", diamond},
                                        MockFile{"std.porp", std_porp, "std"}));
-    const auto& registry = ctx.analyzer.get_registry();
+    const auto& registry = ctx->analyzer.get_registry();
     REQUIRE(registry.size() == 4);
 
     CHECK(registry.get_from_opt(0, "a"));
@@ -103,8 +103,8 @@ TEST_CASE("Self import") {
 
 TEST_CASE("Unknown file module") {
     std::stringstream ss;
-    auto ctx = helpers::analyze_unchecked(helpers::TEST_FILENAME, ss, R"(import "a.porp" as a;)");
-    REQUIRE(ctx.root_mod->has_sema_diagnostics());
+    auto ctx = helpers::analyze(helpers::TEST_FILENAME, ss, R"(import "a.porp" as a;)");
+    REQUIRE(ctx->root_mod->has_sema_diagnostics());
 
     constexpr std::string_view expected{
         R"(test.porp:1:8: error: Could not find path 'a.porp' in virtual file system

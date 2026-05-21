@@ -64,15 +64,21 @@ namespace {
 } // namespace
 
 TEST_CASE("Full sema pipeline") {
-    auto        ctx      = helpers::analyze("main.porp",
-                                main_porp,
-                                MockFile{"std.porp", std_porp, "std"},
-                                MockFile{"io.porp", io_porp});
-    const auto& registry = ctx.analyzer.get_registry();
-    auto&       pool     = ctx.analyzer.get_pool();
+    auto        ctx      = helpers::analyze_and_check("main.porp",
+                                          main_porp,
+                                          MockFile{"std.porp", std_porp, "std"},
+                                          MockFile{"io.porp", io_porp});
+    const auto& registry = ctx->analyzer.get_registry();
+    for (const auto& table : registry) {
+        for (const auto& [_, symbol] : table) {
+            REQUIRE(symbol.get_status() == sema::SymbolStatus::RESOLVED);
+        }
+    }
+
+    auto& pool = ctx->analyzer.get_pool();
     REQUIRE(registry.size() == 6);
 
-    auto& root_module = *ctx.root_mod;
+    auto& root_module = *ctx->root_mod;
     CHECK(root_module.root_table_idx == 0);
     auto [std_module, std_module_type] = check_inner_module(registry, root_module, 0, "std");
     CHECK(std_module.root_table_idx == 1);
