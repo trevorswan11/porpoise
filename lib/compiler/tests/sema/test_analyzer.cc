@@ -1,7 +1,8 @@
 #include <string_view>
+#include <utility>
+#include <variant>
 
 #include <catch2/catch_test_macros.hpp>
-#include <variant>
 
 #include "ast/expression.hh"
 #include "ast/primitive.hh"
@@ -43,18 +44,21 @@ namespace {
 [[nodiscard]] auto check_inner_module(const sema::SymbolTableRegistry& registry,
                                       mod::Module&                     enclosing_module,
                                       usize                            table_idx,
-                                      std::string_view                 name) -> mod::Module& {
+                                      std::string_view                 name)
+    -> std::pair<mod::Module&, const sema::Type&> {
     const auto& symbol = helpers::unwrap(registry.get_from_opt(table_idx, name));
     CHECK(symbol.get_kind_opt() == sema::SymbolKind::MODULE);
     CHECK(symbol.get_status() == sema::SymbolStatus::RESOLVED);
-    const auto node = helpers::unwrap(symbol.as_opt<sema::symbols::Node>());
-    CHECK(node.is<ast::ImportStatement>());
+    const auto  node = helpers::unwrap(symbol.as_opt<sema::symbols::Node>());
+    const auto& import_stmt =
+        helpers::unwrap(enclosing_module.ast.get_as_opt<ast::ImportStatement>(node));
+    REQUIRE(import_stmt.get_name(enclosing_module.ast) == name);
 
     const auto& type        = helpers::unwrap(enclosing_module.get_sema_type_opt(node));
     const auto& module_type = helpers::unwrap(type.as_opt<sema::types::Module>());
     auto&       module      = module_type.imported;
     CHECK(module.is_ok());
-    return module;
+    return {module, type};
 }
 
 } // namespace
@@ -70,12 +74,11 @@ TEST_CASE("Full sema pipeline") {
 
     auto& root_module = *ctx.root_mod;
     CHECK(root_module.root_table_idx == 0);
-    auto& std_module = check_inner_module(registry, root_module, 0, "std");
+    auto [std_module, std_module_type] = check_inner_module(registry, root_module, 0, "std");
     CHECK(std_module.root_table_idx == 1);
-    auto& io_module = check_inner_module(registry, std_module, 1, "io");
+    auto [io_module, io_module_type] = check_inner_module(registry, std_module, 1, "io");
     CHECK(registry.get_from(1, "io").is_public(std_module));
     CHECK(io_module.root_table_idx == 2);
-    // TODO: Verify function types
 
     SECTION("Main function validation") {
         const auto& symbol = helpers::unwrap(registry.get_from_opt(0, "main"));
@@ -89,6 +92,7 @@ TEST_CASE("Full sema pipeline") {
 
         const auto& fn_type = helpers::unwrap(root_module.get_sema_type_opt(node));
         CHECK(fn_type.get_symbol_table_idx_opt() == 4);
+        CHECK(&fn_type == &pool[{sema::TypeKind::FUNCTION, sema::types::mut::CONSTANT, 4}]);
         const auto  fn_idx = fn_type.get_symbol_table_idx();
         const auto& fn     = helpers::unwrap(fn_type.as_opt<sema::types::Function>());
         CHECK(fn.params.size() == 1);
@@ -173,9 +177,20 @@ TEST_CASE("Full sema pipeline") {
             const auto& scope_expr = helpers::unwrap(
                 root_module.ast.get_as_opt<ast::ScopeResolutionExpression>(scope_id));
             const auto& println_fn_type =
-                helpers::unwrap(io_module.get_sema_type_opt(scope_expr.inner));
-            (void)println_fn_type;
-            // TODO: Verify scope resolution
+                helpers::unwrap(root_module.get_sema_type_opt(scope_expr.inner));
+            CHECK(&println_fn_type ==
+                  &pool[{sema::TypeKind::FUNCTION, sema::types::mut::CONSTANT, 3}]);
+
+            // The outer part of resolution should be two modules
+            const auto& scope_outer_expr = helpers::unwrap(
+                root_module.ast.get_as_opt<ast::ScopeResolutionExpression>(scope_expr.outer));
+            const auto& scope_std_expr =
+                helpers::unwrap(root_module.get_sema_type_opt(scope_outer_expr.outer));
+            CHECK(&scope_std_expr == &std_module_type);
+
+            const auto& scope_io_expr =
+                helpers::unwrap(root_module.get_sema_type_opt(scope_outer_expr.inner));
+            CHECK(&scope_io_expr == &io_module_type);
         }
     }
 
@@ -190,6 +205,7 @@ TEST_CASE("Full sema pipeline") {
 
         const auto& fn_type = helpers::unwrap(io_module.get_sema_type_opt(node));
         CHECK(fn_type.get_symbol_table_idx_opt() == 3);
+        CHECK(&fn_type == &pool[{sema::TypeKind::FUNCTION, sema::types::mut::CONSTANT, 3}]);
         const auto& fn = helpers::unwrap(fn_type.as_opt<sema::types::Function>());
         CHECK(fn.params.size() == 1);
 

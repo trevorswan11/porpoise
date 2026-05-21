@@ -36,6 +36,13 @@
 
 namespace porpoise::sema {
 
+// Performs the resolution and poison check & bubble & return operation
+#define TRY_RESOLVE(resolvable_expr)                                                       \
+    do {                                                                                   \
+        resolve(resolvable_expr);                                                          \
+        if (last_type_->is_poison()) { return resolving_.set_sema_type(id, *last_type_); } \
+    } while (0)
+
 auto TypeResolver::resolve_types(mod::Module& module, Context& ctx) -> mod::ModuleState {
     // Poisoned collection should flush the diagnostics
     if (module.state == mod::ModuleState::POISONED_SYMBOL_COLLECTION) {
@@ -1307,8 +1314,8 @@ auto TypeResolver::visit(ast::NodeID id, const ast::ExpressionStatement& expr) -
 }
 
 auto TypeResolver::visit(ast::NodeID id, const ast::ImportStatement& import_stmt) -> void {
-    const auto [_, name] = import_stmt.get_name(resolving_.ast);
-    auto& symbol         = ctx_.registry.get_from(table_idx_, name);
+    const auto name   = import_stmt.get_name(resolving_.ast);
+    auto&      symbol = ctx_.registry.get_from(table_idx_, name);
 
     // Updating this type reflects on the symbol in the actual table as well
     auto& import_type = resolving_.get_sema_type(id);

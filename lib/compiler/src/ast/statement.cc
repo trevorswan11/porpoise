@@ -286,16 +286,15 @@ auto ImportStatement::parse(syntax::Parser& parser) -> Result<StatementHandle, s
     return parser.add_stmt<ImportStatement>(start_token, imported_core, imported_alias);
 }
 
-auto ImportStatement::get_name(const AST& tree) const noexcept
-    -> std::pair<IdentifierHandle, std::string_view> {
+auto ImportStatement::get_name(const AST& tree) const noexcept -> std::string_view {
     if (alias) {
         const auto& ident = tree.get_as<ast::IdentifierExpression>(*alias);
-        return {*alias, ident.name};
+        return ident.name;
     }
 
     // This must be an ident as all strings have an alias
     const auto& ident = tree.get_as<ast::IdentifierExpression>(payload);
-    return {payload, ident.name};
+    return ident.name;
 }
 
 auto ReturnStatement::parse(syntax::Parser& parser) -> Result<StatementHandle, syntax::Diagnostic> {
