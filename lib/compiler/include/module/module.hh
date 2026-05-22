@@ -24,6 +24,7 @@
 #include "option.hh"
 #include "result.hh"
 #include "source_file.hh"
+#include "type_traits.hh"
 #include "types.hh"
 #include "utility.hh"
 #include "variant.hh"
@@ -118,26 +119,29 @@ struct Module {
         return sema_side_tables.match_arm_types[arm.pattern].has_value();
     }
 
-    template <traits::IndexableID ID>
-    [[nodiscard]] constexpr auto get_sema_type_opt(ID id) noexcept -> opt::Option<sema::Type&> {
+    template <traits::IndexableID ID, typename Self>
+    [[nodiscard]] constexpr auto get_sema_type_opt(this Self&& self, ID id) noexcept {
+        using ReturnType = opt::Option<traits::const_dispatch_t<Self, sema::Type&>>;
         if constexpr (traits::IndexableNodeID<ID>) {
-            return sema_side_tables.node_types[id];
+            return ReturnType{self.sema_side_tables.node_types[id]};
         } else {
-            return sema_side_tables.explicit_types[id];
+            return ReturnType{self.sema_side_tables.explicit_types[id]};
         }
     }
 
-    template <traits::IndexableID ID>
-    [[nodiscard]] constexpr auto get_sema_type(ID id) noexcept -> sema::Type& {
-        return *get_sema_type_opt(id);
+    template <traits::IndexableID ID, typename Self>
+    [[nodiscard]] constexpr auto get_sema_type(this Self&& self, ID id) noexcept -> auto& {
+        return *self.get_sema_type_opt(id);
     }
 
-    [[nodiscard]] auto get_sema_type_opt(const ast::MatchExpression::Arm& arm) noexcept
-        -> opt::Option<sema::Type&> {
-        return sema_side_tables.match_arm_types[arm.pattern];
+    template <typename Self>
+    [[nodiscard]] auto get_sema_type_opt(this Self&&                      self,
+                                         const ast::MatchExpression::Arm& arm) noexcept {
+        using ReturnType = opt::Option<traits::const_dispatch_t<Self, sema::Type&>>;
+        return ReturnType{self.sema_side_tables.match_arm_types[arm.pattern]};
     }
 
-    [[nodiscard]] auto get_sema_type(const ast::MatchExpression::Arm& arm) noexcept -> sema::Type& {
+    [[nodiscard]] auto get_sema_type(const ast::MatchExpression::Arm& arm) const noexcept -> auto& {
         return *get_sema_type_opt(arm);
     }
 

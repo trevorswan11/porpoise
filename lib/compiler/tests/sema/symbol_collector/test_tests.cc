@@ -9,8 +9,6 @@
 
 namespace porpoise::tests {
 
-namespace mut = sema::types::mut;
-
 TEST_CASE("Test statement symbol collection") {
     auto [ctx, idx]      = helpers::collect_and_check(R"(test "foo" { const foo := bar; })");
     const auto& registry = ctx->analyzer.get_registry();
@@ -18,10 +16,9 @@ TEST_CASE("Test statement symbol collection") {
     const auto& table = helpers::unwrap(registry.get_opt(idx));
     CHECK(table.size() == 0);
 
-    auto&       pool = ctx->analyzer.get_pool();
     const auto& test_type =
         helpers::unwrap(ctx->root_mod->get_sema_type_opt(ctx->root_mod->ast[0]));
-    CHECK(&test_type == &pool[{sema::TypeKind::BLOCK, mut::CONSTANT, 1}]);
+    CHECK(&test_type == &ctx->get_type(sema::TypeKind::BLOCK, 1));
     ctx->test_common_decl_collection(1);
 }
 

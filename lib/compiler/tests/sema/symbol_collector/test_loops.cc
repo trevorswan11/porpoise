@@ -7,14 +7,13 @@
 #include "helpers/common.hh"
 #include "helpers/sema.hh"
 #include "sema/error.hh"
+#include "sema/symbol.hh"
 #include "sema/type.hh"
 
 #include "memory.hh"
 #include "types.hh"
 
 namespace porpoise::tests {
-
-namespace mut = sema::types::mut;
 
 namespace {
 
@@ -24,16 +23,12 @@ namespace {
 
     const auto& registry = ctx->analyzer.get_registry();
     REQUIRE(registry.size() == expected_reg_count);
-    const auto& symbol_a = helpers::unwrap(registry.get_from_opt(0, "a"));
-    CHECK_FALSE(symbol_a.has_kind());
+    const auto [sym, sym_data, node_data] =
+        ctx->get_ast_sym_info<sema::symbols::Node, ast::DeclStatement>("a", 0);
+    CHECK_FALSE(sym.has_kind());
 
-    const auto  symbolic_node = helpers::unwrap(symbol_a.as_opt<sema::symbols::Node>());
-    const auto& decl =
-        helpers::unwrap(ctx->root_mod->ast.get_as_opt<ast::DeclStatement>(symbolic_node));
-
-    auto&       pool        = ctx->analyzer.get_pool();
-    const auto& actual_type = helpers::unwrap(ctx->root_mod->get_sema_type_opt(*decl.value));
-    CHECK(&actual_type == &pool[{sema::TypeKind::BLOCK, mut::CONSTANT, loop_block_idx}]);
+    const auto& actual_type = helpers::unwrap(ctx->root_mod->get_sema_type_opt(*node_data.value));
+    CHECK(&actual_type == &ctx->get_type(sema::TypeKind::BLOCK, loop_block_idx));
     return std::move(ctx);
 }
 

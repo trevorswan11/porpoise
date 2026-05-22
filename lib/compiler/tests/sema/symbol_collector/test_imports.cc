@@ -12,8 +12,6 @@
 
 namespace porpoise::tests {
 
-namespace mut = sema::types::mut;
-
 using MockFile = helpers::MockFile;
 
 TEST_CASE("Import aliases correctly used") {
@@ -24,20 +22,15 @@ TEST_CASE("Import aliases correctly used") {
 
     const auto& registry = ctx->analyzer.get_registry();
     REQUIRE(registry.size() == 3);
-    auto& pool = ctx->analyzer.get_pool();
     ctx->test_common_decl_collection(idx);
 
     const auto test_import_inner = [&](std::string_view import_name, usize inner_idx) {
-        const auto& symbol = helpers::unwrap(registry.get_from_opt(idx, import_name));
-        CHECK(symbol.get_kind_opt() == sema::SymbolKind::MODULE);
+        const auto [sym, sym_data, type, type_data] =
+            ctx->get_full_type_sym_info<sema::symbols::Node, sema::types::Module>(import_name, idx);
+        CHECK(sym.get_kind_opt() == sema::SymbolKind::MODULE);
 
-        const auto symbolic_node = helpers::unwrap(symbol.as_opt<sema::symbols::Node>());
-        auto&      import_type = helpers::unwrap(ctx->root_mod->get_sema_type_opt(*symbolic_node));
-        CHECK(&import_type ==
-              &pool[sema::types::Key{sema::TypeKind::MODULE, mut::CONSTANT, inner_idx}]);
-
-        const auto import_inner = helpers::unwrap(import_type.as_opt<sema::types::Module>());
-        helpers::test_common_decl_collection(registry, import_inner.imported, inner_idx);
+        CHECK(&type == &ctx->get_type(sema::TypeKind::MODULE, inner_idx));
+        helpers::test_common_decl_collection(registry, type_data.imported, inner_idx);
     };
 
     test_import_inner("A", 1);

@@ -2,9 +2,11 @@
 
 #include <concepts>
 #include <filesystem>
+#include <functional>
 #include <iostream>
 #include <ostream>
 #include <string_view>
+#include <tuple>
 #include <utility>
 #include <vector>
 
@@ -12,12 +14,14 @@
 #include <fmt/format.h>
 #include <fmt/ranges.h>
 
+#include "ast/kind.hh"
 #include "helpers/common.hh"
 #include "module/memory_loader.hh"
 #include "module/module.hh"
 #include "sema/analyzer.hh"
 #include "sema/error.hh"
 #include "sema/symbol.hh"
+#include "sema/type.hh"
 
 #include "memory.hh"
 #include "option.hh"
@@ -40,6 +44,9 @@ auto test_common_decl_collection(const sema::SymbolTableRegistry& registry,
                                  usize                            idx,
                                  std::string_view                 name = "foo") -> void;
 
+template <typename Data>
+concept ASTData = traits::ASTNode<Data> || traits::ASTExplicitType<Data>;
+
 struct SemaTestContext {
     mem::Box<mod::MemoryLoader> loader;
     mod::ModuleManager          manager;
@@ -55,8 +62,86 @@ struct SemaTestContext {
 
     MAKE_MOVE_CONSTRUCTABLE_ONLY(SemaTestContext)
 
+    // Walks all tables in the registry and checks that all symbols are resolved
+    //
+    // A successful resolution should resolve every single symbol
+    auto verify_registry_resolved() -> void;
+
     // Tests the collected state of a minimal non-public implicit declaration in the context
     auto test_common_decl_collection(usize idx, std::string_view name = "foo") -> void;
+
+    template <sema::types::MutabilityModifiers mut = sema::types::mut::CONSTANT,
+              typename... Markers>
+    [[nodiscard]] auto get_type(sema::TypeKind kind, Markers&&... markers) -> auto& {
+        return analyzer.get_pool()[{kind, mut, std::forward<Markers>(markers)...}];
+    }
+
+    // Contains [symbol, symbol data]
+    template <typename SymbolData>
+    [[nodiscard]] auto get_symbol(std::string_view name, usize table_idx) {
+        const auto& symbol = helpers::unwrap(analyzer.get_registry().get_from_opt(table_idx, name));
+        const auto& symbol_data = helpers::unwrap(symbol.as_opt<SymbolData>());
+        return std::tie(symbol, symbol_data);
+    }
+
+    // Contains [symbol, symbol data, type]
+    template <typename SymbolData, typename Proj = std::identity>
+    [[nodiscard]] auto get_type_sym_info(std::string_view          name,
+                                         usize                     table_idx,
+                                         opt::Option<mod::Module&> module = opt::none,
+                                         Proj                      proj   = {}) {
+        auto        info      = get_symbol<SymbolData>(name, table_idx);
+        auto&       enclosing = module.value_or(*root_mod);
+        const auto& type =
+            helpers::unwrap(enclosing.get_sema_type_opt(std::invoke(proj, std::get<1>(info))));
+        return std::tuple_cat(info, std::forward_as_tuple(type));
+    }
+
+    // Contains [symbol, symbol data, type, type data]
+    template <typename SymbolData, typename TypeData, typename Proj = std::identity>
+    [[nodiscard]] auto get_full_type_sym_info(std::string_view          name,
+                                              usize                     table_idx,
+                                              opt::Option<mod::Module&> module = opt::none,
+                                              Proj                      proj   = {}) {
+        auto        info      = get_type_sym_info<SymbolData>(name, table_idx, module, proj);
+        const auto& type_data = helpers::unwrap(std::get<2>(info).template as_opt<TypeData>());
+        return std::tuple_cat(info, std::forward_as_tuple(type_data));
+    }
+
+    // Contains [symbol, symbol data, ast data]
+    template <typename SymbolData, ASTData TreeData>
+    [[nodiscard]] auto get_ast_sym_info(std::string_view          name,
+                                        usize                     table_idx,
+                                        opt::Option<mod::Module&> module = opt::none) {
+        auto        info      = get_symbol<SymbolData>(name, table_idx);
+        auto&       enclosing = module.value_or(*root_mod);
+        const auto& node_data =
+            helpers::unwrap(enclosing.ast.get_as_opt<TreeData>(std::get<1>(info)));
+        return std::tuple_cat(info, std::forward_as_tuple(node_data));
+    }
+
+    // Contains the [symbol, symbol data, ast data, type]
+    template <typename SymbolData, ASTData TreeData, typename Proj = std::identity>
+    [[nodiscard]] auto get_ast_type_sym_info(std::string_view          name,
+                                             usize                     table_idx,
+                                             opt::Option<mod::Module&> module = opt::none,
+                                             Proj                      proj   = {}) {
+        auto        info      = get_ast_sym_info<SymbolData, TreeData>(name, table_idx, module);
+        auto&       enclosing = module.value_or(*root_mod);
+        const auto& type =
+            helpers::unwrap(enclosing.get_sema_type_opt(std::invoke(proj, std::get<1>(info))));
+        return std::tuple_cat(info, std::forward_as_tuple(type));
+    }
+
+    // Contains [symbol, symbol data, ast data, type, type data]
+    template <typename SymbolData, ASTData TreeData, typename TypeData>
+    [[nodiscard]] auto get_full_sym_info(std::string_view          name,
+                                         usize                     table_idx,
+                                         opt::Option<mod::Module&> module = opt::none) {
+        auto        info = get_ast_type_sym_info<SymbolData, TreeData>(name, table_idx, module);
+        const auto& type_data = helpers::unwrap(std::get<3>(info).template as_opt<TypeData>());
+        return std::tuple_cat(info, std::forward_as_tuple(type_data));
+    }
 };
 
 // Collects the assumed-syntactically-valid input and returns the analyzer and parent table index
@@ -85,10 +170,7 @@ auto analyze(std::string_view root_path,
              std::string_view input,
              Mocks&&... mocks) -> mem::Box<SemaTestContext> {
     auto ctx = mem::make_box<SemaTestContext>(
-        helpers::make_vector<MockFile>(std::forward<Mocks>(mocks)...),
-        root_path,
-        input,
-        error_stream);
+        make_vector<MockFile>(std::forward<Mocks>(mocks)...), root_path, input, error_stream);
     REQUIRE_FALSE(ctx->root_mod->has_parser_diagnostics());
 
     auto& analyzer = ctx->analyzer;
@@ -119,14 +201,28 @@ auto test_collector_fail(std::string_view             failing,
 
     REQUIRE(test_mod->has_sema_diagnostics());
     const auto& errors = test_mod->get_sema_diagnostics();
-    helpers::check_errors_against<sema::Diagnostic>(errors,
-                                                    std::forward<Ds>(expected_diagnostics)...);
+    check_errors_against<sema::Diagnostic>(errors, std::forward<Ds>(expected_diagnostics)...);
 }
 
 // Tests a semantically failing input against the expected generated errors
 template <SemaDiag... Ds>
 auto test_collector_fail(std::string_view failing, Ds&&... expected_diagnostics) -> void {
     test_collector_fail(failing, {}, std::forward<Ds>(expected_diagnostics)...);
+}
+
+// Walk through the iterable and find the first matching expression statement
+template <traits::ASTNode Node, typename NodeIterable>
+[[nodiscard]] auto lookup_expression(const NodeIterable& nodes, const mod::Module& module) noexcept
+    -> const Node& {
+    for (const auto& body_id : nodes) {
+        if (const auto& expr_stmt = module.ast.get_as_opt<ast::ExpressionStatement>(body_id)) {
+            if (expr_stmt->expression.template is<ast::CallExpression>()) {
+                return helpers::unwrap(
+                    module.ast.get_as_opt<ast::CallExpression>(expr_stmt->expression));
+            }
+        }
+    }
+    FAIL("Call expression could not be found");
 }
 
 } // namespace porpoise::tests::helpers

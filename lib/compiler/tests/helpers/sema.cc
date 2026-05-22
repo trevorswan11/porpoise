@@ -24,8 +24,8 @@ auto test_common_decl_collection(const sema::SymbolTableRegistry& registry,
                                  const mod::Module&               module,
                                  usize                            idx,
                                  std::string_view                 name) -> void {
-    const auto& symbol = helpers::unwrap(registry.get_from_opt(idx, name));
-    const auto& node   = helpers::unwrap(symbol.as_opt<sema::symbols::Node>());
+    const auto& symbol = unwrap(registry.get_from_opt(idx, name));
+    const auto& node   = unwrap(symbol.as_opt<sema::symbols::Node>());
     CHECK_FALSE(symbol.is_public(module));
     CHECK(node.is<ast::DeclStatement>());
 }
@@ -42,8 +42,20 @@ SemaTestContext::SemaTestContext(const std::vector<MockFile>& imports,
               if (mock.name) { REQUIRE(manager.add_library_module(*mock.name, mock.path)); }
           }
 
-          return helpers::unwrap(manager.try_get_file_module(root_path));
+          return unwrap(manager.try_get_file_module(root_path));
       }()} {}
+
+auto SemaTestContext::verify_registry_resolved() -> void {
+    for (usize i = 0; const auto& table : analyzer.get_registry()) {
+        for (const auto& [name, symbol] : table) {
+            CHECK(symbol.get_status() == sema::SymbolStatus::RESOLVED);
+            if (symbol.get_status() != sema::SymbolStatus::RESOLVED) {
+                FAIL(name << "  was not resolved in table " << i);
+            }
+        }
+        i++;
+    }
+}
 
 auto SemaTestContext::test_common_decl_collection(usize idx, std::string_view name) -> void {
     const auto& registry = analyzer.get_registry();
@@ -83,17 +95,8 @@ auto resolve_and_check(std::string_view input, const std::vector<MockFile>& impo
     if (ctx->root_mod->has_sema_diagnostics()) {
         check_errors<sema::Diagnostic>(ctx->root_mod->get_sema_diagnostics());
     }
+    ctx->verify_registry_resolved();
 
-    // A successful resolution should resolve every single symbol
-    for (usize i = 0; const auto& table : ctx->analyzer.get_registry()) {
-        for (const auto& [name, symbol] : table) {
-            CHECK(symbol.get_status() == sema::SymbolStatus::RESOLVED);
-            if (symbol.get_status() != sema::SymbolStatus::RESOLVED) {
-                FAIL(name << "  was not resolved in table " << i);
-            }
-        }
-        i++;
-    }
     return {std::move(ctx), idx};
 }
 

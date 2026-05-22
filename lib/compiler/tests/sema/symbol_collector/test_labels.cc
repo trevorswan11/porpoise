@@ -3,7 +3,6 @@
 
 #include <catch2/catch_test_macros.hpp>
 
-#include "helpers/common.hh"
 #include "helpers/sema.hh"
 #include "sema/error.hh"
 #include "sema/symbol.hh"
@@ -12,8 +11,6 @@
 #include "types.hh"
 
 namespace porpoise::tests {
-
-namespace mut = sema::types::mut;
 
 namespace {
 
@@ -24,20 +21,15 @@ auto collect_and_validate_label(std::string_view input, usize expected_size) -> 
     const auto& registry = analyzer.get_registry();
     REQUIRE(registry.size() == expected_size);
 
-    const auto& top_table = helpers::unwrap(registry.get_opt(idx));
-    CHECK(top_table.has("a"));
-    CHECK_FALSE(top_table.has("blk"));
+    CHECK(registry.get_from_opt(idx, "a"));
+    CHECK_FALSE(registry.get_from_opt(idx, "blk"));
 
-    const auto  blk_idx     = idx + 1;
-    const auto& label_table = helpers::unwrap(registry.get_opt(blk_idx));
-    const auto& blk_symbol  = helpers::unwrap(label_table.get_opt("blk"));
-    CHECK(blk_symbol.get_kind_opt() == sema::SymbolKind::LABEL);
-    const auto symbolic_node = helpers::unwrap(blk_symbol.as_opt<sema::symbols::Node>());
+    const auto blk_idx               = idx + 1;
+    const auto [sym, sym_data, type] = ctx->get_type_sym_info<sema::symbols::Node>("blk", blk_idx);
+    CHECK(sym.get_kind_opt() == sema::SymbolKind::LABEL);
 
-    const auto& label_type = helpers::unwrap(ctx->root_mod->get_sema_type_opt(*symbolic_node));
-    CHECK(label_type.get_symbol_table_idx_opt() == blk_idx);
-    CHECK(&label_type ==
-          &ctx->analyzer.get_pool()[{sema::TypeKind::LABEL, mut::CONSTANT, blk_idx}]);
+    CHECK(type.get_symbol_table_idx_opt() == blk_idx);
+    CHECK(&type == &ctx->get_type(sema::TypeKind::LABEL, blk_idx));
 }
 
 } // namespace

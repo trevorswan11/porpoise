@@ -53,7 +53,8 @@ template <typename T> class Ref {
 
     template <typename U>
         requires(std::convertible_to<U*, T*>)
-    constexpr Ref(const Ref<U>& other) noexcept : ptr_{other.operator->()} {}
+    constexpr Ref(const Ref<U>& other) noexcept
+        : ptr_{other.has_value() ? other.operator->() : nullptr} {}
     // cppcheck-suppress-end noExplicitConstructor
 
     [[nodiscard]] constexpr auto     has_value() const noexcept -> bool { return ptr_ != nullptr; }

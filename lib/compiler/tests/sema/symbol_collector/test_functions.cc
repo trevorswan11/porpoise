@@ -11,29 +11,23 @@
 
 namespace porpoise::tests {
 
-namespace mut = sema::types::mut;
+namespace syms = sema::symbols;
 
 TEST_CASE("Function hollow types") {
     auto [ctx, idx] =
         helpers::collect_and_check("const a := fn(&self, c: type): void { const foo := bar; };");
     const auto& registry = ctx->analyzer.get_registry();
     REQUIRE(registry.size() == 2);
-    const auto& symbol_a = helpers::unwrap(registry.get_from_opt(idx, "a"));
-    REQUIRE(symbol_a.has_kind());
-    CHECK(symbol_a.get_kind() == sema::SymbolKind::CALLABLE);
 
-    const auto  symbolic_node = helpers::unwrap(symbol_a.as_opt<sema::symbols::Node>());
-    const auto& decl_a =
-        helpers::unwrap(ctx->root_mod->ast.get_as_opt<ast::DeclStatement>(symbolic_node));
-    const auto& fn_type = helpers::unwrap(ctx->root_mod->get_sema_type_opt(*decl_a.value));
+    const auto [sym, sym_data, node_data] =
+        ctx->get_ast_sym_info<syms::Node, ast::DeclStatement>("a", idx);
+    CHECK(sym.get_kind_opt() == sema::SymbolKind::CALLABLE);
 
-    auto& pool = ctx->analyzer.get_pool();
-    CHECK(&fn_type == &pool[{sema::TypeKind::FUNCTION, mut::CONSTANT, 1}]);
+    const auto& fn_type = helpers::unwrap(ctx->root_mod->get_sema_type_opt(*node_data.value));
+    CHECK(&fn_type == &ctx->get_type(sema::TypeKind::FUNCTION, 1));
 
-    const auto& self_param = helpers::unwrap(registry.get_from_opt(1, "self"));
-    REQUIRE(self_param.as_opt<sema::symbols::SelfParameter>());
-    const auto& c_param = helpers::unwrap(registry.get_from_opt(1, "c"));
-    REQUIRE(c_param.as_opt<sema::symbols::Parameter>());
+    REQUIRE(helpers::unwrap(registry.get_from_opt(1, "self")).as_opt<syms::SelfParameter>());
+    REQUIRE(helpers::unwrap(registry.get_from_opt(1, "c")).as_opt<syms::Parameter>());
     ctx->test_common_decl_collection(1);
 }
 
