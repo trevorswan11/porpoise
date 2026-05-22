@@ -21,7 +21,6 @@ namespace porpoise::tests {
 using MockFile = helpers::MockFile;
 
 namespace syms  = sema::symbols;
-namespace mut   = sema::types::mut;
 namespace types = sema::types;
 
 constexpr std::string_view main_porp{R"(
@@ -178,8 +177,8 @@ TEST_CASE("Full sema pipeline") {
         CHECK(println_type_data.params.size() == 1);
 
         // Verify the parameter type
-        const auto& u8_slice_type = ctx->get_type(
-            sema::TypeKind::SLICE, mut::CONSTANT, false, ctx->get_type(sema::TypeKind::U8));
+        const auto& u8_slice_type =
+            ctx->get_type(sema::TypeKind::SLICE, false, ctx->get_type(sema::TypeKind::U8));
 
         // Verify the parameter type & symbol
         {

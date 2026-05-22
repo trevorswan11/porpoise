@@ -76,6 +76,10 @@ struct SemaTestContext {
         return analyzer.get_pool()[{kind, mut, std::forward<Markers>(markers)...}];
     }
 
+    static auto check_poisoned(const sema::Symbol& sym) -> void;
+    auto        check_poisoned(const sema::Type& type) -> void;
+    auto        check_poisoned(const sema::Symbol& sym, const sema::Type& type) -> void;
+
     // Contains [symbol, symbol data]
     template <typename SymbolData>
     [[nodiscard]] auto get_symbol(std::string_view name, usize table_idx) {
@@ -144,27 +148,26 @@ struct SemaTestContext {
     }
 };
 
+using CtxIdxPair = std::pair<mem::Box<SemaTestContext>, usize>;
+
 // Collects the assumed-syntactically-valid input and returns the analyzer and parent table index
 [[nodiscard]] auto collect(std::string_view input, const std::vector<MockFile>& imports = {})
-    -> std::pair<mem::Box<SemaTestContext>, usize>;
+    -> CtxIdxPair;
 
 // Collects the assumed-syntactically-valid input and checks for no errors
 auto collect_and_check(std::string_view input, const std::vector<MockFile>& imports = {})
-    -> std::pair<mem::Box<SemaTestContext>, usize>;
+    -> CtxIdxPair;
 
 // Resolves the input and returns the parent table index
 [[nodiscard]] auto resolve(std::string_view input, const std::vector<MockFile>& imports = {})
-    -> std::pair<mem::Box<SemaTestContext>, usize>;
+    -> CtxIdxPair;
 
 // Resolves the input, checks errors, asserts 100% symbol resolution, and returns the parent index
 auto resolve_and_check(std::string_view input, const std::vector<MockFile>& imports = {})
-    -> std::pair<mem::Box<SemaTestContext>, usize>;
-
-template <typename M>
-concept Mock = std::same_as<M, MockFile>;
+    -> CtxIdxPair;
 
 // Runs the entire Analyzer on the provided input without checking semantic validity (no errors)
-template <Mock... Mocks>
+template <std::same_as<MockFile>... Mocks>
 auto analyze(std::string_view root_path,
              std::ostream&    error_stream,
              std::string_view input,
@@ -179,7 +182,7 @@ auto analyze(std::string_view root_path,
 }
 
 // Runs the entire Analyzer on the provided input and checks for errors
-template <Mock... Mocks>
+template <std::same_as<MockFile>... Mocks>
 auto analyze_and_check(std::string_view root_path, std::string_view input, Mocks&&... mocks)
     -> mem::Box<SemaTestContext> {
     auto ctx = analyze(root_path, std::cerr, input, std::forward<Mocks>(mocks)...);
@@ -187,12 +190,8 @@ auto analyze_and_check(std::string_view root_path, std::string_view input, Mocks
     return ctx;
 }
 
-template <typename D>
-concept SemaDiag = std::same_as<D, sema::Diagnostic>;
-
 // Tests a semantically failing input against the expected generated errors
-template <SemaDiag... Ds>
-    requires(std::same_as<Ds, sema::Diagnostic> && ...)
+template <std::same_as<sema::Diagnostic>... Ds>
 auto test_collector_fail(std::string_view             failing,
                          const std::vector<MockFile>& imports,
                          Ds&&... expected_diagnostics) -> void {
@@ -205,7 +204,7 @@ auto test_collector_fail(std::string_view             failing,
 }
 
 // Tests a semantically failing input against the expected generated errors
-template <SemaDiag... Ds>
+template <std::same_as<sema::Diagnostic>... Ds>
 auto test_collector_fail(std::string_view failing, Ds&&... expected_diagnostics) -> void {
     test_collector_fail(failing, {}, std::forward<Ds>(expected_diagnostics)...);
 }
@@ -223,6 +222,26 @@ template <traits::ASTNode Node, typename NodeIterable>
         }
     }
     FAIL("Call expression could not be found");
+}
+
+// Returns the context for optional poison checking
+template <std::same_as<sema::Diagnostic>... Ds>
+auto test_resolver_fail(std::string_view             failing,
+                        const std::vector<MockFile>& imports,
+                        Ds&&... expected_diagnostics) -> CtxIdxPair {
+    auto [ctx, idx] = resolve(failing, imports);
+    auto test_mod   = ctx->root_mod;
+
+    REQUIRE(test_mod->has_sema_diagnostics());
+    const auto& errors = test_mod->get_sema_diagnostics();
+    check_errors_against<sema::Diagnostic>(errors, std::forward<Ds>(expected_diagnostics)...);
+    return {std::move(ctx), idx};
+}
+
+// Returns the context for optional poison checking
+template <std::same_as<sema::Diagnostic>... Ds>
+auto test_resolver_fail(std::string_view failing, Ds&&... expected_diagnostics) {
+    return test_resolver_fail(failing, {}, std::forward<Ds>(expected_diagnostics)...);
 }
 
 } // namespace porpoise::tests::helpers

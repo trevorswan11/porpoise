@@ -885,7 +885,7 @@ const LOCCounter = struct {
         }
     };
 
-    const counted_extensions = [_][]const u8{ ".cc", ".hh", ".zig", ".p" };
+    const counted_extensions = [_][]const u8{ ".cc", ".hh", ".inc", ".zig", ".p" };
     const dropped_file_config: CollectFilesConfig = .{
         .allowed_extensions = &.{ ".zig", ".h", ".in" },
         .return_basenames_only = true,

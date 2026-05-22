@@ -27,7 +27,8 @@ auto test_user_type(std::string_view input, sema::TypeKind kind, usize expected_
         ctx->get_ast_sym_info<sema::symbols::Node, ast::DeclStatement>("a", idx);
     CHECK(sym.get_kind_opt() == sema::SymbolKind::TYPE);
 
-    auto& actual_type = helpers::unwrap(ctx->root_mod->get_sema_type_opt(node_data.ident));
+    auto& actual_type =
+        helpers::unwrap(ctx->root_mod->get_sema_type_opt(helpers::unwrap(node_data.value)));
     CHECK(actual_type.get_symbol_table_idx_opt() == idx + 1);
     CHECK(&actual_type == &ctx->get_type(kind, 1));
 

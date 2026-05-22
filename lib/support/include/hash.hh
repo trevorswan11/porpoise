@@ -150,7 +150,7 @@ class Hasher {
 
     // Hashes the provided value and mixes the result with the current hash
     template <typename T> constexpr auto combine(const T& value) noexcept -> void {
-        hash_ = wyhash::mix(hash_, hash(value));
+        hash_ = wyhash::mix(hash_, hash(value) ^ 0xDABB1EDCABA1F01D);
     }
 
     template <> constexpr auto combine<Hasher>(const Hasher& value) noexcept -> void {
@@ -167,7 +167,7 @@ class Hasher {
     }
 
   private:
-    u64 hash_{0x3722B877F74A5112ULL};
+    u64 hash_{0xA0761D6478BD642FULL};
 };
 
 } // namespace porpoise::hash

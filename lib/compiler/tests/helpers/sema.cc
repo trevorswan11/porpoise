@@ -16,6 +16,7 @@
 #include "sema/symbol.hh"
 
 #include "memory.hh"
+#include "sema/type.hh"
 #include "types.hh"
 
 namespace porpoise::tests::helpers {
@@ -62,8 +63,23 @@ auto SemaTestContext::test_common_decl_collection(usize idx, std::string_view na
     helpers::test_common_decl_collection(registry, *root_mod, idx, name);
 }
 
-auto collect(std::string_view input, const std::vector<MockFile>& imports)
-    -> std::pair<mem::Box<SemaTestContext>, usize> {
+auto SemaTestContext::check_poisoned(const sema::Symbol& sym) -> void {
+    CHECK(sym.get_kind_opt() == sema::SymbolKind::POISONED);
+    CHECK(sym.get_status() == sema::SymbolStatus::RESOLVED);
+}
+
+auto SemaTestContext::check_poisoned(const sema::Type& type) -> void {
+    CHECK(type.is_poison());
+    CHECK(&type == &get_type(sema::TypeKind::POISON));
+    CHECK(type.as_opt<sema::types::Poison>());
+}
+
+auto SemaTestContext::check_poisoned(const sema::Symbol& sym, const sema::Type& type) -> void {
+    check_poisoned(sym);
+    check_poisoned(type);
+}
+
+auto collect(std::string_view input, const std::vector<MockFile>& imports) -> CtxIdxPair {
     auto ctx = mem::make_box<SemaTestContext>(imports, TEST_FILENAME, input);
     REQUIRE_FALSE(ctx->root_mod->has_parser_diagnostics());
     ctx->analyzer.collect_symbols(*ctx->root_mod);
@@ -73,8 +89,7 @@ auto collect(std::string_view input, const std::vector<MockFile>& imports)
     return {std::move(ctx), idx};
 }
 
-auto collect_and_check(std::string_view input, const std::vector<MockFile>& imports)
-    -> std::pair<mem::Box<SemaTestContext>, usize> {
+auto collect_and_check(std::string_view input, const std::vector<MockFile>& imports) -> CtxIdxPair {
     auto [ctx, idx] = collect(input, imports);
     if (ctx->root_mod->has_sema_diagnostics()) {
         check_errors<sema::Diagnostic>(ctx->root_mod->get_sema_diagnostics());
@@ -82,15 +97,13 @@ auto collect_and_check(std::string_view input, const std::vector<MockFile>& impo
     return {std::move(ctx), idx};
 }
 
-auto resolve(std::string_view input, const std::vector<MockFile>& imports)
-    -> std::pair<mem::Box<SemaTestContext>, usize> {
+auto resolve(std::string_view input, const std::vector<MockFile>& imports) -> CtxIdxPair {
     auto [ctx, idx] = collect(input, imports);
     ctx->analyzer.resolve_types(*ctx->root_mod);
     return {std::move(ctx), idx};
 }
 
-auto resolve_and_check(std::string_view input, const std::vector<MockFile>& imports)
-    -> std::pair<mem::Box<SemaTestContext>, usize> {
+auto resolve_and_check(std::string_view input, const std::vector<MockFile>& imports) -> CtxIdxPair {
     auto [ctx, idx] = resolve(input, imports);
     if (ctx->root_mod->has_sema_diagnostics()) {
         check_errors<sema::Diagnostic>(ctx->root_mod->get_sema_diagnostics());

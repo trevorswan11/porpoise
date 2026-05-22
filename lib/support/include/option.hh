@@ -1,10 +1,13 @@
 #pragma once
 
 #include <concepts>
+#include <functional>
 #include <limits>
 #include <optional>
 #include <type_traits>
 #include <utility>
+
+#include <ankerl/unordered_dense.h>
 
 #include "assert.hh"
 #include "type_traits.hh"
@@ -310,58 +313,60 @@ class Tribool {
 };
 
 // A minimal, zero-cost optional usize wrapper
-class Index {
+class Size {
   public:
-    constexpr Index() noexcept = default;
+    constexpr Size() noexcept = default;
 
     // cppcheck-suppress-begin noExplicitConstructor
-    constexpr Index(usize idx) noexcept : idx_{idx} {}
-    constexpr Index(std::nullopt_t) noexcept {}
+    constexpr Size(usize idx) noexcept : value_{idx} {}
+    constexpr Size(std::nullopt_t) noexcept {}
 
     // Any negative value is treated as a sentinel
-    template <traits::Integral Int> constexpr Index(Int i) noexcept {
-        if (i >= 0) { idx_ = static_cast<usize>(i); }
+    template <traits::Integral Int> constexpr Size(Int i) noexcept {
+        if (i >= 0) { value_ = static_cast<usize>(i); }
     }
 
-    constexpr Index(const std::optional<usize>& oi) noexcept : idx_{oi.value_or(NO_VALUE)} {}
+    constexpr Size(const std::optional<usize>& oi) noexcept : value_{oi.value_or(NO_VALUE)} {}
     // cppcheck-suppress-end noExplicitConstructor
 
-    [[nodiscard]] constexpr auto     has_value() const noexcept -> bool { return idx_ != NO_VALUE; }
+    [[nodiscard]] constexpr auto has_value() const noexcept -> bool { return value_ != NO_VALUE; }
     [[nodiscard]] constexpr explicit operator bool() const noexcept { return has_value(); }
 
-    constexpr auto emplace(usize idx) noexcept -> void { idx_ = idx; }
+    constexpr auto emplace(usize idx) noexcept -> void { value_ = idx; }
 
-    constexpr auto               reset() noexcept -> void { idx_ = NO_VALUE; }
+    constexpr auto               reset() noexcept -> void { value_ = NO_VALUE; }
     [[nodiscard]] constexpr auto take() noexcept -> usize {
-        const usize idx = idx_;
+        const usize idx = value_;
         reset();
         return idx;
     }
 
     [[nodiscard]] constexpr auto value() const -> usize {
         if (!*this) { throw std::bad_optional_access(); }
-        return idx_;
+        return value_;
     }
 
     [[nodiscard]] constexpr auto get() const noexcept -> usize {
         ASSERT(has_value(), "Attempt to access empty optional enum");
-        return idx_;
+        return value_;
     }
 
     [[nodiscard]] constexpr auto operator*() const noexcept -> usize { return get(); }
 
     [[nodiscard]] constexpr operator std::optional<usize>() const noexcept {
-        return has_value() ? std::optional<usize>{idx_} : opt::none;
+        return has_value() ? std::optional<usize>{value_} : opt::none;
     }
 
-    [[nodiscard]] friend auto operator==(const Index& lhs, const Index& rhs) noexcept
+    [[nodiscard]] friend auto operator==(const Size& lhs, const Size& rhs) noexcept
         -> bool = default;
+
+    [[nodiscard]] auto hash() const noexcept -> u64 { return std::hash<usize>{}(value_); }
 
   private:
     static constexpr usize NO_VALUE = std::numeric_limits<usize>::max();
 
   private:
-    usize idx_{NO_VALUE};
+    usize value_{NO_VALUE};
 };
 
 } // namespace opt
@@ -380,3 +385,8 @@ concept Option = is_option_v<T>;
 } // namespace traits
 
 } // namespace porpoise
+
+template <> struct ankerl::unordered_dense::hash<porpoise::opt::Size> {
+    using is_avalanching = void;
+    [[nodiscard]] auto operator()(const porpoise::opt::Size& o) const noexcept { return o.hash(); }
+};

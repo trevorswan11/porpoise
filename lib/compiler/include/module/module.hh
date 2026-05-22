@@ -64,7 +64,7 @@ struct Module {
     SourceFile            source;
     ast::AST              ast;
     sema::SideTables      sema_side_tables;
-    opt::Index            root_table_idx;
+    opt::Size             root_table_idx;
     ModuleState           state;
 
     DiagnosticListVariant diagnostics{Unit{}};
@@ -152,6 +152,18 @@ struct Module {
         } else {
             sema_side_tables.explicit_types[id].emplace(type);
         }
+    }
+
+    // Sets the sema type only if there wasn't one already, returns true if modified
+    template <traits::IndexableID ID>
+    constexpr auto set_sema_type_if(ID id, sema::Type& type) noexcept -> bool {
+        if (has_sema_type(id)) { return false; }
+        if constexpr (traits::IndexableNodeID<ID>) {
+            sema_side_tables.node_types[id].emplace(type);
+        } else {
+            sema_side_tables.explicit_types[id].emplace(type);
+        }
+        return true;
     }
 
     auto set_sema_type(const ast::MatchExpression::Arm& arm, sema::Type& type) noexcept -> void {

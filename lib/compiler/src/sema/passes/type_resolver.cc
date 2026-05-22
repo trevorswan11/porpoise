@@ -3,7 +3,6 @@
 #include <ranges>
 #include <span>
 #include <string_view>
-#include <type_traits>
 #include <utility>
 #include <variant>
 
@@ -80,9 +79,7 @@ auto TypeResolver::visit(ast::NodeID id, const ast::ArrayExpression& array) -> v
     const auto null_terminated = array.null_terminated;
     last_type_.emplace(
         ctx_.pool[{TypeKind::ARRAY, types::mut::CONSTANT, null_terminated, items_size, item_type}]);
-    if (!last_type_->has_resolved()) {
-        last_type_->resolve<types::Array>(item_type, items_size, null_terminated);
-    }
+    last_type_->resolve_if<types::Array>(item_type, items_size, null_terminated);
     resolving_.set_sema_type(id, *last_type_);
 }
 
@@ -157,11 +154,8 @@ template <traits::IndexableID ID>
             array_key.set_kind(TypeKind::POINTER);
 
             // The new type uses the slightly modified key with the same underlying type
-            auto& new_type = ctx_.pool[array_key];
-            if (!new_type.has_resolved()) {
-                new_type.resolve<types::Pointer>(array_data->underlying);
-            }
-            return_type = new_type;
+            return_type = ctx_.pool[array_key];
+            return_type->resolve_if<types::Pointer>(array_data->underlying);
         } else {
             return make_sema_err(fmt::format("Expected an array type; found '{}'",
                                              type_kind_display_name(array_type.get_kind())),
@@ -189,9 +183,7 @@ template <traits::IndexableID ID>
 
             // The resulting slice isn't null terminated since the pointer gives no guarantee
             auto& new_type = ctx_.pool[slice_key];
-            if (!new_type.has_resolved()) {
-                new_type.resolve<types::Slice>(ptr_data->underlying, false);
-            }
+            new_type.resolve_if<types::Slice>(ptr_data->underlying, false);
             return_type = new_type;
         } else {
             return make_sema_err(fmt::format("Expected a pointer type; found '{}'",
@@ -238,7 +230,7 @@ template <traits::IndexableID ID>
         // Structs might not be unique with the exact same calls
         return_type =
             ctx_.pool[{TypeKind::STRUCT, types::mut::CONSTANT, members.data(), members.size()}];
-        if (!return_type->has_resolved()) { return_type->resolve<types::Struct>(members); }
+        return_type->resolve_if<types::Struct>(members);
         break;
     }
     case TokenType::BUILTIN_PANIC: {
@@ -246,7 +238,7 @@ template <traits::IndexableID ID>
         return_type = builtin.return_type;
         break;
     }
-    default: ASSERT(false, "Unimplemented builtin type resolution"); break;
+    default: UNREACHABLE("Unimplemented builtin type resolution");
     }
 
     resolving_.set_sema_type(id, *return_type);
@@ -300,7 +292,7 @@ auto TypeResolver::resolve_call(ID id, const ast::CallExpression& call) -> void 
     // The call can only yield a non-poison type if the function is valid
     resolve(call.function);
     auto& callee_type = *last_type_.take();
-    if (!callee_type.has_resolved() || callee_type.is_poison()) {
+    if (callee_type.is_poison()) {
         resolve_call_args(call.arguments);
         return last_type_.emplace(ctx_.poison_node(resolving_, id));
     }
@@ -380,14 +372,8 @@ auto TypeResolver::resolve_members(std::span<const ast::MemberHandle> members)
     return member_types;
 }
 
-#define CHECK_STRUCTURED_EXPLICIT_TYPE_ID()                                   \
-    if constexpr (std::is_same_v<ID, ast::ExplicitTypeID>) {                  \
-        ASSERT(id.get_modifier().is_value(), "Structured type has modifier"); \
-    }
-
 template <traits::IndexableID ID>
 auto TypeResolver::visit(ID id, const ast::EnumExpression& enum_expr) -> void {
-    CHECK_STRUCTURED_EXPLICIT_TYPE_ID();
     if (enum_expr.underlying) { resolve(*enum_expr.underlying); }
 
     auto&                      enum_type = resolving_.get_sema_type(id);
@@ -507,15 +493,11 @@ auto TypeResolver::visit(ast::NodeID id, const ast::FunctionExpression& fn) -> v
 
                 if (modifier.is_ptr()) {
                     auto& new_ptr_type = ctx_.pool[new_key];
-                    if (!new_ptr_type.has_resolved()) {
-                        new_ptr_type.resolve<types::Pointer>(*user_type);
-                    }
+                    new_ptr_type.resolve_if<types::Pointer>(*user_type);
                     resolving_.set_sema_type(fn.self->ident, new_ptr_type);
                 } else if (modifier.is_ref()) {
                     auto& new_ref_type = ctx_.pool[new_key];
-                    if (!new_ref_type.has_resolved()) {
-                        new_ref_type.resolve<types::Reference>(*user_type);
-                    }
+                    new_ref_type.resolve_if<types::Reference>(*user_type);
                     resolving_.set_sema_type(fn.self->ident, new_ref_type);
                 } else {
                     return last_type_.emplace(ctx_.poison_node(
@@ -591,19 +573,17 @@ auto TypeResolver::resolve_ident(ID id, const ast::IdentifierExpression& ident) 
     switch (symbol.get_status()) {
     case SymbolStatus::RESOLVED:
         // Forward the resolved symbol type to the ident due to out of order possibility
-        if (!resolving_.has_sema_type(id)) {
+        resolving_.set_sema_type_if(
+            id,
             symbol.match(Overloaded{
-                [&](symbols::Node node) {
+                [&](symbols::Node node) -> Type& {
                     ASSERT(resolving_.has_sema_type(node), "Resolved node has no type");
-                    resolving_.set_sema_type(id, resolving_.get_sema_type(node));
+                    return resolving_.get_sema_type(node);
                 },
-                [&](symbols::Builtin& builtin) {
-                    resolving_.set_sema_type(id, builtin.get_type());
-                },
-                [&](auto&) {
-                    ASSERT(false, "Symbol should've been resolved before inspecting the ident");
-                }});
-        }
+                [&](symbols::Builtin& builtin) -> Type& { return builtin.get_type(); },
+                [](auto&) -> Type& {
+                    UNREACHABLE("Symbol should've been resolved before inspecting the ident");
+                }}));
         break;
     case SymbolStatus::RESOLVING:
         symbol.set_status(SymbolStatus::RESOLVED);
@@ -667,7 +647,7 @@ auto TypeResolver::visit(ast::NodeID id, const ast::IndexExpression& index) -> v
                              fmt::format("Can only index slices, arrays, and pointers; found '{}'",
                                          type_kind_display_name(array_type.get_kind())),
                              Error::TYPE_MISMATCH,
-                             resolving_.ast.location_of(id)));
+                             resolving_.ast.location_of(index.array)));
     }
 
     auto& single_item_type = *last_type_.take();
@@ -1036,11 +1016,11 @@ auto TypeResolver::visit(ast::NodeID id, const ast::StringExpression& string) ->
     last_type_.emplace(type);
 }
 
-#define MAKE_PRIMITIVE_RESOLVER(NodeType, kind)                                         \
-    auto TypeResolver::visit(ast::NodeID id, const ast::NodeType&) -> void {            \
-        last_type_.emplace(ctx_.get_builtin_resolved_type(TypeKind::kind));             \
-        if (!last_type_->has_resolved()) { last_type_->resolve<types::BuiltinType>(); } \
-        resolving_.set_sema_type(id, *last_type_);                                      \
+#define MAKE_PRIMITIVE_RESOLVER(NodeType, kind)                              \
+    auto TypeResolver::visit(ast::NodeID id, const ast::NodeType&) -> void { \
+        last_type_.emplace(ctx_.get_builtin_resolved_type(TypeKind::kind));  \
+        last_type_->resolve_if<types::BuiltinType>();                        \
+        resolving_.set_sema_type(id, *last_type_);                           \
     }
 
 MAKE_PRIMITIVE_RESOLVER(I32Expression, I32)
@@ -1136,7 +1116,6 @@ auto TypeResolver::visit(ast::NodeID id, const ast::ScopeResolutionExpression& s
 
 template <traits::IndexableID ID>
 auto TypeResolver::visit(ID id, const ast::StructExpression& struct_expr) -> void {
-    CHECK_STRUCTURED_EXPLICIT_TYPE_ID();
     auto&                      struct_type = resolving_.get_sema_type(id);
     const UserTypeStack::Guard g{user_type_stack_, struct_type};
 
@@ -1171,7 +1150,6 @@ auto TypeResolver::resolve_union_field(const ast::UnionExpression::Field& field)
 
 template <traits::IndexableID ID>
 auto TypeResolver::visit(ID id, const ast::UnionExpression& union_expr) -> void {
-    CHECK_STRUCTURED_EXPLICIT_TYPE_ID();
     auto&                      union_type = resolving_.get_sema_type(id);
     const UserTypeStack::Guard g{user_type_stack_, union_type};
 
@@ -1273,16 +1251,24 @@ auto TypeResolver::visit(ast::NodeID id, const ast::DeclStatement& decl) -> void
     }
     symbol.set_status(SymbolStatus::RESOLVING);
 
+    const auto poison_out = [&] {
+        resolving_.set_sema_type(decl.ident, *last_type_);
+        ctx_.poison_symbol(symbol);
+        resolving_.set_sema_type(id, *last_type_);
+    };
+
     // With an explicit type, the ident should always adopt that exact type
     if (decl.explicit_type) {
-        TRY_RESOLVE(*decl.explicit_type);
+        resolve(*decl.explicit_type);
+        if (last_type_->is_poison()) { return poison_out(); }
         resolving_.set_sema_type(id, *last_type_.take());
     }
 
     // Only update the decl value type if it hasn't been set
     if (decl.value) {
-        TRY_RESOLVE(*decl.value);
-        if (!resolving_.has_sema_type(id)) { resolving_.set_sema_type(id, *last_type_.take()); }
+        resolve(*decl.value);
+        if (last_type_->is_poison()) { return poison_out(); }
+        resolving_.set_sema_type_if(id, *last_type_.take());
     }
 
     // The symbol's kind can be fully resolved with knowledge of the declarations type
@@ -1305,7 +1291,7 @@ auto TypeResolver::visit(ast::NodeID id, const ast::DeclStatement& decl) -> void
         }
     }
 
-    // The identifier's type will be set once it is inspected next due to binding
+    resolving_.set_sema_type_if(decl.ident, resolved_type);
     symbol.set_status(SymbolStatus::RESOLVED);
     last_type_.emplace(ctx_.get_builtin_resolved_type(TypeKind::VOID));
 }
@@ -1381,25 +1367,30 @@ auto TypeResolver::visit(ast::NodeID id, const ast::UsingStatement& using_stmt) 
 
 // Without a modifier or with poison the result should be the same as the node
 auto TypeResolver::apply_explicit_modifiers(ast::ExplicitTypeID id, Type& inner_type) -> Type& {
-    const auto modifier   = id.get_modifier();
+    const auto modifier = id.get_modifier();
+    if (modifier.is_value() || inner_type.is_poison()) { return inner_type; }
     const auto mutability = mutability_from_type_modifier(modifier);
-    if (!mutability || inner_type.is_poison()) { return inner_type; }
 
+    // Conditionally update the mutability since the modifier might entail mutability or volatility
     auto new_key = inner_type.get_key();
-    new_key.set_mut(*mutability);
+    if (mutability) { new_key.set_mut(*mutability); }
+    new_key.imprint(inner_type);
 
     if (modifier.is_ptr()) {
+        new_key.set_kind(TypeKind::POINTER);
         auto& new_ptr_type = ctx_.pool[new_key];
-        if (!new_ptr_type.has_resolved()) { new_ptr_type.resolve<types::Pointer>(inner_type); }
+        new_ptr_type.resolve_if<types::Pointer>(inner_type);
         return new_ptr_type;
     } else if (modifier.is_ref()) {
+        new_key.set_kind(TypeKind::REFERENCE);
         auto& new_ref_type = ctx_.pool[new_key];
-        if (!new_ref_type.has_resolved()) { new_ref_type.resolve<types::Reference>(inner_type); }
+        new_ref_type.resolve_if<types::Reference>(inner_type);
         return new_ref_type;
     } else if (modifier.is_volatile()) {
-        // Volatility doesn't impact the resolved type
+        // Volatility doesn't impact the resolved type but should change the key
         auto& new_vol_type = ctx_.pool[new_key];
-        if (!new_vol_type.has_resolved()) { new_vol_type.resolve(inner_type.get_resolved()); }
+        new_vol_type.resolve_if<Type::Resolved>(inner_type.get_resolved());
+        new_key.imprint(modifier.get_raw());
         return new_vol_type;
     }
     std::unreachable();
@@ -1438,9 +1429,7 @@ auto TypeResolver::visit(ast::ExplicitTypeID id, const ast::ExplicitFunctionType
     fn_key.imprint(return_type);
 
     auto& resolved_fn = ctx_.pool[fn_key];
-    if (!resolved_fn.has_resolved()) {
-        resolved_fn.resolve<types::Function>(param_types, return_type);
-    }
+    resolved_fn.resolve_if<types::Function>(param_types, return_type);
 
     auto& final_type = apply_explicit_modifiers(id, resolved_fn);
     resolving_.set_sema_type(id, final_type);
@@ -1461,18 +1450,14 @@ auto TypeResolver::visit(ast::ExplicitTypeID id, const ast::ExplicitArrayType& a
     const auto null_terminated = array.null_terminated;
     if (array.dimension) {
         TRY_RESOLVE(*array.dimension);
-        const usize placeholder_size = 0;
+        const opt::Size placeholder_size;
         last_type_.emplace(ctx_.pool[{
             TypeKind::ARRAY, types::mut::CONSTANT, null_terminated, placeholder_size, item_type}]);
-        if (!last_type_->has_resolved()) {
-            last_type_->resolve<types::Array>(item_type, placeholder_size, null_terminated);
-        }
+        last_type_->resolve_if<types::Array>(item_type, placeholder_size, null_terminated);
     } else {
         last_type_.emplace(
             ctx_.pool[{TypeKind::SLICE, types::mut::CONSTANT, null_terminated, item_type}]);
-        if (!last_type_->has_resolved()) {
-            last_type_->resolve<types::Slice>(item_type, null_terminated);
-        }
+        last_type_->resolve_if<types::Slice>(item_type, null_terminated);
     }
 
     auto& final_type = apply_explicit_modifiers(id, *last_type_.take());

@@ -387,11 +387,7 @@ auto SymbolCollector::visit(ast::NodeID id, const ast::DeclStatement& decl) -> v
     }
 
     collect(value);
-    if (last_type_) {
-        auto& type = *last_type_.take();
-        if (!decl.explicit_type) { collecting_.set_sema_type(decl.ident, type); }
-        collecting_.set_sema_type(value, type);
-    }
+    if (last_type_) { collecting_.set_sema_type(value, *last_type_.take()); }
 }
 
 auto SymbolCollector::visit(ast::NodeID id, const ast::DeferStatement& defer) -> void {

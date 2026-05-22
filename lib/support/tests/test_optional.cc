@@ -175,7 +175,7 @@ TEST_CASE("Boolean-std optional conversion") {
 }
 
 TEST_CASE("Index wrapper") {
-    opt::Index i;
+    opt::Size i;
     CHECK_FALSE(i.has_value());
     CHECK_THROWS_AS(i.value(), std::bad_optional_access);
 
@@ -186,7 +186,7 @@ TEST_CASE("Index wrapper") {
 
 TEST_CASE("Index-std optional conversion") {
     std::optional<usize> std_i{42};
-    opt::Index           my_i = std_i;
+    opt::Size            my_i = std_i;
     REQUIRE(std_i.has_value());
     CHECK(*std_i == *my_i);
 

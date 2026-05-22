@@ -33,6 +33,14 @@ constexpr auto assert_impl(std::source_location loc,
     }
 }
 
+constexpr auto unreachable_impl(std::source_location loc, std::string_view message) -> void {
+    if consteval { // cppcheck-suppress syntaxError
+        throw "Unreachable code reached at compile time";
+    } else {
+        fmt::println(std::cerr, "{}: {}:{}:{}", message, loc.file_name(), loc.line(), loc.column());
+    }
+}
+
 } // namespace detail
 
 #ifndef NDEBUG
@@ -44,12 +52,18 @@ constexpr auto assert_impl(std::source_location loc,
                                         static_cast<bool>(expression),   \
                                         (message),                       \
                                         #expression)
+#    define UNREACHABLE(message)                                                          \
+        ::porpoise::detail::unreachable_impl(std::source_location::current(), (message)); \
+        std::unreachable()
 #else
 #    define ASSERT_1(expression)                         \
         do {                                             \
             if constexpr (false) { (void)(expression); } \
         } while (0)
 #    define ASSERT_2(expression, message) ASSERT_1(expression)
+#    define UNREACHABLE(message) \
+        ASSERT_1(message);       \
+        std::unreachable()
 #endif
 
 #define GET_ASSERT_MACRO(_1, _2, NAME, ...) NAME

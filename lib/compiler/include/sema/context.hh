@@ -24,7 +24,7 @@ struct Context {
     TypePool&            pool;
     Diagnostics          diagnostics;
     std::ostream&        error_stream;
-    opt::Index           prelude_index;
+    opt::Size            prelude_index;
 
     Context(mod::ModuleManager&  modules,
             SymbolTableRegistry& registry,

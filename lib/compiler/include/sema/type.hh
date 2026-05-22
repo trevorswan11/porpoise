@@ -3,7 +3,6 @@
 #include <concepts>
 #include <span>
 #include <string_view>
-#include <type_traits>
 
 #include <ankerl/unordered_dense.h>
 
@@ -71,9 +70,9 @@ struct Slice {
 };
 
 struct Array {
-    Type& underlying;
-    usize len;
-    bool  null_terminated;
+    Type&     underlying;
+    opt::Size len; // This is empty for array types only to be set for constant eval
+    bool      null_terminated;
 };
 
 struct Pointer {
@@ -240,7 +239,13 @@ class Type {
         resolved_.emplace(Resolvee{std::forward<Args>(args)...});
     }
 
-    auto resolve(Resolved resolved) noexcept -> void { resolved_.emplace(std::move(resolved)); }
+    // Resolves only if not already resolved, returning true if modified
+    template <typename Resolvee, typename... Args>
+    auto resolve_if(Args&&... args) noexcept -> bool {
+        if (has_resolved()) { return false; }
+        resolved_.emplace(Resolvee{std::forward<Args>(args)...});
+        return true;
+    }
 
     // Returns the memory address of the Type for a Key's hash
     [[nodiscard]] constexpr auto hash() const noexcept -> u64 {
@@ -266,7 +271,7 @@ class Type {
 
   private:
     types::Key            key_;
-    opt::Index            symbol_table_idx_;
+    opt::Size             symbol_table_idx_;
     opt::Option<Resolved> resolved_;
 
     // Initialization is restricted to the pool's arena exclusively
@@ -288,8 +293,7 @@ class TypePool {
     [[nodiscard]] auto get_opt(const types::Key& key) noexcept -> opt::Option<Type&>;
 
     // Allocate a quasi-contiguous span of types with the provided keys
-    template <typename... Keys>
-        requires(std::same_as<types::Key, std::remove_cvref_t<Keys>> && ...)
+    template <std::same_as<types::Key>... Keys>
     [[nodiscard]] auto get_many(Keys&&... keys) noexcept -> std::span<mem::NonNull<Type>> {
         auto  types = arena_.make_span<mem::NonNull<Type>>(sizeof...(Keys));
         usize i     = 0;

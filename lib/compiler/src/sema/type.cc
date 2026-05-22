@@ -87,7 +87,7 @@ auto strip_modifiers(TypePool& pool, const Type& old_type, types::MutabilityModi
 
     // Resolve here since the type information doesn't contain modifier information
     auto& new_type = pool[key];
-    if (!new_type.has_resolved()) { new_type.resolve(old_type.get_resolved()); }
+    new_type.resolve_if<Type::Resolved>(old_type.get_resolved());
     return new_type;
 }
 

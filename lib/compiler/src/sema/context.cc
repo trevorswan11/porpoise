@@ -13,7 +13,7 @@ namespace porpoise::sema {
 
 auto Context::get_poison() -> Type& {
     auto& poison = pool[{TypeKind::POISON, types::mut::CONSTANT}];
-    if (!poison.has_resolved()) { poison.resolve<types::Poison>(); }
+    poison.resolve_if<types::Poison>();
     return poison;
 }
 
@@ -85,9 +85,7 @@ auto inject_functions(SymbolTable& prelude, TypePool& pool) -> void {
 
     // C-string
     auto& t_c_str = pool[{TypeKind::SLICE, types::mut::CONSTANT, true, TypeKind::U8}];
-    if (!t_c_str.has_resolved()) {
-        t_c_str.resolve<types::Slice>(pool[{TypeKind::U8, types::mut::CONSTANT}], true);
-    }
+    t_c_str.resolve_if<types::Slice>(pool[{TypeKind::U8, types::mut::CONSTANT}], true);
 
     inject_function(bis::ALIGN_CAST, BP{t_type, t_auto}, t_auto);
     inject_function(bis::PTR_CAST, BP{t_type, t_auto}, t_auto);

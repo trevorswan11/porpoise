@@ -47,7 +47,7 @@ template <typename ValueType>
 
     ValueType              v;
     std::from_chars_result result;
-    if constexpr (std::is_same_v<ValueType, f64> || std::is_same_v<ValueType, f32>) {
+    if constexpr (std::is_floating_point_v<ValueType>) {
         result = std::from_chars(first, last, v);
     } else {
         result = std::from_chars(first, last, v, std::to_underlying(*base));
