@@ -23,7 +23,7 @@ using Parsed = std::variant<Unit, cmd::Debug>;
 
 class Parser {
   public:
-    Parser(i32 argc, byte** argv, std::ostream& os = std::cerr) noexcept;
+    Parser(i32 argc, byte** argv, std::ostream& os = std::cerr, bool ensure_utf8 = true) noexcept;
 
     auto               parse() -> Result<Unit, i32>;
     [[nodiscard]] auto get_parsed() noexcept -> Parsed& { return parsed_; }

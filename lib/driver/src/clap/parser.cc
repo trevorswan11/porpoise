@@ -20,9 +20,10 @@
 
 namespace porpoise::clap {
 
-Parser::Parser(i32 argc, byte** argv, std::ostream& os) noexcept : argc_{argc}, os_{os} {
+Parser::Parser(i32 argc, byte** argv, std::ostream& os, bool ensure_utf8) noexcept
+    : argc_{argc}, os_{os} {
     app_.formatter(mem::make_rc<Fmt>());
-    argv_ = app_.ensure_utf8(argv);
+    argv_ = ensure_utf8 ? app_.ensure_utf8(argv) : argv;
 }
 
 auto Parser::parse() -> Result<Unit, i32> {
