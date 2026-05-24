@@ -142,9 +142,10 @@ template <traits::IndexableID ID>
         return_type = builtin.return_type;
         break;
     }
+    // @typeOf returns a type as per documentation, but it's not the literal `type` type
     case TokenType::BUILTIN_TYPE_OF: {
         ASSERT(builtin.return_type.get_kind() == TypeKind::TYPE);
-        return_type = builtin.return_type;
+        return_type = get_resolved_call_arg_type(call.arguments[0]);
         break;
     }
     case TokenType::BUILTIN_PTR_FROM_ARRAY: {
@@ -483,6 +484,7 @@ auto TypeResolver::visit(ast::NodeID id, const ast::FunctionExpression& fn) -> v
         if (const auto user_type = user_type_stack_.peek()) {
             const auto modifier   = fn.self->modifier;
             const auto mutability = mutability_from_type_modifier(modifier);
+
             if (user_type->is_poison()) {
                 return last_type_.emplace(ctx_.poison_node(resolving_, id));
             } else if (!mutability) {
@@ -500,6 +502,7 @@ auto TypeResolver::visit(ast::NodeID id, const ast::FunctionExpression& fn) -> v
                     new_ref_type.resolve_if<types::Reference>(*user_type);
                     resolving_.set_sema_type(fn.self->ident, new_ref_type);
                 } else {
+                    resolve_symbol_info(fn.self->ident, SymbolKind::POISONED);
                     return last_type_.emplace(ctx_.poison_node(
                         resolving_,
                         id,
@@ -509,6 +512,7 @@ auto TypeResolver::visit(ast::NodeID id, const ast::FunctionExpression& fn) -> v
                 }
             }
         } else {
+            resolve_symbol_info(fn.self->ident, SymbolKind::POISONED);
             return last_type_.emplace(
                 ctx_.poison_node(resolving_,
                                  id,
@@ -572,17 +576,48 @@ auto TypeResolver::resolve_ident(ID id, const ast::IdentifierExpression& ident) 
 
     switch (symbol.get_status()) {
     case SymbolStatus::RESOLVED:
-        // Forward the resolved symbol type to the ident due to out of order possibility
+        // Identifier handles are not unique in the tree, but their symbol can be used to find root
         resolving_.set_sema_type_if(
             id,
             symbol.match(Overloaded{
+                [&](symbols::Builtin& builtin) -> Type& { return builtin.get_type(); },
                 [&](symbols::Node node) -> Type& {
                     ASSERT(resolving_.has_sema_type(node), "Resolved node has no type");
                     return resolving_.get_sema_type(node);
                 },
-                [&](symbols::Builtin& builtin) -> Type& { return builtin.get_type(); },
-                [](auto&) -> Type& {
-                    UNREACHABLE("Symbol should've been resolved before inspecting the ident");
+                [&](symbols::MatchCapture& capture) -> Type& {
+                    ASSERT(resolving_.has_sema_type(capture), "Match arm was never typed");
+                    return resolving_.get_sema_type(capture);
+                },
+                [&](symbols::UnionField& field) -> Type& {
+                    ASSERT(resolving_.has_sema_type(field.ident), "Union field was never typed");
+                    ASSERT(resolving_.get_sema_type_opt(field.ident) ==
+                               resolving_.get_sema_type_opt(field.explicit_type),
+                           "Union field was resolved with mismatched type");
+                    return resolving_.get_sema_type(field.ident);
+                },
+                [&](symbols::Enumeration& enumeration) -> Type& {
+                    ASSERT(resolving_.has_sema_type(enumeration.name),
+                           "Enumeration was never typed");
+                    return resolving_.get_sema_type(enumeration.name);
+                },
+                [&](symbols::SelfParameter& self) -> Type& {
+                    ASSERT(resolving_.has_sema_type(self.ident), "Self param was never typed");
+                    return resolving_.get_sema_type(self.ident);
+                },
+                [&](symbols::Parameter& parameter) -> Type& {
+                    ASSERT(resolving_.has_sema_type(parameter.ident), "Parameter was never typed");
+                    ASSERT(resolving_.get_sema_type_opt(parameter.ident) ==
+                               resolving_.get_sema_type_opt(parameter.explicit_type),
+                           "Parameter was resolved with mismatched type");
+                    return resolving_.get_sema_type(parameter.ident);
+                },
+                [&](symbols::ForLoopCapture& capture) -> Type& {
+                    ASSERT(capture.payload.is<ast::IdentifierExpression>(),
+                           "Capture payload must be an ident");
+                    ASSERT(resolving_.has_sema_type(capture.payload),
+                           "For loop capture was never typed");
+                    return resolving_.get_sema_type(capture.payload);
                 }}));
         break;
     case SymbolStatus::RESOLVING:

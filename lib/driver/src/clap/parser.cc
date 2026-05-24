@@ -10,6 +10,7 @@
 #include "clap/formatter.hh"
 #include "cmd/debug.hh"
 
+#include "assert.hh"
 #include "memory.hh"
 #include "result.hh"
 #include "style.hh"
@@ -22,6 +23,7 @@ namespace porpoise::clap {
 
 Parser::Parser(i32 argc, byte** argv, std::ostream& os, bool ensure_utf8) noexcept
     : argc_{argc}, os_{os} {
+    ASSERT(argc > 0, "The program name must be present");
     app_.formatter(mem::make_rc<Fmt>());
     argv_ = ensure_utf8 ? app_.ensure_utf8(argv) : argv;
 }

@@ -127,6 +127,9 @@ template <typename T> class Ref {
         return has_value() ? std::optional<std::remove_const_t<T>>{*ptr_} : opt::none;
     }
 
+    // Compares the pointers, not pointed to contents!
+    [[nodiscard]] friend auto operator==(const Ref& lhs, const Ref& rhs) noexcept -> bool = default;
+
   private:
     T* ptr_;
 };
