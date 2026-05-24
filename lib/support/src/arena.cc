@@ -14,7 +14,7 @@ auto Arena::alloc(usize size, usize align) -> void* {
         const usize total_size  = aligned_ptr - raw_addr + size;
 
         if (total_size <= BLOCK_SIZE) {
-            offset_ += total_size;
+            offset_ = total_size;
             return reinterpret_cast<void*>(aligned_ptr);
         } else if (current_->next) {
             current_ = current_->next;

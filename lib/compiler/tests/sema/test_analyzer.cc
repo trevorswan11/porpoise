@@ -1,11 +1,9 @@
 #include <string_view>
 #include <utility>
-#include <variant>
 
 #include <catch2/catch_test_macros.hpp>
 
 #include "ast/expression.hh"
-#include "ast/primitive.hh"
 #include "ast/statement.hh"
 #include "helpers/common.hh"
 #include "helpers/sema.hh"
@@ -88,9 +86,8 @@ TEST_CASE("Full sema pipeline") {
         const auto& fn_expr = helpers::unwrap(
             root_module.ast.get_as_opt<ast::FunctionExpression>(*main_node_data.value));
 
-        CHECK(main_type.get_symbol_table_idx_opt() == 4);
-        CHECK(&main_type == &ctx->get_type(sema::TypeKind::FUNCTION, 4));
-        const auto fn_idx = main_type.get_symbol_table_idx();
+        const auto fn_idx = helpers::unwrap(main_type.get_symbol_table_idx_opt(), 4uz);
+        CHECK(&main_type == &ctx->get_type(sema::TypeKind::FUNCTION, fn_idx));
         CHECK(main_type_data.params.size() == 1);
 
         // Verify the parameter type
@@ -127,19 +124,17 @@ TEST_CASE("Full sema pipeline") {
             CHECK_FALSE(msg_sym.is_public(root_module));
             CHECK(msg_sym.get_kind_opt() == sema::SymbolKind::VALUE);
 
-            const auto& decl_value = helpers::unwrap(
-                root_module.ast.get_as_opt<ast::StringExpression>(*msg_node_data.value));
-            CHECK(&msg_type ==
-                  &ctx->get_type(sema::TypeKind::ARRAY, false, decl_value.value.size(), u8_type));
+            const auto msg_size = ctx->get_string_literal_size(*msg_node_data.value);
+            CHECK(&msg_type == &ctx->get_type(sema::TypeKind::ARRAY, true, msg_size, u8_type));
 
             const auto& call_expr = helpers::lookup_expression<ast::CallExpression>(
                 helpers::unwrap(root_module.ast.get_as_opt<ast::BlockStatement>(fn_expr.body)),
                 root_module);
 
             CHECK(call_expr.arguments.size() == 1);
-            const auto& arg_type =
-                std::visit([&](const auto& arg) -> auto& { return root_module.get_sema_type(arg); },
-                           call_expr.arguments[0]);
+            const auto arg =
+                helpers::unwrap(call_expr.arguments[0].as_opt<ast::ExpressionHandle>());
+            auto& arg_type = helpers::unwrap(ctx->root_mod->get_sema_type_opt(arg));
             CHECK(&arg_type == &msg_type);
 
             const auto& scope_expr = helpers::unwrap(
@@ -172,8 +167,8 @@ TEST_CASE("Full sema pipeline") {
         CHECK(println_sym.is_public(io_module));
         CHECK(println_sym.get_kind_opt() == sema::SymbolKind::CALLABLE);
 
-        CHECK(println_type.get_symbol_table_idx_opt() == 3);
-        CHECK(&println_type == &ctx->get_type(sema::TypeKind::FUNCTION, 3));
+        const auto fn_idx = helpers::unwrap(println_type.get_symbol_table_idx_opt(), 3uz);
+        CHECK(&println_type == &ctx->get_type(sema::TypeKind::FUNCTION, fn_idx));
         CHECK(println_type_data.params.size() == 1);
 
         // Verify the parameter type
@@ -184,7 +179,7 @@ TEST_CASE("Full sema pipeline") {
         {
             const auto [param_sym, param_sym_data, param_type] =
                 ctx->get_type_sym_info<syms::Parameter>(
-                    "str", 3, io_module, &syms::Parameter::ident);
+                    "str", fn_idx, io_module, &syms::Parameter::ident);
             CHECK(param_sym.get_kind_opt() == sema::SymbolKind::VALUE);
             CHECK(&param_type == &u8_slice_type);
 

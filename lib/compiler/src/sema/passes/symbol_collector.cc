@@ -82,7 +82,7 @@ auto SymbolCollector::visit(ast::NodeID, const ast::CallExpression& call) -> voi
     const auto g = in_expr_scope_.guard();
     collect(call.function);
     for (const auto& arg : call.arguments) {
-        std::visit([this](const auto& handle) { collect(handle); }, arg);
+        std::visit([this](auto arg_id) { collect(arg_id); }, arg.id);
     }
 }
 

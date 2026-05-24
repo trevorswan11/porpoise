@@ -14,6 +14,7 @@
 #include <fmt/format.h>
 #include <fmt/ranges.h>
 
+#include "ast/handle.hh"
 #include "ast/kind.hh"
 #include "helpers/common.hh"
 #include "module/memory_loader.hh"
@@ -70,10 +71,10 @@ struct SemaTestContext {
     // Tests the collected state of a minimal non-public implicit declaration in the context
     auto test_common_decl_collection(usize idx, std::string_view name = "foo") -> void;
 
-    template <sema::types::MutabilityModifiers mut = sema::types::mut::CONSTANT,
+    template <sema::types::MutabilityModifiers Mutability = sema::types::mut::CONSTANT,
               typename... Markers>
     [[nodiscard]] auto get_type(sema::TypeKind kind, Markers&&... markers) -> auto& {
-        return analyzer.get_pool()[{kind, mut, std::forward<Markers>(markers)...}];
+        return analyzer.get_pool()[{kind, Mutability, std::forward<Markers>(markers)...}];
     }
 
     static auto check_poisoned(const sema::Symbol& sym) -> void;
@@ -146,6 +147,10 @@ struct SemaTestContext {
         const auto& type_data = helpers::unwrap(std::get<3>(info).template as_opt<TypeData>());
         return std::tuple_cat(info, std::forward_as_tuple(type_data));
     }
+
+    // Returns the correct null terminated size for a string literal, defaulting to the root module
+    auto get_string_literal_size(ast::ExpressionHandle     handle,
+                                 opt::Option<mod::Module&> enclosing_mod = opt::none) -> usize;
 };
 
 using CtxIdxPair = std::pair<mem::Box<SemaTestContext>, usize>;

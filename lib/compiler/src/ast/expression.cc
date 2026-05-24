@@ -353,9 +353,15 @@ auto FunctionExpression::parse(syntax::Parser& parser)
     } else {
         // The 'self' parameter can be a value type, ref, or mutable ref
         parser.advance();
-        const TypeModifier self_modifier{parser.get_current_token()};
-        if (self_modifier.is_value() && (parser.peek_token_is(syntax::TokenType::COMMA) ||
-                                         parser.peek_token_is(syntax::TokenType::RPAREN))) {
+        const auto         modifier_start = parser.get_current_token();
+        const TypeModifier self_modifier{modifier_start};
+        if (self_modifier.is_volatile()) {
+            return make_syntax_err(
+                "Self parameters cannot be marked volatile; they must be values, refs, or pointers",
+                syntax::Error::ILLEGAL_SELF_PARAMETER_MODIFIER,
+                modifier_start);
+        } else if (self_modifier.is_value() && (parser.peek_token_is(syntax::TokenType::COMMA) ||
+                                                parser.peek_token_is(syntax::TokenType::RPAREN))) {
             const IdentifierHandle ident = TRY(IdentifierExpression::parse(parser));
             self.emplace(SelfParameter{self_modifier, ident});
 

@@ -385,6 +385,13 @@ template <typename T> constexpr bool is_option_v = is_option<T>::value;
 template <typename T>
 concept Option = is_option_v<T>;
 
+template <typename T> struct is_opt_size : std::false_type {};
+template <> struct is_opt_size<opt::Size> : std::true_type {};
+template <typename T> constexpr bool is_opt_size_v = is_opt_size<T>::value;
+
+template <typename T>
+concept OptSize = is_opt_size_v<T>;
+
 } // namespace traits
 
 } // namespace porpoise

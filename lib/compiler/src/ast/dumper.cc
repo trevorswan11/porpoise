@@ -65,7 +65,7 @@ auto ASTDumper::visit(ast::NodeID, const CallExpression& call) -> void {
         fmt::println(out_, "{}Arguments:", indent_.current_branch());
         dump_container(call.arguments, [this](const CallExpression::Argument& arg) {
             fmt::print(out_, "{}", indent_.current_branch());
-            std::visit([this](const auto& arg_id) { dump(arg_id); }, arg);
+            std::visit([this](auto arg_id) { dump(arg_id); }, arg.id);
         });
     }
 }

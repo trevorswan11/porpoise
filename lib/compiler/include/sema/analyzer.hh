@@ -44,6 +44,10 @@ class Analyzer {
     MAKE_DEDUCING_GETTER(registry, SymbolTableRegistry&)
     MAKE_DEDUCING_GETTER(pool, TypePool&)
 
+    [[nodiscard]] auto get_prelude_index_opt() const noexcept -> opt::Size {
+        return ctx_.prelude_index;
+    }
+
     auto collect_symbols(mod::Module& module) -> mod::ModuleState;
     auto resolve_types(mod::Module& module) -> mod::ModuleState;
 

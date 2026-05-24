@@ -7,6 +7,8 @@
 
 #include <catch2/catch_test_macros.hpp>
 
+#include "ast/handle.hh"
+#include "ast/primitive.hh"
 #include "ast/statement.hh"
 #include "helpers/common.hh"
 #include "helpers/sema.hh"
@@ -16,6 +18,7 @@
 #include "sema/symbol.hh"
 
 #include "memory.hh"
+#include "option.hh"
 #include "sema/type.hh"
 #include "types.hh"
 
@@ -51,7 +54,7 @@ auto SemaTestContext::verify_registry_resolved() -> void {
         for (const auto& [name, symbol] : table) {
             CHECK(symbol.get_status() == sema::SymbolStatus::RESOLVED);
             if (symbol.get_status() != sema::SymbolStatus::RESOLVED) {
-                FAIL(name << "  was not resolved in table " << i);
+                FAIL(name << " was not resolved in table " << i);
             }
         }
         i++;
@@ -77,6 +80,13 @@ auto SemaTestContext::check_poisoned(const sema::Type& type) -> void {
 auto SemaTestContext::check_poisoned(const sema::Symbol& sym, const sema::Type& type) -> void {
     check_poisoned(sym);
     check_poisoned(type);
+}
+
+auto SemaTestContext::get_string_literal_size(ast::ExpressionHandle     handle,
+                                              opt::Option<mod::Module&> enclosing_mod) -> usize {
+    const auto& module   = enclosing_mod.value_or(*root_mod);
+    const auto& str_expr = helpers::unwrap(module.ast.get_as_opt<ast::StringExpression>(handle));
+    return str_expr.value.size() + 1;
 }
 
 auto collect(std::string_view input, const std::vector<MockFile>& imports) -> CtxIdxPair {

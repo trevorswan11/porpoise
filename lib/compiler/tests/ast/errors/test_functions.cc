@@ -1,6 +1,8 @@
+#include <string_view>
 #include <utility>
 
 #include <catch2/catch_test_macros.hpp>
+#include <fmt/format.h>
 
 #include "helpers/ast.hh"
 #include "syntax/error.hh"
@@ -39,6 +41,20 @@ TEST_CASE("Out-of-place self parameter") {
         "fn(a: A, self): i32;",
         syntax::Diagnostic{
             "Expected token COLON, found RPAREN", syntax::Error::UNEXPECTED_TOKEN, 0, 13});
+}
+
+TEST_CASE("Illegal self parameter modifier") {
+    const auto test_illegal_self = [](std::string_view modifier) {
+        helpers::test_parser_fail(
+            fmt::format("fn({} self): i32 {{}};", modifier),
+            syntax::Diagnostic{
+                "Self parameters cannot be marked volatile; they must be values, refs, or pointers",
+                syntax::Error::ILLEGAL_SELF_PARAMETER_MODIFIER,
+                std::pair{0uz, 3uz}});
+    };
+
+    test_illegal_self("volatile");
+    test_illegal_self("mut_volatile");
 }
 
 TEST_CASE("Out-of-place variadic parameter") {

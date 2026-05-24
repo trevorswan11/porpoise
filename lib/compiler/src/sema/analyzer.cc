@@ -4,7 +4,6 @@
 #include <utility>
 
 #include "module/module.hh"
-#include "sema/context.hh"
 #include "sema/error.hh"
 #include "sema/passes/symbol_collector.hh"
 #include "sema/passes/type_resolver.hh"
@@ -40,8 +39,7 @@ auto Analyzer::collect_symbols(mod::Module& module) -> mod::ModuleState {
 }
 
 auto Analyzer::resolve_types(mod::Module& module) -> mod::ModuleState {
-    Context ctx = ctx_;
-    return TypeResolver::resolve_types(module, ctx);
+    return TypeResolver::resolve_types(module, ctx_);
 }
 
 } // namespace porpoise::sema

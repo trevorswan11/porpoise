@@ -144,8 +144,8 @@ template <typename S1> struct StringLikeEq {
 // A 'high-quality' hash backed by `wyhash` with a `std::hash` fallback
 class Hasher {
   public:
-    // Hashes the provided value to use as the initial hashed value
-    template <typename T> constexpr explicit Hasher(const T& initial) : hash_{hash(initial)} {}
+    // Hashes the provided value to use as the 'initial' hashed value
+    template <typename T> constexpr explicit Hasher(const T& initial) { combine(initial); }
     constexpr Hasher() noexcept = default;
 
     // Hashes the provided value and mixes the result with the current hash

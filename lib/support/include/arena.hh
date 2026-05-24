@@ -6,6 +6,7 @@
 
 #include "assert.hh"
 #include "memory.hh"
+#include "type_traits.hh"
 #include "types.hh"
 
 namespace porpoise::mem {

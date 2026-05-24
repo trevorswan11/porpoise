@@ -3,7 +3,6 @@
 #include <algorithm>
 #include <array>
 #include <span>
-#include <string_view>
 #include <type_traits>
 #include <utility>
 #include <vector>
@@ -14,7 +13,6 @@
 
 #include "option.hh"
 #include "result.hh"
-#include "string.hh"
 #include "types.hh"
 
 namespace porpoise::tests::helpers {
@@ -67,11 +65,20 @@ template <typename T, usize N> constexpr auto combinations(std::array<T, N> inpu
 
 template <typename T>
 concept Unwrappable =
-    traits::Option<std::remove_cvref_t<T>> || traits::Result<std::remove_cvref_t<T>>;
+    traits::Option<std::remove_cvref_t<T>> || traits::Result<std::remove_cvref_t<T>> ||
+    traits::OptSize<std::remove_cvref_t<T>>;
 
 // Unpacks the value in the option or result and returns its value if present
 template <Unwrappable U> [[nodiscard]] auto unwrap(U&& u) -> decltype(auto) {
     REQUIRE(u);
+    return *u;
+}
+
+// Unpacks the value in the option or result and returns its value if present and equal to expected
+template <Unwrappable U, typename E>
+[[nodiscard]] auto unwrap(U&& u, E&& expected_value) -> decltype(auto) {
+    REQUIRE(u);
+    REQUIRE(*u == std::forward<E>(expected_value));
     return *u;
 }
 

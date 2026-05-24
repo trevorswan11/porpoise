@@ -10,6 +10,7 @@
 
 #include "option.hh"
 #include "result.hh"
+#include "type_traits.hh"
 
 namespace porpoise {
 
@@ -28,7 +29,21 @@ struct ArrayExpression {
 };
 
 struct CallExpression {
-    using Argument = std::variant<ExpressionHandle, ExplicitTypeID>;
+    struct Argument {
+        std::variant<ExpressionHandle, ExplicitTypeID> id;
+
+        // Unpacks T from the variant ID assuming T is currently active
+        template <typename T, typename Self> [[nodiscard]] auto as(this Self&& self) -> auto& {
+            return std::get<T>(self.id);
+        }
+
+        // Unpacks T from the variant ID only if T is currently active
+        template <typename T, typename Self> [[nodiscard]] auto as_opt(this Self&& self) noexcept {
+            using ReturnType = opt::Option<traits::const_dispatch_t<Self, T>&>;
+            if (!std::holds_alternative<T>(self.id)) { return ReturnType{opt::none}; }
+            return ReturnType{std::get<T>(self.id)};
+        }
+    };
 
     ExpressionHandle      function;
     std::vector<Argument> arguments;

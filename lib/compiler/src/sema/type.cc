@@ -70,10 +70,8 @@ auto TypePool::get_many_unsafe(usize count) noexcept -> std::span<mem::NonNull<T
     return arena_.make_span<mem::NonNull<Type>>(count);
 }
 
-auto TypePool::get_many(usize count, types::Key common_key) noexcept
-    -> std::span<mem::NonNull<Type>> {
-    auto  types       = get_many_unsafe(count);
-    auto& common_type = get_or_emplace(common_key);
+auto TypePool::get_many(usize count, Type& common_type) noexcept -> std::span<mem::NonNull<Type>> {
+    auto types = get_many_unsafe(count);
     for (usize i = 0; i < count; ++i) { types[i] = common_type; }
     return types;
 }
