@@ -76,20 +76,22 @@ TEST_CASE("Builtin 'unsafe' casts") {
 }
 
 TEST_CASE("Builtin bit/byte operations") {
-#if 0
-    test_builtin_resolve(bis::ALIGN_OF, "", [](helpers::SemaTestContext& ctx) -> sema::Type& {});
-    test_builtin_resolve(bis::SIZE_OF, "", [](helpers::SemaTestContext& ctx) -> sema::Type& {});
-    test_builtin_resolve(bis::CLZ, "", [](helpers::SemaTestContext& ctx) -> sema::Type& {});
-    test_builtin_resolve(bis::CTZ, "", [](helpers::SemaTestContext& ctx) -> sema::Type& {});
-    test_builtin_resolve(bis::POP_COUNT, "", [](helpers::SemaTestContext& ctx) -> sema::Type& {});
-#endif
+    constexpr std::array ops{bis::ALIGN_OF, bis::SIZE_OF, bis::CLZ, bis::CTZ, bis::POP_COUNT};
+    for (const auto& bi : ops) {
+        test_builtin_resolve(bi, "123", [](helpers::SemaTestContext& ctx) -> sema::Type& {
+            return ctx.get_type(sema::TypeKind::USIZE);
+        });
+    }
 }
 
 TEST_CASE("Builtin type introspection") {
-#if 0
-    test_builtin_resolve(bis::TYPE_OF, "", [](helpers::SemaTestContext& ctx) -> sema::Type& {});
-    test_builtin_resolve(bis::TAG_NAME, "", [](helpers::SemaTestContext& ctx) -> sema::Type& {});
-#endif
+    test_builtin_resolve(bis::TYPE_OF, "i32", [](helpers::SemaTestContext& ctx) -> sema::Type& {
+        return ctx.get_type(sema::TypeKind::I32);
+    });
+
+    test_builtin_resolve(bis::TAG_NAME, "123", [](helpers::SemaTestContext& ctx) -> sema::Type& {
+        return ctx.get_type(sema::TypeKind::SLICE, true, ctx.get_type(sema::TypeKind::U8));
+    });
 }
 
 TEST_CASE("Builtin pointer conversions") {
@@ -102,36 +104,53 @@ TEST_CASE("Builtin pointer conversions") {
 }
 
 TEST_CASE("Builtins memory operation") {
-#if 0
-    test_builtin_resolve(bis::MEMCPY, "", [](helpers::SemaTestContext& ctx) -> sema::Type& {});
-    test_builtin_resolve(bis::MEMSET, "", [](helpers::SemaTestContext& ctx) -> sema::Type& {});
-    test_builtin_resolve(bis::MEMMOVE, "", [](helpers::SemaTestContext& ctx) -> sema::Type& {});
-#endif
+    constexpr std::array ops{bis::MEMCPY, bis::MEMSET, bis::MEMMOVE};
+    for (const auto& bi : ops) {
+        test_builtin_resolve(
+            bi,
+            "a, b",
+            [](helpers::SemaTestContext& ctx) -> sema::Type& {
+                return ctx.get_type(sema::TypeKind::VOID);
+            },
+            "var a: i32; var b: i32;");
+    }
 }
 
 TEST_CASE("Builtin arithmetic") {
-#if 0
-    test_builtin_resolve(bis::MUL_ADD, "", [](helpers::SemaTestContext& ctx) -> sema::Type& {});
-    test_builtin_resolve(bis::SQRT, "", [](helpers::SemaTestContext& ctx) -> sema::Type& {});
-    test_builtin_resolve(bis::SIN, "", [](helpers::SemaTestContext& ctx) -> sema::Type& {});
-    test_builtin_resolve(bis::COS, "", [](helpers::SemaTestContext& ctx) -> sema::Type& {});
-    test_builtin_resolve(bis::TAN, "", [](helpers::SemaTestContext& ctx) -> sema::Type& {});
-    test_builtin_resolve(bis::EXP, "", [](helpers::SemaTestContext& ctx) -> sema::Type& {});
-    test_builtin_resolve(bis::EXP2, "", [](helpers::SemaTestContext& ctx) -> sema::Type& {});
-    test_builtin_resolve(bis::LOG, "", [](helpers::SemaTestContext& ctx) -> sema::Type& {});
-    test_builtin_resolve(bis::LOG2, "", [](helpers::SemaTestContext& ctx) -> sema::Type& {});
-    test_builtin_resolve(bis::LOG10, "", [](helpers::SemaTestContext& ctx) -> sema::Type& {});
-    test_builtin_resolve(bis::ABS, "", [](helpers::SemaTestContext& ctx) -> sema::Type& {});
-    test_builtin_resolve(bis::FLOOR, "", [](helpers::SemaTestContext& ctx) -> sema::Type& {});
-    test_builtin_resolve(bis::CEIL, "", [](helpers::SemaTestContext& ctx) -> sema::Type& {});
-    test_builtin_resolve(bis::DIV_MOD, "", [](helpers::SemaTestContext& ctx) -> sema::Type& {});
-#endif
+    constexpr std::array fns{bis::SQRT,
+                             bis::SIN,
+                             bis::COS,
+                             bis::TAN,
+                             bis::EXP,
+                             bis::EXP2,
+                             bis::LOG,
+                             bis::LOG2,
+                             bis::LOG10,
+                             bis::ABS,
+                             bis::FLOOR,
+                             bis::CEIL};
+    for (const auto& bi : fns) {
+        test_builtin_resolve(bi, "2.34f", [](helpers::SemaTestContext& ctx) -> sema::Type& {
+            return ctx.get_type(sema::TypeKind::F32);
+        });
+    }
+
+    test_builtin_resolve(
+        bis::MUL_ADD, "f64, 1.0, 2.0, 3.0", [](helpers::SemaTestContext& ctx) -> sema::Type& {
+            return ctx.get_type(sema::TypeKind::F64);
+        });
+
+    test_builtin_resolve(
+        bis::DIV_MOD, "f32, 2.0f, 6.0f", [](helpers::SemaTestContext& ctx) -> sema::Type& {
+            return ctx.get_type(sema::TypeKind::STRUCT, ctx.get_type(sema::TypeKind::F32));
+        });
 }
 
 TEST_CASE("Builtin control flow") {
-#if 0
-    test_builtin_resolve(bis::PANIC, "", [](helpers::SemaTestContext& ctx) -> sema::Type& {});
-#endif
+    test_builtin_resolve(
+        bis::PANIC, R"("Help!")", [](helpers::SemaTestContext& ctx) -> sema::Type& {
+            return ctx.get_type(sema::TypeKind::NORETURN);
+        });
 }
 
 TEST_CASE("Builtin function arity mismatch") {

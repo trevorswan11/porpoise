@@ -84,7 +84,8 @@ auto inject_functions(SymbolTable& prelude, TypePool& pool) -> void {
     auto& t_noreturn = pool[{TypeKind::NORETURN, types::mut::CONSTANT}];
 
     // C-string
-    auto& t_c_str = pool[{TypeKind::SLICE, types::mut::CONSTANT, true, TypeKind::U8}];
+    auto& t_u8    = pool[{TypeKind::U8, types::mut::CONSTANT}];
+    auto& t_c_str = pool[{TypeKind::SLICE, types::mut::CONSTANT, true, t_u8}];
     t_c_str.resolve_if<types::Slice>(pool[{TypeKind::U8, types::mut::CONSTANT}], true);
 
     inject_function(bis::ALIGN_CAST, BP{t_type, t_auto}, t_auto);
