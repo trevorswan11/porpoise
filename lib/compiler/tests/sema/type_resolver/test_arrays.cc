@@ -26,20 +26,20 @@ TEST_CASE("Array resolution with explicit type") {
     // The explicit type in the decl can't have a true size at this point
     const auto& item_type  = ctx->get_type(sema::TypeKind::I32);
     const auto& array_type = ctx->get_type(sema::TypeKind::ARRAY, false, opt::Size{}, item_type);
-    CHECK(&type == &array_type);
+    CHECK(type == array_type);
     const auto& ident_type = helpers::unwrap(ctx->root_mod->get_sema_type_opt(node_data.ident));
-    CHECK(&ident_type == &array_type);
+    CHECK(ident_type == array_type);
     const auto& et_type =
         helpers::unwrap(ctx->root_mod->get_sema_type_opt(*node_data.explicit_type));
-    CHECK(&et_type == &array_type);
+    CHECK(et_type == array_type);
 
     // The actual value type is properly typed
     const auto& array_literal_type = ctx->get_type(sema::TypeKind::ARRAY, false, 2, item_type);
     const auto& value_type = helpers::unwrap(ctx->root_mod->get_sema_type_opt(*node_data.value));
-    CHECK(&value_type == &array_literal_type);
+    CHECK(value_type == array_literal_type);
 
     const auto& type_data = helpers::unwrap(array_literal_type.as_opt<sema::types::Array>());
-    CHECK(&type_data.underlying == &item_type);
+    CHECK(type_data.underlying == item_type);
     CHECK(type_data.len == 2);
     CHECK_FALSE(type_data.null_terminated);
 
@@ -47,7 +47,7 @@ TEST_CASE("Array resolution with explicit type") {
     for (const auto& arr =
              helpers::unwrap(ctx->root_mod->ast.get_as_opt<ast::ArrayExpression>(*node_data.value));
          const auto item : arr.items) {
-        CHECK(&item_type == &ctx->root_mod->get_sema_type(item));
+        CHECK(item_type == ctx->root_mod->get_sema_type(item));
     }
 }
 
@@ -58,11 +58,11 @@ TEST_CASE("Array resolution with implicit type") {
 
     const auto& item_type          = ctx->get_type(sema::TypeKind::U64);
     const auto& array_literal_type = ctx->get_type(sema::TypeKind::ARRAY, false, 4, item_type);
-    CHECK(&type == &array_literal_type);
+    CHECK(type == array_literal_type);
     const auto& ident_type = helpers::unwrap(ctx->root_mod->get_sema_type_opt(node_data.ident));
-    CHECK(&ident_type == &array_literal_type);
+    CHECK(ident_type == array_literal_type);
     const auto& value_type = helpers::unwrap(ctx->root_mod->get_sema_type_opt(*node_data.value));
-    CHECK(&value_type == &array_literal_type);
+    CHECK(value_type == array_literal_type);
 }
 
 TEST_CASE("Indexing with single accessors") {
@@ -70,7 +70,7 @@ TEST_CASE("Indexing with single accessors") {
         auto [ctx, idx] =
             helpers::resolve_and_check(fmt::format("var a: {}u32; const b := a[0];", type_mod));
         const auto [sym, sym_data, type] = ctx->get_type_sym_info<syms::Node>("b", idx);
-        CHECK(&type == &ctx->get_type(sema::TypeKind::U32));
+        CHECK(type == ctx->get_type(sema::TypeKind::U32));
     };
 
     test_index("[]");
@@ -84,7 +84,7 @@ TEST_CASE("Indexing with slice accessor") {
 
     const auto& i32_type   = ctx->get_type(sema::TypeKind::U32);
     const auto& slice_type = ctx->get_type(sema::TypeKind::SLICE, false, i32_type);
-    CHECK(&type == &slice_type);
+    CHECK(type == slice_type);
 }
 
 TEST_CASE("Illegal index target") {

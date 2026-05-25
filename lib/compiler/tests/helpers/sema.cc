@@ -73,7 +73,7 @@ auto SemaTestContext::check_poisoned(const sema::Symbol& sym) -> void {
 
 auto SemaTestContext::check_poisoned(const sema::Type& type) -> void {
     CHECK(type.is_poison());
-    CHECK(&type == &get_type(sema::TypeKind::POISON));
+    CHECK(type == get_type(sema::TypeKind::POISON));
     CHECK(type.as_opt<sema::types::Poison>());
 }
 

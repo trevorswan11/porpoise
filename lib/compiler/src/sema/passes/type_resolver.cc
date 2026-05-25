@@ -152,12 +152,9 @@ template <traits::IndexableID ID>
     case TokenType::BUILTIN_PTR_FROM_ARRAY: {
         auto& array_type = *get_resolved_call_arg_type(call.arguments[0]);
         if (const auto& array_data = array_type.as_opt<types::Array>()) {
-            auto array_key = array_type.get_key();
-            array_key.set_kind(TypeKind::POINTER);
-            array_key.imprint(array_type);
-
-            // The new type uses the slightly modified key with the same underlying type
-            return_type = ctx_.pool[array_key];
+            // The new type uses a new key to align with normal pointer creation
+            return_type =
+                ctx_.pool[{TypeKind::POINTER, types::mut::CONSTANT, array_data->underlying}];
             return_type->resolve_if<types::Pointer>(array_data->underlying);
         } else {
             return make_sema_err(fmt::format("Expected an array-yielding expression; found '{}'",
@@ -181,12 +178,9 @@ template <traits::IndexableID ID>
     case TokenType::BUILTIN_SLICE_FROM_PTR: {
         auto& ptr_type = *get_resolved_call_arg_type(call.arguments[0]);
         if (const auto& ptr_data = ptr_type.as_opt<types::Pointer>()) {
-            auto slice_key = ptr_type.get_key();
-            slice_key.set_kind(TypeKind::SLICE);
-            slice_key.imprint(ptr_type);
-
             // The resulting slice isn't null terminated since the pointer gives no guarantee
-            auto& new_type = ctx_.pool[slice_key];
+            auto& new_type =
+                ctx_.pool[{TypeKind::SLICE, types::mut::CONSTANT, false, ptr_data->underlying}];
             new_type.resolve_if<types::Slice>(ptr_data->underlying, false);
             return_type = new_type;
         } else {
@@ -1010,7 +1004,7 @@ auto TypeResolver::visit(ast::NodeID id, const ast::AddressOfExpression& adr_of)
     auto& rhs_type = *last_type_.take();
 
     auto& new_type = ctx_.pool[{TypeKind::POINTER, ref_addr_of_is_mutable(id), rhs_type}];
-    new_type.resolve<types::Pointer>(rhs_type);
+    new_type.resolve_if<types::Pointer>(rhs_type);
 
     resolving_.set_sema_type(id, new_type);
     last_type_.emplace(new_type);
@@ -1019,6 +1013,27 @@ auto TypeResolver::visit(ast::NodeID id, const ast::AddressOfExpression& adr_of)
 auto TypeResolver::visit(ast::NodeID id, const ast::DereferenceExpression& deref) -> void {
     TRY_RESOLVE(deref.rhs);
     auto& inner_type = *last_type_.take();
+
+    // Creates a pointer type out of the resolved inner type of the expression
+    const auto make_pointer_type = [&] {
+        auto& new_type = ctx_.pool[{TypeKind::POINTER, types::mut::CONSTANT, inner_type}];
+        new_type.resolve_if<types::Pointer>(inner_type);
+        resolving_.set_sema_type(id, new_type);
+        last_type_.emplace(new_type);
+    };
+
+    // There's some cases where the parser can't disambiguate between types and values
+    if (const auto ident = resolving_.ast.get_as_opt<ast::IdentifierExpression>(deref.rhs)) {
+        const auto& symbol = ctx_.registry.lookup(table_stack_, ident->name);
+
+        // If we've found a resolved type then we can safely interpret this as a pointer
+        if (symbol->get_status() == SymbolStatus::RESOLVED &&
+            symbol->get_kind_opt() == SymbolKind::TYPE) {
+            return make_pointer_type();
+        }
+    } else if (inner_type.get_kind() == TypeKind::TYPE) {
+        return make_pointer_type();
+    }
 
     // Check for a pointer and update to the underlying type to enforce dereference semantics
     if (const auto pointer = inner_type.as_opt<types::Pointer>()) {
@@ -1328,7 +1343,7 @@ auto TypeResolver::visit(ast::NodeID id, const ast::DeclStatement& decl) -> void
             symbol.set_kind(SymbolKind::CALLABLE);
         } else if (resolved_type.as_opt<types::Module>()) {
             symbol.set_kind(SymbolKind::MODULE);
-        } else if (&resolved_type == &ctx_.get_builtin_resolved_type(TypeKind::TYPE)) {
+        } else if (resolved_type == ctx_.get_builtin_resolved_type(TypeKind::TYPE)) {
             symbol.set_kind(SymbolKind::TYPE);
         } else {
             symbol.set_kind(SymbolKind::VALUE);

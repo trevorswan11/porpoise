@@ -18,7 +18,7 @@ TEST_CASE("Test statement symbol collection") {
 
     const auto& test_type =
         helpers::unwrap(ctx->root_mod->get_sema_type_opt(ctx->root_mod->ast[0]));
-    CHECK(&test_type == &ctx->get_type(sema::TypeKind::BLOCK, 1));
+    CHECK(test_type == ctx->get_type(sema::TypeKind::BLOCK, 1));
     ctx->test_common_decl_collection(1);
 }
 

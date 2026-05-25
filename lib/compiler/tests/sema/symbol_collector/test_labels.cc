@@ -29,7 +29,7 @@ auto collect_and_validate_label(std::string_view input, usize expected_size) -> 
     CHECK(sym.get_kind_opt() == sema::SymbolKind::LABEL);
 
     CHECK(type.get_symbol_table_idx_opt() == blk_idx);
-    CHECK(&type == &ctx->get_type(sema::TypeKind::LABEL, blk_idx));
+    CHECK(type == ctx->get_type(sema::TypeKind::LABEL, blk_idx));
 }
 
 } // namespace

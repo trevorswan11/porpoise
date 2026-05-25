@@ -87,7 +87,7 @@ TEST_CASE("Full sema pipeline") {
             root_module.ast.get_as_opt<ast::FunctionExpression>(*main_node_data.value));
 
         const auto fn_idx = helpers::unwrap(main_type.get_symbol_table_idx_opt(), 4uz);
-        CHECK(&main_type == &ctx->get_type(sema::TypeKind::FUNCTION, fn_idx));
+        CHECK(main_type == ctx->get_type(sema::TypeKind::FUNCTION, fn_idx));
         CHECK(main_type_data.params.size() == 1);
 
         // Verify the parameter type
@@ -102,18 +102,18 @@ TEST_CASE("Full sema pipeline") {
                 ctx->get_type_sym_info<syms::Parameter>(
                     "args", fn_idx, root_module, &syms::Parameter::ident);
             CHECK(param_sym.get_kind_opt() == sema::SymbolKind::VALUE);
-            CHECK(&param_type == &u8_slice_slice_type);
+            CHECK(param_type == u8_slice_slice_type);
 
             const auto& args_param_explicit_type =
                 helpers::unwrap(root_module.get_sema_type_opt(param_sym_data.explicit_type));
-            CHECK(&args_param_explicit_type == &u8_slice_slice_type);
-            CHECK(&*main_type_data.params[0] == &u8_slice_slice_type);
+            CHECK(args_param_explicit_type == u8_slice_slice_type);
+            CHECK(*main_type_data.params[0] == u8_slice_slice_type);
         }
 
         // Verify the return type
         {
             const auto& return_type = main_type_data.return_type;
-            CHECK(&return_type == &ctx->get_type(sema::TypeKind::I32));
+            CHECK(return_type == ctx->get_type(sema::TypeKind::I32));
         }
 
         // Verify the function body
@@ -125,7 +125,7 @@ TEST_CASE("Full sema pipeline") {
             CHECK(msg_sym.get_kind_opt() == sema::SymbolKind::VALUE);
 
             const auto msg_size = ctx->get_string_literal_size(*msg_node_data.value);
-            CHECK(&msg_type == &ctx->get_type(sema::TypeKind::ARRAY, true, msg_size, u8_type));
+            CHECK(msg_type == ctx->get_type(sema::TypeKind::ARRAY, true, msg_size, u8_type));
 
             const auto& call_expr = helpers::lookup_expression<ast::CallExpression>(
                 helpers::unwrap(root_module.ast.get_as_opt<ast::BlockStatement>(fn_expr.body)),
@@ -135,24 +135,24 @@ TEST_CASE("Full sema pipeline") {
             const auto arg =
                 helpers::unwrap(call_expr.arguments[0].as_opt<ast::ExpressionHandle>());
             auto& arg_type = helpers::unwrap(ctx->root_mod->get_sema_type_opt(arg));
-            CHECK(&arg_type == &msg_type);
+            CHECK(arg_type == msg_type);
 
             const auto& scope_expr = helpers::unwrap(
                 root_module.ast.get_as_opt<ast::ScopeResolutionExpression>(call_expr.function));
             const auto& println_fn_type =
                 helpers::unwrap(root_module.get_sema_type_opt(scope_expr.inner));
-            CHECK(&println_fn_type == &ctx->get_type(sema::TypeKind::FUNCTION, 3));
+            CHECK(println_fn_type == ctx->get_type(sema::TypeKind::FUNCTION, 3));
 
             // The outer part of resolution should be two modules
             const auto& scope_outer_expr = helpers::unwrap(
                 root_module.ast.get_as_opt<ast::ScopeResolutionExpression>(scope_expr.outer));
             const auto& scope_std_expr =
                 helpers::unwrap(root_module.get_sema_type_opt(scope_outer_expr.outer));
-            CHECK(&scope_std_expr == &std_module_type);
+            CHECK(scope_std_expr == std_module_type);
 
             const auto& scope_io_expr =
                 helpers::unwrap(root_module.get_sema_type_opt(scope_outer_expr.inner));
-            CHECK(&scope_io_expr == &io_module_type);
+            CHECK(scope_io_expr == io_module_type);
         }
     }
 
@@ -168,7 +168,7 @@ TEST_CASE("Full sema pipeline") {
         CHECK(println_sym.get_kind_opt() == sema::SymbolKind::CALLABLE);
 
         const auto fn_idx = helpers::unwrap(println_type.get_symbol_table_idx_opt(), 3uz);
-        CHECK(&println_type == &ctx->get_type(sema::TypeKind::FUNCTION, fn_idx));
+        CHECK(println_type == ctx->get_type(sema::TypeKind::FUNCTION, fn_idx));
         CHECK(println_type_data.params.size() == 1);
 
         // Verify the parameter type
@@ -181,19 +181,19 @@ TEST_CASE("Full sema pipeline") {
                 ctx->get_type_sym_info<syms::Parameter>(
                     "str", fn_idx, io_module, &syms::Parameter::ident);
             CHECK(param_sym.get_kind_opt() == sema::SymbolKind::VALUE);
-            CHECK(&param_type == &u8_slice_type);
+            CHECK(param_type == u8_slice_type);
 
             const auto& str_param_explicit_type =
                 helpers::unwrap(io_module.get_sema_type_opt(param_sym_data.explicit_type));
-            CHECK(&str_param_explicit_type == &u8_slice_type);
-            CHECK(&*println_type_data.params[0] == &u8_slice_type);
+            CHECK(str_param_explicit_type == u8_slice_type);
+            CHECK(*println_type_data.params[0] == u8_slice_type);
         }
 
         // Verify the return type
         {
             const auto& return_type = println_type_data.return_type;
             const auto& void_type   = ctx->get_type(sema::TypeKind::VOID);
-            CHECK(&return_type == &void_type);
+            CHECK(return_type == void_type);
         }
     }
 }

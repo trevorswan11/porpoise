@@ -29,7 +29,7 @@ TEST_CASE("Import aliases correctly used") {
             ctx->get_full_type_sym_info<sema::symbols::Node, sema::types::Module>(import_name, idx);
         CHECK(sym.get_kind_opt() == sema::SymbolKind::MODULE);
 
-        CHECK(&type == &ctx->get_type(sema::TypeKind::MODULE, inner_idx));
+        CHECK(type == ctx->get_type(sema::TypeKind::MODULE, inner_idx));
         helpers::test_common_decl_collection(registry, type_data.imported, inner_idx);
     };
 

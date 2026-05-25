@@ -24,7 +24,7 @@ TEST_CASE("Function hollow types") {
     CHECK(sym.get_kind_opt() == sema::SymbolKind::CALLABLE);
 
     const auto& fn_type = helpers::unwrap(ctx->root_mod->get_sema_type_opt(*node_data.value));
-    CHECK(&fn_type == &ctx->get_type(sema::TypeKind::FUNCTION, 1));
+    CHECK(fn_type == ctx->get_type(sema::TypeKind::FUNCTION, 1));
 
     REQUIRE(helpers::unwrap(registry.get_from_opt(1, "self")).as_opt<syms::SelfParameter>());
     REQUIRE(helpers::unwrap(registry.get_from_opt(1, "c")).as_opt<syms::Parameter>());

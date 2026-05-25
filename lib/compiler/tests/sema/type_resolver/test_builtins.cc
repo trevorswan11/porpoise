@@ -39,12 +39,12 @@ auto test_builtin_resolve(const syntax::Builtin& builtin,
     const sema::Type& expected_type = expected_type_fn(*ctx);
     const auto [decl_sym, decl_sym_data, decl_node_data, decl_type] =
         ctx->get_ast_type_sym_info<syms::Node, ast::DeclStatement>("foo", idx);
-    CHECK(&expected_type == &decl_type);
+    CHECK(expected_type == decl_type);
 
     const auto& call =
         helpers::unwrap(ctx->root_mod->ast.get_as_opt<ast::CallExpression>(*decl_node_data.value));
     const auto& call_type = helpers::unwrap(ctx->root_mod->get_sema_type_opt(call.function));
-    CHECK(&builtin_type == &call_type);
+    CHECK(builtin_type == call_type);
 }
 
 } // namespace
@@ -76,7 +76,8 @@ TEST_CASE("Builtin 'unsafe' casts") {
 }
 
 TEST_CASE("Builtin bit/byte operations") {
-    constexpr std::array ops{bis::ALIGN_OF, bis::SIZE_OF, bis::CLZ, bis::CTZ, bis::POP_COUNT};
+    constexpr std::array ops{
+        bis::ALIGN_OF, bis::SIZE_OF, bis::CLZ, bis::CTZ, bis::POP_COUNT, bis::INT_FROM_PTR};
     for (const auto& bi : ops) {
         test_builtin_resolve(bi, "123", [](helpers::SemaTestContext& ctx) -> sema::Type& {
             return ctx.get_type(sema::TypeKind::USIZE);
@@ -95,12 +96,23 @@ TEST_CASE("Builtin type introspection") {
 }
 
 TEST_CASE("Builtin pointer conversions") {
-#if 0
-    test_builtin_resolve(bis::INT_FROM_PTR, "", [](helpers::SemaTestContext& ctx) -> sema::Type& {});
-    test_builtin_resolve(bis::PTR_FROM_ARRAY, "", [](helpers::SemaTestContext& ctx) -> sema::Type& {});
-    test_builtin_resolve(bis::PTR_FROM_INT, "", [](helpers::SemaTestContext& ctx) -> sema::Type& {});
-    test_builtin_resolve(bis::SLICE_FROM_PTR, "", [](helpers::SemaTestContext& ctx) -> sema::Type& {});
-#endif
+    test_builtin_resolve(
+        bis::PTR_FROM_ARRAY,
+        "a",
+        [](helpers::SemaTestContext& ctx) -> sema::Type& {
+            return ctx.get_type(sema::TypeKind::POINTER, ctx.get_type(sema::TypeKind::I32));
+        },
+        "var a := [_]i32{0, 1, 2};");
+
+    test_builtin_resolve(
+        bis::PTR_FROM_INT, "*i32, 0xc0ffeeul", [](helpers::SemaTestContext& ctx) -> sema::Type& {
+            return ctx.get_type(sema::TypeKind::POINTER, ctx.get_type(sema::TypeKind::I32));
+        });
+
+    test_builtin_resolve(
+        bis::SLICE_FROM_PTR, "^1, 20uz", [](helpers::SemaTestContext& ctx) -> sema::Type& {
+            return ctx.get_type(sema::TypeKind::SLICE, false, ctx.get_type(sema::TypeKind::I32));
+        });
 }
 
 TEST_CASE("Builtins memory operation") {

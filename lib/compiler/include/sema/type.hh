@@ -268,6 +268,10 @@ class Type {
         return static_cast<bool>(key_.get_mut() & types::mut::VOLATILE);
     }
 
+    constexpr friend auto operator==(const Type& lhs, const Type& rhs) noexcept -> bool {
+        return &lhs == &rhs;
+    }
+
   private:
     // This should only be used when allocating an immediately-to-be-filled span
     Type() noexcept = default;

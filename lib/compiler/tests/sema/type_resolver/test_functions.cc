@@ -44,7 +44,7 @@ TEST_CASE("Function declaration and usage") {
             const auto [sym, sym_data, type] = ctx->get_type_sym_info<syms::Parameter>(
                 name, 1, opt::none, &syms::Parameter::ident);
             CHECK(sym.get_kind_opt() == sema::SymbolKind::VALUE);
-            CHECK(&type == &expected_type);
+            CHECK(type == expected_type);
         };
 
         check_param_type("b", i32_type);
@@ -56,27 +56,27 @@ TEST_CASE("Function declaration and usage") {
         const auto& fn = helpers::unwrap(
             ctx->root_mod->ast.get_as_opt<ast::FunctionExpression>(*a_decl_node_data.value));
         const auto& return_type = ctx->root_mod->get_sema_type(fn.explicit_return_type);
-        CHECK(&return_type == &bool_type);
+        CHECK(return_type == bool_type);
     }
 
     SECTION("Call validation") {
         const auto [decl_sym, decl_sym_data, decl_node_data, decl_type] =
             ctx->get_ast_type_sym_info<syms::Node, ast::DeclStatement>("result", idx);
         CHECK(decl_sym.get_kind_opt() == sema::SymbolKind::VALUE);
-        CHECK(&decl_type == &bool_type);
+        CHECK(decl_type == bool_type);
 
         const auto& call = helpers::unwrap(
             ctx->root_mod->ast.get_as_opt<ast::CallExpression>(*decl_node_data.value));
         CHECK(call.arguments.size() == 3);
         const auto& call_type = helpers::unwrap(ctx->root_mod->get_sema_type_opt(call.function));
-        CHECK(&a_decl_type == &call_type);
+        CHECK(a_decl_type == call_type);
 
         const auto check_arg_type = [&](usize arg_idx, const sema::Type& expected_type) {
             REQUIRE(arg_idx < call.arguments.size());
             const auto arg =
                 helpers::unwrap(call.arguments[arg_idx].as_opt<ast::ExpressionHandle>());
             const auto& arg_type = helpers::unwrap(ctx->root_mod->get_sema_type_opt(arg));
-            CHECK(&expected_type == &arg_type);
+            CHECK(expected_type == arg_type);
         };
 
         check_arg_type(0, i32_type);
@@ -90,7 +90,7 @@ TEST_CASE("Function declaration and usage") {
             ctx->get_type(sema::TypeKind::ARRAY, true, str_size, u8_type);
 
         const auto& last_arg_type = helpers::unwrap(ctx->root_mod->get_sema_type_opt(last_arg));
-        CHECK(&null_string_type == &last_arg_type);
+        CHECK(null_string_type == last_arg_type);
     }
 }
 
@@ -109,7 +109,7 @@ TEST_CASE("Self parameters in structural types") {
                 "foo", struct_idx);
         REQUIRE(fn_type_data.params.size() == 1);
         const auto& expected_param_type = ctx->get_type(self_kind, struct_idx, a_decl_type);
-        CHECK(&expected_param_type == &*fn_type_data.params[0]);
+        CHECK(expected_param_type == *fn_type_data.params[0]);
     };
 
     check_structural_type(R"(const a := struct {
