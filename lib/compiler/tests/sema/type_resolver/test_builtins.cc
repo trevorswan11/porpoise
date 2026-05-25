@@ -87,12 +87,25 @@ TEST_CASE("Builtin bit/byte operations") {
 
 TEST_CASE("Builtin type introspection") {
     test_builtin_resolve(bis::TYPE_OF, "i32", [](helpers::SemaTestContext& ctx) -> sema::Type& {
-        return ctx.get_type(sema::TypeKind::I32);
+        return ctx.get_type(sema::TypeKind::TYPE, ctx.get_type(sema::TypeKind::I32));
     });
 
     test_builtin_resolve(bis::TAG_NAME, "123", [](helpers::SemaTestContext& ctx) -> sema::Type& {
         return ctx.get_type(sema::TypeKind::SLICE, true, ctx.get_type(sema::TypeKind::U8));
     });
+}
+
+TEST_CASE("Deferred return type from typeOf") {
+    auto [ctx, idx] =
+        helpers::resolve_and_check("const a := fn(): type {}; using B = @typeOf(a());");
+
+    const auto [sym, sym_data, node_data, type] =
+        ctx->get_ast_type_sym_info<syms::Node, ast::UsingStatement>("B", idx);
+
+    const auto& call = helpers::unwrap(
+        ctx->root_mod->ast.get_as_opt<ast::CallExpression>(node_data.explicit_type));
+    CHECK(type == ctx->get_type(sema::TypeKind::TYPE, &call));
+    CHECK(&call == &helpers::unwrap(type.as_opt<sema::types::DeferredEval>()).call_node);
 }
 
 TEST_CASE("Builtin pointer conversions") {

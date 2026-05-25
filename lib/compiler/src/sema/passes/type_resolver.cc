@@ -29,6 +29,7 @@
 #include "diagnostic.hh"
 #include "memory.hh"
 #include "option.hh"
+#include "result.hh"
 #include "types.hh"
 #include "utility.hh"
 #include "variant.hh"
@@ -146,7 +147,14 @@ template <traits::IndexableID ID>
     // @typeOf returns a type as per documentation, but it's not the literal `type` type
     case TokenType::BUILTIN_TYPE_OF: {
         ASSERT(builtin.return_type.get_kind() == TypeKind::TYPE);
-        return_type = get_resolved_call_arg_type(call.arguments[0]);
+        auto& instance_type = *get_resolved_call_arg_type(call.arguments[0]);
+        if (instance_type.as_opt<types::DeferredEval>()) {
+            return_type = ctx_.pool[{TypeKind::TYPE, types::mut::CONSTANT, &call}];
+            return_type->resolve_if<types::DeferredEval>(call);
+        } else {
+            return_type = ctx_.pool[{TypeKind::TYPE, types::mut::CONSTANT, instance_type}];
+            return_type->resolve_if<types::MetaType>(instance_type);
+        }
         break;
     }
     case TokenType::BUILTIN_PTR_FROM_ARRAY: {
@@ -312,6 +320,15 @@ auto TypeResolver::resolve_call(ID id, const ast::CallExpression& call) -> void 
                     "Expected {} arguments, found {}", params.size(), call.arguments.size()),
                 Error::ARITY_MISMATCH,
                 resolving_.ast.location_of(call.function)));
+        }
+
+        // Functions that return a type cannot be resolved until the constant evaluator
+        if (function_type->return_type.get_kind() == TypeKind::TYPE) {
+            auto& deferred_type = ctx_.pool[{TypeKind::TYPE, types::mut::CONSTANT, &call}];
+            deferred_type.resolve_if<types::DeferredEval>(call);
+
+            resolving_.set_sema_type(id, deferred_type);
+            return last_type_.emplace(deferred_type);
         }
 
         // Only arity is checked since the type checker will handle the rest
@@ -1434,15 +1451,20 @@ auto TypeResolver::apply_explicit_modifiers(ast::ExplicitTypeID id, Type& inner_
     auto new_key = inner_type.get_key();
     if (mutability) { new_key.set_mut(*mutability); }
 
+    // The key should reflect the new kind and should not double imprint the same type
     if (modifier.is_ptr()) {
+        new_key.clear_markers();
         new_key.set_kind(TypeKind::POINTER);
         new_key.imprint(inner_type);
+
         auto& new_ptr_type = ctx_.pool[new_key];
         new_ptr_type.resolve_if<types::Pointer>(inner_type);
         return new_ptr_type;
     } else if (modifier.is_ref()) {
+        new_key.clear_markers();
         new_key.set_kind(TypeKind::REFERENCE);
         new_key.imprint(inner_type);
+
         auto& new_ref_type = ctx_.pool[new_key];
         new_ref_type.resolve_if<types::Reference>(inner_type);
         return new_ref_type;

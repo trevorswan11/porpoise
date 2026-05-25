@@ -6,6 +6,7 @@
 
 #include <ankerl/unordered_dense.h>
 
+#include "ast/expression.hh"
 #include "module/module.hh"
 
 #include "arena.hh"
@@ -114,6 +115,15 @@ struct BuiltinFunction {
     Type&         return_type;
 };
 
+struct MetaType {
+    Type& instance;
+};
+
+// Represents a node who's type cannot be known until constant evaluation
+struct DeferredEval {
+    const ast::CallExpression& call_node;
+};
+
 enum class MutabilityModifiers : u8 {
     CONSTANT = 1 << 0,
     VOLATILE = 1 << 1,
@@ -151,6 +161,8 @@ class Key {
     template <typename Marker> constexpr auto imprint(const Marker& marker) noexcept -> void {
         markers_.combine(marker);
     }
+
+    constexpr auto clear_markers() noexcept -> void { markers_ = {}; }
 
     [[nodiscard]] constexpr auto operator==(const Key&) const noexcept -> bool = default;
 
@@ -202,7 +214,9 @@ class Type {
                                   types::Struct,
                                   types::Module,
                                   types::Function,
-                                  types::BuiltinFunction>;
+                                  types::BuiltinFunction,
+                                  types::MetaType,
+                                  types::DeferredEval>;
 
   public:
     ~Type() = default;

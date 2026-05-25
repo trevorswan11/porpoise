@@ -30,9 +30,8 @@ TEST_CASE("Function declaration and usage") {
         const result := a(1, ^int, "Hello, World");
     )");
 
-    const auto& i32_type     = ctx->get_type(sema::TypeKind::I32);
-    const auto& i32_ptr_type = ctx->get_type(sema::TypeKind::POINTER, i32_type);
-    const auto& bool_type    = ctx->get_type(sema::TypeKind::BOOL);
+    const auto& i32_type  = ctx->get_type(sema::TypeKind::I32);
+    const auto& bool_type = ctx->get_type(sema::TypeKind::BOOL);
 
     const auto [a_decl_sym, a_decl_sym_data, a_decl_node_data, a_decl_type] =
         ctx->get_ast_type_sym_info<syms::Node, ast::DeclStatement>("a", idx);
@@ -48,7 +47,13 @@ TEST_CASE("Function declaration and usage") {
         };
 
         check_param_type("b", i32_type);
-        check_param_type("c", i32_ptr_type);
+
+        const auto& c_meta = ctx->get_type(sema::TypeKind::TYPE, i32_type);
+        const auto& c_ptr  = ctx->get_type(sema::TypeKind::POINTER, c_meta);
+        check_param_type("c", c_ptr);
+        const auto& c_meta_data = helpers::unwrap(c_meta.as_opt<sema::types::MetaType>());
+        CHECK(c_meta_data.instance == i32_type);
+
         const auto& u8_slice =
             ctx->get_type(sema::TypeKind::SLICE, true, ctx->get_type(sema::TypeKind::U8));
         check_param_type("d", u8_slice);
@@ -80,7 +85,7 @@ TEST_CASE("Function declaration and usage") {
         };
 
         check_arg_type(0, i32_type);
-        check_arg_type(1, i32_ptr_type);
+        check_arg_type(1, ctx->get_type(sema::TypeKind::POINTER, i32_type));
 
         const auto last_arg = helpers::unwrap(call.arguments[2].as_opt<ast::ExpressionHandle>());
         const auto str_size = ctx->get_string_literal_size(last_arg);
@@ -128,6 +133,18 @@ TEST_CASE("Self parameters in structural types") {
         const foo := fn(*self): void {};
     };)",
                           sema::TypeKind::POINTER);
+}
+
+TEST_CASE("Deferred return type from user function") {
+    auto [ctx, idx] = helpers::resolve_and_check("const a := fn(): type {}; using B = a();");
+
+    const auto [sym, sym_data, node_data, type] =
+        ctx->get_ast_type_sym_info<syms::Node, ast::UsingStatement>("B", idx);
+
+    const auto& call = helpers::unwrap(
+        ctx->root_mod->ast.get_as_opt<ast::CallExpression>(node_data.explicit_type));
+    CHECK(type == ctx->get_type(sema::TypeKind::TYPE, &call));
+    CHECK(&call == &helpers::unwrap(type.as_opt<sema::types::DeferredEval>()).call_node);
 }
 
 TEST_CASE("Self parameters in non-structural types") {

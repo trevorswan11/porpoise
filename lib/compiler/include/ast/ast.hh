@@ -96,14 +96,14 @@ class AST {
     }
 
     // Returns the casted node at the requested index
-    template <typename Data, traits::IndexableNodeID ID>
+    template <typename Data, traits::IndexableID ID>
     [[nodiscard]] constexpr auto get_as(ID id) const noexcept -> const Data& {
         ASSERT(id.template is<Data>(), "Illegal node data retrieval");
         return std::get<Data>(operator[](id));
     }
 
     // Returns the casted node data at the requested index if present
-    template <typename Data, traits::IndexableNodeID ID>
+    template <typename Data, traits::IndexableID ID>
     [[nodiscard]] constexpr auto get_as_opt(ID id) const noexcept -> opt::Option<const Data&> {
         if (!id.template is<Data>()) { return opt::none; }
         return opt::Option<const Data&>{std::get<Data>(operator[](id))};
