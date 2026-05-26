@@ -88,7 +88,7 @@ template <traits::IndexableID ID>
 [[nodiscard]] auto TypeResolver::resolve_builtin_call(ID                            id,
                                                       const ast::CallExpression&    call,
                                                       const types::BuiltinFunction& builtin)
-    -> Result<Unit, Diagnostic> {
+    -> Result<void, Diagnostic> {
     ASSERT(call.function.is<ast::IdentifierExpression>(), "Builtin function must be a raw ident");
     const auto& params = builtin.params;
     if (call.arguments.size() != params.size()) {
@@ -248,17 +248,17 @@ template <traits::IndexableID ID>
 
     resolving_.set_sema_type(id, *return_type);
     last_type_.emplace(*return_type);
-    return Unit{};
+    return {};
 }
 
 template auto TypeResolver::resolve_builtin_call<ast::NodeID>(ast::NodeID,
                                                               const ast::CallExpression&,
                                                               const types::BuiltinFunction&)
-    -> Result<Unit, Diagnostic>;
+    -> Result<void, Diagnostic>;
 template auto TypeResolver::resolve_builtin_call<ast::ExplicitTypeID>(ast::ExplicitTypeID,
                                                                       const ast::CallExpression&,
                                                                       const types::BuiltinFunction&)
-    -> Result<Unit, Diagnostic>;
+    -> Result<void, Diagnostic>;
 
 auto TypeResolver::resolve_call_args(std::span<const ast::CallExpression::Argument> args)
     -> ResolveResult {

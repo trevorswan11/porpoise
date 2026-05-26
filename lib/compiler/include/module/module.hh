@@ -193,7 +193,7 @@ class ModuleManager {
 
     // Adds a library module and its underlying path to the lookup table
     [[nodiscard]] auto add_library_module(std::string_view name, const std::filesystem::path& path)
-        -> Result<Unit, Diagnostic>;
+        -> Result<void, Diagnostic>;
 
   private:
     [[nodiscard]] auto try_get(const std::filesystem::path& path)

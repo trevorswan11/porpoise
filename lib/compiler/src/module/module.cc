@@ -83,12 +83,12 @@ auto ModuleManager::try_get_library_module(std::string_view name)
 }
 
 auto ModuleManager::add_library_module(std::string_view name, const std::filesystem::path& path)
-    -> Result<Unit, Diagnostic> {
+    -> Result<void, Diagnostic> {
     const auto normalized = loader_.normalize(path);
     if (!normalized) { return make_mod_err(normalized.error()); }
 
     if (auto it = module_lut_.find(name); it != module_lut_.end()) {
-        if (it->second == normalized) { return Unit{}; }
+        if (it->second == normalized) { return {}; }
         return make_mod_err(fmt::format("Attempt to add duplicate module '{}' from path '{}' "
                                         "which already exists at path '{}'",
                                         name,
@@ -98,7 +98,7 @@ auto ModuleManager::add_library_module(std::string_view name, const std::filesys
     }
 
     module_lut_.emplace(name, *normalized);
-    return Unit{};
+    return {};
 }
 
 auto ModuleManager::try_get(const std::filesystem::path& path)

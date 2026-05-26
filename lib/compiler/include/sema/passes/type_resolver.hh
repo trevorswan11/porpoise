@@ -89,7 +89,7 @@ class TypeResolver {
     [[nodiscard]] auto resolve_builtin_call(ID                            id,
                                             const ast::CallExpression&    call,
                                             const types::BuiltinFunction& builtin)
-        -> Result<Unit, Diagnostic>;
+        -> Result<void, Diagnostic>;
 
     auto resolve_call_args(std::span<const ast::CallExpression::Argument> args) -> ResolveResult;
     [[nodiscard]] auto get_resolved_call_arg_type(const ast::CallExpression::Argument& arg)

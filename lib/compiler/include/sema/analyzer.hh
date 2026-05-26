@@ -13,7 +13,6 @@
 #include "result.hh"
 #include "types.hh"
 #include "utility.hh"
-#include "variant.hh"
 
 namespace porpoise::sema {
 
@@ -30,7 +29,7 @@ class Analyzer {
     MAKE_MOVE_CONSTRUCTABLE_ONLY(Analyzer)
 
     // Runs the entire sema pipeline
-    auto analyze(const std::filesystem::path& entry_path) -> Result<Unit, Diagnostic>;
+    auto analyze(const std::filesystem::path& entry_path) -> Result<void, Diagnostic>;
 
     template <typename Self> [[nodiscard]] auto get_table(this Self&& self, usize idx) -> auto& {
         return self.registry_.get(idx);

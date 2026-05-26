@@ -68,7 +68,7 @@ auto Symbol::is_public(const mod::Module& module) const noexcept -> bool {
 }
 
 auto SymbolTable::insert(std::string_view name, const mod::Module& module, const Symbol::Data& data)
-    -> Result<Unit, Diagnostic> {
+    -> Result<void, Diagnostic> {
     // Reserved identifier use is impossible due to a parser invariant
     auto [it, inserted] = symbols_.try_emplace(name, name, data);
 
@@ -81,7 +81,7 @@ auto SymbolTable::insert(std::string_view name, const mod::Module& module, const
             Error::IDENTIFIER_REDECLARATION,
             symbol_location_of(module, data));
     }
-    return Unit{};
+    return {};
 }
 
 auto SymbolTable::insert_unchecked(std::string_view name, const Symbol::Data& data) -> void {
@@ -93,7 +93,7 @@ auto SymbolTable::insert_unchecked(std::string_view name, const Symbol::Data& da
 auto SymbolTableRegistry::insert_into(usize               table_idx,
                                       const mod::Module&  module,
                                       std::string_view    name,
-                                      const Symbol::Data& data) -> Result<Unit, Diagnostic> {
+                                      const Symbol::Data& data) -> Result<void, Diagnostic> {
     if (auto table = get_opt(table_idx)) { return table->insert(name, module, data); }
     return make_sema_err(Error::INVALID_TABLE_IDX);
 }
@@ -102,7 +102,7 @@ auto SymbolTableRegistry::insert_into(usize               table_idx,
                                                      const mod::Module&      module,
                                                      std::string_view        name,
                                                      const Symbol::Data&     data) noexcept
-    -> Result<Unit, Diagnostic> {
+    -> Result<void, Diagnostic> {
     for (const auto idx : stack | std::views::take(stack.size() - 1)) {
         if (const auto symbol = get(idx).get_opt(name)) {
             return make_sema_err(
@@ -113,7 +113,7 @@ auto SymbolTableRegistry::insert_into(usize               table_idx,
                 symbol_location_of(module, data));
         }
     }
-    return Unit{};
+    return {};
 }
 
 } // namespace porpoise::sema

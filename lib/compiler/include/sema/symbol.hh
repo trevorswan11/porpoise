@@ -145,13 +145,13 @@ class SymbolTable {
     // Constructs the symbolic node in place with the provided args
     template <typename T, typename... Args>
     auto insert(std::string_view name, const mod::Module& module, Args&&... args)
-        -> Result<Unit, Diagnostic> {
+        -> Result<void, Diagnostic> {
         return insert(name, module, Symbol::Data{T{std::forward<Args>(args)...}});
     }
 
     // Checks that the module was inserted without collision
     auto insert(std::string_view name, const mod::Module& module, const Symbol::Data& data)
-        -> Result<Unit, Diagnostic>;
+        -> Result<void, Diagnostic>;
 
     // For use of prelude injection only
     auto insert_unchecked(std::string_view name, const Symbol::Data& data) -> void;
@@ -246,14 +246,14 @@ class SymbolTableRegistry {
     template <typename T, typename... Args>
     [[nodiscard]] auto
     insert_into(usize table_idx, const mod::Module& module, std::string_view name, Args&&... args)
-        -> Result<Unit, Diagnostic> {
+        -> Result<void, Diagnostic> {
         return insert_into(table_idx, module, name, Symbol::Data{T{std::forward<Args>(args)...}});
     }
 
     [[nodiscard]] auto insert_into(usize               table_idx,
                                    const mod::Module&  module,
                                    std::string_view    name,
-                                   const Symbol::Data& data) -> Result<Unit, Diagnostic>;
+                                   const Symbol::Data& data) -> Result<void, Diagnostic>;
 
     template <typename Self> [[nodiscard]] auto get(this Self&& self, usize idx) -> auto& {
         return self.tables_.at(idx);
@@ -281,7 +281,7 @@ class SymbolTableRegistry {
     [[nodiscard]] auto is_shadowing(const SymbolTableStack& stack,
                                     const mod::Module&      module,
                                     std::string_view        name,
-                                    const Symbol::Data& data) noexcept -> Result<Unit, Diagnostic>;
+                                    const Symbol::Data& data) noexcept -> Result<void, Diagnostic>;
 
     // Looks up all levels of the stack for the queried name
     template <typename Self>

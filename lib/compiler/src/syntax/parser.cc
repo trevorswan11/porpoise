@@ -82,7 +82,7 @@ auto Parser::consume(ast::AST& ast) -> Diagnostics {
     return diagnostics;
 }
 
-auto Parser::expect_peek(TokenType expected) -> Result<Unit, Diagnostic> {
+auto Parser::expect_peek(TokenType expected) -> Result<void, Diagnostic> {
     if (peek_token_is(expected)) {
         advance();
         return {};

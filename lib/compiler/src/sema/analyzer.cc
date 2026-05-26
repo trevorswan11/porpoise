@@ -13,7 +13,7 @@
 
 namespace porpoise::sema {
 
-auto Analyzer::analyze(const std::filesystem::path& entry_path) -> Result<Unit, Diagnostic> {
+auto Analyzer::analyze(const std::filesystem::path& entry_path) -> Result<void, Diagnostic> {
     auto module_result = modules_.try_get_file_module(entry_path);
     if (!module_result) {
         return make_sema_err(std::move(module_result.error().get_message()),
@@ -21,17 +21,14 @@ auto Analyzer::analyze(const std::filesystem::path& entry_path) -> Result<Unit, 
     }
 
     auto module = *module_result;
-    if (module->has_parser_diagnostics()) {
-        module->print_diagnostics(error_stream_);
-        return Unit{};
-    }
+    if (module->has_parser_diagnostics()) { module->print_diagnostics(error_stream_); }
 
     collect_symbols(*module);
     resolve_types(*module);
 
     // Perform a final diagnostic flush if poisoned
     if (module->is_poisoned()) { module->print_diagnostics(error_stream_); }
-    return Unit{};
+    return {};
 }
 
 auto Analyzer::collect_symbols(mod::Module& module) -> mod::ModuleState {

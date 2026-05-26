@@ -46,7 +46,7 @@ struct Context {
     auto operator=(Context&&) -> Context&            = delete;
 
     // Returns false if the passed result was an error type, which is forwarded to the diagnostics
-    template <typename T = Unit> auto try_result(Result<T, Diagnostic>&& result) -> bool {
+    template <typename T = void> auto try_result(Result<T, Diagnostic>&& result) -> bool {
         if (!result) {
             diagnostics.emplace_back(result.error());
             return false;

@@ -11,13 +11,13 @@
 
 namespace porpoise::driver {
 
-auto launch(i32 argc, byte** argv) -> Result<Unit, i32> {
+auto launch(i32 argc, byte** argv) -> Result<void, i32> {
     clap::Parser parser{argc, argv};
     TRY(parser.parse());
 
     cmd::Dispatcher dispatcher;
     TRY(std::visit(dispatcher, parser.get_parsed()));
-    return Unit{};
+    return {};
 }
 
 } // namespace porpoise::driver

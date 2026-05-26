@@ -4,13 +4,12 @@
 
 #include "result.hh"
 #include "types.hh"
-#include "variant.hh"
 
 namespace porpoise::cmd {
 
-auto Dispatcher::operator()(Debug& dump) -> Result<Unit, i32> {
+auto Dispatcher::operator()(Debug& dump) -> Result<void, i32> {
     dump.run();
-    return Unit{};
+    return {};
 }
 
 } // namespace porpoise::cmd

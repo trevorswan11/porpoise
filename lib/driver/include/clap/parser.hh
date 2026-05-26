@@ -25,7 +25,7 @@ class Parser {
   public:
     Parser(i32 argc, byte** argv, std::ostream& os = std::cerr, bool ensure_utf8 = true) noexcept;
 
-    auto               parse() -> Result<Unit, i32>;
+    auto               parse() -> Result<void, i32>;
     [[nodiscard]] auto get_parsed() noexcept -> Parsed& { return parsed_; }
 
   private:

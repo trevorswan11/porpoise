@@ -15,7 +15,6 @@
 #include "result.hh"
 #include "style.hh"
 #include "types.hh"
-#include "variant.hh"
 
 #include <config.h>
 
@@ -28,7 +27,7 @@ Parser::Parser(i32 argc, byte** argv, std::ostream& os, bool ensure_utf8) noexce
     argv_ = ensure_utf8 ? app_.ensure_utf8(argv) : argv;
 }
 
-auto Parser::parse() -> Result<Unit, i32> {
+auto Parser::parse() -> Result<void, i32> {
     app_.usage("Usage: porpoise [command] [options]");
     app_.set_version_flag("-v,--version", fmt::format("porpoise v{} ({})", VERSION_STR, GIT_INFO));
     app_.require_subcommand(1);
@@ -48,7 +47,7 @@ auto Parser::parse() -> Result<Unit, i32> {
     } catch (const CLI::ParseError& e) { return Err{app_.exit(e)}; };
     if (ast_app->parsed()) { parsed_.emplace<cmd::Debug>(); }
 
-    return Unit{};
+    return {};
 }
 
 } // namespace porpoise::clap
