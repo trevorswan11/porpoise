@@ -20,6 +20,12 @@
 
 namespace porpoise::sema {
 
+auto symbols::Label::from(Symbol& symbol) -> Label& {
+    auto label_data = symbol.as_opt<symbols::Label>();
+    ASSERT(label_data, "Label is not linked to a symbolic label");
+    return *label_data;
+}
+
 namespace {
 
 [[nodiscard]] auto symbol_location_of(const mod::Module& module, const Symbol::Data& data) noexcept
@@ -27,6 +33,9 @@ namespace {
     return std::visit(
         Overloaded{[](const symbols::Builtin&) { return SourceLocation{0, 0}; },
                    [&module](const auto& handle) { return module.ast.location_of(handle); },
+                   [&module](const symbols::Label& label) {
+                       return module.ast.location_of(label.get_definition());
+                   },
                    [&module](const symbols::UnionField& inner) {
                        return module.ast.location_of(inner.ident);
                    },

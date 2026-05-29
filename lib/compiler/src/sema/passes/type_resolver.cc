@@ -119,14 +119,15 @@ template <traits::IndexableID ID>
     case TokenType::BUILTIN_CONST_CAST: {
         // Pointer/reference is checked since it is an invariant of the cast
         auto& expr_type = *get_resolved_call_arg_type(call.arguments[0]);
-        if (expr_type.get_kind() != TypeKind::POINTER &&
-            expr_type.get_kind() != TypeKind::REFERENCE) {
+        if (expr_type.get_kind() == TypeKind::POINTER ||
+            expr_type.get_kind() == TypeKind::REFERENCE) {
+            return_type = ctx_.pool.strip_const(expr_type);
+        } else {
             return make_sema_err(fmt::format("Expected pointer or reference type; found '{}'",
                                              type_kind_display_name(expr_type.get_kind())),
                                  Error::TYPE_MISMATCH,
                                  get_call_arg_location(call.arguments[0]));
         }
-        return_type = ctx_.pool.strip_const(expr_type);
         break;
     }
     case TokenType::BUILTIN_VOLATILE_CAST: {
@@ -268,7 +269,7 @@ auto TypeResolver::resolve_call_args(std::span<const ast::CallExpression::Argume
             [this](auto id) {
                 resolve(id);
                 const auto is_poison = last_type_->is_poison();
-                resolving_.set_sema_type(id, *last_type_.take());
+                last_type_.reset();
                 return is_poison;
             },
             arg.id);
@@ -279,11 +280,26 @@ auto TypeResolver::resolve_call_args(std::span<const ast::CallExpression::Argume
 auto TypeResolver::get_resolved_call_arg_type(const ast::CallExpression::Argument& arg)
     -> mem::NonNull<Type> {
     return std::visit(
-        [this](auto id) -> auto& {
-            auto& type = resolving_.get_sema_type(id);
-            ASSERT(type.has_resolved(), "Call argument was not already resolved");
-            return type;
-        },
+        Overloaded{[this](ast::ExpressionHandle id) -> auto& {
+                       // Labels store their actual type in nested node data
+                       if (const auto label = resolving_.ast.get_as_opt<ast::LabelExpression>(id)) {
+                           ASSERT(resolving_.has_sema_type(label->name),
+                                  "Labels should be typed when resolved");
+                           auto& type = resolving_.get_sema_type(label->name);
+                           ASSERT(type.has_resolved(),
+                                  "Label-derived argument was not already resolved");
+                           return type;
+                       }
+
+                       auto& type = resolving_.get_sema_type(id);
+                       ASSERT(type.has_resolved(), "Call argument was not already resolved");
+                       return type;
+                   },
+                   [this](ast::ExplicitTypeID id) -> auto& {
+                       auto& type = resolving_.get_sema_type(id);
+                       ASSERT(type.has_resolved(), "Call argument was not already resolved");
+                       return type;
+                   }},
         arg.id);
 }
 
@@ -430,7 +446,6 @@ auto TypeResolver::visit(ID id, const ast::EnumExpression& enum_expr) -> void {
 VISITOR_TEMPLATE_INIT(TypeResolver, visit, EnumExpression)
 
 auto TypeResolver::visit(ast::NodeID id, const ast::ForLoopExpression& for_expr) -> void {
-    for (const auto& iterable : for_expr.iterables) { TRY_RESOLVE(iterable); }
     ASSERT(for_expr.iterables.size() == for_expr.captures.size());
 
     // The loop itself holds the block index which houses captures, not the block
@@ -441,9 +456,11 @@ auto TypeResolver::visit(ast::NodeID id, const ast::ForLoopExpression& for_expr)
         // The captures must be paired with the iterables inner types (shallow type check)
         for (const auto& [capture, iterable] :
              std::views::zip(for_expr.captures, for_expr.iterables)) {
+            TRY_RESOLVE(iterable);
+            auto& iterable_type = *last_type_.take();
+            resolving_.set_sema_type(iterable, iterable_type);
+
             // Assign types unconditionally since ignoring discards saves no space
-            ASSERT(resolving_.has_sema_type(iterable), "Iterable was not resolved");
-            auto& iterable_type = resolving_.get_sema_type(iterable);
             if (const auto array = iterable_type.as_opt<types::Array>()) {
                 resolving_.set_sema_type(capture.payload, array->underlying);
             } else if (const auto slice = iterable_type.as_opt<types::Slice>()) {
@@ -568,11 +585,12 @@ auto TypeResolver::visit(ast::NodeID id, const ast::FunctionExpression& fn) -> v
 }
 
 auto TypeResolver::resolve_symbol_info(ast::IdentifierHandle handle, opt::Option<SymbolKind> kind)
-    -> void {
+    -> Symbol& {
     const auto& ident  = resolving_.ast.get_as<ast::IdentifierExpression>(handle);
     auto&       symbol = ctx_.registry.get_from(table_idx_, ident.name);
     if (kind) { symbol.set_kind(*kind); }
     symbol.set_status(SymbolStatus::RESOLVED);
+    return symbol;
 }
 
 template <traits::IndexableID ID>
@@ -601,6 +619,11 @@ auto TypeResolver::resolve_ident(ID id, const ast::IdentifierExpression& ident) 
                 [this](symbols::Node node) -> Type& {
                     ASSERT(resolving_.has_sema_type(node), "Resolved node has no type");
                     return resolving_.get_sema_type(node);
+                },
+                [this](symbols::Label label) -> Type& {
+                    const auto defn = label.get_definition();
+                    ASSERT(resolving_.has_sema_type(defn), "Resolved node has no type");
+                    return resolving_.get_sema_type(defn);
                 },
                 [this](symbols::MatchCapture& capture) -> Type& {
                     ASSERT(resolving_.has_sema_type(capture), "Match arm was never typed");
@@ -686,7 +709,9 @@ auto TypeResolver::visit(ast::NodeID id, const ast::IndexExpression& index) -> v
     TRY_RESOLVE(index.array);
     auto& array_type = *last_type_.take();
 
-    if (const auto slice = array_type.as_opt<types::Slice>()) {
+    if (array_type.get_kind() == TypeKind::LABEL) {
+        last_type_.emplace(ctx_.get_builtin_resolved_type(TypeKind::AUTO));
+    } else if (const auto slice = array_type.as_opt<types::Slice>()) {
         last_type_.emplace(slice->underlying);
     } else if (const auto array = array_type.as_opt<types::Array>()) {
         last_type_.emplace(array->underlying);
@@ -722,8 +747,13 @@ auto TypeResolver::visit(ast::NodeID id, const ast::IndexExpression& index) -> v
 }
 
 auto TypeResolver::visit(ast::NodeID id, const ast::InfiniteLoopExpression& loop) -> void {
-    TRY_RESOLVE(loop.block);
-    last_type_.emplace(resolving_.get_sema_type(id));
+    auto&       loop_type = resolving_.get_sema_type(id);
+    const Scope s{table_stack_, loop_type.get_symbol_table_idx(), table_idx_};
+
+    // Just an abridged normal loop handler
+    const auto& block = resolving_.ast.get_as<ast::BlockStatement>(loop.block);
+    for (const auto& stmt : block) { TRY_RESOLVE(stmt); }
+    last_type_.emplace(loop_type);
 }
 
 auto TypeResolver::visit(ast::NodeID id, const ast::AssignmentExpression& assign) -> void {
@@ -941,8 +971,26 @@ auto TypeResolver::visit(ast::NodeID id, const ast::LabelExpression& label) -> v
 
     // Resolve the body but cache the label's type so the result can bind to the label
     TRY_RESOLVE(*label.body);
-    resolve_symbol_info(label.name, opt::none);
-    last_type_.emplace(label_type);
+    auto& symbol     = resolve_symbol_info(label.name, opt::none);
+    auto& label_data = symbols::Label::from(symbol);
+
+    // Every label should be broken to at least once
+    if (!label_data.has_yield_types()) {
+        label_data.add_yield_type(ctx_.get_poison());
+        return last_type_.emplace(
+            ctx_.poison_node(resolving_,
+                             label.name,
+                             "Labels cannot be used without inner break or continue statements",
+                             Error::ILLEGAL_LABEL_USAGE,
+                             resolving_.ast.location_of(label.name)));
+    }
+
+    // The last type inherits the result type to help propagation of poison
+    auto& result_type = *label_data.get_yield_types()[0];
+    ASSERT(result_type.has_resolved(), "The label's inner type should've been resolved");
+    label_type.resolve_if<Type::Resolved>(result_type.get_resolved());
+    resolving_.set_sema_type(label.name, result_type);
+    last_type_.emplace(result_type);
 }
 
 auto TypeResolver::visit(ast::NodeID id, const ast::MatchExpression& match) -> void {
@@ -1269,48 +1317,70 @@ auto TypeResolver::visit(ast::NodeID id, const ast::BlockStatement& block) -> vo
     const Scope s{table_stack_, block_type.get_symbol_table_idx(), table_idx_};
 
     // Just an abridged loop handler
-    for (const auto& stmt : block.statements) { TRY_RESOLVE(stmt); }
+    for (const auto& stmt : block) { TRY_RESOLVE(stmt); }
     last_type_.emplace(block_type);
 }
 
-auto TypeResolver::resolve_control_flow_label(ast::NodeID                        id,
-                                              opt::Option<ast::IdentifierHandle> label,
-                                              std::string_view stmt_name) -> bool {
+auto TypeResolver::resolve_control_flow_label(opt::Option<ast::IdentifierHandle> label,
+                                              std::string_view                   stmt_name)
+    -> Result<opt::Option<Symbol&>, Diagnostic> {
     if (label) {
         const auto& ident  = resolving_.ast.get_as<ast::IdentifierExpression>(*label);
-        auto&       symbol = ctx_.registry.get_from(table_idx_, ident.name);
-        if (symbol.get_kind() != SymbolKind::LABEL) {
-            last_type_.emplace(ctx_.poison_node(
-                resolving_,
-                id,
+        auto        symbol = ctx_.registry.lookup(table_stack_, ident.name);
+        ASSERT(symbol, "Symbol was not found in the current accessible scopes");
+        if (symbol->get_kind() != SymbolKind::LABEL) {
+            return make_sema_err(
                 fmt::format("Labeled {} statements must be used with a known label", stmt_name),
                 Error::ILLEGAL_CONTROL_FLOW,
-                resolving_.ast.location_of(*label)));
-            return false;
+                resolving_.ast.location_of(*label));
         }
+        return symbol;
     }
-    return true;
+    return opt::none;
 }
 
 auto TypeResolver::visit(ast::NodeID id, const ast::BreakStatement& break_stmt) -> void {
-    if (!resolve_control_flow_label(id, break_stmt.label, "break")) { return; }
+    auto result = resolve_control_flow_label(break_stmt.label, "break");
+    if (!result) {
+        return last_type_.emplace(ctx_.poison_node(resolving_, id, std::move(result).error()));
+    }
+    auto symbol = result.value();
 
-    if (break_stmt.expression) {
-        // Label's type may need peer type resolution in pass 3
-        TRY_RESOLVE(*break_stmt.expression);
-        resolving_.set_sema_type(id, *last_type_.take());
+    // No payload is semantically equivalent to breaking with void
+    if (symbol) {
+        auto& label_data = symbols::Label::from(*symbol);
+
+        if (break_stmt.expression) {
+            TRY_RESOLVE(*break_stmt.expression);
+            auto& expression_type = *last_type_.take();
+            label_data.add_yield_type(expression_type);
+            resolving_.set_sema_type(id, expression_type);
+        } else {
+            resolving_.set_sema_type(id, ctx_.get_builtin_resolved_type(TypeKind::VOID));
+        }
     } else {
-        // No payload is semantically equivalent to breaking with void
         resolving_.set_sema_type(id, ctx_.get_builtin_resolved_type(TypeKind::VOID));
     }
+
     last_type_.emplace(ctx_.get_builtin_resolved_type(TypeKind::NORETURN));
 }
 
 auto TypeResolver::visit(ast::NodeID id, const ast::ContinueStatement& continue_stmt) -> void {
-    if (!resolve_control_flow_label(id, continue_stmt.label, "continue")) { return; }
+    auto result = resolve_control_flow_label(continue_stmt.label, "continue");
+    if (!result) {
+        return last_type_.emplace(ctx_.poison_node(resolving_, id, std::move(result).error()));
+    }
+
+    // Continue statements should only store a single void type since they have no value
+    auto  symbol    = result.value();
+    auto& void_type = ctx_.get_builtin_resolved_type(TypeKind::VOID);
+    if (symbol) {
+        auto& label_data = symbols::Label::from(*symbol);
+        if (!label_data.has_yield_types()) { label_data.add_yield_type(void_type); }
+    }
 
     // Similar to breaks but there is no way to break with a value
-    resolving_.set_sema_type(id, ctx_.get_builtin_resolved_type(TypeKind::VOID));
+    resolving_.set_sema_type(id, void_type);
     last_type_.emplace(ctx_.get_builtin_resolved_type(TypeKind::NORETURN));
 }
 

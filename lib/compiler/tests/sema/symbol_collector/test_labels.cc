@@ -8,6 +8,7 @@
 #include "sema/symbol.hh"
 #include "sema/type.hh"
 
+#include "option.hh"
 #include "types.hh"
 
 namespace porpoise::tests {
@@ -25,7 +26,8 @@ auto collect_and_validate_label(std::string_view input, usize expected_size) -> 
     CHECK_FALSE(registry.get_from_opt(idx, "blk"));
 
     const auto blk_idx               = idx + 1;
-    const auto [sym, sym_data, type] = ctx->get_type_sym_info<sema::symbols::Node>("blk", blk_idx);
+    const auto [sym, sym_data, type] = ctx->get_type_sym_info<sema::symbols::Label>(
+        "blk", blk_idx, opt::none, &sema::symbols::Label::get_definition);
     CHECK(sym.get_kind_opt() == sema::SymbolKind::LABEL);
 
     CHECK(type.get_symbol_table_idx_opt() == blk_idx);

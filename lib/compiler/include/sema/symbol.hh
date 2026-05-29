@@ -1,6 +1,7 @@
 #pragma once
 
 #include <ranges>
+#include <span>
 #include <string_view>
 #include <vector>
 
@@ -18,6 +19,7 @@
 #include "assert.hh"
 #include "diagnostic.hh"
 #include "iterator.hh"
+#include "memory.hh"
 #include "option.hh"
 #include "result.hh"
 #include "type_traits.hh"
@@ -28,6 +30,7 @@
 namespace porpoise::sema {
 
 class Type;
+class Symbol;
 
 enum class SymbolKind : u8 {
     TYPE,
@@ -62,10 +65,31 @@ class Builtin {
     Type&         type_;
 };
 
-using Node           = ast::Handle<ast::NodeKind::DECL_STATEMENT,
-                                   ast::NodeKind::USING_STATEMENT,
-                                   ast::NodeKind::LABEL_EXPRESSION,
-                                   ast::NodeKind::IMPORT_STATEMENT>;
+using Node = ast::Handle<ast::NodeKind::DECL_STATEMENT,
+                         ast::NodeKind::USING_STATEMENT,
+                         ast::NodeKind::IMPORT_STATEMENT>;
+
+class Label {
+  public:
+    using Handle = ast::Handle<ast::NodeKind::LABEL_EXPRESSION>;
+
+  public:
+    explicit Label(Handle label) noexcept : definition_{label} {}
+
+    MAKE_GETTER(definition, Handle)
+    MAKE_GETTER(yield_types, std::span<const mem::NonNull<Type>>)
+
+    [[nodiscard]] auto has_yield_types() const noexcept -> bool { return !yield_types_.empty(); }
+    auto               add_yield_type(Type& type) -> void { yield_types_.emplace_back(type); }
+
+    // Gets the Label data from the symbol, asserting the underlying data is a label
+    [[nodiscard]] static auto from(Symbol& symbol) -> Label&;
+
+  private:
+    Handle                          definition_;
+    std::vector<mem::NonNull<Type>> yield_types_;
+};
+
 using MatchCapture   = ast::IdentifierHandle;
 using UnionField     = ast::UnionExpression::Field;
 using Enumeration    = ast::EnumExpression::Enumeration;
@@ -79,6 +103,7 @@ class Symbol {
   public:
     using Data = std::variant<symbols::Builtin,
                               symbols::Node,
+                              symbols::Label,
                               symbols::MatchCapture,
                               symbols::UnionField,
                               symbols::Enumeration,

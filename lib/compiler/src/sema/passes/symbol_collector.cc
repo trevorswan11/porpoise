@@ -221,7 +221,7 @@ auto SymbolCollector::visit(ast::NodeID id, const ast::LabelExpression& label) -
     // Labels and their associated nodes live in their own scope
     const auto  new_idx = ctx_.registry.create();
     const Scope s{table_stack_, new_idx, table_idx_};
-    if (try_declare<symbols::Node>(ident.name, id)) {
+    if (try_declare<symbols::Label>(ident.name, symbols::Label::Handle{id})) {
         auto& symbol = ctx_.registry.get_from(table_idx_, ident.name);
         symbol.set_kind(SymbolKind::LABEL);
     }

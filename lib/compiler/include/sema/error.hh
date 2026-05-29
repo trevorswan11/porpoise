@@ -25,6 +25,7 @@ enum class Error : u8 {
     OUTER_SCOPE_NOT_FOUND,
     CYCLIC_DEPENDENCY,
     ILLEGAL_SELF_PARAMETER,
+    ILLEGAL_LABEL_USAGE,
 };
 
 using Diagnostic  = Diagnostic<Error>;

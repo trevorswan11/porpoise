@@ -158,9 +158,9 @@ class TypeResolver {
     auto visit(ast::NodeID, const ast::BlockStatement&) -> void;
 
     // Returns `true` if the resolution was successful
-    [[nodiscard]] auto resolve_control_flow_label(ast::NodeID                        id,
-                                                  opt::Option<ast::IdentifierHandle> label,
-                                                  std::string_view stmt_name) -> bool;
+    [[nodiscard]] auto resolve_control_flow_label(opt::Option<ast::IdentifierHandle> label,
+                                                  std::string_view                   stmt_name)
+        -> Result<opt::Option<Symbol&>, Diagnostic>;
 
     auto visit(ast::NodeID, const ast::BreakStatement&) -> void;
     auto visit(ast::NodeID, const ast::ContinueStatement&) -> void;
@@ -186,7 +186,7 @@ class TypeResolver {
     auto visit(ast::ExplicitTypeID, const ast::ExplicitArrayType&) -> void;
 
     // Looks up the symbol by name and sets its status to resolved and alters its kind if requested
-    auto resolve_symbol_info(ast::IdentifierHandle handle, opt::Option<SymbolKind> kind) -> void;
+    auto resolve_symbol_info(ast::IdentifierHandle handle, opt::Option<SymbolKind> kind) -> Symbol&;
 
     TypeResolver(mod::Module& resolving, Context& ctx)
         : resolving_{resolving}, table_idx_{*resolving.root_table_idx}, ctx_{ctx} {
