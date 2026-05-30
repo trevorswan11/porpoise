@@ -103,7 +103,6 @@ template <typename T> class Ref {
         static_assert(!std::is_same_v<Res, std::in_place_t>,
                       "Result of f(value()) should not be std::in_place_t");
         static_assert(!std::is_same_v<Res, None>, "Result of f(value()) should not be opt::none");
-        static_assert(std::is_object_v<Res>, "Result of f(value()) should be an object type");
 
         // Also from clang, but generalized to support reference transform chains
         using Ret = std::conditional_t<std::is_reference_v<ResCV>,

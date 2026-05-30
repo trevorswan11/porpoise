@@ -59,7 +59,7 @@ auto BreakStatement::parse(syntax::Parser& parser) -> Result<StatementHandle, sy
                                syntax::Error::VALUED_BREAK_MISSING_LABEL,
                                start_token);
     }
-    TRY(parser.expect_peek(syntax::TokenType::SEMICOLON));
+    TRY(parser.expect_semicolon());
     return parser.add_stmt<BreakStatement>(start_token, label, value);
 }
 
@@ -173,9 +173,7 @@ auto DeclStatement::parse(syntax::Parser& parser) -> Result<StatementHandle, syn
                                start_token);
     }
 
-    if (!parser.current_token_is(syntax::TokenType::SEMICOLON)) {
-        TRY(parser.expect_peek(syntax::TokenType::SEMICOLON));
-    }
+    TRY(parser.expect_semicolon());
     return parser.add_stmt<DeclStatement>(start_token, decl_name, decl_type, decl_value, modifiers);
 }
 
@@ -214,9 +212,7 @@ auto DiscardStatement::parse(syntax::Parser& parser)
     parser.advance();
     const auto expr = TRY(parser.parse_expression());
 
-    if (!parser.current_token_is(syntax::TokenType::SEMICOLON)) {
-        TRY(parser.expect_peek(syntax::TokenType::SEMICOLON));
-    }
+    TRY(parser.expect_semicolon());
     return parser.add_stmt<DiscardStatement>(start_token, expr);
 }
 
@@ -225,7 +221,10 @@ auto ExpressionStatement::parse(syntax::Parser& parser, bool require_semicolon)
     const auto start_token = parser.get_current_token();
     const auto expr        = TRY(parser.parse_expression());
 
-    if (!parser.current_token_is(syntax::TokenType::SEMICOLON)) {
+    // RBRACE would mean we're at the end of a block and a semicolon is never required
+    if (parser.current_token_is(syntax::TokenType::RBRACE)) {
+        if (parser.peek_token_is(syntax::TokenType::SEMICOLON)) { parser.advance(); }
+    } else if (!parser.current_token_is(syntax::TokenType::SEMICOLON)) {
         if (parser.peek_token_is(syntax::TokenType::SEMICOLON)) {
             parser.advance();
         } else if (require_semicolon) {
@@ -279,10 +278,7 @@ auto ImportStatement::parse(syntax::Parser& parser) -> Result<StatementHandle, s
                                start_token);
     }
 
-    if (!parser.current_token_is(syntax::TokenType::SEMICOLON)) {
-        TRY(parser.expect_peek(syntax::TokenType::SEMICOLON));
-    }
-
+    TRY(parser.expect_semicolon());
     return parser.add_stmt<ImportStatement>(start_token, imported_core, imported_alias);
 }
 
@@ -307,7 +303,7 @@ auto ReturnStatement::parse(syntax::Parser& parser) -> Result<StatementHandle, s
         value.emplace(TRY(parser.parse_expression()));
     }
 
-    TRY(parser.expect_peek(syntax::TokenType::SEMICOLON));
+    TRY(parser.expect_semicolon());
     return parser.add_stmt<ReturnStatement>(start_token, value);
 }
 

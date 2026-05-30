@@ -90,6 +90,12 @@ auto Parser::expect_peek(TokenType expected) -> Result<void, Diagnostic> {
     return Err{peek_error(expected)};
 }
 
+auto Parser::expect_semicolon() -> Result<void, Diagnostic> {
+    using TokenType::SEMICOLON;
+    if (current_token_is(SEMICOLON)) { return {}; }
+    return expect_peek(SEMICOLON);
+}
+
 auto Parser::peek_error(TokenType expected) -> Diagnostic {
     return Diagnostic{fmt::format("Expected token {}, found {}",
                                   magic_enum::enum_name(expected),

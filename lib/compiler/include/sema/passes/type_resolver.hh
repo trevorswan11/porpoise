@@ -185,8 +185,9 @@ class TypeResolver {
     auto visit(ast::ExplicitTypeID, const ast::ExplicitTypeID) -> void;
     auto visit(ast::ExplicitTypeID, const ast::ExplicitArrayType&) -> void;
 
-    // Looks up the symbol by name and sets its status to resolved and alters its kind if requested
-    auto resolve_symbol_info(ast::IdentifierHandle handle, opt::Option<SymbolKind> kind) -> Symbol&;
+    // Looks up the symbol by name in the current index ONLY. Changes no state on failure
+    auto resolve_symbol_info(ast::IdentifierHandle handle, opt::Option<SymbolKind> kind)
+        -> opt::Option<Symbol&>;
 
     TypeResolver(mod::Module& resolving, Context& ctx)
         : resolving_{resolving}, table_idx_{*resolving.root_table_idx}, ctx_{ctx} {

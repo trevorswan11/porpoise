@@ -26,6 +26,7 @@
 
 #include "memory.hh"
 #include "option.hh"
+#include "syntax/error.hh"
 #include "types.hh"
 #include "utility.hh"
 
@@ -114,14 +115,15 @@ struct SemaTestContext {
     }
 
     // Contains [symbol, symbol data, ast data]
-    template <typename SymbolData, ASTData TreeData>
+    template <typename SymbolData, ASTData TreeData, typename Proj = std::identity>
     [[nodiscard]] auto get_ast_sym_info(std::string_view          name,
                                         usize                     table_idx,
-                                        opt::Option<mod::Module&> module = opt::none) {
+                                        opt::Option<mod::Module&> module = opt::none,
+                                        Proj                      proj   = {}) {
         auto        info      = get_symbol<SymbolData>(name, table_idx);
         auto&       enclosing = module.value_or(*root_mod);
-        const auto& node_data =
-            helpers::unwrap(enclosing.ast.get_as_opt<TreeData>(std::get<1>(info)));
+        const auto& node_data = helpers::unwrap(
+            enclosing.ast.get_as_opt<TreeData>(std::invoke(proj, std::get<1>(info))));
         return std::tuple_cat(info, std::forward_as_tuple(node_data));
     }
 
@@ -131,7 +133,7 @@ struct SemaTestContext {
                                              usize                     table_idx,
                                              opt::Option<mod::Module&> module = opt::none,
                                              Proj                      proj   = {}) {
-        auto        info      = get_ast_sym_info<SymbolData, TreeData>(name, table_idx, module);
+        auto        info = get_ast_sym_info<SymbolData, TreeData>(name, table_idx, module, proj);
         auto&       enclosing = module.value_or(*root_mod);
         const auto& type =
             helpers::unwrap(enclosing.get_sema_type_opt(std::invoke(proj, std::get<1>(info))));
@@ -179,7 +181,9 @@ auto analyze(std::string_view root_path,
              Mocks&&... mocks) -> mem::Box<SemaTestContext> {
     auto ctx = mem::make_box<SemaTestContext>(
         make_vector<MockFile>(std::forward<Mocks>(mocks)...), root_path, input, error_stream);
-    REQUIRE_FALSE(ctx->root_mod->has_parser_diagnostics());
+    if (ctx->root_mod->has_parser_diagnostics()) {
+        check_errors<syntax::Diagnostic>(ctx->root_mod->get_parser_diagnostics());
+    }
 
     auto& analyzer = ctx->analyzer;
     REQUIRE(analyzer.analyze(root_path));

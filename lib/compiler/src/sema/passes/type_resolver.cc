@@ -585,12 +585,14 @@ auto TypeResolver::visit(ast::NodeID id, const ast::FunctionExpression& fn) -> v
 }
 
 auto TypeResolver::resolve_symbol_info(ast::IdentifierHandle handle, opt::Option<SymbolKind> kind)
-    -> Symbol& {
-    const auto& ident  = resolving_.ast.get_as<ast::IdentifierExpression>(handle);
-    auto&       symbol = ctx_.registry.get_from(table_idx_, ident.name);
-    if (kind) { symbol.set_kind(*kind); }
-    symbol.set_status(SymbolStatus::RESOLVED);
-    return symbol;
+    -> opt::Option<Symbol&> {
+    const auto& ident = resolving_.ast.get_as<ast::IdentifierExpression>(handle);
+    return ctx_.registry.get_from_opt(table_idx_, ident.name)
+        .transform([&](Symbol& symbol) -> auto& {
+            if (kind) { symbol.set_kind(*kind); }
+            symbol.set_status(SymbolStatus::RESOLVED);
+            return symbol;
+        });
 }
 
 template <traits::IndexableID ID>
@@ -971,8 +973,9 @@ auto TypeResolver::visit(ast::NodeID id, const ast::LabelExpression& label) -> v
 
     // Resolve the body but cache the label's type so the result can bind to the label
     TRY_RESOLVE(*label.body);
-    auto& symbol     = resolve_symbol_info(label.name, opt::none);
-    auto& label_data = symbols::Label::from(symbol);
+    auto symbol = resolve_symbol_info(label.name, opt::none);
+    if (!symbol) { return; }
+    auto& label_data = symbols::Label::from(*symbol);
 
     // Every label should be broken to at least once
     if (!label_data.has_yield_types()) {

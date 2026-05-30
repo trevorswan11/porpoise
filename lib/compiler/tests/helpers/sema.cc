@@ -20,6 +20,7 @@
 #include "memory.hh"
 #include "option.hh"
 #include "sema/type.hh"
+#include "syntax/error.hh"
 #include "types.hh"
 
 namespace porpoise::tests::helpers {
@@ -91,7 +92,9 @@ auto SemaTestContext::get_string_literal_size(ast::ExpressionHandle     handle,
 
 auto collect(std::string_view input, const std::vector<MockFile>& imports) -> CtxIdxPair {
     auto ctx = mem::make_box<SemaTestContext>(imports, TEST_FILENAME, input);
-    REQUIRE_FALSE(ctx->root_mod->has_parser_diagnostics());
+    if (ctx->root_mod->has_parser_diagnostics()) {
+        check_errors<syntax::Diagnostic>(ctx->root_mod->get_parser_diagnostics());
+    }
     ctx->analyzer.collect_symbols(*ctx->root_mod);
 
     REQUIRE(ctx->root_mod->root_table_idx);

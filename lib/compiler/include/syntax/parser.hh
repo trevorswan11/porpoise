@@ -81,6 +81,11 @@ class Parser {
     // Advances the cursor tokens only if the expected token type matches the actual peek token.
     [[nodiscard]] auto expect_peek(TokenType expected) -> Result<void, Diagnostic>;
 
+    // Checks for a semicolon in either the current or peak token and advances state accordingly
+    //
+    // Only use this over `expect_peek` when a potentially-block expr has just been parsed
+    [[nodiscard]] auto expect_semicolon() -> Result<void, Diagnostic>;
+
     // Indiscriminately returns an error citing the peek token.
     [[nodiscard]] auto peek_error(TokenType expected) -> Diagnostic;
 
