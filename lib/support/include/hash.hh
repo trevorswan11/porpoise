@@ -159,7 +159,7 @@ class Hasher {
 
     // Call this after a full operation to get the resulting hash
     [[nodiscard]] constexpr auto finalize() const noexcept -> u64 { return hash_; }
-    [[nodiscard]] constexpr bool operator==(const Hasher&) const noexcept = default;
+    [[nodiscard]] constexpr auto operator==(const Hasher&) const noexcept -> bool = default;
 
   private:
     template <typename T> [[nodiscard]] static constexpr auto hash(const T& value) noexcept -> u64 {

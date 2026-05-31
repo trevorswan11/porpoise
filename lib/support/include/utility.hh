@@ -30,14 +30,6 @@ namespace porpoise {
 #define MAKE_DEDUCING_GETTER(...) \
     GET_DEDUCING_GETTER_MACRO(__VA_ARGS__, MAKE_DEDUCING_3, MAKE_DEDUCING_2)(__VA_ARGS__)
 
-#define MAKE_EQ_DELEGATION(T)                                                           \
-    [[nodiscard]] friend auto operator==(const T& lhs, const T& rhs) noexcept -> bool { \
-        return lhs.is_equal(rhs);                                                       \
-    }                                                                                   \
-                                                                                        \
-  private:                                                                              \
-    auto is_equal(const T&) const noexcept -> bool;
-
 #define MAKE_MOVE_CONSTRUCTABLE_ONLY(Type)        \
     Type(const Type&)                  = delete;  \
     auto operator=(const Type&)->Type& = delete;  \

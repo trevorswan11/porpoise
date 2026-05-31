@@ -282,8 +282,8 @@ class Type {
         return static_cast<bool>(key_.get_mut() & types::mut::VOLATILE);
     }
 
-    constexpr friend auto operator==(const Type& lhs, const Type& rhs) noexcept -> bool {
-        return &lhs == &rhs;
+    [[nodiscard]] constexpr auto operator==(const Type& other) const noexcept -> bool {
+        return this == &other;
     }
 
   private:

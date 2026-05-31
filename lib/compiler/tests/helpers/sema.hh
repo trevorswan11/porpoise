@@ -82,6 +82,15 @@ struct SemaTestContext {
     auto        check_poisoned(const sema::Type& type) -> void;
     auto        check_poisoned(const sema::Symbol& sym, const sema::Type& type) -> void;
 
+    template <typename SymbolData, typename Proj = std::identity>
+    auto check_poisoned(std::string_view          name,
+                        usize                     table_idx,
+                        opt::Option<mod::Module&> module = opt::none,
+                        Proj                      proj   = {}) -> void {
+        const auto [sym, _, type] = get_type_sym_info<SymbolData>(name, table_idx, module, proj);
+        check_poisoned(sym, type);
+    }
+
     // Contains [symbol, symbol data]
     template <typename SymbolData>
     [[nodiscard]] auto get_symbol(std::string_view name, usize table_idx) {

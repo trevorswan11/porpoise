@@ -171,7 +171,7 @@ class NonNull {
         return ptr_;
     }
 
-    constexpr bool operator==(const NonNull<T>&) const noexcept = default;
+    [[nodiscard]] constexpr auto operator==(const NonNull<T>&) const noexcept -> bool = default;
 
   private:
     // This should seldom be called as it violates an invariant

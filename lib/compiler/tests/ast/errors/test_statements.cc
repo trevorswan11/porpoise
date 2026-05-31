@@ -114,13 +114,6 @@ TEST_CASE("Duplicate declaration modifier") {
                            std::pair{0uz, 4uz}});
 }
 
-TEST_CASE("Undefined declaration without type") {
-    helpers::test_parser_fail("var a := undefined;",
-                              syntax::Diagnostic{"Undefined declarations require an explicit type",
-                                                 syntax::Error::UNDEFINED_DECL_MISSING_TYPE,
-                                                 std::pair{0uz, 0uz}});
-}
-
 TEST_CASE("Illegal deferred statements") {
     const auto expected_diag = [] {
         return syntax::Diagnostic{"Deferred statements must be expressions, discards, or blocks",

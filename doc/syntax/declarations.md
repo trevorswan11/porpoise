@@ -38,7 +38,6 @@ var e: []byte;         // Allowed, e is forward declared and future assignments 
     - Variables without an initial value must be initialized with an explicit type
     - Variables declared without an initial value are necessarily uninitialized, and reading from them in this state is illegal behavior
     - Variables can be explicitly marked as uninitialized with the `undefined` keyword. Using this as the right hand side of a declaration is equivalent to not using a value at all
-        - If `undefined` is used as the assigned value to a declaration, an explicit type must be provided
 - A variable's value does not have to be compile-time known
 - A variable may be assigned to a constant
 

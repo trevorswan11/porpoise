@@ -1487,6 +1487,24 @@ auto TypeResolver::visit(ast::NodeID id, const ast::TestStatement& test) -> void
     auto&       test_type = resolving_.get_sema_type(id);
     const Scope s{table_stack_, test_type.get_symbol_table_idx(), table_idx_};
 
+    // Duplicate test blocks are a big no-no if named
+    if (test.description) {
+        const auto& description = resolving_.ast.get_as<ast::StringExpression>(*test.description);
+        const auto& name        = description.value;
+        auto [it, inserted]     = named_tests_.try_emplace(name, id);
+        if (!inserted) {
+            const auto original_loc = resolving_.ast.location_of(it->second);
+            return last_type_.emplace(ctx_.poison_node(
+                resolving_,
+                id,
+                fmt::format("Duplicate test block named '{}'. Previously declared here: {}",
+                            name,
+                            original_loc),
+                Error::DUPLICATE_TEST_NAME,
+                resolving_.ast.location_of(id)));
+        }
+    }
+
     const auto& block = resolving_.ast.get_as<ast::BlockStatement>(test.block);
     for (const auto& stmt : block) { TRY_RESOLVE(stmt); }
     last_type_.emplace(ctx_.get_builtin_resolved_type(TypeKind::VOID));
@@ -1567,19 +1585,19 @@ auto TypeResolver::visit(ast::ExplicitTypeID id, const ast::ExplicitFunctionType
     auto param_types    = ctx_.pool.get_many_unsafe(fn.parameter_types.size());
     bool param_poisoned = false;
 
+    // Make a unique function type by imprinting every associated type
+    types::Key fn_key{TypeKind::FUNCTION, types::mut::CONSTANT};
     for (usize i = 0; const auto& param : fn.parameter_types) {
         resolve(param);
         if (last_type_->is_poison()) { param_poisoned = true; }
-        param_types[i++] = last_type_.take();
+        auto& param_type = *last_type_.take();
+        fn_key.imprint(param_type);
+        param_types[i++] = param_type;
     }
     if (param_poisoned) { return last_type_.emplace(ctx_.poison_node(resolving_, id)); }
 
     TRY_RESOLVE(fn.explicit_return_type);
     auto& return_type = *last_type_.take();
-
-    // Make a unique function type by imprinting every associated type
-    types::Key fn_key{TypeKind::FUNCTION, types::mut::CONSTANT};
-    for (const auto& param_type : param_types) { fn_key.imprint(*param_type); }
     fn_key.imprint(return_type);
 
     auto& resolved_fn = ctx_.pool[fn_key];

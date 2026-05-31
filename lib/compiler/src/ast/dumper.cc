@@ -549,8 +549,14 @@ auto ASTDumper::visit(ast::NodeID, const ContinueStatement& continue_stmt) -> vo
 }
 
 auto ASTDumper::visit(ast::NodeID, const DeclStatement& decl) -> void {
-    const auto& ident = ast_.get_as<IdentifierExpression>(*decl.ident);
-    fmt::println(out_, "DeclStatement ({})", ident);
+    fmt::println(out_, "DeclStatement");
+
+    {
+        const Indent::Guard g{indent_, false};
+        fmt::print(out_, "{}Name: ", indent_.current_branch());
+        dump(decl.ident);
+    }
+
     {
         const Indent::Guard g{indent_, false};
         const auto          flags = magic_enum::enum_flags_name(decl.modifiers);

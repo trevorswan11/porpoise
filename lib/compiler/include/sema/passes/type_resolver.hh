@@ -4,11 +4,13 @@
 #include <string_view>
 #include <vector>
 
+#include <ankerl/unordered_dense.h>
 #include <fmt/format.h>
 
 #include "ast/expression.hh"
 #include "ast/handle.hh"
 #include "ast/id.hh"
+#include "ast/kind.hh"
 #include "ast/primitive.hh"
 #include "ast/statement.hh"
 #include "ast/traits.hh"
@@ -41,6 +43,8 @@ class TypeResolver {
 
   private:
     using Scope = SymbolTableStack::Scope;
+    using NamedTests =
+        ankerl::unordered_dense::map<std::string_view, ast::Handle<ast::NodeKind::TEST_STATEMENT>>;
 
     // A flag for helper functions to indicate if their resolution was poisoned
     enum class ResolveResult : u8 {
@@ -191,7 +195,7 @@ class TypeResolver {
 
     TypeResolver(mod::Module& resolving, Context& ctx)
         : resolving_{resolving}, table_idx_{*resolving.root_table_idx}, ctx_{ctx} {
-        ASSERT(ctx.prelude_index, "TypeResolver must be used post prelude-injection");
+        ASSERT(ctx.prelude_index, "TypeResolver must be used after prelude-injection");
         table_stack_.push(*ctx_.prelude_index);
         table_stack_.push(table_idx_);
     }
@@ -203,6 +207,7 @@ class TypeResolver {
     UserTypeStack      user_type_stack_;
     Context&           ctx_;
     opt::Option<Type&> last_type_;
+    NamedTests         named_tests_; // Named tests of the currently resolving module
 };
 
 } // namespace porpoise::sema

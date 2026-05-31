@@ -76,7 +76,7 @@ template <typename T> class Ref {
     }
 
     [[nodiscard]] constexpr auto value() const -> T& {
-        if (!ptr_) { throw std::bad_optional_access(); }
+        if (!ptr_) { throw std::bad_optional_access{}; }
         return *ptr_;
     }
 
@@ -126,8 +126,8 @@ template <typename T> class Ref {
         return has_value() ? std::optional<std::remove_const_t<T>>{*ptr_} : opt::none;
     }
 
-    // Compares the pointers, not pointed to contents!
-    [[nodiscard]] friend auto operator==(const Ref& lhs, const Ref& rhs) noexcept -> bool = default;
+    // Pointer comparison (just checks memory addresses)
+    [[nodiscard]] constexpr auto operator==(const Ref&) const noexcept -> bool = default;
 
   private:
     T* ptr_;
@@ -165,7 +165,7 @@ template <traits::Compactable T> class CompactOpt {
     }
 
     [[nodiscard]] constexpr auto value() const -> T {
-        if (!has_value()) { throw std::bad_optional_access(); }
+        if (!has_value()) { throw std::bad_optional_access{}; }
         return value_;
     }
 
@@ -285,7 +285,7 @@ class Tribool {
     }
 
     [[nodiscard]] constexpr auto value() const -> bool {
-        if (!has_value()) { throw std::bad_optional_access(); }
+        if (!has_value()) { throw std::bad_optional_access{}; }
         return static_cast<bool>(value_);
     }
 
@@ -344,7 +344,7 @@ class Size {
     }
 
     [[nodiscard]] constexpr auto value() const -> usize {
-        if (!*this) { throw std::bad_optional_access(); }
+        if (!*this) { throw std::bad_optional_access{}; }
         return value_;
     }
 
@@ -359,8 +359,7 @@ class Size {
         return has_value() ? std::optional<usize>{value_} : opt::none;
     }
 
-    [[nodiscard]] friend auto operator==(const Size& lhs, const Size& rhs) noexcept
-        -> bool = default;
+    [[nodiscard]] constexpr auto operator==(const Size&) const noexcept -> bool = default;
 
     [[nodiscard]] auto hash() const noexcept -> u64 { return std::hash<usize>{}(value_); }
 

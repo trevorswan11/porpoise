@@ -47,7 +47,8 @@ DiscardStatement
 └─ Discarded: EnumExpression
     └─ Enumerations:
         └─ Name: IdentifierExpression: RED
-DeclStatement (SIZE)
+DeclStatement
+├─ Name: IdentifierExpression: SIZE
 ├─ Modifiers: CONSTEXPR
 ├─ Type: (inferred)
 └─ Value: USizeExpression: 2
@@ -71,7 +72,8 @@ ExpressionStatement
     │       └─ Expr: IdentifierExpression: a
     └─ Non-Break Clause: ReturnStatement
         └─ Value: IdentifierExpression: b
-DeclStatement (f_ptr)
+DeclStatement
+├─ Name: IdentifierExpression: f_ptr
 ├─ Modifiers: VARIABLE
 └─ Type: ExplicitType (modifier: PTR)
     └─ FunctionExpression
@@ -101,12 +103,14 @@ ExpressionStatement
     └─ Inner: IdentifierExpression: C
 ExpressionStatement
 └─ Expr: StructExpression
-    ├─ DeclStatement (a)
+    ├─ DeclStatement
+    │   ├─ Name: IdentifierExpression: a
     │   ├─ Modifiers: VARIABLE
     │   ├─ Type: ExplicitType (modifier: VALUE)
     │   │   └─ IdentifierExpression: Foo
     │   └─ Value: IdentifierExpression: bar
-    └─ DeclStatement (b)
+    └─ DeclStatement
+        ├─ Name: IdentifierExpression: b
         ├─ Modifiers: CONSTANT
         ├─ Type: (inferred)
         └─ Value: FunctionExpression
@@ -303,7 +307,8 @@ ExpressionStatement
 └─ Expr: RangeExpression (DOT_DOT_EQ)
     ├─ Lower: IdentifierExpression: a
     └─ Upper: IdentifierExpression: b
-DeclStatement (a)
+DeclStatement
+├─ Name: IdentifierExpression: a
 ├─ Modifiers: VARIABLE
 └─ Type: ExplicitType (modifier: VALUE)
     └─ ArrayType
@@ -342,13 +347,15 @@ ExpressionStatement
     │       ├─ Tag: IdentifierExpression: a
     │       └─ Type: ExplicitType (modifier: VALUE)
     │           └─ StructExpression
-    │               └─ DeclStatement (b)
+    │               └─ DeclStatement
+    │                   ├─ Name: IdentifierExpression: b
     │                   ├─ Modifiers: VARIABLE
     │                   ├─ Type: ExplicitType (modifier: VALUE)
     │                   │   └─ IdentifierExpression: Foo
     │                   └─ Value: IdentifierExpression: bar
     └─ Members:
-        └─ DeclStatement (b)
+        └─ DeclStatement
+            ├─ Name: IdentifierExpression: b
             ├─ Modifiers: CONSTANT
             ├─ Type: (inferred)
             └─ Value: FunctionExpression
@@ -371,7 +378,8 @@ ExpressionStatement
     │   └─ Name: IdentifierExpression: A
     │       └─ Default: I64Expression: 2
     └─ Members:
-        └─ DeclStatement (b)
+        └─ DeclStatement
+            ├─ Name: IdentifierExpression: b
             ├─ Modifiers: CONSTANT
             ├─ Type: (inferred)
             └─ Value: FunctionExpression
@@ -387,7 +395,8 @@ ExpressionStatement
                 └─ Body: BlockStatement
                     └─ ExpressionStatement
                         └─ Expr: IdentifierExpression: c
-DeclStatement (a)
+DeclStatement
+├─ Name: IdentifierExpression: a
 ├─ Modifiers: CONSTANT
 ├─ Type: (inferred)
 └─ Value: VoidExpression
@@ -408,7 +417,8 @@ TestStatement
                 └─ BinaryExpression (EQ)
                     ├─ LHS: IdentifierExpression: a
                     └─ RHS: BoolExpression: true
-DeclStatement (a)
+DeclStatement
+├─ Name: IdentifierExpression: a
 ├─ Modifiers: VARIABLE
 └─ Type: ExplicitType (modifier: VALUE)
     └─ CallExpression
@@ -417,13 +427,15 @@ DeclStatement (a)
         │   └─ Inner: IdentifierExpression: ArrayList
         └─ Arguments:
             └─ IdentifierExpression: u8 (primitive)
-DeclStatement (a)
+DeclStatement
+├─ Name: IdentifierExpression: a
 ├─ Modifiers: VARIABLE
 └─ Type: ExplicitType (modifier: VALUE)
     └─ ScopeResolutionExpression
         ├─ Outer: IdentifierExpression: std
         └─ Inner: IdentifierExpression: Io
-DeclStatement (a)
+DeclStatement
+├─ Name: IdentifierExpression: a
 ├─ Modifiers: VARIABLE
 └─ Type: ExplicitType (modifier: VALUE)
     └─ CallExpression
@@ -465,7 +477,8 @@ ExpressionStatement
 └─ Expr: U8Expression: 39
 ExpressionStatement
 └─ Expr: U8Expression: 0
-DeclStatement (a)
+DeclStatement
+├─ Name: IdentifierExpression: a
 ├─ Modifiers: VARIABLE
 ├─ Type: ExplicitType (modifier: VALUE)
 │   └─ IdentifierExpression: i32 (primitive)

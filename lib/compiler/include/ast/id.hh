@@ -146,10 +146,8 @@ class TypeModifier {
         return is_mutable_volatile() || is_const_volatile();
     }
 
-    constexpr friend auto operator==(const TypeModifier& lhs, const TypeModifier& rhs) noexcept
-        -> bool {
-        return lhs.underlying_ == rhs.underlying_;
-    }
+    [[nodiscard]] constexpr auto operator==(const TypeModifier& other) const noexcept
+        -> bool = default;
 
     [[nodiscard]] constexpr explicit operator u64() const noexcept {
         return static_cast<u64>(underlying_);

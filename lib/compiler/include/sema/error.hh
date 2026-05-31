@@ -26,6 +26,7 @@ enum class Error : u8 {
     CYCLIC_DEPENDENCY,
     ILLEGAL_SELF_PARAMETER,
     ILLEGAL_LABEL_USAGE,
+    DUPLICATE_TEST_NAME,
 };
 
 using Diagnostic  = Diagnostic<Error>;

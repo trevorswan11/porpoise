@@ -20,7 +20,7 @@ namespace porpoise::tests {
 
 namespace syms = sema::symbols;
 
-TEST_CASE("Function declaration and usage") {
+TEST_CASE("Function declaration and call type resolution") {
     auto [ctx, idx] = helpers::resolve_and_check(R"(
         const a := fn(b: i32, c: *@typeOf(b), d: [:0]u8): bool {
             return true;
@@ -147,14 +147,25 @@ TEST_CASE("Deferred return type from user function") {
     CHECK(&call == &helpers::unwrap(type.as_opt<sema::types::DeferredEval>()).call_node);
 }
 
+TEST_CASE("Function explicit type resolution") {
+    auto [ctx, idx]              = helpers::resolve_and_check("var foo: fn(*i32, u32): bool;");
+    const auto [sym, data, type] = ctx->get_type_sym_info<syms::Node>("foo", idx);
+
+    const auto& expected_type =
+        ctx->get_type(sema::TypeKind::FUNCTION,
+                      ctx->get_type(sema::TypeKind::POINTER, ctx->get_type(sema::TypeKind::I32)),
+                      ctx->get_type(sema::TypeKind::U32),
+                      ctx->get_type(sema::TypeKind::BOOL));
+    CHECK(type == expected_type);
+}
+
 TEST_CASE("Self parameters in non-structural types") {
     auto [ctx, idx] = helpers::test_resolver_fail(
         "const foo := fn(&self): void {};",
         sema::Diagnostic{"Self parameters may only be used inside member functions",
                          sema::Error::ILLEGAL_SELF_PARAMETER,
                          std::pair{0uz, 17uz}});
-    const auto [sym, _] = ctx->get_symbol<syms::Node>("foo", idx);
-    ctx->check_poisoned(sym);
+    ctx->check_poisoned<syms::Node>("foo", idx);
 }
 
 TEST_CASE("Declared function arity mismatch") {
@@ -162,8 +173,7 @@ TEST_CASE("Declared function arity mismatch") {
         "const foo := fn(a: i32, b: i32): void {}; const bar := foo(1);",
         sema::Diagnostic{
             "Expected 2 arguments, found 1", sema::Error::ARITY_MISMATCH, std::pair{0uz, 55uz}});
-    const auto [sym, _] = ctx->get_symbol<syms::Node>("bar", idx);
-    ctx->check_poisoned(sym);
+    ctx->check_poisoned<syms::Node>("bar", idx);
 }
 
 TEST_CASE("Non-callable expression") {
@@ -172,8 +182,7 @@ TEST_CASE("Non-callable expression") {
                                     sema::Diagnostic{"Expression is not callable",
                                                      sema::Error::NON_CALLABLE_EXPRESSION,
                                                      std::pair{0uz, 29uz}});
-    const auto [sym, _] = ctx->get_symbol<syms::Node>("foo", idx);
-    ctx->check_poisoned(sym);
+    ctx->check_poisoned<syms::Node>("foo", idx);
 }
 
 } // namespace porpoise::tests

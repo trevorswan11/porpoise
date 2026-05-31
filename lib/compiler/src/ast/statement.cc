@@ -157,13 +157,6 @@ auto DeclStatement::parse(syntax::Parser& parser) -> Result<StatementHandle, syn
                                    syntax::Error::EXTERN_VALUE_INITIALIZED,
                                    start_token);
         }
-
-        // Initialized decls with undefined requires a type for well-formed future use
-        if (decl_value->is<UndefinedExpression>() && !decl_type) {
-            return make_syntax_err("Undefined declarations require an explicit type",
-                                   syntax::Error::UNDEFINED_DECL_MISSING_TYPE,
-                                   start_token);
-        }
     } else if ((modifiers_has(modifiers, DeclModifiers::CONSTANT) &&
                 !modifiers_has(modifiers, DeclModifiers::EXTERN)) ||
                modifiers_has(modifiers, DeclModifiers::CONSTEXPR)) {

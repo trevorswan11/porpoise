@@ -45,8 +45,7 @@ template <typename E> class EmptyResult {
         return error();
     }
 
-    [[nodiscard]] friend auto operator==(const EmptyResult&, const EmptyResult&) noexcept
-        -> bool = default;
+    [[nodiscard]] constexpr auto operator==(const EmptyResult&) const noexcept -> bool = default;
 
   private:
     std::variant<std::monostate, E> error_;

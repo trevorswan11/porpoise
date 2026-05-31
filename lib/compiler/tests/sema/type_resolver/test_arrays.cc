@@ -93,8 +93,7 @@ TEST_CASE("Illegal index target") {
         sema::Diagnostic{"Can only index slices, arrays, and pointers; found 'u32'",
                          sema::Error::TYPE_MISMATCH,
                          std::pair{0uz, 23uz}});
-    const auto [sym, sym_data, type] = ctx->get_type_sym_info<syms::Node>("b", idx);
-    ctx->check_poisoned(sym, type);
+    ctx->check_poisoned<syms::Node>("b", idx);
 }
 
 } // namespace porpoise::tests

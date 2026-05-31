@@ -50,6 +50,7 @@ auto inject_types(SymbolTable& prelude, TypePool& pool) -> void {
     inject_type(kws::TYPE, TypeKind::TYPE);
     inject_type(kws::AUTO, TypeKind::AUTO);
     inject_type(kws::OPAQUE, TypeKind::OPAQUE);
+    inject_type(kws::UNDEFINED, TypeKind::UNDEFINED);
     inject_type(kws::NORETURN, TypeKind::NORETURN);
 }
 
@@ -133,7 +134,6 @@ auto inject_functions(SymbolTable& prelude, TypePool& pool) -> void {
 } // namespace
 
 auto Context::inject_prelude() -> void {
-    // This should only ever do work once
     if (prelude_index) { return; }
     prelude_index.emplace(registry.create());
 
