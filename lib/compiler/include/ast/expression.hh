@@ -254,7 +254,13 @@ DECLARE_PREFIX_EXPRESSION(UnaryExpression)
 DECLARE_PREFIX_EXPRESSION(ReferenceExpression)
 DECLARE_PREFIX_EXPRESSION(DereferenceExpression)
 DECLARE_PREFIX_EXPRESSION(AddressOfExpression)
-DECLARE_PREFIX_EXPRESSION(ImplicitAccessExpression)
+
+struct ImplicitAccessExpression {
+    IdentifierHandle member;
+
+    [[nodiscard]] static auto parse(syntax::Parser& parser)
+        -> Result<ExpressionHandle, syntax::Diagnostic>;
+};
 
 #undef DECLARE_PREFIX_EXPRESSION
 

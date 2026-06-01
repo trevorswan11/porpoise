@@ -437,7 +437,7 @@ auto SymbolCollector::visit(ast::NodeID id, const ast::ImportStatement& import_s
     }
 
     try_declare<symbols::Node>(alias, id);
-    if (imported_mod) {
+    if (imported_mod && !imported_mod->is_errored()) {
         // Its much easier for other steps to get the enclosing module if we resolve now
         auto& type =
             ctx_.pool[{TypeKind::MODULE, types::mut::CONSTANT, *imported_mod->root_table_idx}];

@@ -62,13 +62,13 @@ TEST_CASE("Flat match collection") {
 TEST_CASE("If expression inner shadowing") {
     helpers::test_collector_fail(
         "const a := if (b) { var a: i32; };",
-        sema::Diagnostic{"Attempt to shadow identifier 'a'. Previous declaration here: 1:1",
+        sema::Diagnostic{"Attempt to shadow identifier 'a'; previous declaration here: 1:1",
                          sema::Error::SHADOWING_DECLARATION,
                          std::pair{0uz, 20uz}});
 
     helpers::test_collector_fail(
         "const a := if (b) { var c: i32; } else { var a: i32; };",
-        sema::Diagnostic{"Attempt to shadow identifier 'a'. Previous declaration here: 1:1",
+        sema::Diagnostic{"Attempt to shadow identifier 'a'; previous declaration here: 1:1",
                          sema::Error::SHADOWING_DECLARATION,
                          std::pair{0uz, 41uz}});
 }
@@ -76,19 +76,19 @@ TEST_CASE("If expression inner shadowing") {
 TEST_CASE("Match shadowing assignee") {
     helpers::test_collector_fail(
         "const a := match (c) { b => |a| b; };",
-        sema::Diagnostic{"Attempt to shadow identifier 'a'. Previous declaration here: 1:1",
+        sema::Diagnostic{"Attempt to shadow identifier 'a'; previous declaration here: 1:1",
                          sema::Error::SHADOWING_DECLARATION,
                          std::pair{0uz, 29uz}});
 
     helpers::test_collector_fail(
         "const a := match (c) { b => { var a: i32; } };",
-        sema::Diagnostic{"Attempt to shadow identifier 'a'. Previous declaration here: 1:1",
+        sema::Diagnostic{"Attempt to shadow identifier 'a'; previous declaration here: 1:1",
                          sema::Error::SHADOWING_DECLARATION,
                          std::pair{0uz, 30uz}});
 
     helpers::test_collector_fail(
         "const a := match (b) { c => d; } else { var a: i32; };",
-        sema::Diagnostic{"Attempt to shadow identifier 'a'. Previous declaration here: 1:1",
+        sema::Diagnostic{"Attempt to shadow identifier 'a'; previous declaration here: 1:1",
                          sema::Error::SHADOWING_DECLARATION,
                          std::pair{0uz, 40uz}});
 }
@@ -96,7 +96,7 @@ TEST_CASE("Match shadowing assignee") {
 TEST_CASE("Match dispatch shadowing") {
     helpers::test_collector_fail(
         "const a := match (c) { b => |c| { var c: i32; } };",
-        sema::Diagnostic{"Attempt to shadow identifier 'c'. Previous declaration here: 1:30",
+        sema::Diagnostic{"Attempt to shadow identifier 'c'; previous declaration here: 1:30",
                          sema::Error::SHADOWING_DECLARATION,
                          std::pair{0uz, 34uz}});
 }

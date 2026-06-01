@@ -52,7 +52,8 @@ SemaTestContext::SemaTestContext(const std::vector<MockFile>& imports,
 
 auto SemaTestContext::verify_registry_resolved() -> void {
     for (usize i = 0; const auto& table : analyzer.get_registry()) {
-        for (const auto& [name, symbol] : table) {
+        for (const auto& [name, proxy] : table) {
+            const auto& symbol = proxy.symbol;
             CHECK(symbol.get_status() == sema::SymbolStatus::RESOLVED);
             if (symbol.get_status() != sema::SymbolStatus::RESOLVED) {
                 FAIL(name << " was not resolved in table " << i);

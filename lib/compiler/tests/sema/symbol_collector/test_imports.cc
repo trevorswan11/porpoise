@@ -12,7 +12,7 @@
 
 namespace porpoise::tests {
 
-using MockFile = helpers::MockFile;
+using helpers::MockFile;
 
 TEST_CASE("Import aliases correctly used") {
     auto [ctx, idx] = helpers::collect_and_check(
@@ -47,8 +47,12 @@ TEST_CASE("Public import query") {
     CHECK(std_import.is_public(*ctx->root_mod));
 }
 
+namespace {
+
 constexpr std::string_view a_porp{R"(pub import "b.porp" as b;)"};
 constexpr std::string_view b_porp{R"(pub import "a.porp" as a;)"};
+
+} // namespace
 
 TEST_CASE("Circular imports") {
     auto [ctx, _] = helpers::collect_and_check(
@@ -60,6 +64,8 @@ TEST_CASE("Circular imports") {
     CHECK(registry.get_from_opt(1, "a"));
 }
 
+namespace {
+
 constexpr std::string_view importer_porp{R"(
     import "a.porp" as a;
     import "b.porp" as b;
@@ -67,6 +73,8 @@ constexpr std::string_view importer_porp{R"(
 
 constexpr std::string_view diamond{R"(import std;)"};
 constexpr std::string_view std_porp{R"(pub import "io.porp" as io;)"};
+
+} // namespace
 
 TEST_CASE("Diamond dependencies") {
     auto [ctx, _] = helpers::collect_and_check(

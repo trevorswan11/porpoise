@@ -12,7 +12,7 @@
 
 namespace porpoise::tests {
 
-using MockFile = helpers::MockFile;
+using helpers::MockFile;
 
 TEST_CASE("Array/Index collection") {
     helpers::collect_and_check("const a := [2uz]i32{A, B, }; const b := a[0];");
@@ -51,7 +51,7 @@ TEST_CASE("Duplicate identifiers") {
     helpers::test_collector_fail(
         "const a := 2; import a;",
         helpers::make_vector<MockFile>(MockFile{"a.porp", "const foo := bar;", "a"}),
-        sema::Diagnostic{"Redeclaration of symbol 'a'. Previous declaration here: 1:1",
+        sema::Diagnostic{"Redeclaration of symbol 'a'; previous declaration here: 1:1",
                          sema::Error::IDENTIFIER_REDECLARATION,
                          std::pair{0uz, 14uz}});
 }

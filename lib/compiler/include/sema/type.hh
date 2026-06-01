@@ -85,6 +85,7 @@ struct Reference {
 };
 
 struct Enum {
+    usize                         enumeration_count;
     Type&                         underlying;
     std::span<mem::NonNull<Type>> members;
 };
@@ -99,6 +100,7 @@ struct Struct {
 };
 
 struct Function {
+    bool                          has_self;
     std::span<mem::NonNull<Type>> params;
     Type&                         return_type;
 };

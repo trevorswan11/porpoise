@@ -16,10 +16,11 @@
 
 namespace porpoise::tests {
 
-using MockFile = helpers::MockFile;
-
+using helpers::MockFile;
 namespace syms  = sema::symbols;
 namespace types = sema::types;
+
+namespace {
 
 constexpr std::string_view main_porp{R"(
 import std;
@@ -38,8 +39,6 @@ pub import "io.porp" as io;
 constexpr std::string_view io_porp{R"(
 pub const println := fn(str: []u8): void {};
 )"};
-
-namespace {
 
 // The table index should point to the table where the module was first declared
 [[nodiscard]] auto check_inner_module(helpers::SemaTestContext& ctx,

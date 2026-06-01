@@ -256,8 +256,8 @@ ExpressionStatement
                 └─ ExplicitType (modifier: VALUE)
                     └─ IdentifierExpression: u8 (primitive)
 ExpressionStatement
-└─ Expr: ImplicitAccessExpression (DOT)
-    └─ Operand: IdentifierExpression: a
+└─ Expr: ImplicitAccessExpression
+    └─ Member: IdentifierExpression: a
 ExpressionStatement
 └─ Expr: UnionExpression
     └─ Fields:
@@ -326,16 +326,16 @@ ExpressionStatement
     ├─ Object Type: <inferred>
     └─ Initializers:
         └─ Initializer:
-            ├─ Member: ImplicitAccessExpression (DOT)
-            │   └─ Operand: IdentifierExpression: a
+            ├─ Member: ImplicitAccessExpression
+            │   └─ Member: IdentifierExpression: a
             └─ Value: I32Expression: 3
 ExpressionStatement
 └─ Expr: Initializer Expression:
     ├─ Object Type: IdentifierExpression: TT
     └─ Initializers:
         └─ Initializer:
-            ├─ Member: ImplicitAccessExpression (DOT)
-            │   └─ Operand: IdentifierExpression: adfasf
+            ├─ Member: ImplicitAccessExpression
+            │   └─ Member: IdentifierExpression: adfasf
             └─ Value: IdentifierExpression: a
 ExpressionStatement
 └─ Expr: Initializer Expression:

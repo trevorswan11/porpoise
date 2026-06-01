@@ -79,14 +79,14 @@ auto Symbol::is_public(const mod::Module& module) const noexcept -> bool {
 auto SymbolTable::insert(std::string_view name, const mod::Module& module, const Symbol::Data& data)
     -> Result<void, Diagnostic> {
     // Reserved identifier use is impossible due to a parser invariant
-    auto [it, inserted] = symbols_.try_emplace(name, name, data);
+    auto [it, inserted] = symbols_.try_emplace(name, Symbol{name, data}, symbols_.size());
 
     // Check for redeclaration since there's no shadowing
     if (!inserted) {
         return make_sema_err(
-            fmt::format("Redeclaration of symbol '{}'. Previous declaration here: {}",
+            fmt::format("Redeclaration of symbol '{}'; previous declaration here: {}",
                         name,
-                        it->second.get_symbol_location(module)),
+                        it->second.symbol.get_symbol_location(module)),
             Error::IDENTIFIER_REDECLARATION,
             symbol_location_of(module, data));
     }
@@ -95,7 +95,7 @@ auto SymbolTable::insert(std::string_view name, const mod::Module& module, const
 
 auto SymbolTable::insert_unchecked(std::string_view name, const Symbol::Data& data) -> void {
     // Reserved identifier use is impossible due to a parser invariant
-    auto [_, inserted] = symbols_.try_emplace(name, name, data);
+    auto [_, inserted] = symbols_.try_emplace(name, Symbol{name, data}, symbols_.size());
     ASSERT(inserted, "Duplicate symbol injected");
 }
 
@@ -115,7 +115,7 @@ auto SymbolTableRegistry::insert_into(usize               table_idx,
     for (const auto idx : stack | std::views::take(stack.size() - 1)) {
         if (const auto symbol = get(idx).get_opt(name)) {
             return make_sema_err(
-                fmt::format("Attempt to shadow identifier '{}'. Previous declaration here: {}",
+                fmt::format("Attempt to shadow identifier '{}'; previous declaration here: {}",
                             name,
                             symbol_location_of(module, symbol->get_data())),
                 Error::SHADOWING_DECLARATION,

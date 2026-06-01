@@ -74,7 +74,7 @@ TEST_CASE("Undeclared identifier usage") {
 TEST_CASE("Duplicate test name") {
     helpers::test_resolver_fail(
         R"(test "TEST ME" { var a: i32; } test "TEST ME" { var a: i32; })",
-        sema::Diagnostic{"Duplicate test block named 'TEST ME'. Previously declared here: 1:1",
+        sema::Diagnostic{"Duplicate test block named 'TEST ME'; previous declaration here: 1:1",
                          sema::Error::DUPLICATE_TEST_NAME,
                          std::pair{0uz, 31uz}});
 }

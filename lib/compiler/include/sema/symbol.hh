@@ -3,6 +3,7 @@
 #include <ranges>
 #include <span>
 #include <string_view>
+#include <tuple>
 #include <vector>
 
 #include <ankerl/unordered_dense.h>
@@ -157,7 +158,17 @@ class Symbol {
 
 class SymbolTable {
   public:
-    using Table = ankerl::unordered_dense::map<std::string_view, Symbol>;
+    // The managed value type in mapped to by inserted keys
+    struct ValueProxy {
+        Symbol symbol;
+        usize  idx;
+    };
+
+    // Used for returning pseudo reference types from get operations, avoided in iterators
+    template <typename Self>
+    using ReferenceProxy = std::tuple<traits::const_dispatch_t<Self, Symbol>&, usize>;
+
+    using Table = ankerl::unordered_dense::map<std::string_view, ValueProxy>;
     MAKE_UNALIASED_ITERATOR(Table, symbols_)
     using KV = Table::iterator::value_type;
 
@@ -187,21 +198,36 @@ class SymbolTable {
         return symbols_.contains(name);
     }
 
+    // Differs from `get_proxy_opt` by asserting that the name is present.
+    template <typename Self>
+    [[nodiscard]] auto get_proxy(this Self&& self, std::string_view name) noexcept {
+        auto it = self.symbols_.find(name);
+        ASSERT(it != self.symbols_.end(), "Illegal get on missing key");
+        return std::tie(it->second.symbol, it->second.idx);
+    }
+
+    // Returns optional referential metadata of the symbol if present
+    template <typename Self>
+    [[nodiscard]] auto get_proxy_opt(this Self&& self, std::string_view name) noexcept {
+        auto it          = self.symbols_.find(name);
+        using ReturnType = opt::Option<ReferenceProxy<Self>>;
+        if (it == self.symbols_.end()) { return ReturnType{opt::none}; }
+        return ReturnType{std::tie(it->second.symbol, it->second.idx)};
+    }
+
     // Differs from `get_opt` by asserting that the name is present.
     template <typename Self>
     [[nodiscard]] auto get(this Self&& self, std::string_view name) noexcept -> auto& {
-        auto it = self.symbols_.find(name);
-        ASSERT(it != self.symbols_.end(), "Illegal get on missing key");
-        return it->second;
+        return std::get<0>(self.get_proxy(name));
     }
 
     // Returns an optional containing a mutable or const reference to a symbol depending on context.
     template <typename Self>
     [[nodiscard]] auto get_opt(this Self&& self, std::string_view name) noexcept {
-        auto it          = self.symbols_.find(name);
+        const auto proxy = self.get_proxy_opt(name);
         using ReturnType = opt::Option<traits::const_dispatch_t<Self, Symbol>&>;
-        if (it == self.symbols_.end()) { return ReturnType{opt::none}; }
-        return ReturnType{it->second};
+        if (!proxy) { return ReturnType{opt::none}; }
+        return ReturnType{std::get<0>(*proxy)};
     }
 
   private:

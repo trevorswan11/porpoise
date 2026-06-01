@@ -65,7 +65,7 @@ TEST_CASE("Trivial loop resolution") {
     )");
 }
 
-TEST_CASE("Illegal for loop capture type") {
+TEST_CASE("Illegal for loop iterable type") {
     helpers::test_resolver_fail(
         "for (23) |_| { var a: i32; }",
         sema::Diagnostic{"Iterables may only be arrays or slices; found 'i32'",
